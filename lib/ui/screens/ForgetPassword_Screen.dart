@@ -3,7 +3,7 @@ import '../../ui/screens/login_screen.dart';
 import '../../ui/screens/request_submitted_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
-  const ForgotPasswordScreen({Key? key}) : super(key: key);
+  const ForgotPasswordScreen({super.key});
 
   @override
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
@@ -11,104 +11,86 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     with SingleTickerProviderStateMixin {
+
   final _emailController = TextEditingController();
   final _nationalIdController = TextEditingController();
 
-  bool _isLoading = false;
   bool _isFormValid = false;
+  bool _isLoading = false;
 
-  late AnimationController _animationController;
-  late Animation<double> _logoAnimation;
-  late Animation<double> _titleAnimation;
-  late Animation<double> _field1Animation;
-  late Animation<double> _field2Animation;
-  late Animation<double> _buttonAnimation;
+  late AnimationController _contentController;
+  late Animation<Offset> _contentIntro;
+
+  late Animation<double> _field1Anim;
+  late Animation<double> _field2Anim;
 
   @override
   void initState() {
     super.initState();
-    _emailController.addListener(_validateForm);
-    _nationalIdController.addListener(_validateForm);
 
-    // Initialize animation controller
-    _animationController = AnimationController(
+    _contentController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1600),
+      duration: const Duration(milliseconds: 600),
     );
 
-    // Staggered animations for each element
-    _logoAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+    _contentIntro = Tween<Offset>(
+      begin: const Offset(0, 0.4),
+      end: Offset.zero,
+    ).animate(
       CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.0, 0.3, curve: Curves.easeOut),
+        parent: _contentController,
+        curve: Curves.easeOutCubic,
       ),
     );
 
-    _titleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.1, 0.4, curve: Curves.easeOut),
-      ),
+    _field1Anim = CurvedAnimation(
+      parent: _contentController,
+      curve: const Interval(0.25, 0.6, curve: Curves.easeOut),
     );
 
-    _field1Animation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.3, 0.6, curve: Curves.easeOut),
-      ),
+    _field2Anim = CurvedAnimation(
+      parent: _contentController,
+      curve: const Interval(0.45, 0.8, curve: Curves.easeOut),
     );
 
-    _field2Animation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.4, 0.7, curve: Curves.easeOut),
-      ),
-    );
+    Future.delayed(const Duration(milliseconds: 250), () {
+      if (mounted) _contentController.forward();
+    });
 
-    _buttonAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.5, 0.8, curve: Curves.easeOut),
-      ),
-    );
-
-    // Start animation
-    _animationController.forward();
+    _emailController.addListener(_validate);
+    _nationalIdController.addListener(_validate);
   }
 
-  void _validateForm() {
+  void _validate() {
     setState(() {
-      _isFormValid = _emailController.text.isNotEmpty &&
-          _nationalIdController.text.isNotEmpty;
+      _isFormValid =
+          _emailController.text.isNotEmpty &&
+              _nationalIdController.text.isNotEmpty;
     });
   }
 
-  Future<void> _handleSubmit() async {
+  Future<void> _submit() async {
     if (!_isFormValid) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
-    // Simulate password reset API call
     await Future.delayed(const Duration(seconds: 2));
 
-    setState(() {
-      _isLoading = false;
-    });
+    setState(() => _isLoading = false);
 
     if (!mounted) return;
 
-    // Navigate to request submitted screen
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const RequestSubmittedScreen()),
+      MaterialPageRoute(
+        builder: (_) => const RequestSubmittedScreen(),
+      ),
     );
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _contentController.dispose();
     _emailController.dispose();
     _nationalIdController.dispose();
     super.dispose();
@@ -116,179 +98,148 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Stack(
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+        body: Stack(
           children: [
-            Positioned(
-              right: -50,
-              top: 150,
+
+            // BACKGROUND
+            Positioned.fill(
               child: Image.asset(
-                'assets/images/rectangle3.png',
-                width: 400,
-                fit: BoxFit.contain,
+                "assets/images/WelcomeBackground.png",
+                fit: BoxFit.cover,
               ),
             ),
-            // Main content
-            Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                child: AnimatedBuilder(
-                  animation: _animationController,
-                  builder: (context, child) {
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 40),
 
-                        // UniNexus Logo
-                        FadeTransition(
-                          opacity: _logoAnimation,
-                          child: ScaleTransition(
-                            scale: _logoAnimation,
+            // HERO RECTANGLE (same layer feel)
+            Positioned(
+              top: MediaQuery.of(context).size.height * 0.25,
+              right: -200,
+              child: IgnorePointer(
+                child: Hero(
+                  tag: 'shared-rectangle',
+                  child: Opacity(
+                    opacity: 0.9,
+                    child: Image.asset(
+                      "assets/images/Rectangle.png",
+                      width: 550,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // CONTENT
+            SafeArea(
+              child: SlideTransition(
+                position: _contentIntro,
+                child: FadeTransition(
+                  opacity: _contentController,
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(40, 25, 40, 40),
+                      child: Column(
+                        children: [
+
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
                             child: Image.asset(
-                              'assets/images/logonew.png',
-                              width: 80,
-                              height: 80,
+                              "assets/images/uni.jpeg",
+                              width: 90,
+                              fit: BoxFit.cover,
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 24),
 
-                        // Title
-                        FadeTransition(
-                          opacity: _titleAnimation,
-                          child: SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(0, 0.2),
-                              end: Offset.zero,
-                            ).animate(_titleAnimation),
-                            child: const Text(
-                              'Forgotten Password',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20,
-                                color: Color(0xFF000000),
-                                height: 1.3,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
+                          const SizedBox(height: 10),
 
-                        // Subtitle
-                        FadeTransition(
-                          opacity: _titleAnimation,
-                          child: const Text(
-                            'Enter your details to renew your credentials',
-                            textAlign: TextAlign.center,
+                          const Text(
+                            "Forgotten Password",
                             style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w400,
-                              fontSize: 14,
-                              color: Color(0xFF666666),
-                              height: 1.5,
+                              fontFamily: 'Batangas',
+                              fontSize: 30,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 40),
 
-                        // Email / ID Field
-                        FadeTransition(
-                          opacity: _field1Animation,
-                          child: SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(-0.3, 0),
-                              end: Offset.zero,
-                            ).animate(_field1Animation),
-                            child: _buildTextField(
-                              controller: _emailController,
-                              label: 'Email / ID',
-                              hintText: 'Enter Your Email/ID',
+                          const SizedBox(height: 2),
+
+                          const Text(
+                            "Enter your details to renew your credintials",
+                            style: TextStyle(
+                              color: Colors.black54,
+                              fontSize: 17,
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 20),
 
-                        // National ID Field
-                        FadeTransition(
-                          opacity: _field2Animation,
-                          child: SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(-0.3, 0),
-                              end: Offset.zero,
-                            ).animate(_field2Animation),
-                            child: _buildTextField(
-                              controller: _nationalIdController,
-                              label: 'National ID',
-                              hintText: 'Enter Your National ID',
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 40),
+                          const SizedBox(height: 40),
 
-                        // Submit Button
-                        FadeTransition(
-                          opacity: _buttonAnimation,
-                          child: ScaleTransition(
-                            scale: _buttonAnimation,
-                            child: Container(
-                              width: double.infinity,
-                              height: 56,
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFF7B76CF), // violet
-                                    Color(0xFF69CFD8), // cyan
-                                  ],
-                                  begin: Alignment.centerLeft,
-                                  end: Alignment.centerRight,
-                                ),
-                                borderRadius: BorderRadius.circular(28),
-                              ),
-                              child: ElevatedButton(
-                                onPressed: _isFormValid && !_isLoading
-                                    ? _handleSubmit
-                                    : null,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.transparent,
-                                  disabledBackgroundColor: Colors.transparent,
-                                  shadowColor: Colors.transparent,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(28),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                child: _isLoading
-                                    ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white),
-                                  ),
-                                )
-                                    : const Text(
-                                  'Submit',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
+                          FadeTransition(
+                            opacity: _field1Anim,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(-0.3, 0),
+                                end: Offset.zero,
+                              ).animate(_field1Anim),
+                              child: _modernField(
+                                label: "Email / ID",
+                                hint: "Enter Your Email/ID",
+                                controller: _emailController,
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 40),
-                      ],
-                    );
-                  },
+
+                          const SizedBox(height: 55),
+
+                          FadeTransition(
+                            opacity: _field2Anim,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(-0.3, 0),
+                                end: Offset.zero,
+                              ).animate(_field2Anim),
+                              child: _modernField(
+                                label: "National ID",
+                                hint: "Enter Your National ID",
+                                controller: _nationalIdController,
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 280),
+
+                          _mainButton(
+                            text: _isLoading ? "Submitting..." : "Submit",
+                            enabled: _isFormValid && !_isLoading,
+                            onTap: _submit,
+                          ),
+
+                          const SizedBox(height: 6),
+
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text("  Back to"),
+                              TextButton(
+                                onPressed: () => Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const LoginScreen(),
+                                  ),
+                                ),
+                                child: const Text(
+                                  "Login",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -298,60 +249,89 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
+  // -------- MODERN FIELD --------
+
+  Widget _modernField({
     required String label,
-    required String hintText,
+    required String hint,
+    required TextEditingController controller,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          padding: const EdgeInsets.only(left: 10, bottom: 1),
           child: Text(
             label,
             style: const TextStyle(
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-              color: Color(0xFF000000),
+              fontFamily: 'Batangas',
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
         Container(
-          height: 56,
+          height: 50,
           decoration: BoxDecoration(
-            color: const Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.circular(28),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: Colors.grey.withOpacity(0.3),
+              width: 1.4,
+            ),
           ),
           child: TextField(
             controller: controller,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFF000000),
-            ),
             decoration: InputDecoration(
-              hintText: hintText,
-              hintStyle: const TextStyle(
-                color: Color(0xFFBBBBBB),
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(28),
-                borderSide: BorderSide.none,
-              ),
-              filled: true,
-              fillColor: const Color(0xFFF5F5F5),
+              hintText: hint,
+              border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 16,
+                horizontal: 15,
+                vertical: 10,
               ),
             ),
           ),
         ),
       ],
+    );
+  }
+
+  // -------- BUTTON --------
+
+  Widget _mainButton({
+    required String text,
+    required bool enabled,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      width: 280,
+      height: 65,
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Colors.white.withOpacity(0.3),
+          width: 1.5,
+        ),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)],
+        ),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: ElevatedButton(
+        onPressed: enabled ? onTap : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          elevation: 0,
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
     );
   }
 }

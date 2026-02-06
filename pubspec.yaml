@@ -26,3 +26,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+  fonts:
+    - family: Batangas
+      fonts:
+        - asset: assets/fonts/Batangas.ttf
+        - asset: assets/fonts/batangas-bold.otf
