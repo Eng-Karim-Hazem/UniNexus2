@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../ui/screens/login_screen.dart';
 import '../../ui/screens/request_submitted_screen.dart';
+import '../../services/firebase/signup_service.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -11,13 +12,12 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen>
     with SingleTickerProviderStateMixin {
-
   final _nationalIdController = TextEditingController();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _studentIdController = TextEditingController(); // Replaced password controller
 
   bool _isFormValid = false;
-  bool _obscurePassword = true;
+  bool _isLoading = false;
 
   late AnimationController _contentController;
   late Animation<Offset> _contentIntro;
@@ -49,12 +49,10 @@ class _SignUpScreenState extends State<SignUpScreen>
       parent: _contentController,
       curve: const Interval(0.2, 0.5, curve: Curves.easeOut),
     );
-
     _field2Anim = CurvedAnimation(
       parent: _contentController,
       curve: const Interval(0.4, 0.7, curve: Curves.easeOut),
     );
-
     _field3Anim = CurvedAnimation(
       parent: _contentController,
       curve: const Interval(0.6, 0.9, curve: Curves.easeOut),
@@ -66,38 +64,38 @@ class _SignUpScreenState extends State<SignUpScreen>
 
     _nationalIdController.addListener(_validate);
     _emailController.addListener(_validate);
-    _passwordController.addListener(_validate);
-  }
-  void _slideTo(Widget page, {required bool fromRight}) {
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 500),
-        pageBuilder: (_, __, ___) => page,
-        transitionsBuilder: (_, animation, __, child) {
-          final begin = fromRight ? const Offset(1, 0) : const Offset(-1, 0);
-
-          return SlideTransition(
-            position: Tween<Offset>(
-              begin: begin,
-              end: Offset.zero,
-            ).animate(
-              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-            ),
-            child: child,
-          );
-        },
-      ),
-    );
+    _studentIdController.addListener(_validate);
   }
 
   void _validate() {
     setState(() {
-      _isFormValid =
-          _nationalIdController.text.isNotEmpty &&
-              _emailController.text.isNotEmpty &&
-              _passwordController.text.isNotEmpty;
+      _isFormValid = _nationalIdController.text.isNotEmpty &&
+          _emailController.text.isNotEmpty &&
+          _studentIdController.text.isNotEmpty;
     });
+  }
+
+  Future<void> _handleSignUp() async {
+    setState(() => _isLoading = true);
+
+    bool success = await SignupService().registerUser(
+      nationalId: _nationalIdController.text,
+      studentId: _studentIdController.text,
+      email: _emailController.text,
+    );
+
+    if (mounted) setState(() => _isLoading = false);
+
+    if (success && mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const RequestSubmittedScreen()),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Registration failed. Please try again.")),
+      );
+    }
   }
 
   @override
@@ -105,7 +103,7 @@ class _SignUpScreenState extends State<SignUpScreen>
     _contentController.dispose();
     _nationalIdController.dispose();
     _emailController.dispose();
-    _passwordController.dispose();
+    _studentIdController.dispose();
     super.dispose();
   }
 
@@ -114,14 +112,12 @@ class _SignUpScreenState extends State<SignUpScreen>
     return Scaffold(
       body: Stack(
         children: [
-
           Positioned.fill(
             child: Image.asset(
               "assets/images/WelcomeBackground.png",
               fit: BoxFit.cover,
             ),
           ),
-
           Positioned(
             top: MediaQuery.of(context).size.height * 0.25,
             right: -200,
@@ -137,7 +133,6 @@ class _SignUpScreenState extends State<SignUpScreen>
               ),
             ),
           ),
-
           SafeArea(
             child: SlideTransition(
               position: _contentIntro,
@@ -149,17 +144,11 @@ class _SignUpScreenState extends State<SignUpScreen>
                     padding: const EdgeInsets.fromLTRB(40, 25, 40, 40),
                     child: Column(
                       children: [
-
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: Image.asset(
-                            "assets/images/uni.jpeg",
-                            width: 90,
-                          ),
+                          child: Image.asset("assets/images/uni.jpeg", width: 90),
                         ),
-
                         const SizedBox(height: 10),
-
                         const Text(
                           "Register to UniNexus",
                           style: TextStyle(
@@ -168,17 +157,11 @@ class _SignUpScreenState extends State<SignUpScreen>
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-
                         const Text(
                           "Start your smart campus journey",
-                          style: TextStyle(
-                            color: Colors.black54,
-                            fontSize: 17,
-                          ),
+                          style: TextStyle(color: Colors.black54, fontSize: 17),
                         ),
-
                         const SizedBox(height: 40),
-
                         _animatedField(
                           anim: _field1Anim,
                           child: _modernField(
@@ -187,62 +170,41 @@ class _SignUpScreenState extends State<SignUpScreen>
                             controller: _nationalIdController,
                           ),
                         ),
-
                         const SizedBox(height: 40),
-
                         _animatedField(
                           anim: _field2Anim,
                           child: _modernField(
-                            label: "Email / ID",
-                            hint: "Enter Your Email/ID",
+                            label: "University Email",
+                            hint: "Enter Your Email",
                             controller: _emailController,
                           ),
                         ),
-
                         const SizedBox(height: 40),
-
                         _animatedField(
                           anim: _field3Anim,
                           child: _modernField(
-                            label: "Password",
-                            hint: "Enter Your Password",
-                            controller: _passwordController,
-                            obscure: _obscurePassword,
-                            icon: IconButton(
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_off
-                                    : Icons.visibility,
-                              ),
-                              onPressed: () =>
-                                  setState(() => _obscurePassword = !_obscurePassword),
-                            ),
+                            label: "University ID",
+                            hint: "Enter Your ID",
+                            controller: _studentIdController,
                           ),
                         ),
-
                         const SizedBox(height: 180),
-
                         _mainButton(
-                          text: "Register",
-                          enabled: _isFormValid,
-                          onTap: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const RequestSubmittedScreen(),
-                              ),
-                            );
-                          },
+                          text: _isLoading ? "Processing..." : "Register",
+                          enabled: _isFormValid && !_isLoading,
+                          onTap: _handleSignUp,
                         ),
-
                         const SizedBox(height: 6),
-
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             const Text("Already have an account?"),
                             TextButton(
-                              onPressed: () => _slideTo(const LoginScreen(), fromRight: false),
+                              onPressed: () => Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const LoginScreen()),
+                              ),
                               child: const Text(
                                 "Login",
                                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -262,12 +224,7 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 
-  // ---------- HELPERS ----------
-
-  Widget _animatedField({
-    required Animation<double> anim,
-    required Widget child,
-  }) {
+  Widget _animatedField({required Animation<double> anim, required Widget child}) {
     return FadeTransition(
       opacity: anim,
       child: SlideTransition(
@@ -284,8 +241,6 @@ class _SignUpScreenState extends State<SignUpScreen>
     required String label,
     required String hint,
     required TextEditingController controller,
-    bool obscure = false,
-    Widget? icon,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,22 +262,16 @@ class _SignUpScreenState extends State<SignUpScreen>
             color: Colors.white,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: Colors.grey.withValues(alpha: 0.3), // soft light border
+              color: Colors.grey.withOpacity(0.3),
               width: 1.4,
             ),
           ),
-
           child: TextField(
             controller: controller,
-            obscureText: obscure,
             decoration: InputDecoration(
               hintText: hint,
-              suffixIcon: icon,
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 15,
-                vertical: 10,
-              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 15),
             ),
           ),
         ),
@@ -340,7 +289,7 @@ class _SignUpScreenState extends State<SignUpScreen>
       height: 65,
       decoration: BoxDecoration(
         border: Border.all(
-            color: Colors.white.withValues(alpha: 0.3), width: 1.5),
+            color: Colors.white.withOpacity(0.3), width: 1.5),
         gradient: const LinearGradient(
           colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)],
         ),
