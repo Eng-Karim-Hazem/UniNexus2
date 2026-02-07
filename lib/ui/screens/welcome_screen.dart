@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../../ui/screens/login_screen.dart';
-import '../../ui/screens/SignUp_Screen.dart';
+import '../../ui/screens/signup_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -204,7 +204,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       const Text(
                         "Your unified campus experience begins here.",
                         style: TextStyle(
-                          fontFamily: 'Batangas',
+                          fontFamily: 'Inter',
                           fontSize: 19,
                           color: Colors.black54,
                         ),
@@ -234,7 +234,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       height: 64,
       margin: const EdgeInsets.symmetric(horizontal: 65),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.4),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.4),
         gradient: const LinearGradient(
           colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)],
         ),
@@ -251,6 +251,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           text,
           style: const TextStyle(
             color: Colors.white,
+            fontFamily: 'Batangas',
             fontSize: 22,
             fontWeight: FontWeight.bold,
           ),

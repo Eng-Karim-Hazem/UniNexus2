@@ -52,8 +52,8 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => false,
+    return PopScope(
+      canPop: false,
       child: Scaffold(
         body: Stack(
           children: [
@@ -107,7 +107,7 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
                             ),
                           ),
 
-                          const SizedBox(height: 50),
+                          const SizedBox(height: 20),
 
                           const Text(
                             "Request Submitted",
@@ -118,7 +118,7 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
                             ),
                           ),
 
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 50),
 
                           const Text(
                             "Your request was sent successfully",
@@ -140,7 +140,7 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
                             ),
                           ),
 
-                          const SizedBox(height: 230),
+                          const SizedBox(height: 210),
 
                           _mainButton(
                             text: "Back to Login",
@@ -177,7 +177,7 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
       height: 65,
       decoration: BoxDecoration(
         border: Border.all(
-          color: Colors.white.withOpacity(0.3),
+          color: Colors.white.withValues(alpha: 0.3),
           width: 1.5,
         ),
         gradient: const LinearGradient(
@@ -199,7 +199,8 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
           text,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 18,
+            fontFamily: 'Batangas',
+            fontSize: 22,
             fontWeight: FontWeight.w600,
           ),
         ),

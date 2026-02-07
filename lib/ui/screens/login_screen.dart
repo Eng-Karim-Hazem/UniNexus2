@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../ui/screens/ForgetPassword_Screen.dart';
-import '../../ui/screens/SignUp_Screen.dart';
+import '../../ui/screens/forget_password_screen.dart';
+import '../../ui/screens/signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -101,8 +101,8 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => false,
+    return PopScope(
+      canPop: false,
       child: Scaffold(
         body: Stack(
           children: [
@@ -302,7 +302,7 @@ class _LoginScreenState extends State<LoginScreen>
             color: Colors.white,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: Colors.grey.withOpacity(0.3), // soft light border
+              color: Colors.grey.withValues(alpha: 0.3), // soft light border
               width: 1.4,
             ),
           ),
@@ -337,7 +337,7 @@ class _LoginScreenState extends State<LoginScreen>
       height: 65,
       decoration: BoxDecoration(
         border: Border.all(
-          color: Colors.white.withOpacity(0.3), width: 1.5),
+            color: Colors.white.withValues(alpha: 0.3), width: 1.5),
         gradient: const LinearGradient(
           colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)],
         ),
@@ -354,7 +354,8 @@ class _LoginScreenState extends State<LoginScreen>
           "Log In",
           style: TextStyle(
             color: Colors.white,
-            fontSize: 18,
+            fontFamily: 'Batangas',
+            fontSize: 22,
             fontWeight: FontWeight.w600,
           ),
         ),

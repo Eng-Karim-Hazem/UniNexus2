@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../ui/screens/dashboard_screen.dart';
 import '../../ui/screens/login_screen.dart';
+import '../../ui/screens/request_submitted_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -229,7 +229,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const DashboardScreen(),
+                                builder: (_) => const RequestSubmittedScreen(),
                               ),
                             );
                           },
@@ -307,7 +307,7 @@ class _SignUpScreenState extends State<SignUpScreen>
             color: Colors.white,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: Colors.grey.withOpacity(0.3), // soft light border
+              color: Colors.grey.withValues(alpha: 0.3), // soft light border
               width: 1.4,
             ),
           ),
@@ -340,7 +340,7 @@ class _SignUpScreenState extends State<SignUpScreen>
       height: 65,
       decoration: BoxDecoration(
         border: Border.all(
-            color: Colors.white.withOpacity(0.3), width: 1.5),
+            color: Colors.white.withValues(alpha: 0.3), width: 1.5),
         gradient: const LinearGradient(
           colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)],
         ),
@@ -357,8 +357,8 @@ class _SignUpScreenState extends State<SignUpScreen>
           text,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+            fontFamily: 'Batangas',
+            fontSize: 22,
           ),
         ),
       ),
