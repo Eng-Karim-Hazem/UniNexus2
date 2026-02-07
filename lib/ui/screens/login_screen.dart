@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Required for Firebase
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Added for data persistence
 import '../../ui/screens/forget_password_screen.dart';
 import '../../ui/screens/signup_screen.dart';
 import '../../ui/screens/stu_home.dart';
 import '../../ui/screens/faculty_home_screen.dart';
-// ------------------------------------------------------------------
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,7 +21,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   bool _obscurePassword = true;
   bool _isFormValid = false;
-  bool _isLoading = false; // State to show loading spinner
+  bool _isLoading = false;
 
   late AnimationController _contentController;
   late Animation<Offset> _contentIntro;
@@ -31,7 +31,6 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void initState() {
     super.initState();
-    // ... (Your existing animation code remains unchanged) ...
     _contentController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -63,23 +62,21 @@ class _LoginScreenState extends State<LoginScreen>
     _passwordController.addListener(_validate);
   }
 
-  // --- NEW: Authentication Logic ---
+  // --- AUTHENTICATION & SHARED PREFERENCES LOGIC ---
   Future<void> _handleLogin() async {
     final idInput = _codeController.text.trim();
     final passwordInput = _passwordController.text.trim();
 
     if (idInput.isEmpty || passwordInput.isEmpty) return;
 
-    // Dismiss Keyboard
     FocusScope.of(context).unfocus();
-
     setState(() => _isLoading = true);
 
     try {
       String collectionName;
       Widget nextScreen;
 
-      // 1. Check ID Abbreviation (Case Insensitive)
+      // 1. Determine Role
       if (idInput.toUpperCase().startsWith("ST")) {
         collectionName = 'students';
         nextScreen = const StuHomeScreen();
@@ -90,30 +87,51 @@ class _LoginScreenState extends State<LoginScreen>
         throw "Invalid ID format. ID must start with 'ST' or 'FA'.";
       }
 
-      // 2. Fetch Data from Firebase
-      // Note: This assumes your documents have a field named 'id' (or similar)
-      // that matches the user input.
+      // 2. Fetch User from Firebase
       final querySnapshot = await FirebaseFirestore.instance
           .collection(collectionName)
-          .where('ID', isEqualTo: idInput) // Querying specifically for the ID field
+          .where('ID', isEqualTo: idInput)
           .limit(1)
           .get();
 
-      // 3. Verify User Exists
       if (querySnapshot.docs.isEmpty) {
         throw "User ID not found in $collectionName records.";
       }
 
-      // 4. Verify Password
-      // Note: In a real app, passwords should be hashed.
-      // This assumes direct comparison as per request.
       final userDoc = querySnapshot.docs.first;
-      final storedPassword = userDoc['pass'];
+      final userData = userDoc.data();
+      final storedPassword = userData['pass'];
 
+      // 3. Verify Password
       if (storedPassword == passwordInput) {
+
+        // 4. Save to SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+
+        // Save Shared Info
+        await prefs.setString('ID', idInput);
+        await prefs.setString('fName', userData['fName'] ?? "User");
+        await prefs.setString('lName', userData['lName'] ?? "");
+        await prefs.setString('email', userData['email'] ?? "N/A");
+        await prefs.setString('pNum', userData['pNum'] ?? "N/A");
+        await prefs.setString('faculty', userData['faculty'] ?? "N/A");
+        await prefs.setString('nationalID', userData['nationalID'] ?? "N/A");
+
+        // Save Student-Specific Info
+        if (collectionName == 'students') {
+          await prefs.setString('year', userData['year'] ?? "N/A");
+          await prefs.setString('section', userData['section'] ?? "N/A");
+        }else if (collectionName == 'faculty') {
+          // --- NEW: Save Subject List for Faculty ---
+          // This assumes your Firestore field is called 'subjects' and is an Array
+          List<dynamic> subjectsData = userData['subjects'] ?? [];
+          List<String> subjectsList = subjectsData.map((e) => e.toString()).toList();
+          await prefs.setStringList('facultySubjects', subjectsList);
+        }
+
         if (!mounted) return;
 
-        // Login Successful -> Navigate
+        // 5. Navigate
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => nextScreen),
@@ -123,7 +141,6 @@ class _LoginScreenState extends State<LoginScreen>
       }
 
     } catch (e) {
-      // Show Error Message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -144,7 +161,6 @@ class _LoginScreenState extends State<LoginScreen>
     });
   }
 
-  // ... (Your existing _slideTo and dispose methods remain unchanged) ...
   void _slideTo(Widget page, {required bool fromRight}) {
     Navigator.pushReplacement(
       context,
@@ -178,7 +194,6 @@ class _LoginScreenState extends State<LoginScreen>
       child: Scaffold(
         body: Stack(
           children: [
-            // ... (Your Background Images remain unchanged) ...
             Positioned.fill(
               child: Image.asset("assets/images/WelcomeBackground.png", fit: BoxFit.cover),
             ),
@@ -218,7 +233,6 @@ class _LoginScreenState extends State<LoginScreen>
                             "Log in to UniNexus",
                             style: TextStyle(fontFamily: 'Batangas', fontSize: 30, fontWeight: FontWeight.bold),
                           ),
-                          const SizedBox(height: 0.1),
                           const Text(
                             "Access your campus services securely",
                             style: TextStyle(color: Colors.black54, fontSize: 17),
@@ -271,15 +285,13 @@ class _LoginScreenState extends State<LoginScreen>
 
                           const SizedBox(height: 240),
 
-                          // --- UPDATED MAIN BUTTON ---
                           _mainButton(
                             text: "Log In",
-                            enabled: _isFormValid && !_isLoading, // Disable if loading
-                            isLoading: _isLoading, // Pass loading state
-                            onTap: _handleLogin, // Call the new function
+                            enabled: _isFormValid && !_isLoading,
+                            isLoading: _isLoading,
+                            onTap: _handleLogin,
                           ),
 
-                          const SizedBox(height: 1),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -361,7 +373,11 @@ class _LoginScreenState extends State<LoginScreen>
           elevation: 0,
         ),
         child: isLoading
-            ? const CircularProgressIndicator(color: Colors.white) // Show spinner when loading
+            ? const SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+        )
             : Text(
           text,
           style: const TextStyle(

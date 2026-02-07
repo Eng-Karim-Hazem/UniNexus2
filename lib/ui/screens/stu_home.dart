@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'student_id_screen.dart';
 import 'profile_screen.dart';
-import 'stu_schedule.dart'; // Ensure this import is present
+import 'stu_schedule.dart';
 
 class StuHomeScreen extends StatefulWidget {
   const StuHomeScreen({super.key});
@@ -37,6 +37,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.reload();
     setState(() {
+      // Ensuring we pull both names from the keys set during login
       _firstName = prefs.getString('fName') ?? 'Student';
       _lastName = prefs.getString('lName') ?? '';
       _isLoading = false;
@@ -77,7 +78,6 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                 _buildGreetingCard(),
                 const SizedBox(height: 20),
 
-                // Make the Schedule Card clickable
                 GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -151,7 +151,11 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Hi $_firstName!", style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF1A1A1A))),
+          // Updated to show full name
+          Text(
+              "Hi $_firstName $_lastName!".trim(),
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF1A1A1A))
+          ),
           const SizedBox(height: 8),
           const Text("Good morning", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1A1A1A))),
           const SizedBox(height: 8),
@@ -160,6 +164,8 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
       ),
     );
   }
+
+  // ... (rest of your existing helper widgets: _buildStudentNotification, _buildWhiteCard, _buildTopHeader, _buildFab, _buildBottomBar, _buildNavBarItem)
 
   Widget _buildStudentNotification({required String title, required String message, required IconData icon}) {
     return Container(
