@@ -65,7 +65,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       CurvedAnimation(parent: _exitController, curve: Curves.easeInOutCubic),
     );
 
-    // 👇 ONLY move to middle (not top)
+    // ONLY move to middle (not top)
     _bottomExit = Tween(
       begin: Offset.zero,
       end: const Offset(0.494, -0.72),
