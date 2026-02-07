@@ -141,8 +141,6 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
             style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF1A1A1A)),
           ),
           const SizedBox(height: 8),
-          const Text("Welcome back to your dashboard", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
           Text(_getCurrentDate(), style: const TextStyle(fontSize: 14, color: Color(0xFF5BA4F5), fontWeight: FontWeight.w600)),
         ],
       ),

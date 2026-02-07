@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Added for data persistence
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../ui/screens/forget_password_screen.dart';
 import '../../ui/screens/signup_screen.dart';
 import '../../ui/screens/stu_home.dart';
@@ -22,11 +22,13 @@ class _LoginScreenState extends State<LoginScreen>
   bool _obscurePassword = true;
   bool _isFormValid = false;
   bool _isLoading = false;
+  bool _rememberMe = false;
 
   late AnimationController _contentController;
   late Animation<Offset> _contentIntro;
   late Animation<double> _field1Anim;
   late Animation<double> _field2Anim;
+  late Animation<double> _checkAnim; // New animation for checkbox
 
   @override
   void initState() {
@@ -46,13 +48,19 @@ class _LoginScreenState extends State<LoginScreen>
 
     _field1Anim = CurvedAnimation(
       parent: _contentController,
-      curve: const Interval(0.25, 0.6, curve: Curves.easeOut),
+      curve: const Interval(0.2, 0.5, curve: Curves.easeOut),
     );
 
     _field2Anim = CurvedAnimation(
       parent: _contentController,
-      curve: const Interval(0.45, 0.8, curve: Curves.easeOut),
+      curve: const Interval(0.35, 0.65, curve: Curves.easeOut),
     );
+
+    _checkAnim = CurvedAnimation(
+      parent: _contentController,
+      curve: const Interval(0.5, 0.8, curve: Curves.easeOut),
+    );
+
 
     Future.delayed(const Duration(milliseconds: 250), () {
       if (mounted) _contentController.forward();
@@ -62,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen>
     _passwordController.addListener(_validate);
   }
 
-  // --- AUTHENTICATION & SHARED PREFERENCES LOGIC ---
+
   Future<void> _handleLogin() async {
     final idInput = _codeController.text.trim();
     final passwordInput = _passwordController.text.trim();
@@ -76,7 +84,6 @@ class _LoginScreenState extends State<LoginScreen>
       String collectionName;
       Widget nextScreen;
 
-      // 1. Determine Role
       if (idInput.toUpperCase().startsWith("ST")) {
         collectionName = 'students';
         nextScreen = const StuHomeScreen();
@@ -87,7 +94,6 @@ class _LoginScreenState extends State<LoginScreen>
         throw "Invalid ID format. ID must start with 'ST' or 'FA'.";
       }
 
-      // 2. Fetch User from Firebase
       final querySnapshot = await FirebaseFirestore.instance
           .collection(collectionName)
           .where('ID', isEqualTo: idInput)
@@ -102,13 +108,17 @@ class _LoginScreenState extends State<LoginScreen>
       final userData = userDoc.data();
       final storedPassword = userData['pass'];
 
-      // 3. Verify Password
       if (storedPassword == passwordInput) {
-
-        // 4. Save to SharedPreferences
         final prefs = await SharedPreferences.getInstance();
 
-        // Save Shared Info
+        // --- NEW: Save Remember Me Preference ---
+        await prefs.setBool('rememberMe', _rememberMe);
+        if (_rememberMe) {
+          await prefs.setString('rememberedID', idInput);
+        } else {
+          await prefs.remove('rememberedID');
+        }
+
         await prefs.setString('ID', idInput);
         await prefs.setString('fName', userData['fName'] ?? "User");
         await prefs.setString('lName', userData['lName'] ?? "");
@@ -117,13 +127,10 @@ class _LoginScreenState extends State<LoginScreen>
         await prefs.setString('faculty', userData['faculty'] ?? "N/A");
         await prefs.setString('nationalID', userData['nationalID'] ?? "N/A");
 
-        // Save Student-Specific Info
         if (collectionName == 'students') {
           await prefs.setString('year', userData['year'] ?? "N/A");
           await prefs.setString('section', userData['section'] ?? "N/A");
-        }else if (collectionName == 'faculty') {
-          // --- NEW: Save Subject List for Faculty ---
-          // This assumes your Firestore field is called 'subjects' and is an Array
+        } else if (collectionName == 'faculty') {
           List<dynamic> subjectsData = userData['subjects'] ?? [];
           List<String> subjectsList = subjectsData.map((e) => e.toString()).toList();
           await prefs.setStringList('facultySubjects', subjectsList);
@@ -131,7 +138,6 @@ class _LoginScreenState extends State<LoginScreen>
 
         if (!mounted) return;
 
-        // 5. Navigate
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => nextScreen),
@@ -239,51 +245,59 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                           const SizedBox(height: 40),
 
-                          FadeTransition(
-                            opacity: _field1Anim,
-                            child: SlideTransition(
-                              position: Tween<Offset>(begin: const Offset(-0.3, 0), end: Offset.zero).animate(_field1Anim),
-                              child: _modernField(
-                                label: "Email / ID",
-                                hint: "Enter Your Email/ID",
-                                controller: _codeController,
-                              ),
+                          _animatedItem(
+                            anim: _field1Anim,
+                            child: _modernField(
+                              label: "Email / ID",
+                              hint: "Enter Your Email/ID",
+                              controller: _codeController,
                             ),
                           ),
                           const SizedBox(height: 55),
 
-                          FadeTransition(
-                            opacity: _field2Anim,
-                            child: SlideTransition(
-                              position: Tween<Offset>(begin: const Offset(-0.3, 0), end: Offset.zero).animate(_field2Anim),
-                              child: _modernField(
-                                label: "Password",
-                                hint: "Enter Your Password",
-                                controller: _passwordController,
-                                obscure: _obscurePassword,
-                                icon: IconButton(
-                                  icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                                ),
+                          _animatedItem(
+                            anim: _field2Anim,
+                            child: _modernField(
+                              label: "Password",
+                              hint: "Enter Your Password",
+                              controller: _passwordController,
+                              obscure: _obscurePassword,
+                              icon: IconButton(
+                                icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                               ),
                             ),
                           ),
 
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 6, top: 1),
-                              child: TextButton(
-                                onPressed: () => Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                          // --- NEW: Remember Me & Forgot Password Row ---
+                          _animatedItem(
+                            anim: _checkAnim,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Checkbox(
+                                      value: _rememberMe,
+                                      activeColor: const Color(0xFFA78BFA),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                                      onChanged: (val) => setState(() => _rememberMe = val ?? false),
+                                    ),
+                                    const Text("Remember Me", style: TextStyle(fontWeight: FontWeight.w500)),
+                                  ],
                                 ),
-                                child: const Text("Forgot Password?"),
-                              ),
+                                TextButton(
+                                  onPressed: () => Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                                  ),
+                                  child: const Text("Forgot Password?"),
+                                ),
+                              ],
                             ),
                           ),
 
-                          const SizedBox(height: 240),
+                          const SizedBox(height: 180), // Adjusted to fit new row
 
                           _mainButton(
                             text: "Log In",
@@ -311,6 +325,17 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // Helper for consistent animations
+  Widget _animatedItem({required Animation<double> anim, required Widget child}) {
+    return FadeTransition(
+      opacity: anim,
+      child: SlideTransition(
+        position: Tween<Offset>(begin: const Offset(-0.3, 0), end: Offset.zero).animate(anim),
+        child: child,
       ),
     );
   }
