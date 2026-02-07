@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Required for Firebase
 import '../../ui/screens/forget_password_screen.dart';
 import '../../ui/screens/signup_screen.dart';
+import '../../ui/screens/stu_home.dart';
+import '../../ui/screens/faculty_home_screen.dart';
+// ------------------------------------------------------------------
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,17 +21,17 @@ class _LoginScreenState extends State<LoginScreen>
 
   bool _obscurePassword = true;
   bool _isFormValid = false;
+  bool _isLoading = false; // State to show loading spinner
 
   late AnimationController _contentController;
   late Animation<Offset> _contentIntro;
-
   late Animation<double> _field1Anim;
   late Animation<double> _field2Anim;
 
   @override
   void initState() {
     super.initState();
-
+    // ... (Your existing animation code remains unchanged) ...
     _contentController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -36,12 +40,10 @@ class _LoginScreenState extends State<LoginScreen>
     _contentIntro = Tween<Offset>(
       begin: const Offset(0, 0.4),
       end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _contentController,
-        curve: Curves.easeOutCubic,
-      ),
-    );
+    ).animate(CurvedAnimation(
+      parent: _contentController,
+      curve: Curves.easeOutCubic,
+    ));
 
     _field1Anim = CurvedAnimation(
       parent: _contentController,
@@ -60,6 +62,89 @@ class _LoginScreenState extends State<LoginScreen>
     _codeController.addListener(_validate);
     _passwordController.addListener(_validate);
   }
+
+  // --- NEW: Authentication Logic ---
+  Future<void> _handleLogin() async {
+    final idInput = _codeController.text.trim();
+    final passwordInput = _passwordController.text.trim();
+
+    if (idInput.isEmpty || passwordInput.isEmpty) return;
+
+    // Dismiss Keyboard
+    FocusScope.of(context).unfocus();
+
+    setState(() => _isLoading = true);
+
+    try {
+      String collectionName;
+      Widget nextScreen;
+
+      // 1. Check ID Abbreviation (Case Insensitive)
+      if (idInput.toUpperCase().startsWith("ST")) {
+        collectionName = 'students';
+        nextScreen = const StuHomeScreen();
+      } else if (idInput.toUpperCase().startsWith("FA")) {
+        collectionName = 'faculty';
+        nextScreen = const FacultyHomeScreen();
+      } else {
+        throw "Invalid ID format. ID must start with 'ST' or 'FA'.";
+      }
+
+      // 2. Fetch Data from Firebase
+      // Note: This assumes your documents have a field named 'id' (or similar)
+      // that matches the user input.
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection(collectionName)
+          .where('ID', isEqualTo: idInput) // Querying specifically for the ID field
+          .limit(1)
+          .get();
+
+      // 3. Verify User Exists
+      if (querySnapshot.docs.isEmpty) {
+        throw "User ID not found in $collectionName records.";
+      }
+
+      // 4. Verify Password
+      // Note: In a real app, passwords should be hashed.
+      // This assumes direct comparison as per request.
+      final userDoc = querySnapshot.docs.first;
+      final storedPassword = userDoc['pass'];
+
+      if (storedPassword == passwordInput) {
+        if (!mounted) return;
+
+        // Login Successful -> Navigate
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => nextScreen),
+        );
+      } else {
+        throw "Incorrect Password.";
+      }
+
+    } catch (e) {
+      // Show Error Message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll("Exception:", "")),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _validate() {
+    setState(() {
+      _isFormValid = _codeController.text.isNotEmpty && _passwordController.text.isNotEmpty;
+    });
+  }
+
+  // ... (Your existing _slideTo and dispose methods remain unchanged) ...
   void _slideTo(Widget page, {required bool fromRight}) {
     Navigator.pushReplacement(
       context,
@@ -68,27 +153,14 @@ class _LoginScreenState extends State<LoginScreen>
         pageBuilder: (_, __, ___) => page,
         transitionsBuilder: (_, animation, __, child) {
           final begin = fromRight ? const Offset(1, 0) : const Offset(-1, 0);
-
           return SlideTransition(
-            position: Tween<Offset>(
-              begin: begin,
-              end: Offset.zero,
-            ).animate(
-              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-            ),
+            position: Tween<Offset>(begin: begin, end: Offset.zero)
+                .animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
             child: child,
           );
         },
       ),
     );
-  }
-
-  void _validate() {
-    setState(() {
-      _isFormValid =
-          _codeController.text.isNotEmpty &&
-              _passwordController.text.isNotEmpty;
-    });
   }
 
   @override
@@ -106,14 +178,10 @@ class _LoginScreenState extends State<LoginScreen>
       child: Scaffold(
         body: Stack(
           children: [
-
+            // ... (Your Background Images remain unchanged) ...
             Positioned.fill(
-              child: Image.asset(
-                "assets/images/WelcomeBackground.png",
-                fit: BoxFit.cover,
-              ),
+              child: Image.asset("assets/images/WelcomeBackground.png", fit: BoxFit.cover),
             ),
-
             Positioned(
               top: MediaQuery.of(context).size.height * 0.25,
               right: -200,
@@ -123,11 +191,7 @@ class _LoginScreenState extends State<LoginScreen>
                     tag: 'shared-rectangle',
                     child: Opacity(
                       opacity: 0.9,
-                      child: Image.asset(
-                        "assets/images/Rectangle.png",
-                        width: 550,
-                        fit: BoxFit.contain,
-                      ),
+                      child: Image.asset("assets/images/Rectangle.png", width: 550, fit: BoxFit.contain),
                     ),
                   ),
                 ),
@@ -145,46 +209,26 @@ class _LoginScreenState extends State<LoginScreen>
                       padding: const EdgeInsets.fromLTRB(40, 25, 40, 40),
                       child: Column(
                         children: [
-
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(
-                              "assets/images/uni.jpeg",
-                              width: 90,
-                              fit: BoxFit.cover,
-                            ),
+                            child: Image.asset("assets/images/uni.jpeg", width: 90, fit: BoxFit.cover),
                           ),
-
                           const SizedBox(height: 10),
-
                           const Text(
                             "Log in to UniNexus",
-                            style: TextStyle(
-                              fontFamily: 'Batangas',
-                              fontSize: 30,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: TextStyle(fontFamily: 'Batangas', fontSize: 30, fontWeight: FontWeight.bold),
                           ),
-
                           const SizedBox(height: 0.1),
-
                           const Text(
                             "Access your campus services securely",
-                            style: TextStyle(
-                              color: Colors.black54,
-                              fontSize: 17,
-                            ),
+                            style: TextStyle(color: Colors.black54, fontSize: 17),
                           ),
-
                           const SizedBox(height: 40),
 
                           FadeTransition(
                             opacity: _field1Anim,
                             child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(-0.3, 0),
-                                end: Offset.zero,
-                              ).animate(_field1Anim),
+                              position: Tween<Offset>(begin: const Offset(-0.3, 0), end: Offset.zero).animate(_field1Anim),
                               child: _modernField(
                                 label: "Email / ID",
                                 hint: "Enter Your Email/ID",
@@ -192,29 +236,20 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 55),
 
                           FadeTransition(
                             opacity: _field2Anim,
                             child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(-0.3, 0),
-                                end: Offset.zero,
-                              ).animate(_field2Anim),
+                              position: Tween<Offset>(begin: const Offset(-0.3, 0), end: Offset.zero).animate(_field2Anim),
                               child: _modernField(
                                 label: "Password",
                                 hint: "Enter Your Password",
                                 controller: _passwordController,
                                 obscure: _obscurePassword,
                                 icon: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                  ),
-                                  onPressed: () =>
-                                      setState(() => _obscurePassword = !_obscurePassword),
+                                  icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                                 ),
                               ),
                             ),
@@ -227,36 +262,31 @@ class _LoginScreenState extends State<LoginScreen>
                               child: TextButton(
                                 onPressed: () => Navigator.pushReplacement(
                                   context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const ForgotPasswordScreen(),
-                                  ),
+                                  MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
                                 ),
                                 child: const Text("Forgot Password?"),
                               ),
                             ),
                           ),
 
-
                           const SizedBox(height: 240),
 
+                          // --- UPDATED MAIN BUTTON ---
                           _mainButton(
                             text: "Log In",
-                            enabled: _isFormValid,
-                            onTap: () {},
+                            enabled: _isFormValid && !_isLoading, // Disable if loading
+                            isLoading: _isLoading, // Pass loading state
+                            onTap: _handleLogin, // Call the new function
                           ),
 
                           const SizedBox(height: 1),
-
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               const Text("Don't have an account?"),
                               TextButton(
                                 onPressed: () => _slideTo(const SignUpScreen(), fromRight: true),
-                                child: const Text(
-                                  "Register",
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
+                                child: const Text("Register", style: TextStyle(fontWeight: FontWeight.bold)),
                               ),
                             ],
                           ),
@@ -273,8 +303,6 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // -------- MODERN FIELD --------
-
   Widget _modernField({
     required String label,
     required String hint,
@@ -287,26 +315,15 @@ class _LoginScreenState extends State<LoginScreen>
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 10, bottom: 1),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontFamily: 'Batangas',
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          child: Text(label, style: const TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold)),
         ),
         Container(
           height: 50,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: Colors.grey.withValues(alpha: 0.3), // soft light border
-              width: 1.4,
-            ),
+            border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1.4),
           ),
-
           child: TextField(
             controller: controller,
             obscureText: obscure,
@@ -314,10 +331,7 @@ class _LoginScreenState extends State<LoginScreen>
               hintText: hint,
               suffixIcon: icon,
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 15,
-                vertical: 10,
-              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
             ),
           ),
         ),
@@ -325,22 +339,18 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // -------- BUTTON --------
-
   Widget _mainButton({
     required String text,
     required bool enabled,
+    required bool isLoading,
     required VoidCallback onTap,
   }) {
     return Container(
       width: 280,
       height: 65,
       decoration: BoxDecoration(
-        border: Border.all(
-            color: Colors.white.withValues(alpha: 0.3), width: 1.5),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)],
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
+        gradient: const LinearGradient(colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)]),
         borderRadius: BorderRadius.circular(24),
       ),
       child: ElevatedButton(
@@ -350,9 +360,11 @@ class _LoginScreenState extends State<LoginScreen>
           shadowColor: Colors.transparent,
           elevation: 0,
         ),
-        child: const Text(
-          "Log In",
-          style: TextStyle(
+        child: isLoading
+            ? const CircularProgressIndicator(color: Colors.white) // Show spinner when loading
+            : Text(
+          text,
+          style: const TextStyle(
             color: Colors.white,
             fontFamily: 'Batangas',
             fontSize: 22,
