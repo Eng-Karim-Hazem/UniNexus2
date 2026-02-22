@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // Import screens
-import 'faculty_home_screen.dart';
-import 'halls_screen.dart';
-import 'profile_screen.dart';
+import '../Faculty/faculty_home_screen.dart';
+import '../Faculty/halls_screen.dart';
+import '../profile_screen.dart';
 import 'faculty_id_screen.dart';
 
 class QAScreen extends StatefulWidget {

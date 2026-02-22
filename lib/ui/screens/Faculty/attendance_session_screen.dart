@@ -3,9 +3,9 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // Import screens for navigation
 import 'faculty_home_screen.dart';
-import 'qa_screen.dart';
-import 'profile_screen.dart';
-import 'faculty_id_screen.dart';
+import '../Faculty/qa_screen.dart';
+import '../profile_screen.dart';
+import '../Faculty/faculty_id_screen.dart';
 
 class AttendanceSessionScreen extends StatefulWidget {
   const AttendanceSessionScreen({super.key});

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../services/firebase/Schedule_service.dart';
-import '../../model/schedule_model.dart';
-import 'qa_screen.dart';
-import 'profile_screen.dart';
+import '../../../services/firebase/Schedule_service.dart';
+import '../../../model/schedule_model.dart';
+import '../profile_screen.dart';
 
 class StuSchedule extends StatefulWidget {
   const StuSchedule({super.key});
@@ -222,7 +221,7 @@ class _StuScheduleState extends State<StuSchedule> {
       onTap: () {
         if (index == 1) return;
         if (index == 0) Navigator.popUntil(context, (route) => route.isFirst);
-        if (index == 2) Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
+        //if (index == 2) Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
         if (index == 3) Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
       },
       child: Column(

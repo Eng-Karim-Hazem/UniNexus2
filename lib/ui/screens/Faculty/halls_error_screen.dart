@@ -3,8 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 // Import screens for navigation
 import 'faculty_home_screen.dart';
 import 'qa_screen.dart';
-import 'profile_screen.dart';
-import 'halls_screen.dart';
+import '../profile_screen.dart';
+import '../Faculty/halls_screen.dart';
 import 'faculty_id_screen.dart';
 
 class HallErrorScreen extends StatefulWidget {

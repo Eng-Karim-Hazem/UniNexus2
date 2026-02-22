@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
-import 'student_id_screen.dart';
-import 'profile_screen.dart';
-import 'stu_schedule.dart';
+import '../Student/student_id_screen.dart';
+import '../profile_screen.dart';
+import '../Student/stu_schedule.dart';
 
 class StuHomeScreen extends StatefulWidget {
   const StuHomeScreen({super.key});
