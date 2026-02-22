@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'stu_schedule.dart';
-import 'qa_screen.dart';
-import 'halls_screen.dart';
+import 'Student/stu_schedule.dart';
+import 'Faculty/qa_screen.dart';
+import 'Faculty/halls_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String? userID;

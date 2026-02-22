@@ -3,8 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../ui/screens/forget_password_screen.dart';
 import '../../ui/screens/signup_screen.dart';
-import '../../ui/screens/stu_home.dart';
-import '../../ui/screens/faculty_home_screen.dart';
+import 'Student/stu_home.dart';
+import 'Faculty/faculty_home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

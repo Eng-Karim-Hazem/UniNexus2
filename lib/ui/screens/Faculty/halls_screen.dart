@@ -3,10 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // Import your screens
 import 'faculty_home_screen.dart';
-import 'qa_screen.dart';
-import 'profile_screen.dart';
-import 'halls_error_screen.dart';
-import 'faculty_id_screen.dart'; // Needed for the QR button action
+import '../Faculty/qa_screen.dart';
+import '../profile_screen.dart';
+import '../Faculty/halls_error_screen.dart';
+import '../Faculty/faculty_id_screen.dart'; // Needed for the QR button action
 
 class HallsScreen extends StatefulWidget {
   const HallsScreen({super.key});

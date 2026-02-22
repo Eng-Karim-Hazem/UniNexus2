@@ -3,8 +3,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // REQUIRED
 import 'firebase_options.dart';
 import '../../ui/screens/welcome_screen.dart';
-import '../../ui/screens/faculty_home_screen.dart';
-import '../../ui/screens/stu_home.dart';
+import '../../ui/screens/Faculty/faculty_home_screen.dart';
+import 'ui/screens/Student/stu_home.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
