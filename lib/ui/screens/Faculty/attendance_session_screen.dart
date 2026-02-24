@@ -199,7 +199,7 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
                     ),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.asset('assets/images/uni.jpeg', width: 36, height: 36),
+                      child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
                     ),
                   ],
                 ),
@@ -272,7 +272,7 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(5),
                                 child: Image.asset(
-                                  'assets/images/uni.jpeg',
+                                  'assets/images/LOGO.png',
                                   fit: BoxFit.cover,
                                   // No color property here, so it keeps original colors
                                 ),

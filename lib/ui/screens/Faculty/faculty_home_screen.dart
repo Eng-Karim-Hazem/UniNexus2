@@ -23,7 +23,7 @@ class FacultyHomeScreen extends StatefulWidget {
 }
 
 class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
-  int _selectedIndex = 0;
+  int _selectedIndex = 1;
   String _storedFirstName = "";
   String _storedLastName = "";
   String _storedUserID = "";
@@ -121,7 +121,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         const Text("Home", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Image.asset('assets/images/uni.jpeg', width: 36, height: 36),
+          child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
         ),
       ],
     );

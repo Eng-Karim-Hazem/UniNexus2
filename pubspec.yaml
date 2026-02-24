@@ -31,3 +31,10 @@ flutter:
       fonts:
         - asset: assets/fonts/Batangas.ttf
         - asset: assets/fonts/batangas-bold.otf
+    - family: SpaceGrotesk
+      fonts:
+          - asset: assets/fonts/SpaceGrotesk-Regular.ttf
+          - asset: assets/fonts/SpaceGrotesk-Medium.ttf
+            weight: 500
+          - asset: assets/fonts/SpaceGrotesk-Bold.ttf
+            weight: 700

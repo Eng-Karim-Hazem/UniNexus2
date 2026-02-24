@@ -92,7 +92,7 @@ class _StuScheduleState extends State<StuSchedule> {
         Text("Schedule", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Image.asset('assets/images/uni.jpeg', width: 36, height: 36),
+          child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
         ),
       ],
     );
