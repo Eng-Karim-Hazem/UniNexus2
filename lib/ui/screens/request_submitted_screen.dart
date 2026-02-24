@@ -57,16 +57,12 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
       child: Scaffold(
         body: Stack(
           children: [
-
-            // BACKGROUND
             Positioned.fill(
               child: Image.asset(
                 "assets/images/WelcomeBackground.png",
                 fit: BoxFit.cover,
               ),
             ),
-
-            // HERO RECTANGLE (same layer feel)
             Positioned(
               top: MediaQuery.of(context).size.height * 0.25,
               right: -200,
@@ -84,8 +80,6 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
                 ),
               ),
             ),
-
-            // CONTENT
             SafeArea(
               child: SlideTransition(
                 position: _contentIntro,
@@ -97,7 +91,6 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
                       padding: const EdgeInsets.fromLTRB(40, 100, 40, 40),
                       child: Column(
                         children: [
-
                           ClipRRect(
                             borderRadius: BorderRadius.circular(18),
                             child: Image.asset(
@@ -106,9 +99,7 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
                               fit: BoxFit.cover,
                             ),
                           ),
-
                           const SizedBox(height: 20),
-
                           const Text(
                             "Request Submitted",
                             style: TextStyle(
@@ -117,31 +108,27 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-
                           const SizedBox(height: 50),
-
                           const Text(
                             "Your request was sent successfully",
                             style: TextStyle(
+                              fontFamily: 'SpaceGrotesk',
                               color: Colors.black54,
                               fontSize: 17,
                             ),
                           ),
-
                           const SizedBox(height: 24),
-
                           const Text(
                             "For further questions or if there is any delay in processing your request, please contact the university department.",
                             textAlign: TextAlign.center,
                             style: TextStyle(
+                              fontFamily: 'SpaceGrotesk',
                               color: Colors.black54,
                               fontSize: 15,
                               height: 1.4,
                             ),
                           ),
-
                           const SizedBox(height: 210),
-
                           _mainButton(
                             text: "Back to Login",
                             onTap: () {
@@ -165,8 +152,6 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
       ),
     );
   }
-
-  // -------- MODERN BUTTON --------
 
   Widget _mainButton({
     required String text,

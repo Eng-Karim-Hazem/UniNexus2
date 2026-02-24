@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/ui/screens/Student/stu_community.dart';
-// Import your screens
 import 'faculty_home_screen.dart';
 import '../Faculty/qa_screen.dart';
 import '../profile_screen.dart';
 import '../Faculty/halls_error_screen.dart';
-import '../Faculty/faculty_id_screen.dart'; // Needed for the QR button action
+import '../Faculty/faculty_id_screen.dart';
 
 class HallsScreen extends StatefulWidget {
   const HallsScreen({super.key});
@@ -19,11 +18,8 @@ class HallsScreen extends StatefulWidget {
 class _HallsScreenState extends State<HallsScreen> {
   String _searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
-
-  // Set the "Schedule" tab (index 1) as active
   final int _selectedIndex = 1;
 
-  // Colors
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Gradient _fabGradient = const LinearGradient(
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
@@ -31,21 +27,15 @@ class _HallsScreenState extends State<HallsScreen> {
     end: Alignment.bottomRight,
   );
 
-  // --- NAVIGATION LOGIC ---
   void _onNavBarTapped(int index) async {
     if (index == 0) {
-      // Community (Home) -> Go back
       Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
     }
-    else if (index == 1) {
-      // Already on Schedule/Halls -> Do nothing
-    }
+    else if (index == 1) {}
     else if (index == 2) {
-      // Go to Q&A
       Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
     }
     else if (index == 3) {
-      // Go to Profile (Need to fetch IDs first)
       final prefs = await SharedPreferences.getInstance();
       final userID = prefs.getString('userCode') ?? "No ID";
       final fName = prefs.getString('userFirstName') ?? "Faculty";
@@ -53,35 +43,18 @@ class _HallsScreenState extends State<HallsScreen> {
 
       if (mounted) {
         Navigator.push(context, MaterialPageRoute(
-            builder: (context) => ProfileScreen(
-              userID: userID,
-              firstName: fName,
-              lastName: lName,
-            )
+            builder: (context) => ProfileScreen(userID: userID, firstName: fName, lastName: lName)
         ));
       }
     }
   }
 
-  // --- QR BUTTON LOGIC ---
   void _openQRScreen() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userID = prefs.getString('userCode') ?? "No ID";
-    final fName = prefs.getString('userFirstName') ?? "Faculty";
-    final lName = prefs.getString('userLastName') ?? "";
-
     if (mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => FacultyIDScreen(
-          ),
-        ),
-      );
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const FacultyIDScreen()));
     }
   }
 
-  // --- TIME SLOT LOGIC ---
   String _getCurrentTimeSlot() {
     final now = DateTime.now();
     int totalMinutes = now.hour * 60 + now.minute;
@@ -107,175 +80,81 @@ class _HallsScreenState extends State<HallsScreen> {
 
     return Scaffold(
       extendBody: true,
-
-      // --- FAB WITH GRADIENT ---
       floatingActionButton: Container(
-        height: 70,
-        width: 70,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: _mainPurple.withOpacity(0.3),
-              blurRadius: 15,
-              spreadRadius: 2,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
+        height: 70, width: 70,
+        decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.3), blurRadius: 15, spreadRadius: 2, offset: const Offset(0, 8))]),
         child: FloatingActionButton(
-          onPressed: _openQRScreen, // Navigates to ID
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          shape: const CircleBorder(),
+          onPressed: _openQRScreen, elevation: 0, backgroundColor: Colors.transparent, shape: const CircleBorder(),
           child: Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: _fabGradient, // Blue -> Purple
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Image.asset('assets/images/qr_code.png', color: Colors.white),
-            ),
+            width: double.infinity, height: double.infinity,
+            decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
+            child: Padding(padding: const EdgeInsets.all(16.0), child: Image.asset('assets/images/qr_code.png', color: Colors.white)),
           ),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-
-      // --- BOTTOM NAVIGATION BAR ---
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.15),
-              spreadRadius: 5,
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
+        decoration: BoxDecoration(boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.15), spreadRadius: 5, blurRadius: 20, offset: const Offset(0, -5))]),
         child: BottomAppBar(
-          shape: const CircularNotchedRectangle(),
-          notchMargin: 10.0,
-          color: Colors.white,
-          surfaceTintColor: Colors.white,
-          elevation: 0,
-          height: 80,
+          shape: const CircularNotchedRectangle(), notchMargin: 10.0, color: Colors.white, surfaceTintColor: Colors.white, elevation: 0, height: 80,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: <Widget>[
-              // Index 0: Community
               _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
-              // Index 1: Schedule (Active)
               _buildNavBarItem('assets/images/calendar.png', "Schedule", 1),
-              const SizedBox(width: 48), // Space for FAB
-              // Index 2: Q&A
+              const SizedBox(width: 48),
               _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
-              // Index 3: Profile
               _buildNavBarItem('assets/images/profile.png', "Profile", 3),
             ],
           ),
         ),
       ),
-
-      // --- MAIN BODY ---
       body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/background.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
+        width: double.infinity, height: double.infinity,
+        decoration: const BoxDecoration(image: DecorationImage(image: AssetImage('assets/images/background.png'), fit: BoxFit.cover)),
         child: SafeArea(
           bottom: false,
           child: Stack(
             children: [
               Column(
                 children: [
-                  // -- Header --
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Back Button behavior on Menu Icon
-                        GestureDetector(
-                            onTap: () => Navigator.pop(context),
-                            child: Image.asset('assets/images/menu.png', width: 28, color: _mainPurple)
-                        ),
-                        const Text(
-                          "Halls",
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF5C5C80),
-                          ),
-                        ),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
-                        ),
+                        GestureDetector(onTap: () => Navigator.pop(context), child: Image.asset('assets/images/menu.png', width: 28, color: _mainPurple)),
+                        const Text("Halls", style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
+                        ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.asset('assets/images/LOGO.png', width: 36, height: 36)),
                       ],
                     ),
                   ),
-
-                  // -- Search Bar --
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
                     child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
+                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.9), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))]),
                       child: TextField(
                         controller: _searchController,
-                        onChanged: (value) {
-                          setState(() {
-                            _searchQuery = value.toLowerCase();
-                          });
-                        },
+                        onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
+                        style: const TextStyle(fontFamily: 'SpaceGrotesk'),
                         decoration: InputDecoration(
-                          hintText: "Search Hall By Name",
-                          hintStyle: TextStyle(color: Colors.grey.shade400),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                          hintText: "Search Hall By Name", hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400),
+                          border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                           suffixIcon: Container(
-                            margin: const EdgeInsets.all(5),
-                            decoration: BoxDecoration(
-                              color: _mainPurple.withOpacity(0.8),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            margin: const EdgeInsets.all(5), decoration: BoxDecoration(color: _mainPurple.withOpacity(0.8), borderRadius: BorderRadius.circular(12)),
                             child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
                           ),
                         ),
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
-                  // -- Halls List --
                   Expanded(
                     child: StreamBuilder<QuerySnapshot>(
                       stream: FirebaseFirestore.instance.collection('halls').snapshots(),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
-                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                          return const Center(child: Text("No halls data found."));
-                        }
+                        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const Center(child: Text("No halls data found.", style: TextStyle(fontFamily: 'SpaceGrotesk')));
 
                         final docs = snapshot.data!.docs.where((doc) {
                           final data = doc.data() as Map<String, dynamic>;
@@ -285,24 +164,15 @@ class _HallsScreenState extends State<HallsScreen> {
                           return fullName.contains(_searchQuery);
                         }).toList();
 
-                        if (docs.isEmpty) return const Center(child: Text("No matches found."));
+                        if (docs.isEmpty) return const Center(child: Text("No matches found.", style: TextStyle(fontFamily: 'SpaceGrotesk')));
 
                         return ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: docs.length,
+                          padding: const EdgeInsets.fromLTRB(24, 0, 24, 100), physics: const BouncingScrollPhysics(), itemCount: docs.length,
                           itemBuilder: (context, index) {
                             final data = docs[index].data() as Map<String, dynamic>;
-
-                            String building = data['building'] ?? "";
-                            String code = data['hallCode'] ?? "";
-                            String displayName = "$building $code".trim();
-
+                            String building = data['building'] ?? ""; String code = data['hallCode'] ?? ""; String displayName = "$building $code".trim();
                             bool isBusy = false;
-                            if (currentSlotKey != "OFF_HOURS" && data.containsKey(currentSlotKey)) {
-                              isBusy = data[currentSlotKey] == true;
-                            }
-
+                            if (currentSlotKey != "OFF_HOURS" && data.containsKey(currentSlotKey)) isBusy = data[currentSlotKey] == true;
                             return _buildHallCard(displayName, isBusy);
                           },
                         );
@@ -311,31 +181,12 @@ class _HallsScreenState extends State<HallsScreen> {
                   ),
                 ],
               ),
-
-              // -- Report Button (Bottom Right) --
               Positioned(
-                bottom: 100,
-                right: 24,
+                bottom: 100, right: 24,
                 child: Container(
-                  height: 60,
-                  width: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _mainPurple.withOpacity(0.3),
-                        blurRadius: 15,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: IconButton(
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const HallErrorScreen()));
-                    },
-                    icon: Icon(Icons.warning_amber_rounded, color: _mainPurple, size: 32),
-                  ),
+                  height: 60, width: 60,
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))]),
+                  child: IconButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const HallErrorScreen())), icon: Icon(Icons.warning_amber_rounded, color: _mainPurple, size: 32)),
                 ),
               ),
             ],
@@ -345,93 +196,38 @@ class _HallsScreenState extends State<HallsScreen> {
     );
   }
 
-  // --- Helper Widget: Hall Card ---
   Widget _buildHallCard(String name, bool isBusy) {
     Color statusColor = isBusy ? Colors.red : Colors.greenAccent.shade700;
-
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        // TRANSPARENCY FIX: Opacity 0.75 for glass effect
-        color: Colors.white.withOpacity(0.75),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.6)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF237ABA).withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
+      margin: const EdgeInsets.only(bottom: 16), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.75), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(0.6)), boxShadow: [BoxShadow(color: const Color(0xFF237ABA).withOpacity(0.08), blurRadius: 10, offset: const Offset(0, 5))]),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
               Image.asset('assets/images/classroom_1.png', width: 28, height: 28, color: const Color(0xFF5C5C80)),
-              const SizedBox(width: 15),
-              Container(height: 30, width: 1, color: Colors.grey.shade300),
-              const SizedBox(width: 15),
-              Text(
-                name,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF5C7CFA),
-                ),
-              ),
+              const SizedBox(width: 15), Container(height: 30, width: 1, color: Colors.grey.shade300), const SizedBox(width: 15),
+              Text(name, style: const TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF5C7CFA))),
             ],
           ),
-          Container(
-            width: 18,
-            height: 18,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: statusColor,
-              boxShadow: [
-                BoxShadow(
-                  color: statusColor.withOpacity(0.4),
-                  blurRadius: 6,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-          ),
+          Container(width: 18, height: 18, decoration: BoxDecoration(shape: BoxShape.circle, color: statusColor, boxShadow: [BoxShadow(color: statusColor.withOpacity(0.4), blurRadius: 6, spreadRadius: 2)])),
         ],
       ),
     );
   }
 
-  // --- Helper: Bottom Nav Item ---
   Widget _buildNavBarItem(String iconPath, String label, int index) {
     final isSelected = _selectedIndex == index;
     final Color itemColor = isSelected ? _mainPurple : Colors.grey.shade400;
-
     return GestureDetector(
       onTap: () => _onNavBarTapped(index),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset(
-            iconPath,
-            width: 24,
-            height: 24,
-            color: itemColor,
-            // Fallback icon if asset missing
-            errorBuilder: (context, error, stackTrace) => Icon(Icons.circle, size: 24, color: itemColor),
-          ),
+          Image.asset(iconPath, width: 24, height: 24, color: itemColor, errorBuilder: (context, error, stackTrace) => Icon(Icons.circle, size: 24, color: itemColor)),
           const SizedBox(height: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: itemColor,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            ),
-          ),
+          Text(label, style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 11, color: itemColor, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500)),
         ],
       ),
     );

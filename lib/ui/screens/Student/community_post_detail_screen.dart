@@ -20,7 +20,6 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
   final Color _primaryBlue = const Color(0xFF237ABA);
   final Color _textIndigo = const Color(0xFF5C5C80);
 
-  // --- STATE FOR REPLY INPUT ---
   bool _isReplying = false;
   final TextEditingController _replyController = TextEditingController();
 
@@ -34,12 +33,11 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
     if (_replyController.text.trim().isEmpty) return;
 
     setState(() {
-      // Add the text to the replies list to reflect in the UI immediately
       widget.post.replies.add(PostReply(author: "Me", text: _replyController.text.trim()));
       _replyController.clear();
-      _isReplying = false; // Hide input field after submission
+      _isReplying = false;
     });
-    FocusScope.of(context).unfocus(); // Close the keyboard
+    FocusScope.of(context).unfocus();
   }
 
   @override
@@ -66,17 +64,17 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
                 child: Column(
                   children: [
-                    // --- Header ---
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         GestureDetector(
-                          onTap: () => Navigator.pop(context), // Pops back to list
+                          onTap: () => Navigator.pop(context),
                           child: Image.asset('assets/images/menu.png', width: 28, color: _mainPurple),
                         ),
                         Text(
                           'Community',
                           style: TextStyle(
+                            fontFamily: 'Batangas',
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
                             color: _mainPurple,
@@ -90,7 +88,6 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // --- Main Post Card ---
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
@@ -122,7 +119,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
                               Expanded(
                                 child: Text(
                                   widget.post.title,
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _mainPurple),
+                                  style: TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold, color: _mainPurple),
                                 ),
                               ),
                             ],
@@ -130,14 +127,13 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
                           const SizedBox(height: 16),
                           Text(
                             widget.post.body,
-                            style: const TextStyle(fontSize: 14, color: Colors.black87, height: 1.5),
+                            style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Colors.black87, height: 1.5),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 16),
 
-                    // --- Replies Section ---
                     Expanded(
                       child: Container(
                         width: double.infinity,
@@ -152,18 +148,17 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
                         ),
                         child: Column(
                           children: [
-                            // Replies Header with Toggle Button
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
                                   "Replies",
-                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _mainPurple),
+                                  style: TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: _mainPurple),
                                 ),
                                 GestureDetector(
                                   onTap: () {
                                     setState(() {
-                                      _isReplying = !_isReplying; // Toggle visibility of the text box
+                                      _isReplying = !_isReplying;
                                     });
                                   },
                                   child: Icon(
@@ -176,7 +171,6 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            // --- Animated Reply Input Field ---
                             if (_isReplying) ...[
                               Container(
                                 margin: const EdgeInsets.only(bottom: 16),
@@ -186,9 +180,10 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
                                 ),
                                 child: TextField(
                                   controller: _replyController,
+                                  style: const TextStyle(fontFamily: 'SpaceGrotesk'),
                                   decoration: InputDecoration(
                                     hintText: "Type your reply...",
-                                    hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                                    hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400, fontSize: 14),
                                     border: InputBorder.none,
                                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                                     suffixIcon: Padding(
@@ -209,10 +204,9 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
                               ),
                             ],
 
-                            // --- List of Replies ---
                             Expanded(
                               child: widget.post.replies.isEmpty
-                                  ? const Center(child: Text("No replies yet."))
+                                  ? const Center(child: Text("No replies yet.", style: TextStyle(fontFamily: 'SpaceGrotesk')))
                                   : ListView.separated(
                                 physics: const BouncingScrollPhysics(),
                                 itemCount: widget.post.replies.length,
@@ -224,12 +218,12 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
                                     children: [
                                       Text(
                                         reply.author,
-                                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: _mainPurple),
+                                        style: TextStyle(fontFamily: 'Batangas', fontSize: 14, fontWeight: FontWeight.bold, color: _mainPurple),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
                                         reply.text,
-                                        style: const TextStyle(fontSize: 14, color: Colors.black, fontWeight: FontWeight.w500),
+                                        style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Colors.black, fontWeight: FontWeight.w500),
                                       ),
                                     ],
                                   );
@@ -240,12 +234,11 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 100), // Spacing for bottom bar
+                    const SizedBox(height: 100),
                   ],
                 ),
               ),
 
-              // ── Hover Button ──
               Positioned(
                 bottom: 110,
                 right: 24,
@@ -347,6 +340,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
           Text(
             label,
             style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
               fontSize: 10,
               color: sel ? _mainPurple : Colors.grey,
               fontWeight: sel ? FontWeight.bold : FontWeight.normal,

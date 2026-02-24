@@ -28,7 +28,7 @@ class _LoginScreenState extends State<LoginScreen>
   late Animation<Offset> _contentIntro;
   late Animation<double> _field1Anim;
   late Animation<double> _field2Anim;
-  late Animation<double> _checkAnim; // New animation for checkbox
+  late Animation<double> _checkAnim;
 
   @override
   void initState() {
@@ -61,7 +61,6 @@ class _LoginScreenState extends State<LoginScreen>
       curve: const Interval(0.5, 0.8, curve: Curves.easeOut),
     );
 
-
     Future.delayed(const Duration(milliseconds: 250), () {
       if (mounted) _contentController.forward();
     });
@@ -69,7 +68,6 @@ class _LoginScreenState extends State<LoginScreen>
     _codeController.addListener(_validate);
     _passwordController.addListener(_validate);
   }
-
 
   Future<void> _handleLogin() async {
     final idInput = _codeController.text.trim();
@@ -111,7 +109,6 @@ class _LoginScreenState extends State<LoginScreen>
       if (storedPassword == passwordInput) {
         final prefs = await SharedPreferences.getInstance();
 
-        // --- NEW: Save Remember Me Preference ---
         await prefs.setBool('rememberMe', _rememberMe);
         if (_rememberMe) {
           await prefs.setString('rememberedID', idInput);
@@ -150,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString().replaceAll("Exception:", "")),
+            content: Text(e.toString().replaceAll("Exception:", ""), style: const TextStyle(fontFamily: 'SpaceGrotesk')),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
           ),
@@ -218,7 +215,6 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               ),
             ),
-
             SafeArea(
               child: SlideTransition(
                 position: _contentIntro,
@@ -241,10 +237,9 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                           const Text(
                             "Access your campus services securely",
-                            style: TextStyle(color: Colors.black54, fontSize: 17),
+                            style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.black54, fontSize: 17),
                           ),
                           const SizedBox(height: 40),
-
                           _animatedItem(
                             anim: _field1Anim,
                             child: _modernField(
@@ -254,7 +249,6 @@ class _LoginScreenState extends State<LoginScreen>
                             ),
                           ),
                           const SizedBox(height: 55),
-
                           _animatedItem(
                             anim: _field2Anim,
                             child: _modernField(
@@ -268,8 +262,6 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                             ),
                           ),
-
-                          // --- NEW: Remember Me & Forgot Password Row ---
                           _animatedItem(
                             anim: _checkAnim,
                             child: Row(
@@ -283,7 +275,7 @@ class _LoginScreenState extends State<LoginScreen>
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
                                       onChanged: (val) => setState(() => _rememberMe = val ?? false),
                                     ),
-                                    const Text("Remember Me", style: TextStyle(fontWeight: FontWeight.w500)),
+                                    const Text("Remember Me", style: TextStyle(fontFamily: 'SpaceGrotesk', fontWeight: FontWeight.w500)),
                                   ],
                                 ),
                                 TextButton(
@@ -291,28 +283,25 @@ class _LoginScreenState extends State<LoginScreen>
                                     context,
                                     MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
                                   ),
-                                  child: const Text("Forgot Password?"),
+                                  child: const Text("Forgot Password?", style: TextStyle(fontFamily: 'SpaceGrotesk')),
                                 ),
                               ],
                             ),
                           ),
-
-                          const SizedBox(height: 180), // Adjusted to fit new row
-
+                          const SizedBox(height: 180),
                           _mainButton(
                             text: "Log In",
                             enabled: _isFormValid && !_isLoading,
                             isLoading: _isLoading,
                             onTap: _handleLogin,
                           ),
-
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text("Don't have an account?"),
+                              const Text("Don't have an account?", style: TextStyle(fontFamily: 'SpaceGrotesk')),
                               TextButton(
                                 onPressed: () => _slideTo(const SignUpScreen(), fromRight: true),
-                                child: const Text("Register", style: TextStyle(fontWeight: FontWeight.bold)),
+                                child: const Text("Register", style: TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.bold)),
                               ),
                             ],
                           ),
@@ -329,7 +318,6 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // Helper for consistent animations
   Widget _animatedItem({required Animation<double> anim, required Widget child}) {
     return FadeTransition(
       opacity: anim,
@@ -364,8 +352,10 @@ class _LoginScreenState extends State<LoginScreen>
           child: TextField(
             controller: controller,
             obscureText: obscure,
+            style: const TextStyle(fontFamily: 'SpaceGrotesk'),
             decoration: InputDecoration(
               hintText: hint,
+              hintStyle: const TextStyle(fontFamily: 'SpaceGrotesk'),
               suffixIcon: icon,
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),

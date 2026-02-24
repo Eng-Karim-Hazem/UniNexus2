@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:uninexus/ui/screens/Faculty/qa_screen.dart';
-import '../Student/student_id_screen.dart';
+import '../Student/student_id_screen.dart' hide StuSchedule;
 import '../profile_screen.dart';
 import '../Student/stu_schedule.dart';
-import '../Student/stu_community.dart'; 
+import '../Student/stu_community.dart';
 
 
 class StuHomeScreen extends StatefulWidget {
@@ -71,67 +71,68 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
               : Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildTopHeader(),
-                      const SizedBox(height: 30),
-                      _buildGreetingCard(),
-                      const SizedBox(height: 20),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const StuSchedule()),
-                          );
-                        },
-                        child: _buildWhiteCard(
-                          opacity: 0.4,
-                          borderColor: _mainPurple.withOpacity(0.5),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  'Want to check your\nschedule?',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    color: Colors.black.withOpacity(0.8),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              Image.asset('assets/images/main_calender.png', width: 80, height: 80),
-                            ],
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTopHeader(),
+                const SizedBox(height: 30),
+                _buildGreetingCard(),
+                const SizedBox(height: 20),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const StuSchedule()),
+                    );
+                  },
+                  child: _buildWhiteCard(
+                    opacity: 0.4,
+                    borderColor: _mainPurple.withOpacity(0.5),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Want to check your\nschedule?',
+                            style: TextStyle(
+                              fontFamily: 'Batangas',
+                              fontSize: 20,
+                              color: Colors.black.withOpacity(0.8),
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      Expanded(
-                        child: Container(
-                          width: double.infinity,
-                          margin: const EdgeInsets.only(bottom: 100),
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.4),
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: _mainPurple.withOpacity(0.5), width: 1.5),
-                          ),
-                          child: ListView(
-                            physics: const BouncingScrollPhysics(),
-                            children: [
-                              _buildStudentNotification(
-                                title: "Finance",
-                                message: "Your tuition date is due",
-                                icon: Icons.notifications_none_rounded,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+                        Image.asset('assets/images/main_calender.png', width: 80, height: 80),
+                      ],
+                    ),
                   ),
                 ),
+                const SizedBox(height: 20),
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 100),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: _mainPurple.withOpacity(0.5), width: 1.5),
+                    ),
+                    child: ListView(
+                      physics: const BouncingScrollPhysics(),
+                      children: [
+                        _buildStudentNotification(
+                          title: "Finance",
+                          message: "Your tuition date is due",
+                          icon: Icons.notifications_none_rounded,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -153,12 +154,12 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
         children: [
           Text(
             "Hi $_firstName $_lastName!".trim(),
-            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF1A1A1A)),
+            style: const TextStyle(fontFamily: 'Batangas', fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF1A1A1A)),
           ),
           const SizedBox(height: 8),
-          const Text("Good morning", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1A1A1A))),
+          const Text("Good morning", style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1A1A1A))),
           const SizedBox(height: 8),
-          Text(_getCurrentDate(), style: const TextStyle(fontSize: 14, color: Color(0xFF5BA4F5), fontWeight: FontWeight.w600)),
+          Text(_getCurrentDate(), style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Color(0xFF5BA4F5), fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -179,13 +180,13 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
             children: [
               Icon(icon, color: _mainPurple, size: 28),
               const SizedBox(width: 12),
-              Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _mainPurple)),
+              Text(title, style: TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: _mainPurple)),
               const SizedBox(width: 12),
               Container(width: 1.5, height: 20, color: _mainPurple.withOpacity(0.3)),
             ],
           ),
           const SizedBox(height: 8),
-          Text(message, style: const TextStyle(fontSize: 15, color: Colors.black87, fontWeight: FontWeight.w500)),
+          Text(message, style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 15, color: Colors.black87, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -210,7 +211,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Image.asset('assets/images/menu.png', width: 28, color: _mainPurple),
-        const Text("Home", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
+        const Text("Home", style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -279,7 +280,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
             MaterialPageRoute(builder: (context) => const StuSchedule()),
           );
         } else if (index == 2) {
-           Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
         } else if (index == 3) {
           Navigator.push(
             context,
@@ -295,6 +296,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
           Text(
             label,
             style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
               fontSize: 10,
               color: sel ? _mainPurple : Colors.grey,
               fontWeight: sel ? FontWeight.bold : FontWeight.normal,

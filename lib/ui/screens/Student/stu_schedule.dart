@@ -40,7 +40,6 @@ class _StuScheduleState extends State<StuSchedule> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      // Replaced QR button with Home FAB
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildBottomBar(),
@@ -68,7 +67,7 @@ class _StuScheduleState extends State<StuSchedule> {
                     future: _fetchMySchedule(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-                      if (!snapshot.hasData) return Center(child: Text("No schedule found", style: TextStyle(color: _textIndigo, fontWeight: FontWeight.bold)));
+                      if (!snapshot.hasData) return Center(child: Text("No schedule found", style: TextStyle(fontFamily: 'SpaceGrotesk', color: _textIndigo, fontWeight: FontWeight.bold)));
                       return _buildSchedulePanel(snapshot.data!);
                     },
                   ),
@@ -82,14 +81,12 @@ class _StuScheduleState extends State<StuSchedule> {
     );
   }
 
-  // --- UI Components (Synced with Image) ---
-
   Widget _buildTopHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Image.asset('assets/images/menu.png', width: 28, color: _mainPurple),
-        Text("Schedule", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
+        Text("Schedule", style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -109,9 +106,9 @@ class _StuScheduleState extends State<StuSchedule> {
       ),
       child: Column(
         children: [
-          const Text("Today's Schedule", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+          const Text("Today's Schedule", style: TextStyle(fontFamily: 'Batangas', fontSize: 24, fontWeight: FontWeight.w900)),
           Text(DateFormat('MMMM d, yyyy').format(DateTime.now()),
-              style: const TextStyle(fontSize: 14, color: Color(0xFF5BA4F5), fontWeight: FontWeight.w600)),
+              style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Color(0xFF5BA4F5), fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -153,7 +150,7 @@ class _StuScheduleState extends State<StuSchedule> {
           padding: const EdgeInsets.symmetric(vertical: 12.0),
           child: Row(
             children: [
-              SizedBox(width: 75, child: Text("$start\n$end", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+              SizedBox(width: 75, child: Text("$start\n$end", style: const TextStyle(fontFamily: 'SpaceGrotesk', fontWeight: FontWeight.bold, fontSize: 13))),
               const SizedBox(width: 10),
               Container(width: 1.5, height: 40, color: _mainPurple.withOpacity(0.3)),
               const SizedBox(width: 15),
@@ -161,8 +158,8 @@ class _StuScheduleState extends State<StuSchedule> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(subject, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    Text(faculty, style: const TextStyle(fontSize: 13, color: Colors.black54)),
+                    Text(subject, style: const TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(faculty, style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 13, color: Colors.black54)),
                   ],
                 ),
               ),
@@ -173,8 +170,6 @@ class _StuScheduleState extends State<StuSchedule> {
       ],
     );
   }
-
-  // --- Navigation (Synced Home Button) ---
 
   Widget _buildHomeFab() {
     return Container(
@@ -235,7 +230,7 @@ class _StuScheduleState extends State<StuSchedule> {
         children: [
           Image.asset(path, width: 24, color: sel ? _mainPurple : Colors.grey),
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 10, color: sel ? _mainPurple : Colors.grey, fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
+          Text(label, style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 10, color: sel ? _mainPurple : Colors.grey, fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
         ],
       ),
     );

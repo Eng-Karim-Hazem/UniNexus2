@@ -14,7 +14,7 @@ class _SignUpScreenState extends State<SignUpScreen>
     with SingleTickerProviderStateMixin {
   final _nationalIdController = TextEditingController();
   final _emailController = TextEditingController();
-  final _studentIdController = TextEditingController(); // Replaced password controller
+  final _studentIdController = TextEditingController();
 
   bool _isFormValid = false;
   bool _isLoading = false;
@@ -93,7 +93,7 @@ class _SignUpScreenState extends State<SignUpScreen>
       );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Registration failed. Please try again.")),
+        const SnackBar(content: Text("Registration failed. Please try again.", style: TextStyle(fontFamily: 'SpaceGrotesk'))),
       );
     }
   }
@@ -159,7 +159,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                         ),
                         const Text(
                           "Start your smart campus journey",
-                          style: TextStyle(color: Colors.black54, fontSize: 17),
+                          style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.black54, fontSize: 17),
                         ),
                         const SizedBox(height: 40),
                         _animatedField(
@@ -198,7 +198,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text("Already have an account?"),
+                            const Text("Already have an account?", style: TextStyle(fontFamily: 'SpaceGrotesk')),
                             TextButton(
                               onPressed: () => Navigator.pushReplacement(
                                 context,
@@ -207,7 +207,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                               ),
                               child: const Text(
                                 "Login",
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                                style: TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.bold),
                               ),
                             ),
                           ],
@@ -268,8 +268,10 @@ class _SignUpScreenState extends State<SignUpScreen>
           ),
           child: TextField(
             controller: controller,
+            style: const TextStyle(fontFamily: 'SpaceGrotesk'),
             decoration: InputDecoration(
               hintText: hint,
+              hintStyle: const TextStyle(fontFamily: 'SpaceGrotesk'),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(horizontal: 15),
             ),
