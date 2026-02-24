@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../ui/screens/login_screen.dart';
-import '../../ui/screens/request_submitted_screen.dart';
-import '../../services/firebase/signup_service.dart';
+import 'package:uninexus/ui/screens/mobile/request_submitted_screen.dart';
+import '../../../services/firebase/signup_service.dart';
+import 'login_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});

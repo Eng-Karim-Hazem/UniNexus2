@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
-import 'package:uninexus/ui/screens/mobile//Faculty/qa_screen.dart';
+import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import 'student_id_screen.dart' hide StuSchedule;
-import '../../profile_screen.dart';
+import '../profile_screen.dart';
 import '../Student/stu_schedule.dart';
 import 'stu_community.dart';
 
@@ -280,7 +280,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
             MaterialPageRoute(builder: (context) => const StuSchedule()),
           );
         } else if (index == 2) {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const StuQAScreen()));
         } else if (index == 3) {
           Navigator.push(
             context,

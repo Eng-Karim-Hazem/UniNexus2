@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'faculty_home_screen.dart';
 import '../Faculty/qa_screen.dart';
-import '../../profile_screen.dart';
+import '../profile_screen.dart';
 import 'halls_error_screen.dart';
 import 'faculty_id_screen.dart';
 
@@ -101,7 +101,7 @@ class _HallsScreenState extends State<HallsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: <Widget>[
               _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
-              _buildNavBarItem('assets/images/calendar.png', "Schedule", 1),
+              _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1),
               const SizedBox(width: 48),
               _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
               _buildNavBarItem('assets/images/profile.png', "Profile", 3),

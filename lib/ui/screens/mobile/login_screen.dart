@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../ui/screens/forget_password_screen.dart';
-import '../../ui/screens/signup_screen.dart';
-import 'mobile/Student/stu_home.dart';
-import 'mobile/Faculty/faculty_home_screen.dart';
+import 'package:uninexus/ui/screens/mobile/signup_screen.dart';
+
+import 'Faculty/faculty_home_screen.dart';
+import 'Student/stu_home.dart';
+import 'forget_password_screen.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
