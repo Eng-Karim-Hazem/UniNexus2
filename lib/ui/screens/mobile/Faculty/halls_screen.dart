@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uninexus/ui/screens/Student/stu_community.dart';
+import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'faculty_home_screen.dart';
 import '../Faculty/qa_screen.dart';
-import '../profile_screen.dart';
-import '../Faculty/halls_error_screen.dart';
-import '../Faculty/faculty_id_screen.dart';
+import '../../profile_screen.dart';
+import 'halls_error_screen.dart';
+import 'faculty_id_screen.dart';
 
 class HallsScreen extends StatefulWidget {
   const HallsScreen({super.key});

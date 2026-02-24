@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
-import 'package:uninexus/ui/screens/Student/stu_community.dart';
-import '../Faculty/faculty_id_screen.dart';
+import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
+import 'faculty_id_screen.dart';
 import '../Faculty/qa_screen.dart';
-import '../profile_screen.dart';
+import '../../profile_screen.dart';
 import 'halls_screen.dart';
 import 'attendance_session_screen.dart';
 

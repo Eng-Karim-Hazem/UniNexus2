@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
-import 'package:uninexus/ui/screens/Faculty/qa_screen.dart';
-import '../Student/student_id_screen.dart' hide StuSchedule;
-import '../profile_screen.dart';
+import 'package:uninexus/ui/screens/mobile//Faculty/qa_screen.dart';
+import 'student_id_screen.dart' hide StuSchedule;
+import '../../profile_screen.dart';
 import '../Student/stu_schedule.dart';
-import '../Student/stu_community.dart';
+import 'stu_community.dart';
 
 
 class StuHomeScreen extends StatefulWidget {

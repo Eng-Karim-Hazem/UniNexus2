@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uninexus/ui/screens/Faculty/qa_screen.dart';
-import 'package:uninexus/ui/screens/Student/stu_community.dart';
-import '../../../services/firebase/Schedule_service.dart';
-import '../../../model/schedule_model.dart';
-import '../profile_screen.dart';
+import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
+import '../../../../model/schedule_model.dart';
+import '../../../../services/firebase/Schedule_service.dart';
+import '../../profile_screen.dart';
+import '../Faculty/qa_screen.dart';
+
 
 class StuSchedule extends StatefulWidget {
   const StuSchedule({super.key});

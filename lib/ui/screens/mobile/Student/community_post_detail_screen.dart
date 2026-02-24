@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'stu_schedule.dart';
-import '../profile_screen.dart';
-import 'package:uninexus/ui/screens/Faculty/qa_screen.dart';
+import '../../profile_screen.dart';
+import 'package:uninexus/ui/screens/mobile/Faculty/qa_screen.dart';
 import 'create_community_post_screen.dart';
 import 'stu_community.dart'; // Import to access CommunityPost and PostReply models
 

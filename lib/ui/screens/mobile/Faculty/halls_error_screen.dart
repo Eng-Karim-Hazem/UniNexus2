@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../Student/stu_community.dart';
 import 'faculty_home_screen.dart';
 import 'qa_screen.dart';
-import '../profile_screen.dart';
+import '../../profile_screen.dart';
 import '../Faculty/halls_screen.dart';
 import 'faculty_id_screen.dart';
 
