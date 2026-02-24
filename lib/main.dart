@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
-import 'ui/screens/welcome_screen.dart';
+import 'ui/screens/mobile/welcome_screen.dart';
 import 'ui/screens/mobile/Faculty/faculty_home_screen.dart';
 import 'ui/screens/mobile/Student/stu_home.dart';
 
@@ -31,7 +31,7 @@ void main() async {
   } else {
     initialScreen = const WelcomeScreen();
   }
-
+  initialScreen = const WelcomeScreen();
   // Set orientations and THEN run the app
   // This ensures SystemChrome commands are sent correctly
   _setOrientation().then((_) {

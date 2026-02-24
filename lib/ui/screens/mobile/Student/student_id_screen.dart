@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../profile_screen.dart';
+import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import '../Student/stu_schedule.dart';
+import '../profile_screen.dart';
 import 'stu_community.dart';
 
 import 'package:uninexus/ui/screens/mobile//Faculty/qa_screen.dart';
@@ -232,7 +233,7 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
         } else if (index == 2) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const QAScreen()),
+            MaterialPageRoute(builder: (_) => const StuQAScreen()),
           );
         } else if (index == 3) {
           Navigator.pushReplacement(

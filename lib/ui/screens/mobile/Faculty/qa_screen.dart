@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uninexus/ui/screens/mobile/Faculty/halls_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_schedule.dart';
 import 'faculty_home_screen.dart';
-import '../../profile_screen.dart';
+import '../profile_screen.dart';
 import 'faculty_id_screen.dart';
 
 class QAScreen extends StatefulWidget {
@@ -77,7 +78,7 @@ class _QAScreenState extends State<QAScreen> {
           MaterialPageRoute(builder: (context) => const StuCommunity()));
     } else if (index == 1) {
       Navigator.push(context,
-          MaterialPageRoute(builder: (context) => const StuSchedule()));
+          MaterialPageRoute(builder: (context) => const HallsScreen()));
     } else if (index == 2) {
     } else if (index == 3) {
       final prefs = await SharedPreferences.getInstance();
@@ -163,7 +164,7 @@ class _QAScreenState extends State<QAScreen> {
             children: <Widget>[
               _buildNavBarItem(
                   'assets/images/solidarity_1.png', "Community", 0),
-              _buildNavBarItem('assets/images/calendar.png', "Schedule", 1),
+              _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1),
               const SizedBox(width: 48),
               _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
               _buildNavBarItem('assets/images/profile.png', "Profile", 3),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../ui/screens/login_screen.dart';
+
+import 'login_screen.dart';
+
 
 class RequestSubmittedScreen extends StatefulWidget {
   const RequestSubmittedScreen({super.key});

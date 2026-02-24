@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uninexus/ui/screens/mobile/Faculty/halls_screen.dart';
 import '../Student/stu_community.dart';
 import 'faculty_home_screen.dart';
 import '../Faculty/qa_screen.dart';
-import '../../profile_screen.dart';
+import '../profile_screen.dart';
 import 'faculty_id_screen.dart';
 
 class AttendanceSessionScreen extends StatefulWidget {
@@ -31,7 +32,7 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
 
   void _onNavBarTapped(int index) async {
     if (index == 0) { Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity())); }
-    else if (index == 1) {}
+    else if (index == 1) { Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen()));}
     else if (index == 2) { Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen())); }
     else if (index == 3) {
       final prefs = await SharedPreferences.getInstance();
@@ -70,7 +71,7 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: <Widget>[
               _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
-              _buildNavBarItem('assets/images/calendar.png', "Schedule", 1),
+              _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1),
               const SizedBox(width: 48),
               _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
               _buildNavBarItem('assets/images/profile.png', "Profile", 3),

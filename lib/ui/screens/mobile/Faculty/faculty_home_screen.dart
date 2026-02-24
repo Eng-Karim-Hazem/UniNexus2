@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'faculty_id_screen.dart';
 import '../Faculty/qa_screen.dart';
-import '../../profile_screen.dart';
+import '../profile_screen.dart';
 import 'halls_screen.dart';
 import 'attendance_session_screen.dart';
 
@@ -59,9 +59,10 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   }
 
   void _onItemTapped(int index) {
-    if (index == _selectedIndex) return;
     if (index == 0) {
       Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
+    }else if (index == 1) {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen()));
     }
     else if (index == 2) {
       Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
@@ -233,7 +234,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: <Widget>[
             _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
-            _buildNavBarItem('assets/images/calendar.png', "Schedule", 1),
+            _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1),
             const SizedBox(width: 48), // FAB Space
             _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
             _buildNavBarItem('assets/images/user.png', "Profile", 3),

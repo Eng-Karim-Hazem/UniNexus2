@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import 'stu_schedule.dart';
-import '../../profile_screen.dart';
+import '../profile_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/qa_screen.dart';
+import 'package:uninexus/ui/screens/mobile/Faculty/halls_screen.dart';
 
 class CreateCommunityPostScreen extends StatefulWidget {
   const CreateCommunityPostScreen({super.key});
@@ -19,13 +22,37 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _questionController = TextEditingController();
 
+  // Role-based logic variables
+  bool _isStudent = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkUserType();
+  }
+
+  Future<void> _checkUserType() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String id = prefs.getString('ID') ?? "";
+    if (mounted) {
+      setState(() {
+        // Assume student unless ID starts with 'FA' (Faculty)
+        _isStudent = !id.toUpperCase().startsWith('FA');
+      });
+    }
+  }
+
   void _onNavBarTapped(int index) {
     if (index == 0) {
       Navigator.of(context).popUntil((route) => route.isFirst);
     } else if (index == 1) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuSchedule()));
+      // Logic for second icon based on role
+      Widget target = _isStudent ? const StuSchedule() : const HallsScreen();
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => target));
     } else if (index == 2) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const QAScreen()));
+      // Logic for Q&A based on role
+      Widget target = _isStudent ? const StuQAScreen() : const QAScreen();
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => target));
     } else if (index == 3) {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
     }
@@ -35,51 +62,9 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      floatingActionButton: Container(
-        height: 70,
-        width: 70,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: _mainPurple.withOpacity(0.3),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: FloatingActionButton(
-          onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          shape: const CircleBorder(),
-          child: Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(colors: [_primaryBlue, _mainPurple]),
-            ),
-            child: const Icon(Icons.home_rounded, color: Colors.white, size: 32),
-          ),
-        ),
-      ),
+      floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 10.0,
-        height: 80,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _navItem('assets/images/solidarity_1.png', 'Community', 0),
-            _navItem('assets/images/calendar.png',     'Schedule',  1),
-            const SizedBox(width: 48),
-            _navItem('assets/images/qa.png',           'Q&A',       2),
-            _navItem('assets/images/profile.png',      'Profile',   3),
-          ],
-        ),
-      ),
+      bottomNavigationBar: _isStudent ? _buildStudentBottomBar() : _buildFacultyBottomBar(),
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -95,121 +80,201 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
             child: Column(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Image.asset('assets/images/menu.png', width: 28, color: _mainPurple),
-                    ),
-                    Text(
-                      'Community',
-                      style: TextStyle(
-                        fontFamily: 'Batangas',
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: _mainPurple,
-                      ),
-                    ),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
-                    ),
-                  ],
-                ),
+                _buildTopHeader(),
                 const SizedBox(height: 30),
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.85),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: _mainPurple.withOpacity(0.6), width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF237ABA).withOpacity(0.1),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text("Title", style: TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
-                      const SizedBox(height: 8),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF2F2F2),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: TextField(
-                          controller: _titleController,
-                          style: const TextStyle(fontFamily: 'SpaceGrotesk'),
-                          decoration: InputDecoration(
-                            hintText: "Submit a title max one sentence..",
-                            hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400, fontSize: 14),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      const Text("Question", style: TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
-                      const SizedBox(height: 8),
-                      Container(
-                        height: 250,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF2F2F2),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: TextField(
-                          controller: _questionController,
-                          maxLines: null,
-                          keyboardType: TextInputType.multiline,
-                          style: const TextStyle(fontFamily: 'SpaceGrotesk'),
-                          decoration: InputDecoration(
-                            hintText: "Submit your Question maximum 250 letters...",
-                            hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400, fontSize: 14),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildFormContainer(),
                 const SizedBox(height: 30),
-                SizedBox(
-                  width: 220,
-                  height: 55,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Post Submitted!", style: TextStyle(fontFamily: 'SpaceGrotesk'))));
-                      Navigator.pop(context);
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: _mainPurple, width: 2),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      backgroundColor: Colors.white,
-                    ),
-                    child: Text(
-                      "Submit",
-                      style: TextStyle(
-                        fontFamily: 'Batangas',
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: _mainPurple,
-                      ),
-                    ),
-                  ),
-                ),
+                _buildSubmitButton(),
                 const SizedBox(height: 100),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTopHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Image.asset('assets/images/menu.png', width: 28, color: _mainPurple),
+        ),
+        Text(
+          'Community',
+          style: TextStyle(
+            fontFamily: 'Batangas',
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: _mainPurple,
+          ),
+        ),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFormContainer() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.85),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: _mainPurple.withOpacity(0.6), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF237ABA).withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Title", style: TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFF2F2F2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: TextField(
+              controller: _titleController,
+              style: const TextStyle(fontFamily: 'SpaceGrotesk'),
+              decoration: InputDecoration(
+                hintText: "Submit a title max one sentence..",
+                hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400, fontSize: 14),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text("Question", style: TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+          const SizedBox(height: 8),
+          Container(
+            height: 250,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF2F2F2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: TextField(
+              controller: _questionController,
+              maxLines: null,
+              keyboardType: TextInputType.multiline,
+              style: const TextStyle(fontFamily: 'SpaceGrotesk'),
+              decoration: InputDecoration(
+                hintText: "Submit your Question maximum 250 letters...",
+                hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400, fontSize: 14),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      width: 220,
+      height: 55,
+      child: OutlinedButton(
+        onPressed: () {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Post Submitted!", style: TextStyle(fontFamily: 'SpaceGrotesk'))));
+          Navigator.pop(context);
+        },
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: _mainPurple, width: 2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: Colors.white,
+        ),
+        child: Text(
+          "Submit",
+          style: TextStyle(
+            fontFamily: 'Batangas',
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: _mainPurple,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHomeFab() {
+    return Container(
+      height: 70,
+      width: 70,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: _mainPurple.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: FloatingActionButton(
+        onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        shape: const CircleBorder(),
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(colors: [_primaryBlue, _mainPurple]),
+          ),
+          child: const Icon(Icons.home_rounded, color: Colors.white, size: 32),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStudentBottomBar() {
+    return BottomAppBar(
+      shape: const CircularNotchedRectangle(),
+      notchMargin: 10.0,
+      height: 80,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _navItem('assets/images/solidarity_1.png', 'Community', 0),
+          _navItem('assets/images/calendar.png', 'Schedule', 1),
+          const SizedBox(width: 48),
+          _navItem('assets/images/qa.png', 'Q&A', 2),
+          _navItem('assets/images/profile.png', 'Profile', 3),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFacultyBottomBar() {
+    return BottomAppBar(
+      shape: const CircularNotchedRectangle(),
+      notchMargin: 10.0,
+      height: 80,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _navItem('assets/images/solidarity_1.png', 'Community', 0),
+          _navItem('assets/images/classroom_1.png', 'Halls', 1),
+          const SizedBox(width: 48),
+          _navItem('assets/images/qa.png', 'Q&A', 2),
+          _navItem('assets/images/profile.png', 'Profile', 3),
+        ],
       ),
     );
   }

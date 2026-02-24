@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import '../../ui/screens/login_screen.dart';
-import '../../ui/screens/signup_screen.dart';
+import 'package:uninexus/ui/screens/mobile/signup_screen.dart';
+import 'login_screen.dart';
+
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});

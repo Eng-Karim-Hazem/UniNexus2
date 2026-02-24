@@ -3,7 +3,9 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/qa_screen.dart';
 import '../Student/stu_community.dart';
-import '../../profile_screen.dart';
+import '../profile_screen.dart';
+import 'halls_screen.dart';
+
 
 class FacultyIDScreen extends StatefulWidget {
   const FacultyIDScreen({super.key});
@@ -44,9 +46,10 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
   String get _qrData => _isPunchedIn ? "$_userID.out" : "$_userID.in";
 
   void _onItemTapped(int index) {
-    if (index == _selectedIndex) return;
     if (index == 0) {
       Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
+    }else if (index == 1) {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen()));
     }
     else if (index == 2) {
       Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
@@ -187,7 +190,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
     height: 70, width: 70,
     decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: const Color(0xFF4A90E2).withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 8))]),
     child: FloatingActionButton(
-      onPressed: () => Navigator.pop(context),
+      onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
       elevation: 0, backgroundColor: Colors.transparent, shape: const CircleBorder(),
       child: Container(
         width: double.infinity, height: double.infinity,
@@ -205,7 +208,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
           _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
-          _buildNavBarItem('assets/images/calendar.png', "Schedule", 1),
+          _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1),
           const SizedBox(width: 48),
           _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
           _buildNavBarItem('assets/images/profile.png', "Profile", 3),

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uninexus/model/schedule_model.dart';
+import 'package:uninexus/services/firebase/Schedule_service.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
-import '../../../../model/schedule_model.dart';
-import '../../../../services/firebase/Schedule_service.dart';
-import '../../profile_screen.dart';
-import '../Faculty/qa_screen.dart';
+import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
+import '../profile_screen.dart';
 
 
 class StuSchedule extends StatefulWidget {
@@ -223,7 +223,7 @@ class _StuScheduleState extends State<StuSchedule> {
             context,
             MaterialPageRoute(builder: (context) => const StuCommunity()),
           );}
-        if (index == 2) Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
+        if (index == 2) Navigator.push(context, MaterialPageRoute(builder: (context) => const StuQAScreen()));
         if (index == 3) Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
       },
       child: Column(
