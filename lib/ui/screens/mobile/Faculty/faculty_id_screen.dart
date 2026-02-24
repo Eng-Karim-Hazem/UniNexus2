@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uninexus/ui/screens/Faculty/qa_screen.dart';
+import 'package:uninexus/ui/screens/mobile/Faculty/qa_screen.dart';
 import '../Student/stu_community.dart';
-import '../profile_screen.dart';
+import '../../profile_screen.dart';
 
 class FacultyIDScreen extends StatefulWidget {
   const FacultyIDScreen({super.key});

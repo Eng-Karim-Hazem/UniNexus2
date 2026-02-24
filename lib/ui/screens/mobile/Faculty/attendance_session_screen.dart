@@ -4,8 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../Student/stu_community.dart';
 import 'faculty_home_screen.dart';
 import '../Faculty/qa_screen.dart';
-import '../profile_screen.dart';
-import '../Faculty/faculty_id_screen.dart';
+import '../../profile_screen.dart';
+import 'faculty_id_screen.dart';
 
 class AttendanceSessionScreen extends StatefulWidget {
   const AttendanceSessionScreen({super.key});
