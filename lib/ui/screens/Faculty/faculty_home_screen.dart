@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:uninexus/ui/screens/Student/stu_community.dart';
 import '../Faculty/faculty_id_screen.dart';
 import '../Faculty/qa_screen.dart';
 import '../profile_screen.dart';
@@ -61,7 +62,10 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     if (index == _selectedIndex) return;
 
     // Navigation Logic
-    if (index == 2) {
+    if (index == 0) {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
+    }
+    else if (index == 2) {
       Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
     } else if (index == 3) {
       Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
@@ -235,7 +239,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: <Widget>[
-            _buildNavBarItem('assets/images/classroom_1.png', "Community", 0),
+            _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
             _buildNavBarItem('assets/images/calendar.png', "Schedule", 1),
             const SizedBox(width: 48), // FAB Space
             _buildNavBarItem('assets/images/qa.png', "Q&A", 2),

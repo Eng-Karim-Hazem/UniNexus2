@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // Import screens for navigation
+import '../Student/stu_community.dart';
 import 'faculty_home_screen.dart';
 import 'qa_screen.dart';
 import '../profile_screen.dart';
@@ -43,7 +44,7 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
   void _onNavBarTapped(int index) async {
     if (index == 0) {
       // Community -> Home
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
     }
     else if (index == 1) {
       // Schedule -> Go back to Halls list?

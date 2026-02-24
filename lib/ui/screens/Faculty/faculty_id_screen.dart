@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uninexus/ui/screens/Faculty/qa_screen.dart';
+
+import '../Student/stu_community.dart';
+import '../profile_screen.dart';
 
 class FacultyIDScreen extends StatefulWidget {
   const FacultyIDScreen({super.key});
@@ -14,10 +18,13 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
   String _userName = "";
   bool _isLoading = true;
   bool _isPunchedIn = false;
+  int _selectedIndex = 1;
 
   // Light Blue Theme Color for Punch Out
   final Color _lightBlue = const Color(0xFF5BA4F5);
   final Color _primaryPurple = const Color(0xFF7B61FF);
+  final Color _mainPurple = const Color(0xFF7B61FF);
+  final Color _inactiveGrey = const Color(0xFFC1C1D4); // Matching Profile Nav
 
   @override
   void initState() {
@@ -38,6 +45,21 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
 
   String get _qrData => _isPunchedIn ? "$_userID.out" : "$_userID.in";
 
+  void _onItemTapped(int index) {
+    if (index == _selectedIndex) return;
+
+    // Navigation Logic
+    if (index == 0) {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
+    }
+    else if (index == 2) {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
+    } else if (index == 3) {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+    } else {
+      setState(() => _selectedIndex = index);
+    }
+  }
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -211,21 +233,40 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
-          _navItem('assets/images/menu.png', "Community"),
-          _navItem('assets/images/calendar.png', "Schedule"),
+          _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
+          _buildNavBarItem('assets/images/calendar.png', "Schedule", 1),
           const SizedBox(width: 48),
-          _navItem('assets/images/qa.png', "Q&A"),
-          _navItem('assets/images/profile.png', "Profile"),
+          _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
+          _buildNavBarItem('assets/images/profile.png', "Profile", 3),
         ],
       ),
     );
   }
 
-  Widget _navItem(String path, String label) {
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      Image.asset(path, width: 24, height: 24, color: Colors.grey.shade400),
-      const SizedBox(height: 6),
-      Text(label, style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
-    ]);
-  }
-}
+  Widget _buildNavBarItem(String iconPath, String label, int index) {
+    final bool isSelected = _selectedIndex == index;
+    return GestureDetector(
+      onTap: () => _onItemTapped(index),
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset(
+            iconPath,
+            width: 24,
+            height: 24,
+            color: isSelected ? _mainPurple : _inactiveGrey,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: isSelected ? _mainPurple : _inactiveGrey,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }}

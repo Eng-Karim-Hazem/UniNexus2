@@ -226,10 +226,10 @@ class _StuScheduleState extends State<StuSchedule> {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const StuCommunity()),
-          );
+          );}
         if (index == 2) Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
         if (index == 3) Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
-      };},
+      },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
