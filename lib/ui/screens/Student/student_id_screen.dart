@@ -194,7 +194,7 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
-          _navItem('assets/images/menu.png', "Community"),
+          _navItem('assets/images/solidarity_1.png', "Community"),
           _navItem('assets/images/calendar.png', "Schedule"),
           const SizedBox(width: 48),
           _navItem('assets/images/qa.png', "Q&A"),

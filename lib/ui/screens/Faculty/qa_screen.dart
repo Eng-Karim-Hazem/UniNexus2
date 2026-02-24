@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uninexus/ui/screens/Student/stu_community.dart';
+import 'package:uninexus/ui/screens/Student/stu_schedule.dart';
 // Import screens
 import '../Faculty/faculty_home_screen.dart';
-import '../Faculty/halls_screen.dart';
+
+
 import '../profile_screen.dart';
 import 'faculty_id_screen.dart';
 
@@ -76,12 +79,13 @@ class _QAScreenState extends State<QAScreen> {
   // --- NAVIGATION LOGIC ---
   void _onNavBarTapped(int index) async {
     if (index == 0) {
-      // Community -> Go Home
-      Navigator.of(context).popUntil((route) => route.isFirst);
-    }
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const StuCommunity()),
+          );}
     else if (index == 1) {
       // Schedule -> Halls
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen()));
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const StuSchedule()));
     }
     else if (index == 2) {
       // Already on Q&A

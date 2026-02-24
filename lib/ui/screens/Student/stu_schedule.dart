@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uninexus/ui/screens/Faculty/qa_screen.dart';
+import 'package:uninexus/ui/screens/Student/stu_community.dart';
 import '../../../services/firebase/Schedule_service.dart';
 import '../../../model/schedule_model.dart';
 import '../profile_screen.dart';
@@ -220,10 +222,14 @@ class _StuScheduleState extends State<StuSchedule> {
     return GestureDetector(
       onTap: () {
         if (index == 1) return;
-        if (index == 0) Navigator.popUntil(context, (route) => route.isFirst);
-        //if (index == 2) Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
+        if (index == 0) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const StuCommunity()),
+          );
+        if (index == 2) Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
         if (index == 3) Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
-      },
+      };},
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
