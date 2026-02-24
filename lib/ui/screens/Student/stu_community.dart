@@ -258,7 +258,6 @@ class _StuCommunityState extends State<StuCommunity> {
         if (index == _selectedIndex) return;
 
         if (index == 0) {
-          // ✅ يرجع للهوم
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
 

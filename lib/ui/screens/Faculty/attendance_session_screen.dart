@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // Import screens for navigation
+import '../Student/stu_community.dart';
 import 'faculty_home_screen.dart';
 import '../Faculty/qa_screen.dart';
 import '../profile_screen.dart';
@@ -47,7 +48,7 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
   // --- NAVIGATION LOGIC ---
   void _onNavBarTapped(int index) async {
     if (index == 0) {
-      Navigator.of(context).pop();
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
     }
     else if (index == 1) {
       // Already here or related area

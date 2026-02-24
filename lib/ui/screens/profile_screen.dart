@@ -283,14 +283,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
+          _navItem('assets/images/solidarity_1.png', "Community", false, onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
+          }),
           _navItem('assets/images/classroom_1.png', "Halls", false, onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen()));
           }),
+          const SizedBox(width: 48), // Gap for Home FAB
           _navItem('assets/images/qa.png', "Q&A", false, onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
           }),
-          const SizedBox(width: 48), // Gap for Home FAB
-          _navItem('assets/images/notification.png', "Alerts", false),
           _navItem('assets/images/user.png', "Profile", true),
         ],
       ),

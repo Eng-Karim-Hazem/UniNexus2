@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uninexus/ui/screens/Student/stu_community.dart';
 // Import your screens
 import 'faculty_home_screen.dart';
 import '../Faculty/qa_screen.dart';
@@ -34,7 +35,7 @@ class _HallsScreenState extends State<HallsScreen> {
   void _onNavBarTapped(int index) async {
     if (index == 0) {
       // Community (Home) -> Go back
-      Navigator.of(context).pop();
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
     }
     else if (index == 1) {
       // Already on Schedule/Halls -> Do nothing
