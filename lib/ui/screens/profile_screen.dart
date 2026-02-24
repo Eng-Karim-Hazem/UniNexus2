@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uninexus/ui/screens/Student/stu_community.dart';
 import 'Student/stu_schedule.dart';
 import 'Faculty/qa_screen.dart';
 import 'Faculty/halls_screen.dart';
@@ -258,7 +259,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _navItem('assets/images/solidarity_1.png', "Community", false),
+          _navItem('assets/images/solidarity_1.png', "Community", false,onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
+          }),
           _navItem('assets/images/calendar.png', "Schedule", false, onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const StuSchedule()));
           }),
