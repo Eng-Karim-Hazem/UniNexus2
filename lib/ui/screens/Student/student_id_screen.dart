@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../Student/stu_schedule.dart';
+import '../Student/stu_community.dart';
+import '../profile_screen.dart';
+import 'package:uninexus/ui/screens/Faculty/qa_screen.dart';
 
 class StudentIDScreen extends StatefulWidget {
   const StudentIDScreen({super.key});
@@ -13,6 +17,7 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
   String _userID = "";
   String _userName = "";
   bool _isLoading = true;
+  int _selectedIndex = -1; 
 
   @override
   void initState() {
@@ -20,19 +25,15 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
     _loadDataFromPrefs();
   }
 
-  // Same logic as Faculty: Pull individual keys saved during login
   Future<void> _loadDataFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.reload(); // Ensure fresh data
+    await prefs.reload();
 
     setState(() {
-      // Look for 'ID' (from model) or 'userCode' (from login controller)
       _userID = prefs.getString('ID') ?? prefs.getString('userCode') ?? "N/A";
-
       String f = prefs.getString('fName') ?? "Student";
       String l = prefs.getString('lName') ?? "";
       _userName = "$f $l".trim();
-
       _isLoading = false;
     });
   }
@@ -117,7 +118,6 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
       ),
       child: Column(
         children: [
-          // Decorative Elements
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -125,7 +125,10 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
               const SizedBox(width: 15),
               Container(
                 width: 60, height: 12,
-                decoration: BoxDecoration(color: const Color(0xFFE0E0FF), borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0E0FF),
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               const SizedBox(width: 15),
               _buildDot(),
@@ -133,14 +136,12 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
           ),
           const SizedBox(height: 30),
 
-          // Identity Info
           Text(_userName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
           const SizedBox(height: 5),
           Text("ID: $_userID", style: const TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500)),
 
           const SizedBox(height: 40),
 
-          // QR CODE USING ID FROM PREFERENCES
           ShaderMask(
             shaderCallback: (bounds) => const LinearGradient(
               colors: [Color(0xFF237ABA), Color(0xFF9C2CF3)],
@@ -149,7 +150,7 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
             ).createShader(bounds),
             blendMode: BlendMode.srcIn,
             child: QrImageView(
-              data: _userID, // The ID retrieved from SharedPreferences
+              data: _userID,
               version: QrVersions.auto,
               size: 240.0,
               embeddedImage: const AssetImage('assets/images/uni.jpeg'),
@@ -167,7 +168,10 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
     );
   }
 
-  Widget _buildDot() => Container(width: 12, height: 12, decoration: const BoxDecoration(color: Color(0xFFE0E0FF), shape: BoxShape.circle));
+  Widget _buildDot() => Container(
+    width: 12, height: 12,
+    decoration: const BoxDecoration(color: Color(0xFFE0E0FF), shape: BoxShape.circle),
+  );
 
   Widget _buildHomeFab() {
     return Container(
@@ -176,11 +180,14 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
         BoxShadow(color: const Color(0xFF4A90E2).withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 8))
       ]),
       child: FloatingActionButton(
-        onPressed: () => Navigator.pop(context),
+        onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
         elevation: 0, backgroundColor: Colors.transparent, shape: const CircleBorder(),
         child: Container(
           width: double.infinity, height: double.infinity,
-          decoration: const BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [Color(0xFF237ABA), Color(0xFF5C9CE0)])),
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(colors: [Color(0xFF237ABA), Color(0xFF5C9CE0)]),
+          ),
           child: const Icon(Icons.home_rounded, color: Colors.white, size: 32),
         ),
       ),
@@ -193,22 +200,58 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
       notchMargin: 10.0, color: Colors.white, elevation: 0, height: 80,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: <Widget>[
-          _navItem('assets/images/solidarity_1.png', "Community"),
-          _navItem('assets/images/calendar.png', "Schedule"),
+        children: [
+          _navItem('assets/images/solidarity_1.png', 'Community', 0),
+          _navItem('assets/images/calendar.png', 'Schedule', 1),
           const SizedBox(width: 48),
-          _navItem('assets/images/qa.png', "Q&A"),
-          _navItem('assets/images/profile.png', "Profile"),
+          _navItem('assets/images/qa.png', 'Q&A', 2),
+          _navItem('assets/images/user.png', 'Profile', 3),
         ],
       ),
     );
   }
 
-  Widget _navItem(String path, String label) {
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      Image.asset(path, width: 24, height: 24, color: Colors.grey.shade400),
-      const SizedBox(height: 6),
-      Text(label, style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
-    ]);
+  Widget _navItem(String path, String label, int index) {
+    bool sel = _selectedIndex == index;
+    return GestureDetector(
+      onTap: () {
+        setState(() => _selectedIndex = index);
+
+        if (index == 0) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const StuCommunity()),
+          );
+        } else if (index == 1) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const StuSchedule()),
+          );
+        } else if (index == 2) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const QAScreen()),
+          );
+        } else if (index == 3) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const ProfileScreen()),
+          );
+        }
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset(path, width: 24, height: 24,
+            color: sel ? const Color(0xFF7B61FF) : Colors.grey.shade400),
+          const SizedBox(height: 6),
+          Text(label, style: TextStyle(
+            fontSize: 11,
+            color: sel ? const Color(0xFF7B61FF) : Colors.grey.shade400,
+            fontWeight: sel ? FontWeight.bold : FontWeight.normal,
+          )),
+        ],
+      ),
+    );
   }
 }
