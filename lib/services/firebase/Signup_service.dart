@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 class SignupService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final String _collection = "registration_requests";
+  final String _userCollection = "students"; // Your main student/user table
 
   Future<bool> registerUser({
     required String nationalId,
@@ -11,7 +12,16 @@ class SignupService {
     required String email,
   }) async {
     try {
-      // Using National ID as the document ID for uniqueness
+      QuerySnapshot userCheck = await _db
+          .collection(_userCollection)
+          .where('ID', isEqualTo: studentId) // Assuming field is named 'id' or 'studentId'
+          .limit(1)
+          .get();
+
+      if (userCheck.docs.isEmpty) {
+        return false; // This ID doesn't exist in the users table
+      }
+
       await _db.collection(_collection).doc(nationalId).set({
         'nationalId': nationalId,
         'studentId': studentId,
