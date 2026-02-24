@@ -1,23 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:uninexus/ui/screens/Student/student_id_screen.dart';
 import 'stu_schedule.dart';
 import '../profile_screen.dart';
 import 'package:uninexus/ui/screens/Faculty/qa_screen.dart';
+import 'create_community_post_screen.dart';
+import 'community_post_detail_screen.dart'; // Import the new details screen
 
-// ─── Data Model ──────────────────────────────────────────────────────────────
+// ─── Data Models ─────────────────────────────────────────────────────────────
+class PostReply {
+  final String author;
+  final String text;
+
+  PostReply({required this.author, required this.text});
+}
+
 class CommunityPost {
   final String title;
   final String body;
-  bool isExpanded;
+  final List<PostReply> replies;
 
   CommunityPost({
     required this.title,
     required this.body,
-    this.isExpanded = false,
+    this.replies = const [],
   });
 }
 
-// ─── Screen ──────────────────────────────────────────────────────────────────
+// ─── Main Community Screen (List of Posts) ───────────────────────────────────
 class StuCommunity extends StatefulWidget {
   const StuCommunity({super.key});
 
@@ -28,27 +36,38 @@ class StuCommunity extends StatefulWidget {
 class _StuCommunityState extends State<StuCommunity> {
   final int _selectedIndex = 0;
 
-  final Color _mainPurple  = const Color(0xFF7B61FF);
+  final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
-  final Color _textIndigo  = const Color(0xFF5C5C80);
+  final Color _textIndigo = const Color(0xFF5C5C80);
 
   final List<CommunityPost> _posts = [
     CommunityPost(
       title: 'GPIO pins usage on Raspberry Pi',
-      body:  'How do I use GPIO pins and ADC on Raspberry Pi with Python? '
-             'I need to read analog sensor values but the Pi only has digital pins.',
+      body: 'How do I use GPIO pins and ADC on Raspberry Pi with Python? '
+          'I need to read analog sensor values but the Pi only has digital pins.',
+      replies: [
+        PostReply(author: 'Dr. Ahmed', text: 'You need an external ADC chip like MCP3008.'),
+      ],
     ),
     CommunityPost(
       title: 'CCNA R&S new task Protocols',
-      body:  'Is there a way to find the ports and protocols currently open or being '
-             'used by the ECS Fargate Services, so that we could specifically open only '
-             'those ports and protocols in the NACL? ...',
-      isExpanded: true,
+      body: 'Is there a way to find the ports and protocols currently open or being '
+          'used by the ECS Fargate Services, so that we could specifically open only '
+          'those ports and protocols in the NACL?\n\n'
+          'We have a single VPC in our AWS account. This single VPC contains a number of ECS Fargate Services. The VPC network ACL allows all protocols and all ports from all ips. As a security best practise, we want to restrict the ports and protocols that are being allowed.',
+      replies: [
+        PostReply(author: 'Ammar Tarek', text: 'You should examine the ECS task definitions.'),
+        PostReply(author: 'Karim Hazem', text: 'All the ports will be defined there.'),
+        PostReply(author: 'Abd El-Rahman Mohamed', text: 'ECS/Fargate will only expose ports.'),
+        PostReply(author: 'Moaz Osama', text: 'you can be sure to find them all there..'),
+        PostReply(author: 'Youssef Salama', text: 'They are explicitly defined in the task.'),
+      ],
     ),
     CommunityPost(
       title: 'RSA Key composition and process',
-      body:  "I still don't get the point of multiple prime factors in RSA. "
-             'Can anyone explain the key generation steps simply?',
+      body: "I still don't get the point of multiple prime factors in RSA. "
+          'Can anyone explain the key generation steps simply?',
+      replies: [],
     ),
   ];
 
@@ -56,7 +75,7 @@ class _StuCommunityState extends State<StuCommunity> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      floatingActionButton: _buildQrFab(),
+      floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildBottomBar(),
       body: Container(
@@ -70,30 +89,69 @@ class _StuCommunityState extends State<StuCommunity> {
         ),
         child: SafeArea(
           bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-            child: Column(
-              children: [
-                _buildTopHeader(),
-                const SizedBox(height: 30),
-                Expanded(
-                  child: ListView.separated(
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: _posts.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 14),
-                    itemBuilder: (context, i) => _buildPostCard(_posts[i]),
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+                child: Column(
+                  children: [
+                    _buildTopHeader(),
+                    const SizedBox(height: 30),
+                    Expanded(
+                      child: ListView.separated(
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: _posts.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 14),
+                        itemBuilder: (context, i) => _buildPostCard(_posts[i]),
+                      ),
+                    ),
+                    const SizedBox(height: 100),
+                  ],
+                ),
+              ),
+
+              // ── Hover Button ──
+              Positioned(
+                bottom: 110,
+                right: 24,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CreateCommunityPostScreen()),
+                    );
+                  },
+                  child: Container(
+                    width: 65,
+                    height: 65,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _mainPurple.withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Image.asset(
+                        'assets/images/solidarity_1.png',
+                        width: 32,
+                        color: _mainPurple,
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 100),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // ── Top Header ────────────────────────────────────────────────────────────
   Widget _buildTopHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -112,19 +170,21 @@ class _StuCommunityState extends State<StuCommunity> {
         ),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Image.asset('assets/images/uni.jpeg', width: 36, height: 36),
+          child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
         ),
       ],
     );
   }
 
-  // ── Post Card ─────────────────────────────────────────────────────────────
   Widget _buildPostCard(CommunityPost post) {
     return GestureDetector(
-      onTap: () => setState(() => post.isExpanded = !post.isExpanded),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => CommunityPostDetailScreen(post: post)),
+        );
+      },
+      child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
@@ -148,10 +208,7 @@ class _StuCommunityState extends State<StuCommunity> {
                   height: 34,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: _mainPurple.withOpacity(0.5),
-                      width: 1.5,
-                    ),
+                    border: Border.all(color: _mainPurple.withOpacity(0.5), width: 1.5),
                   ),
                   child: Icon(Icons.help_outline_rounded, size: 18, color: _mainPurple),
                 ),
@@ -168,20 +225,14 @@ class _StuCommunityState extends State<StuCommunity> {
                     ),
                   ),
                 ),
-                Icon(
-                  post.isExpanded
-                      ? Icons.keyboard_arrow_up_rounded
-                      : Icons.keyboard_arrow_down_rounded,
-                  color: _mainPurple,
-                  size: 26,
-                ),
+                Icon(Icons.keyboard_arrow_down_rounded, color: _mainPurple, size: 26),
               ],
             ),
             const SizedBox(height: 6),
             Text(
               post.body,
-              maxLines: post.isExpanded ? null : 1,
-              overflow: post.isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 13,
                 color: _textIndigo,
@@ -194,8 +245,7 @@ class _StuCommunityState extends State<StuCommunity> {
     );
   }
 
-  // ── FAB ───────────────────────────────────────────────────────────────────
-  Widget _buildQrFab() {
+  Widget _buildHomeFab() {
     return Container(
       height: 70,
       width: 70,
@@ -210,12 +260,7 @@ class _StuCommunityState extends State<StuCommunity> {
         ],
       ),
       child: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-    context,
-    MaterialPageRoute(builder: (_) => const StudentIDScreen()),
-  );
-        },
+        onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
         backgroundColor: Colors.transparent,
         elevation: 0,
         shape: const CircleBorder(),
@@ -226,13 +271,12 @@ class _StuCommunityState extends State<StuCommunity> {
             shape: BoxShape.circle,
             gradient: LinearGradient(colors: [_primaryBlue, _mainPurple]),
           ),
-          child: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 30),
+          child: const Icon(Icons.home_rounded, color: Colors.white, size: 32),
         ),
       ),
     );
   }
 
-  // ── Bottom Navigation Bar ─────────────────────────────────────────────────
   Widget _buildBottomBar() {
     return BottomAppBar(
       shape: const CircularNotchedRectangle(),
@@ -242,10 +286,10 @@ class _StuCommunityState extends State<StuCommunity> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _navItem('assets/images/solidarity_1.png', 'Community', 0),
-          _navItem('assets/images/calendar.png',     'Schedule',  1),
+          _navItem('assets/images/calendar.png', 'Schedule', 1),
           const SizedBox(width: 48),
-          _navItem('assets/images/qa.png',           'Q&A',       2),
-          _navItem('assets/images/user.png',         'Profile',   3),
+          _navItem('assets/images/qa.png', 'Q&A', 2),
+          _navItem('assets/images/profile.png', 'Profile', 3),
         ],
       ),
     );
@@ -256,28 +300,10 @@ class _StuCommunityState extends State<StuCommunity> {
     return GestureDetector(
       onTap: () {
         if (index == _selectedIndex) return;
-
-        if (index == 0) {
-          Navigator.of(context).popUntil((route) => route.isFirst);
-        }
-
-        if (index == 1) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const StuSchedule()),
-          );
-        }
-
-        if (index == 2) {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const QAScreen()));
-        }
-
-        if (index == 3) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ProfileScreen()),
-          );
-        }
+        if (index == 0) Navigator.of(context).popUntil((route) => route.isFirst);
+        if (index == 1) Navigator.push(context, MaterialPageRoute(builder: (_) => const StuSchedule()));
+        if (index == 2) Navigator.push(context, MaterialPageRoute(builder: (_) => const QAScreen()));
+        if (index == 3) Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
