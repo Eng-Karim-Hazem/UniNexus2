@@ -29,7 +29,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   String _storedUserID = "";
 
   final Color _mainPurple = const Color(0xFF7B61FF);
-  final Color _inactiveGrey = const Color(0xFFC1C1D4); // Matching Profile Nav
+  final Color _inactiveGrey = const Color(0xFFC1C1D4);
 
   final Gradient _fabGradient = const LinearGradient(
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
@@ -60,8 +60,6 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
 
   void _onItemTapped(int index) {
     if (index == _selectedIndex) return;
-
-    // Navigation Logic
     if (index == 0) {
       Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
     }
@@ -112,13 +110,12 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     );
   }
 
-  // --- TOP HEADER ---
   Widget _buildTopHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Image.asset('assets/images/menu.png', width: 28, color: _mainPurple),
-        const Text("Home", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
+        const Text("Home", style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -127,7 +124,6 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     );
   }
 
-  // --- GREETING CARD ---
   Widget _buildGreetingCard() {
     return Container(
       width: double.infinity,
@@ -142,16 +138,15 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         children: [
           Text(
             "Hi Dr. $_storedFirstName $_storedLastName!",
-            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF1A1A1A)),
+            style: const TextStyle(fontFamily: 'Batangas', fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF1A1A1A)),
           ),
           const SizedBox(height: 8),
-          Text(_getCurrentDate(), style: const TextStyle(fontSize: 14, color: Color(0xFF5BA4F5), fontWeight: FontWeight.w600)),
+          Text(_getCurrentDate(), style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Color(0xFF5BA4F5), fontWeight: FontWeight.w600)),
         ],
       ),
     );
   }
 
-  // --- ACTION BUTTONS ---
   Widget _buildActionButtons() {
     return Row(
       children: [
@@ -177,14 +172,13 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
           children: [
             Image.asset(iconPath, width: 38, height: 38, color: const Color(0xFF5C5C80)),
             const SizedBox(height: 12),
-            Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _mainPurple)),
+            Text(title, style: TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold, color: _mainPurple)),
           ],
         ),
       ),
     );
   }
 
-  // --- NOTIFICATIONS ---
   Widget _buildNotificationsArea() {
     return Container(
       width: double.infinity,
@@ -214,16 +208,15 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
           Row(children: [
             Icon(Icons.notifications_active_outlined, color: _mainPurple, size: 20),
             const SizedBox(width: 8),
-            Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: _mainPurple)),
+            Text(title, style: TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.bold, color: _mainPurple)),
           ]),
           const SizedBox(height: 4),
-          Text(msg, style: const TextStyle(fontSize: 14, color: Colors.black87)),
+          Text(msg, style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Colors.black87)),
         ],
       ),
     );
   }
 
-  // --- MODERN NAVIGATION BAR (MATCHES PROFILE) ---
   Widget _buildBottomBar() {
     return Container(
       decoration: BoxDecoration(
@@ -268,6 +261,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
           Text(
             label,
             style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
               fontSize: 11,
               color: isSelected ? _mainPurple : _inactiveGrey,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,

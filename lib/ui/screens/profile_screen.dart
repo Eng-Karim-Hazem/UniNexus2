@@ -78,7 +78,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      // Fixed: Both use the same Home Button design now
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _isStudent ? _buildStudentBottomBar() : _buildFacultyBottomBar(),
@@ -115,8 +114,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // --- UI COMPONENTS ---
-
   Widget _buildHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -125,7 +122,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onTap: () => Navigator.pop(context),
           child: Image.asset('assets/images/menu.png', width: 28, color: _mainPurple),
         ),
-        Text("Profile", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
+        Text("Profile", style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -157,9 +154,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text("$_displayFirstName $_displayLastName",
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold)),
                 Text(_displayID,
-                    style: const TextStyle(fontSize: 14, color: Colors.black54, fontWeight: FontWeight.w600)),
+                    style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Colors.black54, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
@@ -204,17 +201,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54)),
+          Text(label, style: const TextStyle(fontFamily: 'Batangas', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54)),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+          Text(value, style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
           const SizedBox(height: 8),
           Divider(color: _mainPurple.withOpacity(0.1), thickness: 1),
         ],
       ),
     );
   }
-
-  // --- NAVIGATION (SYNCED HOME BUTTON) ---
 
   Widget _buildHomeFab() {
     return Container(
@@ -230,7 +225,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ]
       ),
       child: FloatingActionButton(
-        // Returns to the first screen (Home) regardless of role
         onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -265,7 +259,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _navItem('assets/images/calendar.png', "Schedule", false, onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const StuSchedule()));
           }),
-          const SizedBox(width: 48), // Gap for Home FAB
+          const SizedBox(width: 48),
           _navItem('assets/images/qa.png', "Q&A", false, onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
           }),
@@ -289,7 +283,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _navItem('assets/images/classroom_1.png', "Halls", false, onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen()));
           }),
-          const SizedBox(width: 48), // Gap for Home FAB
+          const SizedBox(width: 48),
           _navItem('assets/images/qa.png', "Q&A", false, onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
           }),
@@ -307,7 +301,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Image.asset(path, width: 24, color: sel ? _mainPurple : Colors.grey),
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 10, color: sel ? _mainPurple : Colors.grey, fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
+          Text(label, style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 10, color: sel ? _mainPurple : Colors.grey, fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
         ],
       ),
     );

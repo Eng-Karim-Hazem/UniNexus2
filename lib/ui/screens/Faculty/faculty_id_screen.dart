@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/ui/screens/Faculty/qa_screen.dart';
-
 import '../Student/stu_community.dart';
 import '../profile_screen.dart';
 
@@ -20,11 +19,10 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
   bool _isPunchedIn = false;
   int _selectedIndex = 1;
 
-  // Light Blue Theme Color for Punch Out
   final Color _lightBlue = const Color(0xFF5BA4F5);
   final Color _primaryPurple = const Color(0xFF7B61FF);
   final Color _mainPurple = const Color(0xFF7B61FF);
-  final Color _inactiveGrey = const Color(0xFFC1C1D4); // Matching Profile Nav
+  final Color _inactiveGrey = const Color(0xFFC1C1D4);
 
   @override
   void initState() {
@@ -47,8 +45,6 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
 
   void _onItemTapped(int index) {
     if (index == _selectedIndex) return;
-
-    // Navigation Logic
     if (index == 0) {
       Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
     }
@@ -60,11 +56,10 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
       setState(() => _selectedIndex = index);
     }
   }
+
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+    if (_isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
     return Scaffold(
       extendBody: true,
@@ -75,10 +70,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/background.png'),
-            fit: BoxFit.cover,
-          ),
+          image: DecorationImage(image: AssetImage('assets/images/background.png'), fit: BoxFit.cover),
         ),
         child: SafeArea(
           bottom: false,
@@ -110,11 +102,8 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Image.asset('assets/images/menu.png', width: 28, color: const Color(0xFF237ABA)),
-          const Text("Faculty ID", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
-          ),
+          const Text("Faculty ID", style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
+          ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.asset('assets/images/LOGO.png', width: 36, height: 36)),
         ],
       ),
     );
@@ -136,26 +125,21 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
           const SizedBox(height: 30),
           _buildBadgeIcon(),
           const SizedBox(height: 15),
-          Text(_userName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
+          Text(_userName, style: const TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
           const SizedBox(height: 30),
-
           ShaderMask(
             shaderCallback: (bounds) => LinearGradient(
               colors: [const Color(0xFF237ABA), _isPunchedIn ? _primaryPurple : _lightBlue],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: Alignment.topLeft, end: Alignment.bottomRight,
             ).createShader(bounds),
             blendMode: BlendMode.srcIn,
             child: QrImageView(
-              data: _qrData,
-              version: QrVersions.auto,
-              size: 220.0,
+              data: _qrData, version: QrVersions.auto, size: 220.0,
               embeddedImage: const AssetImage('assets/images/uni.jpeg'),
               embeddedImageStyle: const QrEmbeddedImageStyle(size: Size(40, 40)),
             ),
           ),
           const SizedBox(height: 10),
-          // Status text removed as requested
         ],
       ),
     );
@@ -168,28 +152,15 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
       width: double.infinity,
       height: 60,
       child: OutlinedButton(
-        onPressed: () {
-          setState(() {
-            _isPunchedIn = !_isPunchedIn;
-          });
-        },
+        onPressed: () => setState(() => _isPunchedIn = !_isPunchedIn),
         style: OutlinedButton.styleFrom(
-          side: BorderSide(
-              color: currentColor,
-              width: 2
-          ),
+          side: BorderSide(color: currentColor, width: 2),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          backgroundColor: Colors.white,
-          elevation: 5,
-          shadowColor: Colors.black12,
+          backgroundColor: Colors.white, elevation: 5, shadowColor: Colors.black12,
         ),
         child: Text(
           _isPunchedIn ? "Punch OUT" : "Punch IN",
-          style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: currentColor
-          ),
+          style: TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: currentColor),
         ),
       ),
     );
@@ -251,22 +222,14 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(
-            iconPath,
-            width: 24,
-            height: 24,
-            color: isSelected ? _mainPurple : _inactiveGrey,
-          ),
+          Image.asset(iconPath, width: 24, height: 24, color: isSelected ? _mainPurple : _inactiveGrey),
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 11,
-              color: isSelected ? _mainPurple : _inactiveGrey,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            ),
+            style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 11, color: isSelected ? _mainPurple : _inactiveGrey, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500),
           ),
         ],
       ),
     );
-  }}
+  }
+}

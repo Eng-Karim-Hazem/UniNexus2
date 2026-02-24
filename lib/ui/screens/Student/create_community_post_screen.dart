@@ -11,7 +11,7 @@ class CreateCommunityPostScreen extends StatefulWidget {
 }
 
 class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
-  final int _selectedIndex = 0; // Community tab
+  final int _selectedIndex = 0;
 
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
@@ -19,7 +19,6 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _questionController = TextEditingController();
 
-  // ── Bottom Navigation Bar ─────────────────────────────────────────────────
   void _onNavBarTapped(int index) {
     if (index == 0) {
       Navigator.of(context).popUntil((route) => route.isFirst);
@@ -36,8 +35,6 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-
-      // ── FAB (Home) ──
       floatingActionButton: Container(
         height: 70,
         width: 70,
@@ -68,8 +65,6 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-
-      // ── Bottom Nav ──
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
         notchMargin: 10.0,
@@ -85,8 +80,6 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
           ],
         ),
       ),
-
-      // ── Body ──
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -102,7 +95,6 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
             child: Column(
               children: [
-                // Header
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -113,6 +105,7 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
                     Text(
                       'Community',
                       style: TextStyle(
+                        fontFamily: 'Batangas',
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: _mainPurple,
@@ -124,10 +117,7 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 30),
-
-                // Form Card
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
@@ -145,7 +135,7 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text("Title", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                      const Text("Title", style: TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
                       const SizedBox(height: 8),
                       Container(
                         decoration: BoxDecoration(
@@ -154,32 +144,32 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
                         ),
                         child: TextField(
                           controller: _titleController,
+                          style: const TextStyle(fontFamily: 'SpaceGrotesk'),
                           decoration: InputDecoration(
                             hintText: "Submit a title max one sentence..",
-                            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                            hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400, fontSize: 14),
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 20),
-
-                      const Text("Question", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                      const Text("Question", style: TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
                       const SizedBox(height: 8),
                       Container(
-                        height: 250, // Large text area
+                        height: 250,
                         decoration: BoxDecoration(
                           color: const Color(0xFFF2F2F2),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: TextField(
                           controller: _questionController,
-                          maxLines: null, // Expands
+                          maxLines: null,
                           keyboardType: TextInputType.multiline,
+                          style: const TextStyle(fontFamily: 'SpaceGrotesk'),
                           decoration: InputDecoration(
                             hintText: "Submit your Question maximum 250 letters...",
-                            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                            hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400, fontSize: 14),
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                           ),
@@ -188,17 +178,13 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 30),
-
-                // Submit Button
                 SizedBox(
                   width: 220,
                   height: 55,
                   child: OutlinedButton(
                     onPressed: () {
-                      // Submit Action
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Post Submitted!")));
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Post Submitted!", style: TextStyle(fontFamily: 'SpaceGrotesk'))));
                       Navigator.pop(context);
                     },
                     style: OutlinedButton.styleFrom(
@@ -211,6 +197,7 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
                     child: Text(
                       "Submit",
                       style: TextStyle(
+                        fontFamily: 'Batangas',
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: _mainPurple,
@@ -218,7 +205,6 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 100),
               ],
             ),
@@ -240,6 +226,7 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
           Text(
             label,
             style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
               fontSize: 10,
               color: sel ? _mainPurple : Colors.grey,
               fontWeight: sel ? FontWeight.bold : FontWeight.normal,

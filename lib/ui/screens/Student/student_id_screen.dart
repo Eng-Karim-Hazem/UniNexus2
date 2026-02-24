@@ -17,7 +17,7 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
   String _userID = "";
   String _userName = "";
   bool _isLoading = true;
-  int _selectedIndex = -1; 
+  int _selectedIndex = -1;
 
   @override
   void initState() {
@@ -86,6 +86,7 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
           const Text(
             "Student ID",
             style: TextStyle(
+              fontFamily: 'Batangas',
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: Color(0xFF5C5C80),
@@ -136,9 +137,9 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
           ),
           const SizedBox(height: 30),
 
-          Text(_userName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
+          Text(_userName, style: const TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
           const SizedBox(height: 5),
-          Text("ID: $_userID", style: const TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500)),
+          Text("ID: $_userID", style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500)),
 
           const SizedBox(height: 40),
 
@@ -161,7 +162,7 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
           const SizedBox(height: 30),
           const Text(
             "Scan for Identity Verification",
-            style: TextStyle(color: Colors.grey, fontSize: 14),
+            style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey, fontSize: 14),
           ),
         ],
       ),
@@ -243,9 +244,10 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Image.asset(path, width: 24, height: 24,
-            color: sel ? const Color(0xFF7B61FF) : Colors.grey.shade400),
+              color: sel ? const Color(0xFF7B61FF) : Colors.grey.shade400),
           const SizedBox(height: 6),
           Text(label, style: TextStyle(
+            fontFamily: 'SpaceGrotesk',
             fontSize: 11,
             color: sel ? const Color(0xFF7B61FF) : Colors.grey.shade400,
             fontWeight: sel ? FontWeight.bold : FontWeight.normal,

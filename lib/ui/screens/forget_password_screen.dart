@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../ui/screens/login_screen.dart';
 import '../../ui/screens/request_submitted_screen.dart';
-import '../../services/firebase/forpass_service.dart'; // Ensure correct path
+import '../../services/firebase/forpass_service.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -52,7 +52,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
     setState(() => _isLoading = true);
 
-    // Call Service
     bool success = await ForpassService().sendRenewalRequest(
       emailOrId: _emailController.text,
       nationalId: _nationalIdController.text,
@@ -67,7 +66,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
       );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error sending renewal request.")),
+        const SnackBar(content: Text("Error sending renewal request.", style: TextStyle(fontFamily: 'SpaceGrotesk'))),
       );
     }
   }
@@ -82,7 +81,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
   @override
   Widget build(BuildContext context) {
-    // build logic stays the same, using _isLoading in _mainButton
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -117,7 +115,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                           const SizedBox(height: 10),
                           const Text("Forgotten Password", style: TextStyle(fontFamily: 'Batangas', fontSize: 30, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 2),
-                          const Text("Enter your details to renew your credentials", style: TextStyle(color: Colors.black54, fontSize: 17)),
+                          const Text("Enter your details to renew your credentials", style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.black54, fontSize: 17)),
                           const SizedBox(height: 40),
                           FadeTransition(
                             opacity: _field1Anim,
@@ -144,10 +142,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text("  Back to"),
+                              const Text("  Back to", style: TextStyle(fontFamily: 'SpaceGrotesk')),
                               TextButton(
                                 onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen())),
-                                child: const Text("Login", style: TextStyle(fontWeight: FontWeight.bold)),
+                                child: const Text("Login", style: TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.bold)),
                               ),
                             ],
                           ),
@@ -164,14 +162,22 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     );
   }
 
-  // --- Helpers stay exactly as you designed them ---
   Widget _modernField({required String label, required String hint, required TextEditingController controller}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Padding(padding: const EdgeInsets.only(left: 10, bottom: 1), child: Text(label, style: const TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold))),
       Container(
         height: 50,
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1.4)),
-        child: TextField(controller: controller, decoration: InputDecoration(hintText: hint, border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10))),
+        child: TextField(
+            controller: controller,
+            style: const TextStyle(fontFamily: 'SpaceGrotesk'),
+            decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: const TextStyle(fontFamily: 'SpaceGrotesk'),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10)
+            )
+        ),
       ),
     ]);
   }

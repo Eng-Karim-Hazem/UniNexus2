@@ -3,9 +3,8 @@ import 'stu_schedule.dart';
 import '../profile_screen.dart';
 import 'package:uninexus/ui/screens/Faculty/qa_screen.dart';
 import 'create_community_post_screen.dart';
-import 'community_post_detail_screen.dart'; // Import the new details screen
+import 'community_post_detail_screen.dart';
 
-// ─── Data Models ─────────────────────────────────────────────────────────────
 class PostReply {
   final String author;
   final String text;
@@ -25,7 +24,6 @@ class CommunityPost {
   });
 }
 
-// ─── Main Community Screen (List of Posts) ───────────────────────────────────
 class StuCommunity extends StatefulWidget {
   const StuCommunity({super.key});
 
@@ -110,7 +108,6 @@ class _StuCommunityState extends State<StuCommunity> {
                 ),
               ),
 
-              // ── Hover Button ──
               Positioned(
                 bottom: 110,
                 right: 24,
@@ -163,6 +160,7 @@ class _StuCommunityState extends State<StuCommunity> {
         Text(
           'Community',
           style: TextStyle(
+            fontFamily: 'Batangas',
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: _mainPurple,
@@ -219,6 +217,7 @@ class _StuCommunityState extends State<StuCommunity> {
                   child: Text(
                     post.title,
                     style: TextStyle(
+                      fontFamily: 'Batangas',
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: _primaryBlue,
@@ -234,6 +233,7 @@ class _StuCommunityState extends State<StuCommunity> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
+                fontFamily: 'SpaceGrotesk',
                 fontSize: 13,
                 color: _textIndigo,
                 height: 1.5,
@@ -313,6 +313,7 @@ class _StuCommunityState extends State<StuCommunity> {
           Text(
             label,
             style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
               fontSize: 10,
               color: sel ? _mainPurple : Colors.grey,
               fontWeight: sel ? FontWeight.bold : FontWeight.normal,
