@@ -155,7 +155,7 @@ class _StuCommunityState extends State<StuCommunity> {
                 Icon(Icons.help_outline_rounded, color: _mainPurple, size: 24),
                 const SizedBox(width: 10),
                 Expanded(child: Text(post.title, style: TextStyle(fontFamily: 'Batangas', fontSize: 14, fontWeight: FontWeight.bold, color: _primaryBlue))),
-                Icon(Icons.keyboard_arrow_down_rounded, color: _mainPurple),
+                Icon(Icons.keyboard_arrow_right_rounded, color: _mainPurple),
               ],
             ),
             const SizedBox(height: 6),

@@ -16,7 +16,7 @@ class StuHomeScreen extends StatefulWidget {
 }
 
 class _StuHomeScreenState extends State<StuHomeScreen> {
-  int _selectedIndex = 0;
+  int _selectedIndex = -1;
   String _firstName = 'Student';
   String _lastName = '';
   bool _isLoading = true;
@@ -102,7 +102,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                             ),
                           ),
                         ),
-                        Image.asset('assets/images/main_calender.png', width: 80, height: 80),
+                        Image.asset('assets/images/main_calender.png', width: 80, height: 60),
                       ],
                     ),
                   ),
@@ -210,7 +210,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Image.asset('assets/images/menu.png', width: 28, color: _mainPurple),
+        Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
         const Text("Home", style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
