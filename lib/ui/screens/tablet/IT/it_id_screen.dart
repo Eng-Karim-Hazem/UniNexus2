@@ -40,7 +40,7 @@ class _ITIDScreenState extends State<ITIDScreen> {
           SafeArea(
             child: Column(
               children: [
-                /// ───────── Top Bar ─────────
+                // TOPBAR
                 Padding(
                   padding: EdgeInsets.symmetric(
                       horizontal: w * 0.025, vertical: h * 0.018),
@@ -70,13 +70,13 @@ class _ITIDScreenState extends State<ITIDScreen> {
                   ),
                 ),
 
-                /// ───────── Main Content ─────────
+                //Main Content
                 Expanded(
                   child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        /// Avatar
+                        // Avatar
                         Container(
                           width: h * 0.095,
                           height: h * 0.095,
@@ -95,7 +95,7 @@ class _ITIDScreenState extends State<ITIDScreen> {
                           ),
                         ),
 
-                        /// Glass Card with overlap (fixed)
+                        // Glass Card
                         Transform.translate(
                           offset: Offset(0, -(h * 0.025)),
                           child: Container(
@@ -124,7 +124,7 @@ class _ITIDScreenState extends State<ITIDScreen> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                /// Employee Name
+                                // Employee Name
                                 Text(
                                   'Employee Name',
                                   style: GoogleFonts.inter(
@@ -135,7 +135,7 @@ class _ITIDScreenState extends State<ITIDScreen> {
                                 ),
                                 SizedBox(height: h * 0.005),
 
-                                /// ID Number
+                                // ID Number
                                 Text(
                                   'ID Number',
                                   style: GoogleFonts.inter(
@@ -147,7 +147,7 @@ class _ITIDScreenState extends State<ITIDScreen> {
                                 ),
                                 SizedBox(height: h * 0.022),
 
-                                /// QR Code
+                                // QR Code
                                 Container(
                                   width: h * 0.26,
                                   height: h * 0.26,
@@ -183,7 +183,7 @@ class _ITIDScreenState extends State<ITIDScreen> {
 
                         SizedBox(height: h * 0.022),
 
-                        /// Punch Button
+                        // Punch Button
                         AnimatedContainer(
                           duration:
                           const Duration(milliseconds: 300),

@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 const _kAccent   = Color(0xFF4A6FD5);
 const _kDark     = Color(0xFF0D1B4B);
 const _kRoomText = Color(0xFF237ABA);
-const _kBlack    = Color(0xFF030007); // all black text — bold
+const _kBlack    = Color(0xFF030007);
 
 class _ErrorItem {
   final String room;
@@ -98,7 +98,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                         horizontal: w * 0.025, vertical: h * 0.01),
                     child: Row(
                       children: [
-                        // ── LEFT list ─────────────────────────────────
+                        // LEFT list
                         SizedBox(
                           width: w * 0.38,
                           child: Column(
@@ -179,7 +179,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
 
                         SizedBox(width: w * 0.025),
 
-                        // ── RIGHT detail card ─────────────────────────
+                        // RIGHT detail card
                         Expanded(
                           child: Container(
                             decoration: BoxDecoration(
@@ -253,7 +253,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                                 ),
                                 SizedBox(height: h * 0.016),
 
-                                // Details — black bold
+                                // Details
                                 Text(sel.details,
                                     style: GoogleFonts.inter(
                                       fontSize: h * 0.019,

@@ -3,8 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 const _kAccent   = Color(0xFF4A6FD5);
 const _kDark     = Color(0xFF0D1B4B);
-const _kTypeClr  = Color(0xFF237ABA);  // Forgot-Password title
-const _kBlack    = Color(0xFF030007);  // all black text — bold
+const _kTypeClr  = Color(0xFF237ABA);
+const _kBlack    = Color(0xFF030007);
 
 class _Request {
   final String type;
@@ -99,7 +99,7 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                         horizontal: w * 0.025, vertical: h * 0.01),
                     child: Row(
                       children: [
-                        // ── LEFT list ─────────────────────────────────
+                        //LEFT list
                         SizedBox(
                           width: w * 0.38,
                           child: Column(
@@ -150,14 +150,12 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                                           crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                           children: [
-                                            // Type — #237ABA bold
                                             Text(req.type,
                                                 style: GoogleFonts.inter(
                                                   fontSize: h * 0.022,
                                                   fontWeight: FontWeight.w700,
                                                   color: _kTypeClr,
                                                 )),
-                                            // Sender — black bold
                                             Text('${req.sender} sent a request',
                                                 style: GoogleFonts.inter(
                                                   fontSize: h * 0.018,
@@ -186,7 +184,7 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
 
                         SizedBox(width: w * 0.025),
 
-                        // ── RIGHT detail card ─────────────────────────
+                        //RIGHT detail card
                         Expanded(
                           child: Container(
                             decoration: BoxDecoration(
@@ -215,7 +213,6 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                                           color: _kAccent, size: h * 0.032),
                                     ),
                                     SizedBox(width: h * 0.014),
-                                    // Type — #237ABA bold
                                     Text(sel.type,
                                         style: GoogleFonts.inter(
                                           fontSize: h * 0.028,
@@ -226,7 +223,6 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                                 ),
                                 SizedBox(height: h * 0.022),
 
-                                // Sender line — black bold
                                 Text('${sel.sender} sent a request',
                                     style: GoogleFonts.inter(
                                       fontSize: h * 0.022,
@@ -235,7 +231,6 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                                     )),
                                 SizedBox(height: h * 0.016),
 
-                                // Detail rows — labels black bold, values black bold
                                 _row('ID', sel.id, h),
                                 _row('Email', sel.email, h),
                                 _row('Year', sel.year, h),
@@ -243,7 +238,6 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
 
                                 const Spacer(),
 
-                                // Accept button — #237ABA
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: GestureDetector(
@@ -290,7 +284,6 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
     );
   }
 
-  // Detail row — label black bold, value black bold
   Widget _row(String label, String value, double h) => Padding(
     padding: EdgeInsets.only(bottom: h * 0.012),
     child: Row(

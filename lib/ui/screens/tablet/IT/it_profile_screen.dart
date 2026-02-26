@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 const _kAccent = Color(0xFF4A6FD5);
 const _kDark   = Color(0xFF0D1B4B);
-const _kBlack  = Color(0xFF030007); // all black text — bold
+const _kBlack  = Color(0xFF030007);
 
 class ITProfileScreen extends StatelessWidget {
   const ITProfileScreen({super.key});
@@ -112,7 +112,7 @@ class ITProfileScreen extends StatelessWidget {
     );
   }
 
-  // Label — black bold / Value — black bold
+  // Label
   Widget _infoRow(String label, String value, double h) => Padding(
     padding: EdgeInsets.symmetric(vertical: h * 0.014),
     child: Row(

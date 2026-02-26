@@ -28,7 +28,7 @@ class ITDashboardScreen extends StatelessWidget {
           SafeArea(
             child: Column(
               children: [
-                // ── Top bar ──────────────────────────────────────────
+                // Top bar
                 Padding(
                   padding: EdgeInsets.symmetric(
                       horizontal: w * 0.025, vertical: h * 0.018),
@@ -58,7 +58,7 @@ class ITDashboardScreen extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ── LEFT ─────────────────────────────────────
+                        // LEFT
                         SizedBox(
                           width: w * 0.38,
                           child: Column(
@@ -110,7 +110,7 @@ class ITDashboardScreen extends StatelessWidget {
 
                         SizedBox(width: w * 0.025),
 
-                        // ── RIGHT: 2×2 transparent glass grid ────────
+                        //RIGHT transparent glass grid
                         Expanded(
                           child: GridView.count(
                             crossAxisCount: 2,
@@ -160,7 +160,7 @@ class ITDashboardScreen extends StatelessWidget {
   }
 }
 
-// ─── NOTIFICATION CARD ────────────────────────────────────────────────────────
+// NOTIFICATION CARD
 class _NotifCard extends StatelessWidget {
   final String room;
   final String msg;
@@ -221,7 +221,7 @@ class _NotifCard extends StatelessWidget {
   }
 }
 
-// ─── GRID CARD — transparent glass, bigger icon ───────────────────────────────
+// GRID CARD
 class _GridCard extends StatelessWidget {
   final IconData icon;
   final String label;
