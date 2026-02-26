@@ -138,7 +138,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
             blendMode: BlendMode.srcIn,
             child: QrImageView(
               data: _qrData, version: QrVersions.auto, size: 220.0,
-              embeddedImage: const AssetImage('assets/images/uni.jpeg'),
+              embeddedImage: const AssetImage('assets/images/LOGO.png'),
               embeddedImageStyle: const QrEmbeddedImageStyle(size: Size(40, 40)),
             ),
           ),
