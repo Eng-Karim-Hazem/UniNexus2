@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
+import '../settings_screen.dart';
 import 'stu_schedule.dart';
 import '../profile_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/qa_screen.dart';
@@ -139,12 +140,31 @@ class _StuCommunityState extends State<StuCommunity> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
+        // --- ADDED NAVIGATION HERE ---
         GestureDetector(
-          onTap: () => Navigator.of(context).popUntil((route) => route.isFirst),
+          onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen())
+            );
+          },
           child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
         ),
-        Text('Community', style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: _mainPurple)),
-        ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.asset('assets/images/LOGO.png', width: 36, height: 36)),
+
+        const Text(
+            "Community",
+            style: TextStyle(
+                fontFamily: 'Batangas',
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF5C5C80)
+            )
+        ),
+
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
+        ),
       ],
     );
   }

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:uninexus/ui/screens/mobile/signup_screen.dart';
 import 'login_screen.dart';
 
-
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
 
@@ -13,7 +12,6 @@ class WelcomeScreen extends StatefulWidget {
 
 class _WelcomeScreenState extends State<WelcomeScreen>
     with TickerProviderStateMixin {
-
   late AnimationController _introController;
   late AnimationController _exitController;
 
@@ -80,9 +78,18 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
     _contentFade = Tween<double>(begin: 1, end: 0).animate(_exitController);
 
+    // Timer to switch from GIF to Static Image
     Timer(const Duration(seconds: 3), () {
       if (mounted) setState(() => showGif = false);
     });
+  }
+
+  // --- FIX: PRECACHE THE IMAGE ---
+  // This loads the static image into memory BEFORE it is needed, eliminating the loading flicker.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    precacheImage(const AssetImage("assets/images/uni.jpeg"), context);
   }
 
   Future<void> _goToLogin() async {
@@ -161,8 +168,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   child: Column(
                     children: [
                       const SizedBox(height: 90),
+                      // --- UPDATED ANIMATED SWITCHER ---
                       AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 600),
+                        // If the static image is identical to the last GIF frame,
+                        // setting duration to 0 makes the cut invisible.
+                        // If they are different, keep the 600ms fade.
+                        duration: const Duration(milliseconds: 0),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(26),
                           child: Image.asset(
@@ -173,6 +184,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             width: 270,
                             height: 270,
                             fit: BoxFit.fill,
+                            // Helps prevent white flashes during rebuilds
+                            gaplessPlayback: true,
                           ),
                         ),
                       ),
@@ -215,7 +228,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       height: 64,
       margin: const EdgeInsets.symmetric(horizontal: 65),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.4),
+        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.4),
         gradient: const LinearGradient(
           colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)],
         ),

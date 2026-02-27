@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
+import '../settings_screen.dart';
 import 'student_id_screen.dart' hide StuSchedule;
 import '../profile_screen.dart';
 import '../Student/stu_schedule.dart';
@@ -115,7 +116,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.4),
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: _mainPurple.withOpacity(0.5), width: 1.5),
+                      border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
                     ),
                     child: ListView(
                       physics: const BouncingScrollPhysics(),
@@ -209,8 +210,27 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
-        const Text("Home", style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
+        // --- ADDED NAVIGATION HERE ---
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen())
+            );
+          },
+          child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
+        ),
+
+        const Text(
+            "Home",
+            style: TextStyle(
+                fontFamily: 'Batangas',
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF5C5C80)
+            )
+        ),
+
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),

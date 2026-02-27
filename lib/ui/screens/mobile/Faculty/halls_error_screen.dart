@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Student/stu_community.dart';
+import '../settings_screen.dart';
 import 'faculty_home_screen.dart';
 import 'qa_screen.dart';
 import '../profile_screen.dart';
@@ -18,9 +19,11 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
   final TextEditingController _hallNameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   String? _selectedErrorType;
-  final int _selectedIndex = 1;
+  int _selectedIndex = 1; // Highlights Halls since this is a sub-screen of Halls
 
   final Color _mainPurple = const Color(0xFF7B61FF);
+  final Color _primaryBlue = const Color(0xFF237ABA);
+
   final Gradient _fabGradient = const LinearGradient(
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
     begin: Alignment.topLeft, end: Alignment.bottomRight,
@@ -29,75 +32,64 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
   final List<String> _errorTypes = ['Projector Issue', 'Air Conditioner', 'Lighting', 'Furniture/Desk', 'Other'];
 
   void _onNavBarTapped(int index) async {
-    if (index == 0) { Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity())); }
-    else if (index == 1) { Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HallsScreen())); }
-    else if (index == 2) { Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen())); }
-    else if (index == 3) {
-      final prefs = await SharedPreferences.getInstance();
-      final userID = prefs.getString('userCode') ?? "No ID";
-      final fName = prefs.getString('userFirstName') ?? "Faculty";
-      final lName = prefs.getString('userLastName') ?? "";
-      if (mounted) Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen(userID: userID, firstName: fName, lastName: lName)));
-    }
-  }
+    if (index == _selectedIndex) return;
 
-  void _openQRScreen() async {
-    if (mounted) Navigator.push(context, MaterialPageRoute(builder: (context) => const FacultyIDScreen()));
+    // If navigating away, pop this screen first or push replacement?
+    // Usually error screen is a sub-screen, so navigating via bottom bar should probably replace the stack
+
+    setState(() => _selectedIndex = index);
+
+    if (index == 0) {
+      await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
+    } else if (index == 1) {
+      // If tapping Halls, go back to Halls list
+      Navigator.pop(context);
+    } else if (index == 2) {
+      await Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
+    } else if (index == 3) {
+      await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+    }
+
+    if (mounted) setState(() => _selectedIndex = 1);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      floatingActionButton: Container(
-        height: 70, width: 70,
-        decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.3), blurRadius: 15, spreadRadius: 2, offset: const Offset(0, 8))]),
-        child: FloatingActionButton(
-          onPressed: _openQRScreen, elevation: 0, backgroundColor: Colors.transparent, shape: const CircleBorder(),
-          child: Container(
-            width: double.infinity, height: double.infinity, decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
-            child: Padding(padding: const EdgeInsets.all(16.0), child: Image.asset('assets/images/qr_code.png', color: Colors.white)),
-          ),
-        ),
-      ),
+      floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.15), spreadRadius: 5, blurRadius: 20, offset: const Offset(0, -5))]),
-        child: BottomAppBar(
-          shape: const CircularNotchedRectangle(), notchMargin: 10.0, color: Colors.white, surfaceTintColor: Colors.white, elevation: 0, height: 80,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: <Widget>[
-              _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
-              _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1),
-              const SizedBox(width: 48),
-              _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
-              _buildNavBarItem('assets/images/profile.png', "Profile", 3),
-            ],
-          ),
-        ),
-      ),
+      bottomNavigationBar: _buildBottomBar(),
       body: Container(
         width: double.infinity, height: double.infinity,
         decoration: const BoxDecoration(image: DecorationImage(image: AssetImage('assets/images/background.png'), fit: BoxFit.cover)),
         child: SafeArea(
           bottom: false,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 100),
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 150), // Added bottom padding for FAB
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    GestureDetector(onTap: () => Navigator.pop(context), child: Image.asset('assets/images/menu.png', width: 28, color: _mainPurple)),
+                    GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen())), child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple)),
                     const Text("Hall Error", style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
                     ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.asset('assets/images/LOGO.png', width: 36, height: 36)),
                   ],
                 ),
                 const SizedBox(height: 30),
+
+                // Form Container
                 Container(
                   padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.75), borderRadius: BorderRadius.circular(24), border: Border.all(color: _mainPurple.withOpacity(0.5), width: 1.5), boxShadow: [BoxShadow(color: const Color(0xFF237ABA).withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10))]),
+                  decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.6), // Consistent opacity
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: _mainPurple.withOpacity(0.2), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(color: const Color(0xFF237ABA).withOpacity(0.12), blurRadius: 25, offset: const Offset(0, 8))
+                      ]
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -136,9 +128,12 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
                 ),
                 const SizedBox(height: 30),
                 SizedBox(
-                  width: double.infinity, height: 55,
+                  width: 220, height: 55,
                   child: OutlinedButton(
-                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error Report Submitted!"))),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error Report Submitted!")));
+                      Navigator.pop(context);
+                    },
                     style: OutlinedButton.styleFrom(side: BorderSide(color: _mainPurple, width: 2), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), backgroundColor: Colors.white),
                     child: const Text("Submit", style: TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
                   ),
@@ -168,17 +163,114 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
     );
   }
 
+  // --- GLOWING HOME FAB ---
+  Widget _buildHomeFab() {
+    return Container(
+      height: 72,
+      width: 72,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: _mainPurple.withOpacity(0.6),
+            blurRadius: 25,
+            spreadRadius: 6,
+            offset: const Offset(0, 2),
+          )
+        ],
+      ),
+      child: FloatingActionButton(
+        onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        shape: const CircleBorder(),
+        child: Container(
+          decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
+          child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
+        ),
+      ),
+    );
+  }
+
+  // --- UPDATED BOTTOM NAVIGATION BAR ---
+  Widget _buildBottomBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 20,
+            spreadRadius: 4,
+            offset: const Offset(0, -6),
+          ),
+        ],
+      ),
+      child: BottomAppBar(
+        clipBehavior: Clip.antiAlias,
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 9.0,
+        color: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        height: 80,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
+                  _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1),
+                ],
+              ),
+            ),
+            const SizedBox(width: 72), // Space for the FAB notch
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
+                  _buildNavBarItem('assets/images/user.png', "Profile", 3),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildNavBarItem(String iconPath, String label, int index) {
-    final isSelected = _selectedIndex == index;
-    final Color itemColor = isSelected ? _mainPurple : Colors.grey.shade400;
+    final bool isSelected = _selectedIndex == index;
+    // Use slightly darker gray for unselected items for better visibility
+    final Color itemColor = isSelected ? _mainPurple : Colors.grey.shade500;
     return GestureDetector(
       onTap: () => _onNavBarTapped(index),
+      behavior: HitTestBehavior.opaque,
       child: Column(
-        mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset(iconPath, width: 24, height: 24, color: itemColor, errorBuilder: (c,o,s) => Icon(Icons.circle, size: 24, color: itemColor)),
-          const SizedBox(height: 6),
-          Text(label, style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 11, color: itemColor, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500)),
+          Image.asset(
+            iconPath,
+            width: 28, // Consistent size
+            height: 28,
+            color: itemColor,
+            errorBuilder: (context, error, stackTrace) => Icon(Icons.circle, size: 28, color: itemColor),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontSize: 12, // Consistent size
+              color: isSelected ? _mainPurple : Colors.grey.shade600,
+              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );

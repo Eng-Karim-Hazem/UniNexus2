@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import '../Student/stu_schedule.dart';
 import '../profile_screen.dart';
+import '../settings_screen.dart';
 import 'stu_community.dart';
 
 import 'package:uninexus/ui/screens/mobile//Faculty/qa_screen.dart';
@@ -73,11 +74,12 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
         ),
         child: SafeArea(
           bottom: false,
+          child:Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
           child: SingleChildScrollView(
             child: Column(
               children: [
-                const SizedBox(height: 20),
-                _buildHeader(),
+                _buildTopHeader(),
                 const SizedBox(height: 30),
                 _buildMainCard(),
                 const SizedBox(height: 40),
@@ -86,31 +88,40 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
           ),
         ),
       ),
+      )
     );
   }
 
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
-          const Text(
-            "Student ID",
+  Widget _buildTopHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // --- ADDED NAVIGATION HERE ---
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen())
+            );
+          },
+          child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
+        ),
+
+        const Text(
+            "Home",
             style: TextStyle(
-              fontFamily: 'Batangas',
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF5C5C80),
-            ),
-          ),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
-          ),
-        ],
-      ),
+                fontFamily: 'Batangas',
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF5C5C80)
+            )
+        ),
+
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
+        ),
+      ],
     );
   }
 

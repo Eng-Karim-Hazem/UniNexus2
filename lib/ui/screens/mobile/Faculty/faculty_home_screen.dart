@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
+import '../settings_screen.dart';
 import 'faculty_id_screen.dart';
 import '../Faculty/qa_screen.dart';
 import '../profile_screen.dart';
@@ -30,8 +31,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   String _storedUserID = "";
 
   final Color _mainPurple = const Color(0xFF7B61FF);
-  // We will override this in the bottom bar with slightly darker grays
-  final Color _inactiveGrey = const Color(0xFFC1C1D4);
+  final Color _primaryBlue = const Color(0xFF237ABA);
 
   final Gradient _fabGradient = const LinearGradient(
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
@@ -60,7 +60,6 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     return DateFormat('MMMM d, yyyy').format(DateTime.now());
   }
 
-  // UPDATED: Added async/await for smooth resetting upon return
   void _onItemTapped(int index) async {
     if (index == _selectedIndex) return;
 
@@ -100,20 +99,29 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         ),
         child: SafeArea(
           bottom: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 150),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildTopHeader(),
-                const SizedBox(height: 30),
-                _buildGreetingCard(),
-                const SizedBox(height: 24),
-                _buildActionButtons(),
-                const SizedBox(height: 24),
-                _buildNotificationsArea(),
-              ],
-            ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                child: _buildTopHeader(),
+              ),
+              const SizedBox(height: 30),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: _buildGreetingCard(),
+              ),
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: _buildActionButtons(),
+              ),
+              const SizedBox(height: 24),
+
+              // EXPANDED fills the rest of the screen
+              Expanded(
+                child: _buildNotificationsArea(),
+              ),
+            ],
           ),
         ),
       ),
@@ -124,8 +132,27 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Image.asset('assets/images/menu.png', width: 28, color: _mainPurple),
-        const Text("Home", style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
+        // --- ADDED NAVIGATION HERE ---
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen())
+            );
+          },
+          child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
+        ),
+
+        const Text(
+            "Home",
+            style: TextStyle(
+                fontFamily: 'Batangas',
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF5C5C80)
+            )
+        ),
+
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -141,7 +168,9 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.9),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 24, offset: const Offset(0, 10)),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,7 +202,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
       child: Container(
         height: 125,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Colors.white.withOpacity(0.9),
           borderRadius: BorderRadius.circular(24),
           boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.1), blurRadius: 15, offset: const Offset(0, 8))],
         ),
@@ -192,18 +221,29 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   Widget _buildNotificationsArea() {
     return Container(
       width: double.infinity,
+      // MARGIN: This pushes the box up so it stops right at the top of the Nav Bar
+      margin: const EdgeInsets.fromLTRB(24, 0, 24, 115),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.4),
+        color: Colors.white.withOpacity(0.6),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
+        boxShadow: [BoxShadow(color: const Color(0xFF237ABA).withOpacity(0.12), blurRadius: 25, offset: const Offset(0, 8))],
       ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _buildNotifyItem("Management", "Faculty meeting today at 12:30 PM"),
-          const SizedBox(height: 12),
-          _buildNotifyItem("System Update", "Student portal maintenance scheduled"),
-        ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          physics: const BouncingScrollPhysics(),
+          children: [
+            _buildNotifyItem("Management", "Faculty meeting today at 12:30 PM"),
+            const SizedBox(height: 12),
+            _buildNotifyItem("System Update", "Student portal maintenance scheduled"),
+            const SizedBox(height: 12),
+            _buildNotifyItem("Reminder", "Submit grades by Friday"),
+            const SizedBox(height: 12),
+            _buildNotifyItem("Event", "Campus tech fair next week"),
+          ],
+        ),
       ),
     );
   }
@@ -227,33 +267,89 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     );
   }
 
+  // --- GLOWING FAB ---
+  Widget _buildFab() {
+    return Container(
+      height: 72,
+      width: 72,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: _mainPurple.withOpacity(0.6),
+            blurRadius: 25,
+            spreadRadius: 6,
+            offset: const Offset(0, 2),
+          )
+        ],
+      ),
+      child: FloatingActionButton(
+        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const FacultyIDScreen())),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        shape: const CircleBorder(),
+        child: Container(
+          decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
+          child: Padding(
+            padding: const EdgeInsets.all(18.0),
+            child: Image.asset('assets/images/qr_code.png', color: Colors.white),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- BOTTOM NAVIGATION BAR WITH NATIVE CUTOUT SHADOW ---
   Widget _buildBottomBar() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, -5))],
+        color: Colors.transparent,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 20,
+            spreadRadius: 4,
+            offset: const Offset(0, -6),
+          ),
+        ],
       ),
       child: BottomAppBar(
+        clipBehavior: Clip.antiAlias,
         shape: const CircularNotchedRectangle(),
-        notchMargin: 12.0,
+        notchMargin: 9.0,
         color: Colors.white,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
+        shadowColor: Colors.transparent,
         height: 80,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: <Widget>[
-            _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
-            _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1),
-            const SizedBox(width: 48), // FAB Space
-            _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
-            _buildNavBarItem('assets/images/user.png', "Profile", 3),
+          children: [
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
+                  _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1),
+                ],
+              ),
+            ),
+            const SizedBox(width: 72), // Space for the FAB notch
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
+                  _buildNavBarItem('assets/images/user.png', "Profile", 3),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  // UPDATED: Bigger, bolder icons and text
   Widget _buildNavBarItem(String iconPath, String label, int index) {
     final bool isSelected = _selectedIndex == index;
     return GestureDetector(
@@ -264,45 +360,21 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         children: [
           Image.asset(
             iconPath,
-            width: 28,  // INCREASED ICON SIZE
-            height: 28, // INCREASED ICON SIZE
-            color: isSelected ? _mainPurple : Colors.grey.shade500, // Better contrast
+            width: 28,
+            height: 28,
+            color: isSelected ? _mainPurple : Colors.grey.shade500,
           ),
-          const SizedBox(height: 5), // Slightly more spacing
+          const SizedBox(height: 5),
           Text(
             label,
             style: TextStyle(
               fontFamily: 'SpaceGrotesk',
-              fontSize: 12, // INCREASED TEXT SIZE
+              fontSize: 12,
               color: isSelected ? _mainPurple : Colors.grey.shade600,
-              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600, // BOLDER WEIGHTS
+              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFab() {
-    return Container(
-      height: 70, width: 70,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
-      ),
-      child: FloatingActionButton(
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const FacultyIDScreen())),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        shape: const CircleBorder(),
-        child: Container(
-          width: double.infinity, height: double.infinity,
-          decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
-          child: Padding(
-            padding: const EdgeInsets.all(18.0),
-            child: Image.asset('assets/images/qr_code.png', color: Colors.white),
-          ),
-        ),
       ),
     );
   }

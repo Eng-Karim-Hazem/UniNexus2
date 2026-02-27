@@ -6,6 +6,7 @@ import 'package:uninexus/services/firebase/Schedule_service.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import '../profile_screen.dart';
+import '../settings_screen.dart';
 
 
 class StuSchedule extends StatefulWidget {
@@ -86,8 +87,27 @@ class _StuScheduleState extends State<StuSchedule> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
-        Text("Schedule", style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
+        // --- ADDED NAVIGATION HERE ---
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen())
+            );
+          },
+          child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
+        ),
+
+        const Text(
+            "Schedule",
+            style: TextStyle(
+                fontFamily: 'Batangas',
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF5C5C80)
+            )
+        ),
+
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),

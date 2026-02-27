@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
+import '../settings_screen.dart';
 import 'qa_request.dart';
 import '../Student/stu_schedule.dart';
 import 'student_id_screen.dart';
@@ -87,7 +88,10 @@ class _StuQAScreenState extends State<StuQAScreen> {
             children: [
               Column(
                 children: [
-                  _buildTopHeader(),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+                    child: _buildTopHeader(),
+                  ),
                   Expanded(
                     child: ListView.builder(
                       padding: const EdgeInsets.fromLTRB(24, 20, 24, 180), // Added padding for the FABs
@@ -146,19 +150,35 @@ class _StuQAScreenState extends State<StuQAScreen> {
   }
 
   Widget _buildTopHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
-          const Text("Q&A", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, fontFamily: 'Batangas',  color: Color(0xFF6C6ED7))),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
-          ),
-        ],
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // --- ADDED NAVIGATION HERE ---
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen())
+            );
+          },
+          child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
+        ),
+
+        const Text(
+            "Q&A",
+            style: TextStyle(
+                fontFamily: 'Batangas',
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF5C5C80)
+            )
+        ),
+
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
+        ),
+      ],
     );
   }
 
