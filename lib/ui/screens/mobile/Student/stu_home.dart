@@ -7,7 +7,6 @@ import '../profile_screen.dart';
 import '../Student/stu_schedule.dart';
 import 'stu_community.dart';
 
-
 class StuHomeScreen extends StatefulWidget {
   const StuHomeScreen({super.key});
 
@@ -16,7 +15,7 @@ class StuHomeScreen extends StatefulWidget {
 }
 
 class _StuHomeScreenState extends State<StuHomeScreen> {
-  int _selectedIndex = 0;
+  int _selectedIndex = -1; // -1 ensures nothing is highlighted by default
   String _firstName = 'Student';
   String _lastName = '';
   bool _isLoading = true;
@@ -143,10 +142,12 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.withOpacity(0.8),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10)),
+          // INCREASED OPACITY TO 0.1
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 24, offset: const Offset(0, -12)),
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 24, offset: const Offset(0, 7)),
         ],
       ),
       child: Column(
@@ -181,8 +182,6 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
               Icon(icon, color: _mainPurple, size: 28),
               const SizedBox(width: 12),
               Text(title, style: TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: _mainPurple)),
-              const SizedBox(width: 12),
-              Container(width: 1.5, height: 20, color: _mainPurple.withOpacity(0.3)),
             ],
           ),
           const SizedBox(height: 8),
@@ -210,7 +209,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Image.asset('assets/images/menu.png', width: 28, color: _mainPurple),
+        Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
         const Text("Home", style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
@@ -220,13 +219,21 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
     );
   }
 
+  // --- UPDATED GLOWING FAB ---
   Widget _buildFab() {
     return Container(
-      height: 70,
-      width: 70,
+      height: 72,
+      width: 72,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
+        boxShadow: [
+          BoxShadow(
+            color: _mainPurple.withOpacity(0.6),
+            blurRadius: 25, // High blur for a soft glow
+            spreadRadius: 4, // Pushes the glow outwards
+            offset: const Offset(0, 2), // Centered so it radiates in all directions evenly
+          )
+        ],
       ),
       child: FloatingActionButton(
         onPressed: () => Navigator.push(
@@ -238,27 +245,60 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
         shape: const CircleBorder(),
         child: Container(
           decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
-          child: Center(child: Image.asset('assets/images/qr_code.png', width: 30, height: 30, color: Colors.white)),
+          // Increased Icon Size to 38
+          child: Center(child: Image.asset('assets/images/qr_code.png', width: 38, height: 38, color: Colors.white)),
         ),
       ),
     );
   }
 
+  // --- UPDATED BOTTOM NAVIGATION BAR WITH NATIVE CUTOUT SHADOW ---
   Widget _buildBottomBar() {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 10.0,
-      color: Colors.white,
-      height: 80,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
-          _buildNavBarItem('assets/images/calendar.png', "Schedule", 1),
-          const SizedBox(width: 48),
-          _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
-          _buildNavBarItem('assets/images/user.png', "Profile", 3),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 20,
+            spreadRadius: 4,
+            offset: const Offset(0, -6), // 👈 negative Y = shadow goes UPWARD
+          ),
         ],
+      ),
+      child: BottomAppBar(
+        clipBehavior: Clip.antiAlias,
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 9.0,
+        color: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0, // 👈 disable native elevation, we handle it above
+        shadowColor: Colors.transparent,
+        height: 80,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
+                  _buildNavBarItem('assets/images/calendar.png', "Schedule", 1),
+                ],
+              ),
+            ),
+            const SizedBox(width: 72), // Space for the FAB notch
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
+                  _buildNavBarItem('assets/images/user.png', "Profile", 3),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -266,40 +306,38 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
   Widget _buildNavBarItem(String path, String label, int index) {
     bool sel = _selectedIndex == index;
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         setState(() => _selectedIndex = index);
 
         if (index == 0) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const StuCommunity()),
-          );
+          await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
         } else if (index == 1) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const StuSchedule()),
-          );
+          await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuSchedule()));
         } else if (index == 2) {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const StuQAScreen()));
+          await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuQAScreen()));
         } else if (index == 3) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ProfileScreen()),
-          );
+          await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
         }
+
+        if (mounted) setState(() => _selectedIndex = -1);
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(path, width: 24, color: sel ? _mainPurple : Colors.grey),
-          const SizedBox(height: 4),
+          Image.asset(
+            path,
+            width: 28,
+            height: 28,
+            color: sel ? _mainPurple : Colors.grey.shade500,
+          ),
+          const SizedBox(height: 5),
           Text(
             label,
             style: TextStyle(
               fontFamily: 'SpaceGrotesk',
-              fontSize: 10,
-              color: sel ? _mainPurple : Colors.grey,
-              fontWeight: sel ? FontWeight.bold : FontWeight.normal,
+              fontSize: 12,
+              color: sel ? _mainPurple : Colors.grey.shade600,
+              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
             ),
           ),
         ],

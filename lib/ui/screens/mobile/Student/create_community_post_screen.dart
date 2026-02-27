@@ -81,9 +81,12 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
             child: Column(
               children: [
                 _buildTopHeader(),
-                const SizedBox(height: 30),
+
+                // --- INCREASED SPACING HERE TO PUSH THE BOX DOWN ---
+                const SizedBox(height: 70),
+
                 _buildFormContainer(),
-                const SizedBox(height: 30),
+                const SizedBox(height: 40),
                 _buildSubmitButton(),
                 const SizedBox(height: 100),
               ],
@@ -100,7 +103,7 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
       children: [
         GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: Image.asset('assets/images/menu.png', width: 28, color: _mainPurple),
+          child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
         ),
         Text(
           'Community',
@@ -123,7 +126,7 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.85),
+        color: Colors.white.withOpacity(0.6),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: _mainPurple.withOpacity(0.6), width: 1.5),
         boxShadow: [
@@ -211,18 +214,20 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
     );
   }
 
+  // --- GLOWING FAB ---
   Widget _buildHomeFab() {
     return Container(
-      height: 70,
-      width: 70,
+      height: 72,
+      width: 72,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
+            color: _mainPurple.withOpacity(0.6),
+            blurRadius: 25,
+            spreadRadius: 6,
+            offset: const Offset(0, 2),
+          )
         ],
       ),
       child: FloatingActionButton(
@@ -231,50 +236,99 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
         elevation: 0,
         shape: const CircleBorder(),
         child: Container(
-          width: double.infinity,
-          height: double.infinity,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(colors: [_primaryBlue, _mainPurple]),
           ),
-          child: const Icon(Icons.home_rounded, color: Colors.white, size: 32),
+          child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
         ),
       ),
     );
   }
 
+  // --- BOTTOM NAVIGATION BARS WITH NATIVE CUTOUT SHADOW ---
+
   Widget _buildStudentBottomBar() {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 10.0,
-      height: 80,
+    return _bottomNavWrapper(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _navItem('assets/images/solidarity_1.png', 'Community', 0),
-          _navItem('assets/images/calendar.png', 'Schedule', 1),
-          const SizedBox(width: 48),
-          _navItem('assets/images/qa.png', 'Q&A', 2),
-          _navItem('assets/images/profile.png', 'Profile', 3),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _navItem('assets/images/solidarity_1.png', 'Community', 0),
+                _navItem('assets/images/calendar.png', 'Schedule', 1),
+              ],
+            ),
+          ),
+          const SizedBox(width: 72), // Space for the FAB notch
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _navItem('assets/images/qa.png', 'Q&A', 2),
+                _navItem('assets/images/user.png', 'Profile', 3),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildFacultyBottomBar() {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 10.0,
-      height: 80,
+    return _bottomNavWrapper(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _navItem('assets/images/solidarity_1.png', 'Community', 0),
-          _navItem('assets/images/classroom_1.png', 'Halls', 1),
-          const SizedBox(width: 48),
-          _navItem('assets/images/qa.png', 'Q&A', 2),
-          _navItem('assets/images/profile.png', 'Profile', 3),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _navItem('assets/images/solidarity_1.png', 'Community', 0),
+                _navItem('assets/images/classroom_1.png', 'Halls', 1),
+              ],
+            ),
+          ),
+          const SizedBox(width: 72), // Space for the FAB notch
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _navItem('assets/images/qa.png', 'Q&A', 2),
+                _navItem('assets/images/user.png', 'Profile', 3),
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _bottomNavWrapper({required Widget child}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 20,
+            spreadRadius: 4,
+            offset: const Offset(0, -6),
+          ),
+        ],
+      ),
+      child: BottomAppBar(
+        clipBehavior: Clip.antiAlias,
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 9.0,
+        color: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        height: 80,
+        child: child,
       ),
     );
   }
@@ -286,15 +340,20 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(path, width: 24, color: sel ? _mainPurple : Colors.grey),
-          const SizedBox(height: 4),
+          Image.asset(
+            path,
+            width: 28,
+            height: 28,
+            color: sel ? _mainPurple : Colors.grey.shade500,
+          ),
+          const SizedBox(height: 5),
           Text(
             label,
             style: TextStyle(
               fontFamily: 'SpaceGrotesk',
-              fontSize: 10,
-              color: sel ? _mainPurple : Colors.grey,
-              fontWeight: sel ? FontWeight.bold : FontWeight.normal,
+              fontSize: 12,
+              color: sel ? _mainPurple : Colors.grey.shade600,
+              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
             ),
           ),
         ],

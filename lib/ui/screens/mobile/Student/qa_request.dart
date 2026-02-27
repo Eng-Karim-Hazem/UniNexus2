@@ -15,9 +15,16 @@ class _QARequestScreenState extends State<QARequestScreen> {
   final _subjectController = TextEditingController();
   final _questionController = TextEditingController();
 
-  final int _selectedIndex = 2; // Q&A index
+  final int _selectedIndex = 2; // Q&A index (Highlights the Q&A icon)
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
+
+  final Gradient _fabGradient = const LinearGradient(
+    colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
   final List<String> _courses = ["IOT Arch.", "Windows Programming", "CCNA R&S"];
 
   void _onNavBarTapped(int index) {
@@ -45,70 +52,9 @@ class _QARequestScreenState extends State<QARequestScreen> {
       extendBody: true,
       resizeToAvoidBottomInset: false,
 
-      // --- EXACT HOME BUTTON FROM STU_QA_SCREEN ---
-      floatingActionButton: SizedBox(
-        height: 75,
-        width: 75,
-        child: FloatingActionButton(
-          onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          shape: const CircleBorder(),
-          child: Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: _mainPurple.withOpacity(0.4),
-                  blurRadius: 25,
-                  spreadRadius: 3,
-                  offset: const Offset(0, 12),
-                ),
-              ],
-              gradient: LinearGradient(
-                colors: [_primaryBlue, _mainPurple],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: const Icon(Icons.home_rounded, color: Colors.white, size: 48),
-          ),
-        ),
-      ),
+      floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-
-      // --- EXACT BOTTOM NAVIGATION BAR FROM STU_QA_SCREEN ---
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.15),
-              spreadRadius: 5,
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: BottomAppBar(
-          shape: const CircularNotchedRectangle(),
-          notchMargin: 12.0,
-          color: Colors.white,
-          elevation: 0,
-          height: 90,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: <Widget>[
-              _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
-              _buildNavBarItem('assets/images/calendar.png', "Schedule", 1),
-              const SizedBox(width: 65), // Gap for the 75px button
-              _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
-              _buildNavBarItem('assets/images/user.png', "Profile", 3),
-            ],
-          ),
-        ),
-      ),
+      bottomNavigationBar: _buildBottomBar(),
 
       body: Container(
         width: double.infinity,
@@ -244,8 +190,8 @@ class _QARequestScreenState extends State<QARequestScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(Icons.grid_view_rounded, size: 28, color: _mainPurple),
-          const Text("Q&A", style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF6C6ED7))),
+          Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
+          const Text("Q&A", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, fontFamily: 'Batangas',  color: Color(0xFF6C6ED7))),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -255,24 +201,110 @@ class _QARequestScreenState extends State<QARequestScreen> {
     );
   }
 
-  Widget _buildNavBarItem(String path, String label, int index) {
-    final isSelected = _selectedIndex == index;
-    final Color itemColor = isSelected ? _mainPurple : Colors.grey;
+  // --- GLOWING HOME FAB ---
+  Widget _buildHomeFab() {
+    return Container(
+      height: 72,
+      width: 72,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: _mainPurple.withOpacity(0.6),
+            blurRadius: 25,
+            spreadRadius: 6,
+            offset: const Offset(0, 2),
+          )
+        ],
+      ),
+      child: FloatingActionButton(
+        onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        shape: const CircleBorder(),
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: _fabGradient,
+          ),
+          child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
+        ),
+      ),
+    );
+  }
 
+  // --- BOTTOM NAVIGATION BAR WITH NATIVE CUTOUT SHADOW ---
+  Widget _buildBottomBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 20,
+            spreadRadius: 4,
+            offset: const Offset(0, -6),
+          ),
+        ],
+      ),
+      child: BottomAppBar(
+        clipBehavior: Clip.antiAlias,
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 9.0,
+        color: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        height: 80,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _navItem('assets/images/solidarity_1.png', "Community", 0),
+                  _navItem('assets/images/calendar.png', "Schedule", 1),
+                ],
+              ),
+            ),
+            const SizedBox(width: 72), // Space for the FAB notch
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _navItem('assets/images/qa.png', "Q&A", 2),
+                  _navItem('assets/images/user.png', "Profile", 3),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _navItem(String path, String label, int index) {
+    bool sel = _selectedIndex == index;
     return GestureDetector(
       onTap: () => _onNavBarTapped(index),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(path, width: 24, color: itemColor),
-          const SizedBox(height: 4),
+          Image.asset(
+            path,
+            width: 28,
+            height: 28,
+            color: sel ? _mainPurple : Colors.grey.shade500,
+          ),
+          const SizedBox(height: 5),
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'Batangas',
-              fontSize: 10,
-              color: itemColor,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              fontFamily: 'SpaceGrotesk',
+              fontSize: 12,
+              color: sel ? _mainPurple : Colors.grey.shade600,
+              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
             ),
           ),
         ],

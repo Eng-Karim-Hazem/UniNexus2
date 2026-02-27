@@ -14,10 +14,16 @@ class StuQAScreen extends StatefulWidget {
 }
 
 class _StuQAScreenState extends State<StuQAScreen> {
-  final int _selectedIndex = 2;
+  int _selectedIndex = 2; // Q&A selected by default
 
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
+
+  final Gradient _fabGradient = const LinearGradient(
+    colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 
   final List<Map<String, dynamic>> _questions = [
     {
@@ -39,17 +45,22 @@ class _StuQAScreenState extends State<StuQAScreen> {
   ];
 
   void _onNavBarTapped(int index) async {
+    if (index == _selectedIndex) return;
+
+    setState(() => _selectedIndex = index);
+
     if (index == 0) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
+      await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
     } else if (index == 1) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const StuSchedule()));
+      await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuSchedule()));
     } else if (index == 3) {
       if (mounted) {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+        await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
       }
     }
-  }
 
+    if (mounted) setState(() => _selectedIndex = 2); // Reset to Q&A when returning
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,39 +68,8 @@ class _StuQAScreenState extends State<StuQAScreen> {
       extendBody: true,
 
       // Central Home Button
-      floatingActionButton: SizedBox(
-        height: 73,
-        width: 73,
-        child: FloatingActionButton(
-          onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          shape: const CircleBorder(),
-          child: Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: _mainPurple.withOpacity(0.4),
-                  blurRadius: 25,
-                  spreadRadius: 3,
-                  offset: const Offset(0, 12),
-                ),
-              ],
-              gradient: LinearGradient(
-                colors: [_primaryBlue, _mainPurple],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: const Icon(Icons.home_rounded, color: Colors.white, size: 48),
-          ),
-        ),
-      ),
+      floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-
       bottomNavigationBar: _buildBottomBar(),
 
       body: Container(
@@ -102,6 +82,7 @@ class _StuQAScreenState extends State<StuQAScreen> {
           ),
         ),
         child: SafeArea(
+          bottom: false,
           child: Stack(
             children: [
               Column(
@@ -109,7 +90,7 @@ class _StuQAScreenState extends State<StuQAScreen> {
                   _buildTopHeader(),
                   Expanded(
                     child: ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 180), // Added padding for the FAB
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 180), // Added padding for the FABs
                       physics: const BouncingScrollPhysics(),
                       itemCount: _questions.length,
                       itemBuilder: (context, index) => _buildModernQACard(_questions[index]),
@@ -118,10 +99,10 @@ class _StuQAScreenState extends State<StuQAScreen> {
                 ],
               ),
 
-              // --- THE RECTANGULAR QUESTION MARK FAB ---
+              // --- THE REVERTED RECTANGULAR QUESTION MARK FAB ---
               Positioned(
-                right: 10,
-                bottom: 20, // Adjusted to sit above the navigation bar
+                right: 24,
+                bottom: 130,
                 child: GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -130,11 +111,11 @@ class _StuQAScreenState extends State<StuQAScreen> {
                     );
                   },
                   child: Container(
-                    width: 80,
-                    height: 80,
+                    width: 80, // Reverted to the larger box size
+                    height: 80, // Reverted to the larger box size
                     decoration: BoxDecoration(
                       color: _mainPurple,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(22), // Soft rounded squircle corners
                       boxShadow: [
                         BoxShadow(
                           color: _mainPurple.withOpacity(0.4),
@@ -148,7 +129,7 @@ class _StuQAScreenState extends State<StuQAScreen> {
                           "?",
                           style: TextStyle(
                               color: Colors.white,
-                              fontSize: 50,
+                              fontSize: 45, // Reverted to the large, bold font size
                               fontFamily: 'Batangas',
                               fontWeight: FontWeight.bold
                           )
@@ -170,9 +151,8 @@ class _StuQAScreenState extends State<StuQAScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Image.asset('assets/images/menu.png', width: 28, color: _mainPurple),
-          const Text("Q&A", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, fontFamily: 'Batangas',  color: Color(
-              0xFF6C6ED7))),
+          Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
+          const Text("Q&A", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, fontFamily: 'Batangas',  color: Color(0xFF6C6ED7))),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -226,20 +206,13 @@ class _StuQAScreenState extends State<StuQAScreen> {
               ),
               if (item['answer'] != null) ...[
                 const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEAF4FF).withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: RichText(
-                    text: TextSpan(
-                      style: const TextStyle(color: Colors.black, fontSize: 14, fontFamily: 'Batangas', height: 1.4),
-                      children: [
-                        const TextSpan(text: "A : ", style: TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.bold)),
-                        TextSpan(text: item['answer']),
-                      ],
-                    ),
+                RichText(
+                  text: TextSpan(
+                    style: const TextStyle(color: Colors.black, fontSize: 15, fontFamily: 'Batangas', height: 1.4),
+                    children: [
+                      const TextSpan(text: "A : ", style: TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.bold)),
+                      TextSpan(text: item['answer'], style: const TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.bold)),
+                    ],
                   ),
                 ),
               ],
@@ -250,55 +223,107 @@ class _StuQAScreenState extends State<StuQAScreen> {
     );
   }
 
+  // --- GLOWING HOME FAB ---
+  Widget _buildHomeFab() {
+    return Container(
+      height: 72,
+      width: 72,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: _mainPurple.withOpacity(0.6),
+            blurRadius: 25,
+            spreadRadius: 6,
+            offset: const Offset(0, 2),
+          )
+        ],
+      ),
+      child: FloatingActionButton(
+        onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        shape: const CircleBorder(),
+        child: Container(
+          decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
+          child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
+        ),
+      ),
+    );
+  }
+
+  // --- BOTTOM NAVIGATION BAR WITH NATIVE CUTOUT SHADOW ---
   Widget _buildBottomBar() {
     return Container(
       decoration: BoxDecoration(
+        color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.15),
-            spreadRadius: 5,
+            color: Colors.black.withOpacity(0.18),
             blurRadius: 20,
-            offset: const Offset(0, -5),
+            spreadRadius: 4,
+            offset: const Offset(0, -6),
           ),
         ],
       ),
       child: BottomAppBar(
+        clipBehavior: Clip.antiAlias,
         shape: const CircularNotchedRectangle(),
-        notchMargin: 12.0,
+        notchMargin: 9.0,
         color: Colors.white,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        height: 90,
+        shadowColor: Colors.transparent,
+        height: 80,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: <Widget>[
-            _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
-            _buildNavBarItem('assets/images/calendar.png', "Schedule", 1),
-            const SizedBox(width: 65),
-            _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
-            _buildNavBarItem('assets/images/user.png', "Profile", 3),
+          children: [
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _navItem('assets/images/solidarity_1.png', "Community", 0),
+                  _navItem('assets/images/calendar.png', "Schedule", 1),
+                ],
+              ),
+            ),
+            const SizedBox(width: 72), // Space for the FAB notch
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _navItem('assets/images/qa.png', "Q&A", 2),
+                  _navItem('assets/images/user.png', "Profile", 3),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNavBarItem(String path, String label, int index) {
-    final isSelected = _selectedIndex == index;
-    final Color itemColor = isSelected ? _mainPurple : Colors.grey;
-
+  Widget _navItem(String path, String label, int index) {
+    bool sel = _selectedIndex == index;
     return GestureDetector(
       onTap: () => _onNavBarTapped(index),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(path, width: 24, color: itemColor),
-          const SizedBox(height: 4),
+          Image.asset(
+            path,
+            width: 28,
+            height: 28,
+            color: sel ? _mainPurple : Colors.grey.shade500,
+          ),
+          const SizedBox(height: 5),
           Text(
             label,
             style: TextStyle(
-              fontSize: 10,
-              color: itemColor,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              fontFamily: 'SpaceGrotesk',
+              fontSize: 12,
+              color: sel ? _mainPurple : Colors.grey.shade600,
+              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
             ),
           ),
         ],

@@ -23,12 +23,14 @@ class FacultyHomeScreen extends StatefulWidget {
 }
 
 class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
-  int _selectedIndex = 1;
+  // SET TO -1: Ensures no icon is highlighted on the Home Screen
+  int _selectedIndex = -1;
   String _storedFirstName = "";
   String _storedLastName = "";
   String _storedUserID = "";
 
   final Color _mainPurple = const Color(0xFF7B61FF);
+  // We will override this in the bottom bar with slightly darker grays
   final Color _inactiveGrey = const Color(0xFFC1C1D4);
 
   final Gradient _fabGradient = const LinearGradient(
@@ -58,18 +60,25 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     return DateFormat('MMMM d, yyyy').format(DateTime.now());
   }
 
-  void _onItemTapped(int index) {
+  // UPDATED: Added async/await for smooth resetting upon return
+  void _onItemTapped(int index) async {
+    if (index == _selectedIndex) return;
+
+    setState(() => _selectedIndex = index);
+
     if (index == 0) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
-    }else if (index == 1) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen()));
-    }
-    else if (index == 2) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
+      await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
+    } else if (index == 1) {
+      await Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen()));
+    } else if (index == 2) {
+      await Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
     } else if (index == 3) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
-    } else {
-      setState(() => _selectedIndex = index);
+      await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+    }
+
+    // Reset highlight when popped back to the home screen
+    if (mounted) {
+      setState(() => _selectedIndex = -1);
     }
   }
 
@@ -244,6 +253,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     );
   }
 
+  // UPDATED: Bigger, bolder icons and text
   Widget _buildNavBarItem(String iconPath, String label, int index) {
     final bool isSelected = _selectedIndex == index;
     return GestureDetector(
@@ -254,18 +264,18 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         children: [
           Image.asset(
             iconPath,
-            width: 24,
-            height: 24,
-            color: isSelected ? _mainPurple : _inactiveGrey,
+            width: 28,  // INCREASED ICON SIZE
+            height: 28, // INCREASED ICON SIZE
+            color: isSelected ? _mainPurple : Colors.grey.shade500, // Better contrast
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 5), // Slightly more spacing
           Text(
             label,
             style: TextStyle(
               fontFamily: 'SpaceGrotesk',
-              fontSize: 11,
-              color: isSelected ? _mainPurple : _inactiveGrey,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              fontSize: 12, // INCREASED TEXT SIZE
+              color: isSelected ? _mainPurple : Colors.grey.shade600,
+              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600, // BOLDER WEIGHTS
             ),
           ),
         ],

@@ -16,7 +16,7 @@ class StuSchedule extends StatefulWidget {
 }
 
 class _StuScheduleState extends State<StuSchedule> {
-  final int _selectedIndex = 1;
+  int _selectedIndex = 1; // Highlights Schedule icon
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
   final Color _textIndigo = const Color(0xFF5C5C80);
@@ -86,7 +86,7 @@ class _StuScheduleState extends State<StuSchedule> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Image.asset('assets/images/menu.png', width: 28, color: _mainPurple),
+        Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
         Text("Schedule", style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
@@ -101,9 +101,13 @@ class _StuScheduleState extends State<StuSchedule> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 25),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.withOpacity(0.8),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20)],
+        boxShadow: [
+          // INCREASED OPACITY TO 0.1
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 24, offset: const Offset(0, -12)),
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 24, offset: const Offset(0, 7)),
+        ],
       ),
       child: Column(
         children: [
@@ -172,43 +176,85 @@ class _StuScheduleState extends State<StuSchedule> {
     );
   }
 
+  // --- UPDATED GLOWING HOME FAB ---
   Widget _buildHomeFab() {
     return Container(
-      height: 70, width: 70,
-      decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [
-        BoxShadow(color: _mainPurple.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))
-      ]),
+      height: 72,
+      width: 72,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: _mainPurple.withOpacity(0.6),
+            blurRadius: 25,
+            spreadRadius: 6,
+            offset: const Offset(0, 2),
+          )
+        ],
+      ),
       child: FloatingActionButton(
         onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
         backgroundColor: Colors.transparent,
         elevation: 0,
         shape: const CircleBorder(),
         child: Container(
-          width: double.infinity, height: double.infinity,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(colors: [_primaryBlue, _mainPurple]),
           ),
-          child: const Icon(Icons.home_rounded, color: Colors.white, size: 32),
+          child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
         ),
       ),
     );
   }
 
+  // --- UPDATED BOTTOM NAVIGATION BAR WITH NATIVE CUTOUT SHADOW ---
   Widget _buildBottomBar() {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 10.0,
-      height: 80,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _navItem('assets/images/solidarity_1.png', "Community", 0),
-          _navItem('assets/images/calendar.png', "Schedule", 1),
-          const SizedBox(width: 48),
-          _navItem('assets/images/qa.png', "Q&A", 2),
-          _navItem('assets/images/user.png', "Profile", 3),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 20,
+            spreadRadius: 4,
+            offset: const Offset(0, -6),
+          ),
         ],
+      ),
+      child: BottomAppBar(
+        clipBehavior: Clip.antiAlias,
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 9.0,
+        color: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        height: 80,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _navItem('assets/images/solidarity_1.png', "Community", 0),
+                  _navItem('assets/images/calendar.png', "Schedule", 1),
+                ],
+              ),
+            ),
+            const SizedBox(width: 72), // Space for the FAB notch
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _navItem('assets/images/qa.png', "Q&A", 2),
+                  _navItem('assets/images/user.png', "Profile", 3),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -216,22 +262,41 @@ class _StuScheduleState extends State<StuSchedule> {
   Widget _navItem(String path, String label, int index) {
     bool sel = _selectedIndex == index;
     return GestureDetector(
-      onTap: () {
-        if (index == 1) return;
+      onTap: () async {
+        if (index == _selectedIndex) return;
+
+        setState(() => _selectedIndex = index);
+
         if (index == 0) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const StuCommunity()),
-          );}
-        if (index == 2) Navigator.push(context, MaterialPageRoute(builder: (context) => const StuQAScreen()));
-        if (index == 3) Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+          await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
+        } else if (index == 2) {
+          await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuQAScreen()));
+        } else if (index == 3) {
+          await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+        }
+
+        // Reset to highlight Schedule when returned here
+        if (mounted) setState(() => _selectedIndex = 1);
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(path, width: 24, color: sel ? _mainPurple : Colors.grey),
-          const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 10, color: sel ? _mainPurple : Colors.grey, fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
+          Image.asset(
+            path,
+            width: 28,
+            height: 28,
+            color: sel ? _mainPurple : Colors.grey.shade500,
+          ),
+          const SizedBox(height: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontSize: 12,
+              color: sel ? _mainPurple : Colors.grey.shade600,
+              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );

@@ -19,7 +19,16 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
   String _userID = "";
   String _userName = "";
   bool _isLoading = true;
-  int _selectedIndex = -1;
+  int _selectedIndex = -1; // -1 to not highlight anything when just viewing the ID
+
+  final Color _mainPurple = const Color(0xFF7B61FF);
+  final Color _primaryBlue = const Color(0xFF237ABA);
+
+  final Gradient _fabGradient = const LinearGradient(
+    colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 
   @override
   void initState() {
@@ -31,13 +40,15 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.reload();
 
-    setState(() {
-      _userID = prefs.getString('ID') ?? prefs.getString('userCode') ?? "N/A";
-      String f = prefs.getString('fName') ?? "Student";
-      String l = prefs.getString('lName') ?? "";
-      _userName = "$f $l".trim();
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _userID = prefs.getString('ID') ?? prefs.getString('userCode') ?? "N/A";
+        String f = prefs.getString('fName') ?? "Student";
+        String l = prefs.getString('lName') ?? "";
+        _userName = "$f $l".trim();
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -84,7 +95,7 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Image.asset('assets/images/menu.png', width: 28, color: const Color(0xFF237ABA)),
+          Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
           const Text(
             "Student ID",
             style: TextStyle(
@@ -176,40 +187,85 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
     decoration: const BoxDecoration(color: Color(0xFFE0E0FF), shape: BoxShape.circle),
   );
 
+  // --- GLOWING HOME FAB ---
   Widget _buildHomeFab() {
     return Container(
-      height: 70, width: 70,
-      decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [
-        BoxShadow(color: const Color(0xFF4A90E2).withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 8))
-      ]),
+      height: 72,
+      width: 72,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: _mainPurple.withOpacity(0.6),
+            blurRadius: 25,
+            spreadRadius: 6,
+            offset: const Offset(0, 2),
+          )
+        ],
+      ),
       child: FloatingActionButton(
         onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-        elevation: 0, backgroundColor: Colors.transparent, shape: const CircleBorder(),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        shape: const CircleBorder(),
         child: Container(
-          width: double.infinity, height: double.infinity,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: LinearGradient(colors: [Color(0xFF237ABA), Color(0xFF5C9CE0)]),
+            gradient: _fabGradient,
           ),
-          child: const Icon(Icons.home_rounded, color: Colors.white, size: 32),
+          child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
         ),
       ),
     );
   }
 
+  // --- BOTTOM NAVIGATION BAR WITH NATIVE CUTOUT SHADOW ---
   Widget _buildBottomBar() {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 10.0, color: Colors.white, elevation: 0, height: 80,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _navItem('assets/images/solidarity_1.png', 'Community', 0),
-          _navItem('assets/images/calendar.png', 'Schedule', 1),
-          const SizedBox(width: 48),
-          _navItem('assets/images/qa.png', 'Q&A', 2),
-          _navItem('assets/images/user.png', 'Profile', 3),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 20,
+            spreadRadius: 4,
+            offset: const Offset(0, -6),
+          ),
         ],
+      ),
+      child: BottomAppBar(
+        clipBehavior: Clip.antiAlias,
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 9.0,
+        color: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        height: 80,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _navItem('assets/images/solidarity_1.png', 'Community', 0),
+                  _navItem('assets/images/calendar.png', 'Schedule', 1),
+                ],
+              ),
+            ),
+            const SizedBox(width: 72), // Space for the FAB notch
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _navItem('assets/images/qa.png', 'Q&A', 2),
+                  _navItem('assets/images/user.png', 'Profile', 3),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -217,43 +273,40 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
   Widget _navItem(String path, String label, int index) {
     bool sel = _selectedIndex == index;
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         setState(() => _selectedIndex = index);
 
         if (index == 0) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const StuCommunity()),
-          );
+          await Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuCommunity()));
         } else if (index == 1) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const StuSchedule()),
-          );
+          await Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuSchedule()));
         } else if (index == 2) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const StuQAScreen()),
-          );
+          await Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuQAScreen()));
         } else if (index == 3) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const ProfileScreen()),
-          );
+          await Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
         }
+
+        if (mounted) setState(() => _selectedIndex = -1);
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(path, width: 24, height: 24,
-              color: sel ? const Color(0xFF7B61FF) : Colors.grey.shade400),
-          const SizedBox(height: 6),
-          Text(label, style: TextStyle(
-            fontFamily: 'SpaceGrotesk',
-            fontSize: 11,
-            color: sel ? const Color(0xFF7B61FF) : Colors.grey.shade400,
-            fontWeight: sel ? FontWeight.bold : FontWeight.normal,
-          )),
+          Image.asset(
+            path,
+            width: 28,
+            height: 28,
+            color: sel ? _mainPurple : Colors.grey.shade500,
+          ),
+          const SizedBox(height: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontSize: 12,
+              color: sel ? _mainPurple : Colors.grey.shade600,
+              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );

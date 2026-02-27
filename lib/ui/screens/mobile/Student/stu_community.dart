@@ -29,12 +29,12 @@ class StuCommunity extends StatefulWidget {
 }
 
 class _StuCommunityState extends State<StuCommunity> {
-  final int _selectedIndex = 0;
+  final int _selectedIndex = 0; // Community is selected
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
   final Color _textIndigo = const Color(0xFF5C5C80);
 
-  bool _isStudent = true; // Defaults to true so UI shows immediately
+  bool _isStudent = true;
 
   final List<CommunityPost> _posts = [
     CommunityPost(
@@ -60,7 +60,7 @@ class _StuCommunityState extends State<StuCommunity> {
     final String id = prefs.getString('ID') ?? "";
     if (mounted) {
       setState(() {
-        _isStudent = !id.toUpperCase().startsWith('FA'); // Assume student unless 'FA' prefix
+        _isStudent = !id.toUpperCase().startsWith('FA');
       });
     }
   }
@@ -71,7 +71,6 @@ class _StuCommunityState extends State<StuCommunity> {
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      // FIXED: Directly calling the builder ensures it always shows
       bottomNavigationBar: _isStudent ? _buildStudentBottomBar() : _buildFacultyBottomBar(),
       body: Container(
         width: double.infinity,
@@ -96,7 +95,7 @@ class _StuCommunityState extends State<StuCommunity> {
                       child: ListView.separated(
                         physics: const BouncingScrollPhysics(),
                         itemCount: _posts.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 14),
+                        separatorBuilder: (_, __) => const SizedBox(height: 16),
                         itemBuilder: (context, i) => _buildPostCard(_posts[i]),
                       ),
                     ),
@@ -105,18 +104,27 @@ class _StuCommunityState extends State<StuCommunity> {
                 ),
               ),
               Positioned(
-                bottom: 110,
+                bottom: 130,
                 right: 24,
                 child: GestureDetector(
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateCommunityPostScreen())),
                   child: Container(
-                    width: 65, height: 65,
+                    width: 80, height: 80,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
                     ),
-                    child: Center(child: Image.asset('assets/images/solidarity_1.png', width: 32, color: _mainPurple)),
+                    // --- INCREASED LOGO SIZE ---
+                    child: Center(
+                      child: Image.asset(
+                        'assets/images/solidarity_1.png',
+                        width: 50,  // Increased from 40
+                        height: 50, // Explicit height forces it to scale
+                        fit: BoxFit.contain, // Ensures it sizes up without clipping
+                        color: _mainPurple,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -133,7 +141,7 @@ class _StuCommunityState extends State<StuCommunity> {
       children: [
         GestureDetector(
           onTap: () => Navigator.of(context).popUntil((route) => route.isFirst),
-          child: Image.asset('assets/images/menu.png', width: 28, color: _mainPurple),
+          child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
         ),
         Text('Community', style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: _mainPurple)),
         ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.asset('assets/images/LOGO.png', width: 36, height: 36)),
@@ -145,8 +153,20 @@ class _StuCommunityState extends State<StuCommunity> {
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CommunityPostDetailScreen(post: post))),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(color: Colors.white.withOpacity(0.92), borderRadius: BorderRadius.circular(20)),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.95),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: _mainPurple.withOpacity(0.15), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 18,
+              spreadRadius: 2,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -154,66 +174,128 @@ class _StuCommunityState extends State<StuCommunity> {
               children: [
                 Icon(Icons.help_outline_rounded, color: _mainPurple, size: 24),
                 const SizedBox(width: 10),
-                Expanded(child: Text(post.title, style: TextStyle(fontFamily: 'Batangas', fontSize: 14, fontWeight: FontWeight.bold, color: _primaryBlue))),
+                Expanded(child: Text(post.title, style: TextStyle(fontFamily: 'Batangas', fontSize: 15, fontWeight: FontWeight.bold, color: _primaryBlue))),
                 Icon(Icons.keyboard_arrow_down_rounded, color: _mainPurple),
               ],
             ),
-            const SizedBox(height: 6),
-            Text(post.body, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 13, color: _textIndigo)),
+            const SizedBox(height: 8),
+            Text(post.body, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 13, color: _textIndigo, height: 1.4)),
           ],
         ),
       ),
     );
   }
 
+  // --- INCREASED CENTRAL HOME ICON SIZE ---
   Widget _buildHomeFab() {
     return Container(
-      height: 70, width: 70,
-      decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))]),
+      height: 72,
+      width: 72,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: _mainPurple.withOpacity(0.6),
+            blurRadius: 25,
+            spreadRadius: 6,
+            offset: const Offset(0, 2),
+          )
+        ],
+      ),
       child: FloatingActionButton(
         onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        shape: const CircleBorder(),
         child: Container(
           decoration: BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [_primaryBlue, _mainPurple])),
-          child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 32)),
+          child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)), // Increased to 48
         ),
       ),
     );
   }
 
   Widget _buildStudentBottomBar() {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 10.0,
-      height: 80,
+    return _bottomNavWrapper(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _navItem('assets/images/solidarity_1.png', 'Community', true),
-          _navItem('assets/images/calendar.png', 'Schedule', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StuSchedule()))),
-          const SizedBox(width: 48),
-          _navItem('assets/images/qa.png', 'Q&A', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StuQAScreen()))),
-          _navItem('assets/images/profile.png', 'Profile', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()))),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _navItem('assets/images/solidarity_1.png', 'Community', true),
+                _navItem('assets/images/calendar.png', 'Schedule', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StuSchedule()))),
+              ],
+            ),
+          ),
+          const SizedBox(width: 72),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _navItem('assets/images/qa.png', 'Q&A', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StuQAScreen()))),
+                _navItem('assets/images/user.png', 'Profile', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()))),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildFacultyBottomBar() {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 10.0,
-      height: 80,
+    return _bottomNavWrapper(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _navItem('assets/images/solidarity_1.png', 'Community', true),
-          _navItem('assets/images/classroom_1.png', 'Halls', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HallsScreen()))),
-          const SizedBox(width: 48),
-          _navItem('assets/images/qa.png', 'Q&A', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QAScreen()))),
-          _navItem('assets/images/profile.png', 'Profile', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()))),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _navItem('assets/images/solidarity_1.png', 'Community', true),
+                _navItem('assets/images/classroom_1.png', 'Halls', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HallsScreen()))),
+              ],
+            ),
+          ),
+          const SizedBox(width: 72),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _navItem('assets/images/qa.png', 'Q&A', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QAScreen()))),
+                _navItem('assets/images/user.png', 'Profile', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()))),
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _bottomNavWrapper({required Widget child}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 20,
+            spreadRadius: 4,
+            offset: const Offset(0, -6),
+          ),
+        ],
+      ),
+      child: BottomAppBar(
+        clipBehavior: Clip.antiAlias,
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 9.0,
+        color: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        height: 80,
+        child: child,
       ),
     );
   }
@@ -224,9 +306,22 @@ class _StuCommunityState extends State<StuCommunity> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(path, width: 24, color: sel ? _mainPurple : Colors.grey),
-          const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 10, color: sel ? _mainPurple : Colors.grey)),
+          Image.asset(
+            path,
+            width: 28,
+            height: 28,
+            color: sel ? _mainPurple : Colors.grey.shade500,
+          ),
+          const SizedBox(height: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontSize: 12,
+              color: sel ? _mainPurple : Colors.grey.shade600,
+              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
