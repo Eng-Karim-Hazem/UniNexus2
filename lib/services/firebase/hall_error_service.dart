@@ -6,7 +6,8 @@ class HallErrorService {
 
   Future<void> submitError(HallErrorModel report) async {
     try {
-      // Access the HallErrors collection
+      // Access the HallErrors collection and add the report
+      // report.toFirestore() now includes the 'department' and the combined 'hallName'
       await _db.collection('HallErrors').add(report.toFirestore());
     } catch (e) {
       throw Exception("Failed to submit report: $e");

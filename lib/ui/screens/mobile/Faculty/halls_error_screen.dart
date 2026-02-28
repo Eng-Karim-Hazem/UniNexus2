@@ -22,7 +22,10 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
   final HallErrorService _service = HallErrorService();
   final ImagePicker _picker = ImagePicker();
 
-  // --- NEW STATE VARIABLE FOR DEPARTMENT ---
+  // --- NEW STATE VARIABLES ---
+  String? _selectedBuilding;
+  final List<String> _buildings = ['A', 'B', 'C'];
+
   String? _selectedDepartment;
   String? _selectedErrorType;
   String _base64Image = "";
@@ -36,7 +39,6 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
     begin: Alignment.topLeft, end: Alignment.bottomRight,
   );
 
-  // --- DROPDOWN LISTS ---
   final List<String> _departments = ['IT', 'Storage', 'Maintenance'];
   final List<String> _errorTypes = ['Projector Issue', 'Air Conditioner', 'Lighting', 'Furniture/Desk', 'Other'];
 
@@ -52,10 +54,10 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
   }
 
   Future<void> _submitReport() async {
-    // Updated validation to include Department
-    if (_hallNameController.text.isEmpty || _selectedErrorType == null || _selectedDepartment == null) {
+    // --- UPDATED VALIDATION ---
+    if (_hallNameController.text.isEmpty || _selectedErrorType == null || _selectedDepartment == null || _selectedBuilding == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please fill in Hall Name, Department, and Error Type"))
+          const SnackBar(content: Text("Please fill in Building, Hall Name, Department, and Error Type"))
       );
       return;
     }
@@ -63,14 +65,16 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
     setState(() => _isUploading = true);
 
     try {
+      // --- COMBINE BUILDING AND HALL NAME ---
+      final String fullHallLocation = "Building $_selectedBuilding - ${_hallNameController.text}";
+
       final report = HallErrorModel(
-        hallName: _hallNameController.text,
+        hallName: fullHallLocation, // Saves as "Building A - 101"
+        department: _selectedDepartment!,
         errorType: _selectedErrorType!,
         description: _descriptionController.text,
         attachment: _base64Image,
         timestamp: DateTime.now(),
-        // UNCOMMENT AND USE THIS NOW:
-        department: _selectedDepartment!,
       );
 
       await _service.submitError(report);
@@ -115,7 +119,7 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
                 _buildHeader(),
                 const SizedBox(height: 30),
                 _buildFormContainer(),
-                const SizedBox(height: 15),
+                const SizedBox(height: 20),
                 _buildSubmitButton(),
               ],
             ),
@@ -148,12 +152,61 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildLabel("Hall name"), const SizedBox(height: 8),
-          _buildTextField(controller: _hallNameController, hint: "Submit the errored hall's name", icon: Icons.send_rounded),
+          // --- SPLIT ROW FOR BUILDING AND HALL NAME ---
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Building Dropdown (Smaller)
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildLabel("Building"),
+                    const SizedBox(height: 8),
+                    Container(
+                      height: 55, // Fixed height to match TextField
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(color: const Color(0xFFF2F2F2), borderRadius: BorderRadius.circular(16)),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _selectedBuilding,
+                          hint: Text("Bld", style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400, fontSize: 14)),
+                          isExpanded: true,
+                          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF5C5C80)),
+                          items: _buildings.map((String value) => DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value, style: const TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.black87))
+                          )).toList(),
+                          onChanged: (newValue) => setState(() => _selectedBuilding = newValue),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Hall Name Text Field (Larger)
+              Expanded(
+                flex: 5,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildLabel("Hall Name"),
+                    const SizedBox(height: 8),
+                    _buildTextField(
+                        controller: _hallNameController,
+                        hint: "Hall No.",
+                        icon: Icons.send_rounded // Kept the icon as requested
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
 
           const SizedBox(height: 20),
 
-          // --- NEW DESIGNATED TO FIELD ---
           _buildLabel("Designated To"), const SizedBox(height: 8),
           _buildDepartmentDropdown(),
 
@@ -182,7 +235,6 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
     );
   }
 
-  // --- NEW DROPDOWN FOR DEPARTMENT ---
   Widget _buildDepartmentDropdown() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -221,7 +273,7 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
 
   Widget _buildDescriptionField() {
     return Container(
-      height: 80, padding: const EdgeInsets.all(16),
+      height: 90, padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: const Color(0xFFF2F2F2), borderRadius: BorderRadius.circular(16)),
       child: TextField(
         controller: _descriptionController, maxLines: 5, style: const TextStyle(fontFamily: 'SpaceGrotesk'),
@@ -249,6 +301,7 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
 
   Widget _buildTextField({required TextEditingController controller, required String hint, IconData? icon, bool readOnly = false, VoidCallback? onIconTap}) {
     return Container(
+      height: 55, // Fixed height ensuring alignment
       decoration: BoxDecoration(color: const Color(0xFFF2F2F2), borderRadius: BorderRadius.circular(16)),
       child: TextField(
         controller: controller, readOnly: readOnly, style: const TextStyle(fontFamily: 'SpaceGrotesk'),

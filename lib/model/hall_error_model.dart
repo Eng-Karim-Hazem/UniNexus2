@@ -8,7 +8,7 @@ class HallErrorModel {
 
   HallErrorModel({
     required this.hallName,
-    required this.department, // --- REQUIRED IN CONSTRUCTOR ---
+    required this.department, // --- REQUIRED ---
     required this.errorType,
     required this.description,
     this.attachment,
