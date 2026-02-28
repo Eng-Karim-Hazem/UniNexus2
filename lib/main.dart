@@ -31,7 +31,6 @@ void main() async {
   } else {
     initialScreen = const WelcomeScreen();
   }
-  initialScreen = const WelcomeScreen();
   // Set orientations and THEN run the app
   // This ensures SystemChrome commands are sent correctly
   _setOrientation().then((_) {
