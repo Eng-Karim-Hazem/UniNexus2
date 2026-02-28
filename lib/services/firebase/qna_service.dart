@@ -30,6 +30,38 @@ class QnAService {
     });
   }
 
+  Stream<List<Map<String, dynamic>>> streamUnansweredQnA(List<String> subjects) {
+    if (subjects.isEmpty) return Stream.value([]);
+
+    return _db
+        .collection('QnA')
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs
+          .map((doc) => {...doc.data(), 'docId': doc.id})
+          .where((data) {
+        // 1. Check if the subject matches the user's assigned subjects
+        String? docSubject = data['subject']?.toString();
+        bool subjectMatch = subjects.contains(docSubject);
+
+        // 2. Check if the answer is empty or null
+        var answer = data['answer'];
+        bool isUnanswered = (answer == null || answer.toString().trim().isEmpty);
+
+        return subjectMatch && isUnanswered;
+      })
+          .toList();
+    });
+  }
+
+  // Updates the document with the answer and the responder's name
+  Future<void> submitAnswer(String docId, String answer, String rName) async {
+    await _db.collection('QnA').doc(docId).update({
+      'answer': answer,
+      'rName': rName,
+    });
+  }
+
   // Used for the Dropdown in the request screen
   Stream<List<String>> streamSubjectsByYear(int year) {
     return _db
