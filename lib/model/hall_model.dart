@@ -1,4 +1,4 @@
-class HallModel {
+  class HallModel {
   final String building;
   final String hallCode;
   final String day;

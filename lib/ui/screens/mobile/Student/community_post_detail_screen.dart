@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Added for direct name fetching
+import 'package:uninexus/model/community_model.dart';
+import 'package:uninexus/services/firebase/community_service.dart';
+
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import '../settings_screen.dart';
 import 'stu_schedule.dart';
@@ -7,10 +12,9 @@ import '../profile_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/qa_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/halls_screen.dart';
 import 'create_community_post_screen.dart';
-import 'stu_community.dart';
 
 class CommunityPostDetailScreen extends StatefulWidget {
-  final CommunityPost post;
+  final CommunityPostModel post;
 
   const CommunityPostDetailScreen({super.key, required this.post});
 
@@ -19,12 +23,14 @@ class CommunityPostDetailScreen extends StatefulWidget {
 }
 
 class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
-  int _selectedIndex = -1;
+  // Service
+  final _communityService = CommunityService();
+
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
-  final Color _textIndigo = const Color(0xFF5C5C80);
 
   bool _isReplying = false;
+  bool _isSending = false;
   final TextEditingController _replyController = TextEditingController();
 
   bool _isStudent = true;
@@ -49,7 +55,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
       String id = prefs.getString('ID') ?? prefs.getString('userCode') ?? "N/A";
       if (mounted) {
         setState(() {
-          _isStudent = id.toUpperCase().startsWith('ST');
+          _isStudent = !id.toUpperCase().startsWith('FA');
           _isLoading = false;
         });
       }
@@ -64,15 +70,88 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
     super.dispose();
   }
 
-  void _submitReply() {
+  // --- UPDATED: ROBUST NAME FETCHING ---
+  Future<void> _submitReply() async {
     if (_replyController.text.trim().isEmpty) return;
 
-    setState(() {
-      widget.post.replies.add(PostReply(author: "Me", text: _replyController.text.trim()));
+    setState(() => _isSending = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Get the ID
+      String userId = prefs.getString('userCode') ?? prefs.getString('ID') ?? '';
+
+      // Check if user is Faculty based on ID prefix
+      bool isFaculty = userId.toUpperCase().startsWith('FA');
+
+      String fName = "";
+      String lName = "";
+
+      // 1. First, check local SharedPreferences (using your app's common keys)
+      // Note: Adjust these keys if your login screen saves them differently
+      fName = prefs.getString('fName') ?? prefs.getString('userFirstName') ?? '';
+      lName = prefs.getString('lName') ?? prefs.getString('userLastName') ?? '';
+
+      // 2. If missing locally, fetch from Firestore using YOUR EXACT FIELD NAMES
+      if (fName.isEmpty && userId.isNotEmpty) {
+        try {
+          if (isFaculty) {
+            var doc = await FirebaseFirestore.instance.collection('faculty').doc(userId).get();
+            if (doc.exists) {
+              // Using keys from your screenshot: fName, lName
+              fName = doc.data()?['fName'] ?? '';
+              lName = doc.data()?['lName'] ?? '';
+            }
+          } else {
+            var doc = await FirebaseFirestore.instance.collection('students').doc(userId).get();
+            if (doc.exists) {
+              // Using keys from your screenshot: fName, lName
+              fName = doc.data()?['fName'] ?? '';
+              lName = doc.data()?['lName'] ?? '';
+            }
+          }
+        } catch (e) {
+          debugPrint("Error fetching user name: $e");
+        }
+      }
+
+      // 3. Format the Display Name
+      String displayName = "$fName $lName".trim();
+
+      // Fallback
+      if (displayName.isEmpty) {
+        displayName = isFaculty ? 'Faculty Member' : 'Student';
+      } else {
+        // Add "Dr." prefix for faculty
+        if (isFaculty) {
+          displayName = "Dr. $displayName";
+        }
+      }
+
+      // 4. Create and Send Reply
+      CommunityReplyModel reply = CommunityReplyModel(
+        userId: userId,
+        userName: displayName,
+        content: _replyController.text.trim(),
+        timestamp: DateTime.now(),
+      );
+
+      await _communityService.addReply(widget.post.id, reply);
+
       _replyController.clear();
-      _isReplying = false;
-    });
-    FocusScope.of(context).unfocus();
+      setState(() {
+        _isReplying = false;
+      });
+      FocusScope.of(context).unfocus();
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to send reply: $e")),
+      );
+    } finally {
+      if (mounted) setState(() => _isSending = false);
+    }
   }
 
   @override
@@ -110,6 +189,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
                   ],
                 ),
               ),
+              // Optional: FAB to create a NEW post
               _buildCreatePostFab(),
             ],
           ),
@@ -122,7 +202,6 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // --- ADDED NAVIGATION HERE ---
         GestureDetector(
           onTap: () {
             Navigator.push(
@@ -151,18 +230,17 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
     );
   }
 
-  // --- UPDATED POST CARD ---
   Widget _buildPostCard() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.6), // Glassy Opacity
+        color: Colors.white.withOpacity(0.6),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: _mainPurple.withOpacity(0.2), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF237ABA).withOpacity(0.12), // Soft Tinted Shadow
+            color: const Color(0xFF237ABA).withOpacity(0.12),
             blurRadius: 25,
             spreadRadius: 2,
             offset: const Offset(0, 8),
@@ -177,16 +255,25 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
               Icon(Icons.help_outline_rounded, size: 24, color: _mainPurple),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  widget.post.title,
-                  style: TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold, color: _mainPurple),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.post.title,
+                      style: TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold, color: _mainPurple),
+                    ),
+                    Text(
+                      "${widget.post.userName} • ${DateFormat('MMM d').format(widget.post.timestamp)}",
+                      style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                    )
+                  ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
           Text(
-            widget.post.body,
+            widget.post.content,
             style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Colors.black87, height: 1.5),
           ),
         ],
@@ -194,14 +281,13 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
     );
   }
 
-  // --- UPDATED REPLIES SECTION ---
   Widget _buildRepliesSection() {
     return Expanded(
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.6), // Glassy Opacity
+          color: Colors.white.withOpacity(0.6),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: _mainPurple.withOpacity(0.2), width: 1.5),
           boxShadow: [
@@ -226,23 +312,44 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
               ],
             ),
             const SizedBox(height: 16),
+
             if (_isReplying) _buildReplyInput(),
+
             Expanded(
-              child: widget.post.replies.isEmpty
-                  ? const Center(child: Text("No replies yet.", style: TextStyle(fontFamily: 'SpaceGrotesk')))
-                  : ListView.separated(
-                physics: const BouncingScrollPhysics(),
-                itemCount: widget.post.replies.length,
-                separatorBuilder: (_, __) => const Divider(height: 24),
-                itemBuilder: (context, index) {
-                  final reply = widget.post.replies[index];
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(reply.author, style: TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold, color: _mainPurple)),
-                      const SizedBox(height: 4),
-                      Text(reply.text, style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Colors.black)),
-                    ],
+              child: StreamBuilder<List<CommunityReplyModel>>(
+                stream: _communityService.getRepliesStream(widget.post.id),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator(color: _mainPurple));
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text("No replies yet. Be the first!", style: TextStyle(fontFamily: 'SpaceGrotesk')));
+                  }
+
+                  final replies = snapshot.data!;
+
+                  return ListView.separated(
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: replies.length,
+                    separatorBuilder: (_, __) => const Divider(height: 24),
+                    itemBuilder: (context, index) {
+                      final reply = replies[index];
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(reply.userName, style: TextStyle(fontFamily: 'Batangas', fontSize: 14, fontWeight: FontWeight.bold, color: _mainPurple)),
+                              Text(DateFormat('h:mm a').format(reply.timestamp), style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(reply.content, style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Colors.black)),
+                        ],
+                      );
+                    },
                   );
                 },
               ),
@@ -264,7 +371,9 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
           hintText: "Type your reply...",
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          suffixIcon: IconButton(onPressed: _submitReply, icon: Icon(Icons.send_rounded, color: _mainPurple)),
+          suffixIcon: _isSending
+              ? Padding(padding: const EdgeInsets.all(12), child: CircularProgressIndicator(strokeWidth: 2, color: _mainPurple))
+              : IconButton(onPressed: _submitReply, icon: Icon(Icons.send_rounded, color: _mainPurple)),
         ),
       ),
     );
@@ -286,7 +395,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
           child: Center(
               child: Image.asset(
                   'assets/images/solidarity_1.png',
-                  width: 50, // Increased size
+                  width: 50,
                   height: 50,
                   fit: BoxFit.contain,
                   color: _mainPurple
@@ -319,7 +428,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
         shape: const CircleBorder(),
         child: Container(
           decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
-          child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)), // Increased size
+          child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
         ),
       ),
     );
@@ -334,8 +443,8 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _navItem('assets/images/solidarity_1.png', 'Community', 0),
-                _navItem('assets/images/calendar.png', 'Schedule', 1),
+                _navItem('assets/images/solidarity_1.png', 'Community', true),
+                _navItem('assets/images/calendar.png', 'Schedule', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StuSchedule()))),
               ],
             ),
           ),
@@ -344,8 +453,8 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _navItem('assets/images/qa.png', 'Q&A', 2),
-                _navItem('assets/images/user.png', 'Profile', 3),
+                _navItem('assets/images/qa.png', 'Q&A', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StuQAScreen()))),
+                _navItem('assets/images/user.png', 'Profile', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()))),
               ],
             ),
           ),
@@ -363,8 +472,8 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _navItem('assets/images/solidarity_1.png', 'Community', 0),
-                _navItem('assets/images/classroom_1.png', 'Halls', 1),
+                _navItem('assets/images/solidarity_1.png', 'Community', true),
+                _navItem('assets/images/classroom_1.png', 'Halls', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HallsScreen()))),
               ],
             ),
           ),
@@ -373,8 +482,8 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _navItem('assets/images/qa.png', 'Q&A', 2),
-                _navItem('assets/images/user.png', 'Profile', 3),
+                _navItem('assets/images/qa.png', 'Q&A', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QAScreen()))),
+                _navItem('assets/images/user.png', 'Profile', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()))),
               ],
             ),
           ),
@@ -410,30 +519,9 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
     );
   }
 
-  Widget _navItem(String path, String label, int index) {
-    bool sel = _selectedIndex == index;
+  Widget _navItem(String path, String label, bool sel, {VoidCallback? onTap}) {
     return GestureDetector(
-      onTap: () async {
-        setState(() => _selectedIndex = index);
-        if (index == 0) {
-          Navigator.of(context).pop();
-        } else if (index == 1) {
-          if (_isStudent) {
-            await Navigator.push(context, MaterialPageRoute(builder: (_) => const StuSchedule()));
-          } else {
-            await Navigator.push(context, MaterialPageRoute(builder: (_) => const HallsScreen()));
-          }
-        } else if (index == 2) {
-          if (_isStudent) {
-            await Navigator.push(context, MaterialPageRoute(builder: (_) => const StuQAScreen()));
-          } else {
-            await Navigator.push(context, MaterialPageRoute(builder: (_) => const QAScreen()));
-          }
-        } else if (index == 3) {
-          await Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
-        }
-        if (mounted) setState(() => _selectedIndex = -1);
-      },
+      onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

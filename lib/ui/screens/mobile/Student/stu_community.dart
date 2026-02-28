@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uninexus/model/community_model.dart';
+import 'package:uninexus/services/firebase/community_service.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import '../settings_screen.dart';
 import 'stu_schedule.dart';
@@ -9,18 +11,6 @@ import 'package:uninexus/ui/screens/mobile/Faculty/halls_screen.dart';
 import 'create_community_post_screen.dart';
 import 'community_post_detail_screen.dart';
 
-class PostReply {
-  final String author;
-  final String text;
-  PostReply({required this.author, required this.text});
-}
-
-class CommunityPost {
-  final String title;
-  final String body;
-  final List<PostReply> replies;
-  CommunityPost({required this.title, required this.body, this.replies = const []});
-}
 
 class StuCommunity extends StatefulWidget {
   const StuCommunity({super.key});
@@ -30,25 +20,15 @@ class StuCommunity extends StatefulWidget {
 }
 
 class _StuCommunityState extends State<StuCommunity> {
+  // Service
+  final _communityService = CommunityService();
+
   final int _selectedIndex = 0; // Community is selected
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
   final Color _textIndigo = const Color(0xFF5C5C80);
 
   bool _isStudent = true;
-
-  final List<CommunityPost> _posts = [
-    CommunityPost(
-      title: 'GPIO pins usage on Raspberry Pi',
-      body: 'How do I use GPIO pins and ADC on Raspberry Pi with Python? I need to read analog sensor values but the Pi only has digital pins.',
-      replies: [PostReply(author: 'Dr. Ahmed', text: 'You need an external ADC chip like MCP3008.')],
-    ),
-    CommunityPost(
-      title: 'CCNA R&S new task Protocols',
-      body: 'Is there a way to find the ports and protocols currently open or being used by the ECS Fargate Services...',
-      replies: [PostReply(author: 'Ammar Tarek', text: 'You should examine the ECS task definitions.')],
-    ),
-  ];
 
   @override
   void initState() {
@@ -57,12 +37,16 @@ class _StuCommunityState extends State<StuCommunity> {
   }
 
   Future<void> _checkUserType() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String id = prefs.getString('ID') ?? "";
-    if (mounted) {
-      setState(() {
-        _isStudent = !id.toUpperCase().startsWith('FA');
-      });
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String id = prefs.getString('ID') ?? "";
+      if (mounted) {
+        setState(() {
+          _isStudent = !id.toUpperCase().startsWith('FA');
+        });
+      }
+    } catch (e) {
+      // Handle error
     }
   }
 
@@ -92,18 +76,46 @@ class _StuCommunityState extends State<StuCommunity> {
                   children: [
                     _buildTopHeader(),
                     const SizedBox(height: 30),
+
+                    // --- STREAM BUILDER FOR REAL DATA ---
                     Expanded(
-                      child: ListView.separated(
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: _posts.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 16),
-                        itemBuilder: (context, i) => _buildPostCard(_posts[i]),
+                      child: StreamBuilder<List<CommunityPostModel>>(
+                        stream: _communityService.getPostsStream(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return Center(child: CircularProgressIndicator(color: _mainPurple));
+                          }
+
+                          if (snapshot.hasError) {
+                            return Center(child: Text("Error loading posts", style: TextStyle(color: Colors.red, fontFamily: 'SpaceGrotesk')));
+                          }
+
+                          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                            return const Center(
+                                child: Text(
+                                    "No questions yet. Be the first to ask!",
+                                    style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey)
+                                )
+                            );
+                          }
+
+                          final posts = snapshot.data!;
+
+                          return ListView.separated(
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: posts.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 16),
+                            itemBuilder: (context, i) => _buildPostCard(posts[i]),
+                          );
+                        },
                       ),
                     ),
                     const SizedBox(height: 100),
                   ],
                 ),
               ),
+
+              // Floating "Create Post" Button
               Positioned(
                 bottom: 130,
                 right: 24,
@@ -116,13 +128,12 @@ class _StuCommunityState extends State<StuCommunity> {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
                     ),
-                    // --- INCREASED LOGO SIZE ---
                     child: Center(
                       child: Image.asset(
                         'assets/images/solidarity_1.png',
-                        width: 50,  // Increased from 40
-                        height: 50, // Explicit height forces it to scale
-                        fit: BoxFit.contain, // Ensures it sizes up without clipping
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.contain,
                         color: _mainPurple,
                       ),
                     ),
@@ -140,7 +151,6 @@ class _StuCommunityState extends State<StuCommunity> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // --- ADDED NAVIGATION HERE ---
         GestureDetector(
           onTap: () {
             Navigator.push(
@@ -169,44 +179,110 @@ class _StuCommunityState extends State<StuCommunity> {
     );
   }
 
-  Widget _buildPostCard(CommunityPost post) {
-    return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CommunityPostDetailScreen(post: post))),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+  // --- UPDATED CARD WITH SWIPE TO DELETE ---
+  Widget _buildPostCard(CommunityPostModel post) {
+    return Dismissible(
+      key: Key(post.id),
+      // Only allow swipe if NOT a student (i.e., Faculty)
+      direction: _isStudent ? DismissDirection.none : DismissDirection.endToStart,
+      background: Container(
+        padding: const EdgeInsets.only(right: 25),
+        alignment: Alignment.centerRight,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.95),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _mainPurple.withOpacity(0.15), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.12),
-              blurRadius: 18,
-              spreadRadius: 2,
-              offset: const Offset(0, 6),
-            ),
-          ],
+          color: Colors.redAccent.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(20), // Match the card radius
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.help_outline_rounded, color: _mainPurple, size: 24),
-                const SizedBox(width: 10),
-                Expanded(child: Text(post.title, style: TextStyle(fontFamily: 'Batangas', fontSize: 15, fontWeight: FontWeight.bold, color: _primaryBlue))),
-                Icon(Icons.keyboard_arrow_down_rounded, color: _mainPurple),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(post.body, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 13, color: _textIndigo, height: 1.4)),
-          ],
+        child: const Icon(Icons.delete_forever_rounded, color: Colors.white, size: 32),
+      ),
+      confirmDismiss: (direction) async {
+        return await showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text("Delete Post", style: TextStyle(color: _mainPurple, fontWeight: FontWeight.bold)),
+            content: const Text("Are you sure you want to delete this question?"),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text("Delete", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
+              ),
+            ],
+          ),
+        );
+      },
+      onDismissed: (direction) {
+        // Call the service to delete
+        _communityService.deletePost(post.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Post deleted"))
+        );
+      },
+      child: GestureDetector(
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CommunityPostDetailScreen(post: post))),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.9),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: _mainPurple.withOpacity(0.15), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.12),
+                blurRadius: 18,
+                spreadRadius: 2,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.help_outline_rounded, color: _mainPurple, size: 24),
+                  const SizedBox(width: 10),
+                  Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                              post.title,
+                              style: TextStyle(fontFamily: 'Batangas', fontSize: 15, fontWeight: FontWeight.bold, color: _primaryBlue)
+                          ),
+                          // Display Role and Name correctly
+                          Text(
+                            "${post.userRole} • ${post.userName}",
+                            style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      )
+                  ),
+                  // Display Reply Count if > 0
+                  if (post.replyCount > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(color: _mainPurple.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                      child: Text("${post.replyCount}", style: TextStyle(color: _mainPurple, fontSize: 12, fontWeight: FontWeight.bold)),
+                    ),
+                  const SizedBox(width: 5),
+                  Icon(Icons.keyboard_arrow_right_rounded, color: _mainPurple),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                  post.content,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 13, color: _textIndigo, height: 1.4)
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // --- INCREASED CENTRAL HOME ICON SIZE ---
   Widget _buildHomeFab() {
     return Container(
       height: 72,
@@ -229,7 +305,7 @@ class _StuCommunityState extends State<StuCommunity> {
         shape: const CircleBorder(),
         child: Container(
           decoration: BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [_primaryBlue, _mainPurple])),
-          child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)), // Increased to 48
+          child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
         ),
       ),
     );

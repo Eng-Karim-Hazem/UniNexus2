@@ -1,11 +1,17 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uninexus/model/community_model.dart';
+import 'package:uninexus/services/firebase/community_service.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
+
 import '../settings_screen.dart';
 import 'stu_schedule.dart';
 import '../profile_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/qa_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/halls_screen.dart';
+
+
 
 class CreateCommunityPostScreen extends StatefulWidget {
   const CreateCommunityPostScreen({super.key});
@@ -22,6 +28,10 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _questionController = TextEditingController();
+
+  // --- ADDED SERVICE AND LOADING STATE ---
+  final _communityService = CommunityService();
+  bool _isLoading = false;
 
   // Role-based logic variables
   bool _isStudent = true;
@@ -40,6 +50,94 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
         // Assume student unless ID starts with 'FA' (Faculty)
         _isStudent = !id.toUpperCase().startsWith('FA');
       });
+    }
+  }
+
+  // --- ADDED SUBMIT FUNCTIONALITY ---
+  Future<void> _submitPost() async {
+    // 1. Validation
+    if (_titleController.text.trim().isEmpty || _questionController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please fill in both Title and Question fields")));
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 2. Get User Data
+      final prefs = await SharedPreferences.getInstance();
+      String userId = prefs.getString('userCode') ?? prefs.getString('ID') ?? 'unknown_id';
+
+      // Determine Role based on ID prefix
+      bool isFaculty = userId.toUpperCase().startsWith('FA');
+      String detectedRole = isFaculty ? 'Faculty' : 'Student';
+      String faculty = prefs.getString('userFaculty') ?? 'General';
+
+      // 3. Fetch Name (Robust Logic)
+      String fName = prefs.getString('fName') ?? prefs.getString('userFirstName') ?? '';
+      String lName = prefs.getString('lName') ?? prefs.getString('userLastName') ?? '';
+
+      // If missing locally, fetch from Firestore
+      if (fName.isEmpty && userId.isNotEmpty) {
+        try {
+          if (isFaculty) {
+            var doc = await FirebaseFirestore.instance.collection('faculty').doc(userId).get();
+            if (doc.exists) {
+              fName = doc.data()?['fName'] ?? '';
+              lName = doc.data()?['lName'] ?? '';
+            }
+          } else {
+            var doc = await FirebaseFirestore.instance.collection('students').doc(userId).get();
+            if (doc.exists) {
+              fName = doc.data()?['fName'] ?? '';
+              lName = doc.data()?['lName'] ?? '';
+            }
+          }
+        } catch (e) {
+          debugPrint("Error fetching user name: $e");
+        }
+      }
+
+      // 4. Format Display Name
+      String displayName = "$fName $lName".trim();
+
+      if (displayName.isEmpty) {
+        displayName = isFaculty ? 'Faculty Member' : 'Student';
+      } else {
+        if (isFaculty) {
+          displayName = "Dr. $displayName";
+        }
+      }
+
+      // 5. Create Model
+      CommunityPostModel newPost = CommunityPostModel(
+        userId: userId,
+        userName: displayName, // Saves "Dr. Abdo..." or "Karim..."
+        userRole: detectedRole,
+        userFaculty: faculty,
+        title: _titleController.text.trim(),
+        content: _questionController.text.trim(),
+        timestamp: DateTime.now(),
+        replyCount: 0,
+      );
+
+      // 6. Call Service
+      await _communityService.createPost(newPost);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Post Submitted Successfully!", style: TextStyle(fontFamily: 'SpaceGrotesk')))
+        );
+        Navigator.pop(context); // Go back to Community Feed
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error: ${e.toString()}")));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -199,10 +297,8 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
       width: 220,
       height: 55,
       child: OutlinedButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Post Submitted!", style: TextStyle(fontFamily: 'SpaceGrotesk'))));
-          Navigator.pop(context);
-        },
+        // --- UPDATED ON PRESSED ---
+        onPressed: _isLoading ? null : _submitPost,
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: _mainPurple, width: 2),
           shape: RoundedRectangleBorder(
@@ -210,7 +306,14 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
           ),
           backgroundColor: Colors.white,
         ),
-        child: Text(
+        // --- ADDED LOADING INDICATOR ---
+        child: _isLoading
+            ? SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(color: _mainPurple, strokeWidth: 2.5)
+        )
+            : Text(
           "Submit",
           style: TextStyle(
             fontFamily: 'Batangas',

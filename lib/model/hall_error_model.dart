@@ -1,7 +1,6 @@
-import 'dart:convert';
-
 class HallErrorModel {
   final String hallName;
+  final String department; // --- NEW FIELD ---
   final String errorType;
   final String description;
   final String? attachment; // Attachment stored as base64 string
@@ -9,6 +8,7 @@ class HallErrorModel {
 
   HallErrorModel({
     required this.hallName,
+    required this.department, // --- REQUIRED IN CONSTRUCTOR ---
     required this.errorType,
     required this.description,
     this.attachment,
@@ -18,11 +18,12 @@ class HallErrorModel {
   // Converts the model into a Map to send to Firestore
   Map<String, dynamic> toFirestore() {
     return {
-      'hallName': hallName,         // From "Hall name" input
-      'errorType': errorType,       // From "Error Type" dropdown
-      'description': description,   // From "Description" field
-      'attachment': attachment, // From "Attachment" as Base64
-      'timestamp': timestamp,       // To track when the error was reported
+      'hallName': hallName,
+      'department': department, // --- ADDED TO MAP ---
+      'errorType': errorType,
+      'description': description,
+      'attachment': attachment,
+      'timestamp': timestamp,
     };
   }
 
@@ -30,6 +31,7 @@ class HallErrorModel {
   factory HallErrorModel.fromFirestore(Map<String, dynamic> data) {
     return HallErrorModel(
       hallName: data['hallName'] ?? '',
+      department: data['department'] ?? '', // --- ADDED TO FACTORY ---
       errorType: data['errorType'] ?? '',
       description: data['description'] ?? '',
       attachment: data['attachment'],
