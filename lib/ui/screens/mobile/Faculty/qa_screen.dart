@@ -143,6 +143,10 @@ class _QAScreenState extends State<QAScreen> {
   }
 
   Widget _buildQuestionCard(Map<String, dynamic> item, String docId) {
+    // 1. EXTRACT THE SENDER ID
+    // Replace 'sName' with the exact field name in your QnA collection that holds the student ID (e.g., "ST2022...")
+    String studentId = item['ID'] ?? "";
+
     return Container(
       decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.75),
@@ -205,7 +209,11 @@ class _QAScreenState extends State<QAScreen> {
             Align(
               alignment: Alignment.centerRight,
               child: GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const WhoSentThisScreen())),
+                onTap: () => Navigator.push(
+                    context,
+                    // Pass the extracted ID here. Removed 'const' because studentId is dynamic.
+                    MaterialPageRoute(builder: (context) => WhoSentThisScreen(senderId: studentId))
+                ),
                 child: Text("Who sent this?", style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 12, color: Colors.grey.shade600, decoration: TextDecoration.underline)),
               ),
             ),

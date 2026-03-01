@@ -202,13 +202,15 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
       children: [
         // --- ADDED NAVIGATION HERE ---
         GestureDetector(
-          onTap: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen())
-            );
-          },
-          child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
+          onTap: () => Navigator.pop(context),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: _mainPurple),
+          ),
         ),
 
         const Text(
