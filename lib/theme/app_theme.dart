@@ -477,7 +477,7 @@ class AppDecorations {
     return Container(width: 1.5, height: height, color: AppColors.divider);
   }
 
-  // Profile info horizontal divider — stroke color 0xFF32006C
+  // Profile info horizontal divider
   static const Divider profileInfoDivider = Divider(
     color: AppColors.infoDivider,
     thickness: 1,

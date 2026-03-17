@@ -56,13 +56,13 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
 
-                  /// GRID
+                  // GRID
                   Expanded(
                     flex: selectedSettingTab == null ? 1 : 35,
                     child: _buildGrid(),
                   ),
 
-                  /// DETAIL PANEL
+                  // DETAIL PANEL
                   if (selectedSettingTab != null) ...[
                     const SizedBox(width: 16),
                     Expanded(
@@ -79,9 +79,9 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// GRID
+  // GRID
   Widget _buildGrid() {
-    // 6 items: no panel → 3 cols × 2 rows | panel open → 2 cols × 3 rows
+
     final columnCount = selectedSettingTab == null ? 3 : 2;
     final rowCount    = selectedSettingTab == null ? 2 : 3;
 
@@ -122,7 +122,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// DETAIL PANEL
+  // DETAIL PANEL
   Widget _buildDetailPanel() {
     return Container(
       padding: const EdgeInsets.all(32),
@@ -149,7 +149,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// SETTINGS CARD
+  // SETTINGS CARD
   Widget _buildSettingCard(Map<String, String> item) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
@@ -180,7 +180,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// TAB SWITCH
+  // TAB SWITCH
   Widget _getContentForTab(int index) {
     switch (index) {
       case 0:  return _buildAccountManagement();
@@ -192,7 +192,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     }
   }
 
-  /// ACCOUNT
+  // ACCOUNT
   Widget _buildAccountManagement() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,7 +208,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// NOTIFICATIONS
+  // NOTIFICATIONS
   Widget _buildNotificationSettings() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,7 +224,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// EXPORT
+  // EXPORT
   Widget _buildExportLogs() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,7 +239,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// FEEDBACK
+  // FEEDBACK
   Widget _buildFeedback() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -278,7 +278,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// APP INFO
+  // APP INFO
   Widget _buildAppInfo() {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,7 +290,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// LOGOUT
+  // LOGOUT
   Future<void> _logout() async {
     final confirm = await showDialog(
       context: context,
@@ -323,7 +323,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// INPUT
+  // INPUT
   Widget _buildTextField(String label, String hint) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -345,7 +345,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// DROPDOWN
+  // DROPDOWN
   Widget _buildDropdown(String label) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -370,7 +370,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// BUTTON
+  //BUTTON
   Widget _buildPrimaryButton(String text) {
     return OutlinedButton(
       onPressed: () {},
