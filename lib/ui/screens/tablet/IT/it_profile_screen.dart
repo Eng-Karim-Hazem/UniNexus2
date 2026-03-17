@@ -29,7 +29,7 @@ class ITProfileScreen extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // Profile details card — fills all remaining space, no white gap
+            // Profile details card
             Expanded(
               child: GlassCard(
                 padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 0),
