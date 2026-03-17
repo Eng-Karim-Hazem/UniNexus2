@@ -24,41 +24,11 @@ class SecurityDashboardScreen extends StatelessWidget {
           children: [
 
             /// GREETING CARD
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(28, 20, 28, 20),
-                  decoration: AppDecorations.greetingCard,
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Hi Hassan!",
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        "Good morning",
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        "October 11, 2026",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            // Greeting card
+            const AppGreetingCard(
+              name: 'Hassan',
+              subtitle: 'Good morning',
+              date: 'October 11, 2026',
             ),
 
             const SizedBox(height: 28),
@@ -182,7 +152,8 @@ class SecurityDashboardScreen extends StatelessWidget {
                       children: [
 
                         /// ANNOUNCEMENTS
-                        GlassCard(
+                        Expanded(
+                          child: GlassCard(
                           padding: const EdgeInsets.all(20),
                           child: Column(
                             children: const [
@@ -199,6 +170,7 @@ class SecurityDashboardScreen extends StatelessWidget {
                               ),
                             ],
                           ),
+                        ),
                         ),
 
                         const SizedBox(height: 26),
@@ -417,8 +389,8 @@ class _ActionCard extends StatelessWidget {
               right: 0,
               child: Image.asset(
                 imagePath,
-                width: 42,
-                height: 42,
+                width: 50,
+                height: 50,
                 fit: BoxFit.contain,
                 errorBuilder: (_, __, ___) =>
                 const Icon(Icons.image, size: 42),
@@ -432,7 +404,8 @@ class _ActionCard extends StatelessWidget {
                 label,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontFamily: AppFonts.batangas,
+                  fontSize: 22,
                 ),
               ),
             ),

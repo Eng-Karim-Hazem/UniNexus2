@@ -31,11 +31,12 @@ class SecurityGateEntryScreen extends StatelessWidget {
             const Text(
               "Gate Entry",
               style: TextStyle(
-                  fontSize: 26,
+                  fontSize: 40,
+                  fontFamily: AppFonts.batangas,
                   fontWeight: FontWeight.bold),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 55),
 
             Expanded(
               child: Row(
