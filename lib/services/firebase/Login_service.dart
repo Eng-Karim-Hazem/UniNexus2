@@ -20,7 +20,7 @@ class LoginService {
       switch (prefix) {
         case 'ST': return await _loginStudent(cleanCode, cleanPassword);
         case 'FA': return await _loginFaculty(cleanCode, cleanPassword);
-        case 'IT':
+        case 'MN':
         case 'SC':
         case 'AD': return await _loginStaff(cleanCode, cleanPassword);
         default: return {'status': LoginResult.invalidPrefix};

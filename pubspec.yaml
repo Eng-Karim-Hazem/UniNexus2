@@ -28,6 +28,7 @@ flutter:
   assets:
     - assets/images/
     - assets/images_tab/
+    - assets/icons/
   fonts:
     - family: Batangas
       fonts:
