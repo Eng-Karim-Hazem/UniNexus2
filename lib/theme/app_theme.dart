@@ -37,6 +37,9 @@ class AppColors {
   static const Color lightGreyStart = Color(0xFFF3F4F6);
   static const Color lightGreyEnd   = Color(0xFFE5E7EB);
 
+  // Profile info divider stroke
+  static const Color infoDivider    = Color(0xFF32006C);
+
   // Gradients
   static const LinearGradient sidebarGradient = LinearGradient(
     begin: Alignment.topCenter,
@@ -473,6 +476,13 @@ class AppDecorations {
   static Container verticalDivider({double height = 24}) {
     return Container(width: 1.5, height: height, color: AppColors.divider);
   }
+
+  // Profile info horizontal divider — stroke color 0xFF32006C
+  static const Divider profileInfoDivider = Divider(
+    color: AppColors.infoDivider,
+    thickness: 1,
+    height: 1,
+  );
 }
 
 
@@ -551,7 +561,7 @@ class AppGreetingCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15), // Soft shadow
+            color: Colors.black.withOpacity(0.15),
             blurRadius: 15,
             spreadRadius: 2,
             offset: const Offset(10, 4),
@@ -575,7 +585,7 @@ class AppGreetingCard extends StatelessWidget {
             subtitle,
             style: const TextStyle(
               fontSize: 14,
-              fontWeight: FontWeight.w700, // Bold dark grey like the screenshot
+              fontWeight: FontWeight.w700,
               fontFamily: AppFonts.spaceGrotesk,
               color: AppColors.textDark,
             ),
@@ -587,7 +597,7 @@ class AppGreetingCard extends StatelessWidget {
               fontSize: 13,
               fontWeight: FontWeight.w700,
               fontFamily: AppFonts.spaceGrotesk,
-              color: AppColors.primary, // Purple date
+              color: AppColors.primary,
             ),
           ),
         ],
@@ -595,6 +605,7 @@ class AppGreetingCard extends StatelessWidget {
     );
   }
 }
+
 // Profile header with avatar and name/ID
 class ProfileHeader extends StatelessWidget {
   final String iconAsset;

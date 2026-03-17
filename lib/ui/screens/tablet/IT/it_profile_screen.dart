@@ -15,7 +15,7 @@ class ITProfileScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Profile', style: AppTextStyles.largeHeading),
-            const SizedBox(height: 20),
+            const SizedBox(height: 45),
 
             // Profile header card
             GlassCard(
@@ -29,21 +29,24 @@ class ITProfileScreen extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // Profile details card
-            GlassCard(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              child: Column(
-                children: [
-                  _buildInfoRow('Department',  'IT'),
-                  const SizedBox(height: 16),
-                  _buildInfoRow('Position',    'Senior Technician'),
-                  const SizedBox(height: 16),
-                  _buildInfoRow('E-mail',      'ahmed3044@gmail.com'),
-                  const SizedBox(height: 16),
-                  _buildInfoRow('Phone no.',   '01920202343'),
-                  const SizedBox(height: 16),
-                  _buildInfoRow('National ID', '2838329204792-32'),
-                ],
+            // Profile details card — fills all remaining space, no white gap
+            Expanded(
+              child: GlassCard(
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildInfoRow('Department',  'IT'),
+                    AppDecorations.profileInfoDivider,
+                    _buildInfoRow('Position',    'Senior Technician'),
+                    AppDecorations.profileInfoDivider,
+                    _buildInfoRow('E-mail',      'ahmed3044@gmail.com'),
+                    AppDecorations.profileInfoDivider,
+                    _buildInfoRow('Phone no.',   '01920202343'),
+                    AppDecorations.profileInfoDivider,
+                    _buildInfoRow('National ID', '2838329204792-32'),
+                  ],
+                ),
               ),
             ),
           ],
@@ -53,25 +56,17 @@ class ITProfileScreen extends StatelessWidget {
   }
 
   Widget _buildInfoRow(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 120,
-          child: Text(label,
-              style: AppTextStyles.profileInfoLabelStyle,
-              textAlign: TextAlign.right),
-        ),
-        const SizedBox(
-          width: 20,
-          child: Text(':',
-              style: AppTextStyles.profileInfoLabelStyle,
-              textAlign: TextAlign.center),
-        ),
-        Expanded(
-          child: Text(value, style: AppTextStyles.profileInfoValueStyle),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 18),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text('$label : ', style: AppTextStyles.profileInfoLabelStyle),
+          Expanded(
+            child: Text(value, style: AppTextStyles.profileInfoValueStyle),
+          ),
+        ],
+      ),
     );
   }
 }

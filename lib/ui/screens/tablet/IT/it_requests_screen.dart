@@ -88,29 +88,29 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
   Widget build(BuildContext context) {
     return ITScreenBackground(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('User Requests', style: AppTextStyles.heading),
-            const SizedBox(height: 24),
+            const Text('User Requests', style: AppTextStyles.largeHeading),
+            const SizedBox(height: 45),
+
             Expanded(
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Left panel
                   Expanded(
-                    flex: 4,
+                    flex: 45,
                     child: GlassCard(
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(12),
                       child: _requests.isEmpty
                           ? Center(
                           child: Text('No pending requests',
-                              style: AppTextStyles.body))
-                          : ListView.separated(
+                              style: AppTextStyles.emptyStateStyle))
+                          : ListView.builder(
+                        padding: EdgeInsets.zero,
                         itemCount: _requests.length,
-                        separatorBuilder: (_, __) =>
-                        const SizedBox(height: 12),
                         itemBuilder: (_, i) {
                           final r = _requests[i];
                           return _RequestTile(
@@ -123,14 +123,14 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                     ),
                   ),
 
-                  const SizedBox(width: 20),
+                  const SizedBox(width: 16),
 
                   // Right panel
                   Expanded(
-                    flex: 5,
+                    flex: 55,
                     child: _selected == null
                         ? GlassCard(
-                      child: const Center(
+                      child: Center(
                         child: Text(
                           'Select a request to view details',
                           style: AppTextStyles.emptyStateStyle,
@@ -170,39 +170,25 @@ class _RequestTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary.withOpacity(0.12)
-              : Colors.white.withOpacity(0.55),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primary
-                : AppColors.primary.withOpacity(0.3),
-            width: isSelected ? 2 : 1.2,
-          ),
-          boxShadow: isSelected
-              ? [
-            BoxShadow(
-              color: AppColors.primary.withOpacity(0.15),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            )
-          ]
-              : [],
-        ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: AppDecorations.smallCard(isSelected: isSelected),
         child: Row(
           children: [
             Image.asset(
               'assets/icons/rotation_lock.png',
-              width: 38, height: 38,
+              width: 28, height: 28,
               fit: BoxFit.contain,
               color: AppColors.primary,
               errorBuilder: (_, __, ___) => const Icon(
-                  Icons.lock_reset_rounded, color: AppColors.primary, size: 38),
+                  Icons.lock_reset_rounded, color: AppColors.primary, size: 28),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              width: 1.5,
+              height: 38,
+              color: AppColors.primary.withOpacity(0.3),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -243,29 +229,32 @@ class _RequestDetailPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GlassCard(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Image.asset(
                 'assets/icons/rotation_lock.png',
-                width: 44, height: 44,
+                width: 40, height: 40,
                 fit: BoxFit.contain,
                 color: AppColors.primary,
                 errorBuilder: (_, __, ___) => const Icon(
-                    Icons.lock_reset_rounded, color: AppColors.primary, size: 44),
+                    Icons.lock_reset_rounded, color: AppColors.primary, size: 40),
               ),
-              const SizedBox(width: 14),
-              Container(width: 2, height: 36, color: AppColors.divider),
-              const SizedBox(width: 14),
-              Text(request.type, style: AppTextStyles.requestDetailsHeaderStyle),
+              const SizedBox(width: 16),
+              Container(width: 2, height: 50, color: AppColors.divider),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(request.type, style: AppTextStyles.requestDetailsHeaderStyle),
+              ),
             ],
           ),
 
-          const SizedBox(height: 28),
+          const SizedBox(height: 24),
 
           // Fields
           _InfoRow(label: 'Requested by', value: request.requesterName, bold: true),
@@ -295,6 +284,8 @@ class _RequestDetailPanel extends StatelessWidget {
     );
   }
 }
+
+// Info row widget
 
 class _InfoRow extends StatelessWidget {
   final String label;
