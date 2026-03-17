@@ -68,7 +68,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Hall Errors', style: AppTextStyles.largeHeading),
-            const SizedBox(height: 20),
+            const SizedBox(height: 45),
 
             Expanded(
               child: Row(
@@ -78,63 +78,75 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                   Expanded(
                     flex: 45,
                     child: GlassCard(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: ListView.builder(
-                          itemCount: _errors.length,
-                          itemBuilder: (context, index) {
-                            final e = _errors[index];
-                            final isSelected = _selectedIndex == index;
-                            return GestureDetector(
-                              onTap: () => setState(() => _selectedIndex = index),
-                              child: Container(
-                                margin: const EdgeInsets.only(bottom: 10),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 14, vertical: 12),
-                                decoration: AppDecorations.smallCard(
-                                    isSelected: isSelected),
-                                child: Row(
-                                  children: [
-                                    Image.asset('assets/icons/warning.png',
-                                        width: 28, height: 28,
-                                        errorBuilder: (_, __, ___) => const Icon(
-                                            Icons.warning_amber_rounded,
-                                            size: 28, color: AppColors.primary)),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(e.hall,
-                                              style: AppTextStyles.hallListNumberStyle),
-                                          const SizedBox(height: 2),
-                                          Text(e.issue,
-                                              style: AppTextStyles.hallListErrorStyle,
-                                              overflow: TextOverflow.ellipsis),
-                                        ],
-                                       ),
+                      // --- NOTE 1 FIX: Reduced padding here so the cards get closer to the border ---
+                      padding: const EdgeInsets.all(12),
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero, // Removed extra list padding
+                        itemCount: _errors.length,
+                        itemBuilder: (context, index) {
+                          final e = _errors[index];
+                          final isSelected = _selectedIndex == index;
+                          return GestureDetector(
+                            onTap: () => setState(() => _selectedIndex = index),
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 12),
+                              decoration: AppDecorations.smallCard(
+                                  isSelected: isSelected),
+                              child: Row(
+                                children: [
+                                  Image.asset('assets/icons/warning.png',
+                                      width: 28, height: 28,
+                                      errorBuilder: (_, __, ___) => const Icon(
+                                          Icons.warning_amber_rounded,
+                                          size: 28, color: AppColors.primary)),
+
+                                  const SizedBox(width: 12),
+
+                                  // --- NOTE 2 FIX: Added the vertical line ---
+                                  Container(
+                                      width: 1.5,
+                                      height: 38,
+                                      color: AppColors.primary.withOpacity(0.3)
+                                  ),
+
+                                  const SizedBox(width: 12),
+
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(e.hall,
+                                            style: AppTextStyles.hallListNumberStyle),
+                                        const SizedBox(height: 2),
+                                        Text(e.issue,
+                                            style: AppTextStyles.hallListErrorStyle,
+                                            overflow: TextOverflow.ellipsis),
+                                      ],
                                     ),
-                                    if (e.hasAttachment)
-                                      Padding(
-                                        padding: const EdgeInsets.only(left: 6),
-                                        child: Icon(Icons.attach_file,
-                                            size: 20, color: AppColors.textLight),
+                                  ),
+
+                                  if (e.hasAttachment)
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 6),
+                                      child: Icon(Icons.attach_file,
+                                          size: 26, color: AppColors.textLight),
+                                    ),
+                                  if (e.hasAlert)
+                                    Container(
+                                      width: 14, height: 14,
+                                      margin: const EdgeInsets.only(left: 6),
+                                      decoration: const BoxDecoration(
+                                        color: AppColors.alertOrange,
+                                        shape: BoxShape.circle,
                                       ),
-                                    if (e.hasAlert)
-                                      Container(
-                                        width: 14, height: 14,
-                                        margin: const EdgeInsets.only(left: 6),
-                                        decoration: const BoxDecoration(
-                                          color: AppColors.alertOrange,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                  ],
-                                ),
+                                    ),
+                                ],
                               ),
-                            );
-                          },
-                        ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),

@@ -25,26 +25,11 @@ class ITDashboardScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Greeting card
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(24, 18, 24, 18),
-                  decoration: AppDecorations.greetingCard,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text('Hi Eng. Ahmed!', style: AppTextStyles.greetingTitleStyle),
-                      SizedBox(height: 4),
-                      Text('Good morning',   style: AppTextStyles.greetingMorningStyle),
-                      SizedBox(height: 2),
-                      Text('October 11, 2026', style: AppTextStyles.greetingDateStyle),
-                    ],
-                  ),
-                ),
-              ),
+            // Greeting card
+            const AppGreetingCard(
+              name: 'Eng. Ahmed',
+              subtitle: 'Good morning',
+              date: 'October 11, 2026',
             ),
 
             const SizedBox(height: 20),
@@ -82,36 +67,41 @@ class ITDashboardScreen extends StatelessWidget {
                     flex: 4,
                     child: Column(
                       children: [
-                        // Announcements preview
-                        GlassCard(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _AnnouncementCard(
-                                sender: 'Management',
-                                message: 'We need to update our policy rules',
-                              ),
-                              const SizedBox(height: 10),
-                              _AnnouncementCard(
-                                sender: 'Management',
-                                message: 'The next board meeting will be on 27/5',
-                              ),
-                              const SizedBox(height: 10),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: GestureDetector(
-                                  onTap: () => onNavigate(UninexusTab.announcements),
-                                  child: const Text('View All >', style: AppTextStyles.viewLinkStyle),
+                        // --- CHANGED: Wrapped in Expanded ---
+                        Expanded(
+                          child: GlassCard(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const _AnnouncementCard(
+                                  sender: 'Management',
+                                  message: 'We need to update our policy rules',
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 10),
+                                const _AnnouncementCard(
+                                  sender: 'Management',
+                                  message: 'The next board meeting will be on 27/5',
+                                ),
+
+                                // --- CHANGED: Added Spacer to push "View All" to the bottom ---
+                                const Spacer(),
+
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: GestureDetector(
+                                    onTap: () => onNavigate(UninexusTab.announcements),
+                                    child: const Text('View All >', style: AppTextStyles.viewLinkStyle),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
 
                         const SizedBox(height: 16),
 
-                        // Stats row
+                        // Stats row (Now pushed to the bottom)
                         SizedBox(
                           height: 250,
                           child: Row(

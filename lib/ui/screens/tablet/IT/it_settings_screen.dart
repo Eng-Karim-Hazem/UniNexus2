@@ -5,6 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
+import '../login_page.dart';
+import '../welcome_screen.dart';
+
 class ITSettingsScreen extends StatefulWidget {
   final void Function(UninexusTab) onNavigate;
 
@@ -351,18 +354,24 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
       builder: (_) => AlertDialog(
         title: const Text("Confirm Logout"),
         content:
-        const Text("Are you sure you want to logout?"),
+        const Text(
+            "Are you sure you want to logout?"),
         actions: [
 
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () =>
+                Navigator.pop(context, false),
             child: const Text("Cancel"),
           ),
 
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Logout",
-                style: TextStyle(color: Colors.red)),
+            onPressed: () =>
+                Navigator.pop(context, true),
+            child: const Text(
+              "Logout",
+              style:
+              TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -370,13 +379,19 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
 
     if (confirm != true) return;
 
-    final prefs = await SharedPreferences.getInstance();
+    final prefs =
+    await SharedPreferences.getInstance();
 
     await prefs.clear();
 
-    widget.onNavigate(UninexusTab.settings);
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const WelcomePage(),
+      ),
+          (route) => false,
+    );
   }
-
   /// INPUT
   Widget _buildTextField(String label, String hint) {
     return Column(

@@ -284,11 +284,12 @@ class AppTextStyles {
     fontFamily: AppFonts.batangas, color: AppColors.textDark,
   );
   static const TextStyle greetingMorningStyle = TextStyle(
-    fontSize: 14, color: AppColors.textLight,
+    fontSize: 14, fontFamily: AppFonts.spaceGrotesk
+    ,color: AppColors.textLight,
   );
   static const TextStyle greetingDateStyle = TextStyle(
-    fontSize: 14, fontWeight: FontWeight.w600,
-    color: AppColors.primary,
+    fontSize: 14,fontFamily: AppFonts.spaceGrotesk,
+    fontWeight: FontWeight.w600, color: AppColors.primary,
   );
 
   // "View All" links
@@ -527,7 +528,73 @@ class AppInputStyles {
 }
 
 //  SHARED WIDGETS
+// Greeting Card (Solid White with Soft Shadow)
+class AppGreetingCard extends StatelessWidget {
+  final String name;
+  final String subtitle;
+  final String date;
 
+  const AppGreetingCard({
+    super.key,
+    required this.name,
+    required this.subtitle,
+    required this.date,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15), // Soft shadow
+            blurRadius: 15,
+            spreadRadius: 2,
+            offset: const Offset(10, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Hi $name!',
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              fontFamily: AppFonts.batangas,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700, // Bold dark grey like the screenshot
+              fontFamily: AppFonts.spaceGrotesk,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            date,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              fontFamily: AppFonts.spaceGrotesk,
+              color: AppColors.primary, // Purple date
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 // Profile header with avatar and name/ID
 class ProfileHeader extends StatelessWidget {
   final String iconAsset;
