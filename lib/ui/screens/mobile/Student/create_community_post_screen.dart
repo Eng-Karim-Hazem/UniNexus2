@@ -1,10 +1,17 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uninexus/model/community_model.dart';
+import 'package:uninexus/services/firebase/community_service.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
+
+import '../settings_screen.dart';
 import 'stu_schedule.dart';
 import '../profile_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/qa_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/halls_screen.dart';
+
+
 
 class CreateCommunityPostScreen extends StatefulWidget {
   const CreateCommunityPostScreen({super.key});
@@ -21,6 +28,10 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _questionController = TextEditingController();
+
+  // --- ADDED SERVICE AND LOADING STATE ---
+  final _communityService = CommunityService();
+  bool _isLoading = false;
 
   // Role-based logic variables
   bool _isStudent = true;
@@ -39,6 +50,94 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
         // Assume student unless ID starts with 'FA' (Faculty)
         _isStudent = !id.toUpperCase().startsWith('FA');
       });
+    }
+  }
+
+  // --- ADDED SUBMIT FUNCTIONALITY ---
+  Future<void> _submitPost() async {
+    // 1. Validation
+    if (_titleController.text.trim().isEmpty || _questionController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please fill in both Title and Question fields")));
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 2. Get User Data
+      final prefs = await SharedPreferences.getInstance();
+      String userId = prefs.getString('userCode') ?? prefs.getString('ID') ?? 'unknown_id';
+
+      // Determine Role based on ID prefix
+      bool isFaculty = userId.toUpperCase().startsWith('FA');
+      String detectedRole = isFaculty ? 'Faculty' : 'Student';
+      String faculty = prefs.getString('userFaculty') ?? 'General';
+
+      // 3. Fetch Name (Robust Logic)
+      String fName = prefs.getString('fName') ?? prefs.getString('userFirstName') ?? '';
+      String lName = prefs.getString('lName') ?? prefs.getString('userLastName') ?? '';
+
+      // If missing locally, fetch from Firestore
+      if (fName.isEmpty && userId.isNotEmpty) {
+        try {
+          if (isFaculty) {
+            var doc = await FirebaseFirestore.instance.collection('faculty').doc(userId).get();
+            if (doc.exists) {
+              fName = doc.data()?['fName'] ?? '';
+              lName = doc.data()?['lName'] ?? '';
+            }
+          } else {
+            var doc = await FirebaseFirestore.instance.collection('students').doc(userId).get();
+            if (doc.exists) {
+              fName = doc.data()?['fName'] ?? '';
+              lName = doc.data()?['lName'] ?? '';
+            }
+          }
+        } catch (e) {
+          debugPrint("Error fetching user name: $e");
+        }
+      }
+
+      // 4. Format Display Name
+      String displayName = "$fName $lName".trim();
+
+      if (displayName.isEmpty) {
+        displayName = isFaculty ? 'Faculty Member' : 'Student';
+      } else {
+        if (isFaculty) {
+          displayName = "Dr. $displayName";
+        }
+      }
+
+      // 5. Create Model
+      CommunityPostModel newPost = CommunityPostModel(
+        userId: userId,
+        userName: displayName, // Saves "Dr. Abdo..." or "Karim..."
+        userRole: detectedRole,
+        userFaculty: faculty,
+        title: _titleController.text.trim(),
+        content: _questionController.text.trim(),
+        timestamp: DateTime.now(),
+        replyCount: 0,
+      );
+
+      // 6. Call Service
+      await _communityService.createPost(newPost);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Post Submitted Successfully!", style: TextStyle(fontFamily: 'SpaceGrotesk')))
+        );
+        Navigator.pop(context); // Go back to Community Feed
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error: ${e.toString()}")));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -81,9 +180,12 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
             child: Column(
               children: [
                 _buildTopHeader(),
-                const SizedBox(height: 30),
+
+                // --- INCREASED SPACING HERE TO PUSH THE BOX DOWN ---
+                const SizedBox(height: 70),
+
                 _buildFormContainer(),
-                const SizedBox(height: 30),
+                const SizedBox(height: 40),
                 _buildSubmitButton(),
                 const SizedBox(height: 100),
               ],
@@ -98,19 +200,29 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
+        // --- ADDED NAVIGATION HERE ---
         GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: Image.asset('assets/images/menu.png', width: 28, color: _mainPurple),
-        ),
-        Text(
-          'Community',
-          style: TextStyle(
-            fontFamily: 'Batangas',
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: _mainPurple,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: _mainPurple),
           ),
         ),
+
+        const Text(
+            "Community",
+            style: TextStyle(
+                fontFamily: 'Batangas',
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF5C5C80)
+            )
+        ),
+
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -123,7 +235,7 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.85),
+        color: Colors.white.withOpacity(0.6),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: _mainPurple.withOpacity(0.6), width: 1.5),
         boxShadow: [
@@ -187,10 +299,8 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
       width: 220,
       height: 55,
       child: OutlinedButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Post Submitted!", style: TextStyle(fontFamily: 'SpaceGrotesk'))));
-          Navigator.pop(context);
-        },
+        // --- UPDATED ON PRESSED ---
+        onPressed: _isLoading ? null : _submitPost,
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: _mainPurple, width: 2),
           shape: RoundedRectangleBorder(
@@ -198,7 +308,14 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
           ),
           backgroundColor: Colors.white,
         ),
-        child: Text(
+        // --- ADDED LOADING INDICATOR ---
+        child: _isLoading
+            ? SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(color: _mainPurple, strokeWidth: 2.5)
+        )
+            : Text(
           "Submit",
           style: TextStyle(
             fontFamily: 'Batangas',
@@ -211,18 +328,20 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
     );
   }
 
+  // --- GLOWING FAB ---
   Widget _buildHomeFab() {
     return Container(
-      height: 70,
-      width: 70,
+      height: 72,
+      width: 72,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
+            color: _mainPurple.withOpacity(0.6),
+            blurRadius: 25,
+            spreadRadius: 6,
+            offset: const Offset(0, 2),
+          )
         ],
       ),
       child: FloatingActionButton(
@@ -231,50 +350,99 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
         elevation: 0,
         shape: const CircleBorder(),
         child: Container(
-          width: double.infinity,
-          height: double.infinity,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(colors: [_primaryBlue, _mainPurple]),
           ),
-          child: const Icon(Icons.home_rounded, color: Colors.white, size: 32),
+          child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
         ),
       ),
     );
   }
 
+  // --- BOTTOM NAVIGATION BARS WITH NATIVE CUTOUT SHADOW ---
+
   Widget _buildStudentBottomBar() {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 10.0,
-      height: 80,
+    return _bottomNavWrapper(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _navItem('assets/images/solidarity_1.png', 'Community', 0),
-          _navItem('assets/images/calendar.png', 'Schedule', 1),
-          const SizedBox(width: 48),
-          _navItem('assets/images/qa.png', 'Q&A', 2),
-          _navItem('assets/images/profile.png', 'Profile', 3),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _navItem('assets/images/solidarity_1.png', 'Community', 0),
+                _navItem('assets/images/calendar.png', 'Schedule', 1),
+              ],
+            ),
+          ),
+          const SizedBox(width: 72), // Space for the FAB notch
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _navItem('assets/images/qa.png', 'Q&A', 2),
+                _navItem('assets/images/user.png', 'Profile', 3),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildFacultyBottomBar() {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 10.0,
-      height: 80,
+    return _bottomNavWrapper(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _navItem('assets/images/solidarity_1.png', 'Community', 0),
-          _navItem('assets/images/classroom_1.png', 'Halls', 1),
-          const SizedBox(width: 48),
-          _navItem('assets/images/qa.png', 'Q&A', 2),
-          _navItem('assets/images/profile.png', 'Profile', 3),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _navItem('assets/images/solidarity_1.png', 'Community', 0),
+                _navItem('assets/images/classroom_1.png', 'Halls', 1),
+              ],
+            ),
+          ),
+          const SizedBox(width: 72), // Space for the FAB notch
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _navItem('assets/images/qa.png', 'Q&A', 2),
+                _navItem('assets/images/user.png', 'Profile', 3),
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _bottomNavWrapper({required Widget child}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 20,
+            spreadRadius: 4,
+            offset: const Offset(0, -6),
+          ),
+        ],
+      ),
+      child: BottomAppBar(
+        clipBehavior: Clip.antiAlias,
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 9.0,
+        color: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        height: 80,
+        child: child,
       ),
     );
   }
@@ -286,15 +454,20 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(path, width: 24, color: sel ? _mainPurple : Colors.grey),
-          const SizedBox(height: 4),
+          Image.asset(
+            path,
+            width: 28,
+            height: 28,
+            color: sel ? _mainPurple : Colors.grey.shade500,
+          ),
+          const SizedBox(height: 5),
           Text(
             label,
             style: TextStyle(
               fontFamily: 'SpaceGrotesk',
-              fontSize: 10,
-              color: sel ? _mainPurple : Colors.grey,
-              fontWeight: sel ? FontWeight.bold : FontWeight.normal,
+              fontSize: 12,
+              color: sel ? _mainPurple : Colors.grey.shade600,
+              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
             ),
           ),
         ],

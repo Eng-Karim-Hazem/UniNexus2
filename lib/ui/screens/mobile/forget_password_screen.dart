@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:uninexus/ui/screens/mobile/request_submitted_screen.dart';
 
-import '../../../services/firebase/Forpass_service.dart';
+
+import '/../../services/firebase/Forpass_service.dart';
 import 'login_screen.dart';
 
 

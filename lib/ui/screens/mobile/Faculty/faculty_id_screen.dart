@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uninexus/ui/screens/mobile/Faculty/qa_screen.dart';
-import '../Student/stu_community.dart';
+import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
+import '../Faculty/halls_screen.dart';
+import '../Faculty/qa_screen.dart';
 import '../profile_screen.dart';
-import 'halls_screen.dart';
-
+import '../settings_screen.dart';
 
 class FacultyIDScreen extends StatefulWidget {
   const FacultyIDScreen({super.key});
@@ -18,13 +18,20 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
   String _userID = "";
   String _userName = "";
   bool _isLoading = true;
-  bool _isPunchedIn = false;
-  int _selectedIndex = 1;
+  int _selectedIndex = -1;
 
-  final Color _lightBlue = const Color(0xFF5BA4F5);
-  final Color _primaryPurple = const Color(0xFF7B61FF);
+  // Track punch state
+  bool _isPunchedIn = false;
+
   final Color _mainPurple = const Color(0xFF7B61FF);
-  final Color _inactiveGrey = const Color(0xFFC1C1D4);
+  final Color _primaryBlue = const Color(0xFF237ABA);
+  final Color _secondaryPurple = const Color(0xFF9C2CF3);
+
+  final Gradient _fabGradient = const LinearGradient(
+    colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 
   @override
   void initState() {
@@ -34,35 +41,24 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
 
   Future<void> _loadDataFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _userID = prefs.getString('ID') ?? "N/A";
-      String f = prefs.getString('fName') ?? "Faculty";
-      String l = prefs.getString('lName') ?? "";
-      _userName = "$f $l".trim();
-      _isLoading = false;
-    });
-  }
+    await prefs.reload();
 
-  String get _qrData => _isPunchedIn ? "$_userID.out" : "$_userID.in";
-
-  void _onItemTapped(int index) {
-    if (index == 0) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
-    }else if (index == 1) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen()));
-    }
-    else if (index == 2) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
-    } else if (index == 3) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
-    } else {
-      setState(() => _selectedIndex = index);
+    if (mounted) {
+      setState(() {
+        _userID = prefs.getString('userCode') ?? prefs.getString('ID') ?? "N/A";
+        String f = prefs.getString('userFirstName') ?? prefs.getString('fName') ?? "Faculty";
+        String l = prefs.getString('userLastName') ?? prefs.getString('lName') ?? "";
+        _userName = "$f $l".trim();
+        _isLoading = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       extendBody: true,
@@ -73,23 +69,28 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
-          image: DecorationImage(image: AssetImage('assets/images/background.png'), fit: BoxFit.cover),
+          image: DecorationImage(
+            image: AssetImage('assets/images/background.png'),
+            fit: BoxFit.cover,
+          ),
         ),
         child: SafeArea(
           bottom: false,
           child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
             child: Column(
               children: [
-                const SizedBox(height: 20),
-                _buildHeader(),
+                _buildTopHeader(),
                 const SizedBox(height: 30),
                 _buildMainCard(),
+
+                // --- WIDE PUNCH BUTTON ---
                 const SizedBox(height: 30),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: _buildPunchButton(),
+                  child: _buildWidePunchButton(),
                 ),
-                const SizedBox(height: 120),
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -98,138 +99,303 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
     );
   }
 
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Image.asset('assets/images/menu.png', width: 28, color: const Color(0xFF237ABA)),
-          const Text("Faculty ID", style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
-          ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.asset('assets/images/LOGO.png', width: 36, height: 36)),
-        ],
-      ),
+  Widget _buildTopHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // --- ADDED NAVIGATION HERE ---
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen())
+            );
+          },
+          child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
+        ),
+
+        const Text(
+            "ID",
+            style: TextStyle(
+                fontFamily: 'Batangas',
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF5C5C80)
+            )
+        ),
+
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
+        ),
+      ],
     );
   }
 
   Widget _buildMainCard() {
+    // Gradient Logic
+    final List<Color> qrColors = _isPunchedIn
+        ? [_secondaryPurple, _primaryBlue]
+        : [_primaryBlue, _secondaryPurple];
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 30),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.85),
         borderRadius: BorderRadius.circular(30),
-        boxShadow: [BoxShadow(color: const Color(0xFF237ABA).withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10))],
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF237ABA).withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          )
+        ],
         border: Border.all(color: Colors.white.withOpacity(0.6), width: 2),
       ),
       child: Column(
         children: [
-          _buildDecorativeTop(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildDot(),
+              const SizedBox(width: 15),
+              Container(
+                width: 60, height: 12,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0E0FF),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(width: 15),
+              _buildDot(),
+            ],
+          ),
           const SizedBox(height: 30),
-          _buildBadgeIcon(),
-          const SizedBox(height: 15),
-          Text(_userName, style: const TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
+
+          Text(_userName, style: const TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
+          const SizedBox(height: 5),
+          Text("ID: $_userID", style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500)),
+
+          const SizedBox(height: 40),
+
+          // --- STACK APPROACH: Layer Logo ON TOP of Gradient QR ---
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              // Layer 1: The QR Code with Gradient (No Image Here)
+              ShaderMask(
+                shaderCallback: (bounds) => LinearGradient(
+                  colors: qrColors,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ).createShader(bounds),
+                blendMode: BlendMode.srcIn,
+                child: QrImageView(
+                  data: _userID,
+                  version: QrVersions.auto,
+                  size: 240.0,
+                  // IMPORTANT: Set Error Correction to HIGH so covering the center is safe
+                  errorCorrectionLevel: QrErrorCorrectLevel.H,
+                  // We remove the embeddedImage from here so it doesn't get tinted
+                ),
+              ),
+
+              // Layer 2: The Logo (Untouched colors)
+              Container(
+                width: 45,
+                height: 45,
+                // Optional: Add a white background behind the logo for better visibility
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
+                child: Image.asset(
+                  'assets/images/LOGO.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ],
+          ),
+
           const SizedBox(height: 30),
-          ShaderMask(
-            shaderCallback: (bounds) => LinearGradient(
-              colors: [const Color(0xFF237ABA), _isPunchedIn ? _primaryPurple : _lightBlue],
-              begin: Alignment.topLeft, end: Alignment.bottomRight,
-            ).createShader(bounds),
-            blendMode: BlendMode.srcIn,
-            child: QrImageView(
-              data: _qrData, version: QrVersions.auto, size: 220.0,
-              embeddedImage: const AssetImage('assets/images/LOGO.png'),
-              embeddedImageStyle: const QrEmbeddedImageStyle(size: Size(40, 40)),
+          Text(
+            _isPunchedIn ? "Active Session - Scan to Punch Out" : "Scan for Identity Verification",
+            style: TextStyle(
+                fontFamily: 'SpaceGrotesk',
+                color: _isPunchedIn ? _primaryBlue : Colors.grey,
+                fontSize: 14,
+                fontWeight: _isPunchedIn ? FontWeight.bold : FontWeight.normal
             ),
           ),
-          const SizedBox(height: 10),
         ],
       ),
     );
   }
 
-  Widget _buildPunchButton() {
-    final Color currentColor = _isPunchedIn ? _lightBlue : _primaryPurple;
+  // --- WIDE PUNCH BUTTON ---
+  Widget _buildWidePunchButton() {
+    final Color activeColor = _isPunchedIn ? _primaryBlue : _mainPurple;
 
-    return SizedBox(
-      width: double.infinity,
-      height: 60,
-      child: OutlinedButton(
-        onPressed: () => setState(() => _isPunchedIn = !_isPunchedIn),
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: currentColor, width: 2),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          backgroundColor: Colors.white, elevation: 5, shadowColor: Colors.black12,
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _isPunchedIn = !_isPunchedIn;
+        });
+      },
+      child: Container(
+        width: 240,
+        height: 60,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(
+              color: activeColor,
+              width: 2
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: activeColor.withOpacity(0.2),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            )
+          ],
         ),
-        child: Text(
-          _isPunchedIn ? "Punch OUT" : "Punch IN",
-          style: TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: currentColor),
+        child: Center(
+          child: Text(
+            _isPunchedIn ? "Punch OUT" : "Punch IN",
+            style: TextStyle(
+              fontFamily: 'Batangas',
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: activeColor,
+              letterSpacing: 0.5,
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildDecorativeTop() => Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      _buildDot(), const SizedBox(width: 15),
-      Container(width: 60, height: 12, decoration: BoxDecoration(color: const Color(0xFFE0E0FF), borderRadius: BorderRadius.circular(10))),
-      const SizedBox(width: 15), _buildDot(),
-    ],
+  Widget _buildDot() => Container(
+    width: 12, height: 12,
+    decoration: const BoxDecoration(color: Color(0xFFE0E0FF), shape: BoxShape.circle),
   );
 
-  Widget _buildDot() => Container(width: 12, height: 12, decoration: const BoxDecoration(color: Color(0xFFE0E0FF), shape: BoxShape.circle));
-
-  Widget _buildBadgeIcon() => Container(
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(color: _primaryPurple.withOpacity(0.8), borderRadius: BorderRadius.circular(12)),
-    child: const Icon(Icons.badge_outlined, color: Colors.white, size: 40),
-  );
-
-  Widget _buildHomeFab() => Container(
-    height: 70, width: 70,
-    decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: const Color(0xFF4A90E2).withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 8))]),
-    child: FloatingActionButton(
-      onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-      elevation: 0, backgroundColor: Colors.transparent, shape: const CircleBorder(),
-      child: Container(
-        width: double.infinity, height: double.infinity,
-        decoration: const BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [Color(0xFF237ABA), Color(0xFF5C9CE0)])),
-        child: const Icon(Icons.home_rounded, color: Colors.white, size: 32),
+  Widget _buildHomeFab() {
+    return Container(
+      height: 72,
+      width: 72,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: _mainPurple.withOpacity(0.6),
+            blurRadius: 25,
+            spreadRadius: 6,
+            offset: const Offset(0, 2),
+          )
+        ],
       ),
-    ),
-  );
+      child: FloatingActionButton(
+        onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        shape: const CircleBorder(),
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: _fabGradient,
+          ),
+          child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
+        ),
+      ),
+    );
+  }
 
   Widget _buildBottomBar() {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 10.0, color: Colors.white, elevation: 0, height: 80,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: <Widget>[
-          _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
-          _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1),
-          const SizedBox(width: 48),
-          _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
-          _buildNavBarItem('assets/images/profile.png', "Profile", 3),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 20,
+            spreadRadius: 4,
+            offset: const Offset(0, -6),
+          ),
         ],
+      ),
+      child: BottomAppBar(
+        clipBehavior: Clip.antiAlias,
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 9.0,
+        color: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        height: 80,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _navItem('assets/images/solidarity_1.png', 'Community', 0),
+                  _navItem('assets/images/classroom_1.png', 'Halls', 1),
+                ],
+              ),
+            ),
+            const SizedBox(width: 72),
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _navItem('assets/images/qa.png', 'Q&A', 2),
+                  _navItem('assets/images/user.png', 'Profile', 3),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildNavBarItem(String iconPath, String label, int index) {
-    final bool isSelected = _selectedIndex == index;
+  Widget _navItem(String path, String label, int index) {
+    bool sel = _selectedIndex == index;
     return GestureDetector(
-      onTap: () => _onItemTapped(index),
-      behavior: HitTestBehavior.opaque,
+      onTap: () async {
+        setState(() => _selectedIndex = index);
+
+        if (index == 0) {
+          await Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuCommunity()));
+        } else if (index == 1) {
+          await Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HallsScreen()));
+        } else if (index == 2) {
+          await Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const QAScreen()));
+        } else if (index == 3) {
+          await Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+        }
+
+        if (mounted) setState(() => _selectedIndex = -1);
+      },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(iconPath, width: 24, height: 24, color: isSelected ? _mainPurple : _inactiveGrey),
-          const SizedBox(height: 4),
+          Image.asset(
+            path,
+            width: 28,
+            height: 28,
+            color: sel ? _mainPurple : Colors.grey.shade500,
+          ),
+          const SizedBox(height: 5),
           Text(
             label,
-            style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 11, color: isSelected ? _mainPurple : _inactiveGrey, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500),
+            style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontSize: 12,
+              color: sel ? _mainPurple : Colors.grey.shade600,
+              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+            ),
           ),
         ],
       ),

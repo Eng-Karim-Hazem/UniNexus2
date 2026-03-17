@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
+import 'package:uninexus/ui/screens/mobile/settings_screen.dart';
 
 import 'Faculty/halls_screen.dart';
 import 'Faculty/qa_screen.dart';
@@ -55,24 +56,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       String id = prefs.getString('ID') ?? prefs.getString('userCode') ?? widget.userID ?? "N/A";
 
-      setState(() {
-        _displayID = id;
-        _isStudent = id.toUpperCase().startsWith('ST');
-        _displayFirstName = prefs.getString('fName') ?? prefs.getString('userFirstName') ?? "User";
-        _displayLastName = prefs.getString('lName') ?? prefs.getString('userLastName') ?? "";
-        _displayEmail = prefs.getString('email') ?? "N/A";
-        _displayPhone = prefs.getString('pNum') ?? "N/A";
-        _displayFaculty = prefs.getString('faculty') ?? "N/A";
-        _displayNID = prefs.getString('nationalID') ?? "N/A";
+      if (mounted) {
+        setState(() {
+          _displayID = id;
+          _isStudent = id.toUpperCase().startsWith('ST');
+          _displayFirstName = prefs.getString('fName') ?? prefs.getString('userFirstName') ?? "User";
+          _displayLastName = prefs.getString('lName') ?? prefs.getString('userLastName') ?? "";
+          _displayEmail = prefs.getString('email') ?? "N/A";
+          _displayPhone = prefs.getString('pNum') ?? "N/A";
+          _displayFaculty = prefs.getString('faculty') ?? "N/A";
+          _displayNID = prefs.getString('nationalID') ?? "N/A";
 
-        if (_isStudent) {
-          _displayYear = prefs.getString('year') ?? "N/A";
-          _displaySection = prefs.getString('section') ?? "N/A";
-        }
-        _isLoading = false;
-      });
+          if (_isStudent) {
+            _displayYear = prefs.getString('year') ?? "N/A";
+            _displaySection = prefs.getString('section') ?? "N/A";
+          }
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -100,7 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
             child: Column(
               children: [
-                _buildHeader(),
+                _buildTopHeader(),
                 const SizedBox(height: 30),
                 _buildIdentityCard(),
                 const SizedBox(height: 20),
@@ -116,15 +119,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildTopHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
+        // --- ADDED NAVIGATION HERE ---
         GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Image.asset('assets/images/menu.png', width: 28, color: _mainPurple),
+          onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen())
+            );
+          },
+          child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
         ),
-        Text("Profile", style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
+
+        const Text(
+            "Profile",
+            style: TextStyle(
+                fontFamily: 'Batangas',
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF5C5C80)
+            )
+        ),
+
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -213,16 +232,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // --- GLOWING HOME FAB ---
   Widget _buildHomeFab() {
     return Container(
-      height: 70, width: 70,
+      height: 72,
+      width: 72,
       decoration: BoxDecoration(
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-                color: _mainPurple.withOpacity(0.3),
-                blurRadius: 15,
-                offset: const Offset(0, 8)
+              color: _mainPurple.withOpacity(0.6),
+              blurRadius: 25,
+              spreadRadius: 6,
+              offset: const Offset(0, 2),
             )
           ]
       ),
@@ -241,56 +263,107 @@ class _ProfileScreenState extends State<ProfileScreen> {
               end: Alignment.bottomRight,
             ),
           ),
-          child: const Icon(Icons.home_rounded, color: Colors.white, size: 32),
+          child: const Icon(Icons.home_rounded, color: Colors.white, size: 40),
         ),
       ),
     );
   }
 
+  // --- BOTTOM NAVIGATION BARS WITH NATIVE CUTOUT SHADOW ---
+
   Widget _buildStudentBottomBar() {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 10.0,
-      height: 80,
+    return _bottomNavWrapper(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _navItem('assets/images/solidarity_1.png', "Community", false,onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
-          }),
-          _navItem('assets/images/calendar.png', "Schedule", false, onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const StuSchedule()));
-          }),
-          const SizedBox(width: 48),
-          _navItem('assets/images/qa.png', "Q&A", false, onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const StuQAScreen()));
-          }),
-          _navItem('assets/images/user.png', "Profile", true),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _navItem('assets/images/solidarity_1.png', "Community", false, onTap: () {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
+                }),
+                _navItem('assets/images/calendar.png', "Schedule", false, onTap: () {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const StuSchedule()));
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(width: 72), // Space for the FAB notch
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _navItem('assets/images/qa.png', "Q&A", false, onTap: () {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const StuQAScreen()));
+                }),
+                _navItem('assets/images/user.png', "Profile", true),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildFacultyBottomBar() {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 10.0,
-      height: 80,
+    return _bottomNavWrapper(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _navItem('assets/images/solidarity_1.png', "Community", false, onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
-          }),
-          _navItem('assets/images/classroom_1.png', "Halls", false, onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen()));
-          }),
-          const SizedBox(width: 48),
-          _navItem('assets/images/qa.png', "Q&A", false, onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
-          }),
-          _navItem('assets/images/user.png', "Profile", true),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _navItem('assets/images/solidarity_1.png', "Community", false, onTap: () {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
+                }),
+                _navItem('assets/images/classroom_1.png', "Halls", false, onTap: () {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HallsScreen()));
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(width: 72), // Space for the FAB notch
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _navItem('assets/images/qa.png', "Q&A", false, onTap: () {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const QAScreen()));
+                }),
+                _navItem('assets/images/user.png', "Profile", true),
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _bottomNavWrapper({required Widget child}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 20,
+            spreadRadius: 4,
+            offset: const Offset(0, -6),
+          ),
+        ],
+      ),
+      child: BottomAppBar(
+        clipBehavior: Clip.antiAlias,
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 9.0,
+        color: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        height: 80,
+        child: child,
       ),
     );
   }
@@ -301,9 +374,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(path, width: 24, color: sel ? _mainPurple : Colors.grey),
-          const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 10, color: sel ? _mainPurple : Colors.grey, fontWeight: sel ? FontWeight.bold : FontWeight.normal)),
+          Image.asset(
+            path,
+            width: 28,
+            height: 28,
+            color: sel ? _mainPurple : Colors.grey.shade500,
+          ),
+          const SizedBox(height: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontSize: 12,
+              color: sel ? _mainPurple : Colors.grey.shade600,
+              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
