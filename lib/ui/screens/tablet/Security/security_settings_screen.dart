@@ -4,30 +4,33 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
+import 'package:uninexus/ui/screens/tablet/welcome_screen_tablet.dart';
 
-class ITSettingsScreen extends StatefulWidget {
+class SecuritySettingsScreen extends StatefulWidget {
   final void Function(UninexusTab) onNavigate;
 
-  const ITSettingsScreen({super.key, required this.onNavigate});
+  const SecuritySettingsScreen({super.key, required this.onNavigate});
 
   @override
-  State<ITSettingsScreen> createState() => _ITSettingsScreenState();
+  State<SecuritySettingsScreen> createState() =>
+      _SecuritySettingsScreenState();
 }
 
-class _ITSettingsScreenState extends State<ITSettingsScreen> {
+class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
 
   int? selectedSettingTab;
 
-  final TextEditingController _feedbackController = TextEditingController();
+  final TextEditingController _feedbackController =
+  TextEditingController();
+
   int _rating = 4;
 
   static const List<Map<String, String>> _items = [
-    {'icon': 'assets/icons/information.png', 'label': 'Account management'},
-    {'icon': 'assets/icons/notify.png', 'label': 'Notification settings'},
-    {'icon': 'assets/icons/export.png', 'label': 'Export Logs'},
-    {'icon': 'assets/icons/review.png', 'label': 'Feedback'},
-    {'icon': 'assets/icons/merge.png', 'label': 'App Information'},
-    {'icon': 'assets/icons/logout.png', 'label': 'Logout'},
+    {'icon': 'assets/images/information_1.png', 'label': 'Account management'},
+    {'icon': 'assets/images/notify_1.png', 'label': 'Notification settings'},
+    {'icon': 'assets/images/review_1.png', 'label': 'Feedback'},
+    {'icon': 'assets/images/merge_1.png', 'label': 'App Information'},
+    {'icon': 'assets/images/logout_1.png', 'label': 'Logout'},
   ];
 
   @override
@@ -46,14 +49,9 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            /// HEADER
-            Row(
-              children: const [
-                Text(
-                  "Settings",
-                  style: AppTextStyles.largeHeading,
-                ),
-              ],
+            const Text(
+              "Settings",
+              style: AppTextStyles.largeHeading,
             ),
 
             const SizedBox(height: 10),
@@ -62,7 +60,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
               child: Row(
                 children: [
 
-                  /// GRID
+                  /// SETTINGS GRID
                   Expanded(
                     flex: selectedSettingTab == null ? 1 : 0,
                     child: Center(
@@ -70,7 +68,8 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
                         width: selectedSettingTab == null ? 900 : 420,
                         child: GridView.builder(
                           shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
+                          physics:
+                          const NeverScrollableScrollPhysics(),
                           gridDelegate:
                           SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount:
@@ -86,7 +85,8 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
 
                             return GestureDetector(
                               onTap: () {
-                                if (index == 5) {
+
+                                if (index == 4) {
                                   _logout();
                                 } else {
                                   setState(() {
@@ -111,9 +111,11 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(40),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(28),
+                          borderRadius:
+                          BorderRadius.circular(28),
                           border: Border.all(
-                              color: AppColors.primary, width: 2),
+                              color: AppColors.primary,
+                              width: 2),
                           color: Colors.white,
                         ),
                         child: Column(
@@ -121,9 +123,9 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
                           CrossAxisAlignment.start,
                           children: [
 
-                            /// BACK BUTTON
                             IconButton(
-                              icon: const Icon(Icons.arrow_back),
+                              icon:
+                              const Icon(Icons.arrow_back),
                               onPressed: () {
                                 setState(() {
                                   selectedSettingTab = null;
@@ -153,26 +155,38 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// SETTINGS CARD
+  /// SETTINGS CARD (ICONS MADE BIGGER)
   Widget _buildSettingCard(Map<String, String> item) {
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        filter: ImageFilter.blur(
+            sigmaX: 18, sigmaY: 18),
         child: Container(
           decoration: GlassDecoration.light,
+          padding: const EdgeInsets.symmetric(horizontal: 15),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment:
+            MainAxisAlignment.center,
             children: [
+
+              /// BIGGER ICON
               Image.asset(
                 item['icon']!,
                 width: 80,
                 height: 80,
+                fit: BoxFit.contain,
                 errorBuilder: (_, __, ___) =>
-                const Icon(Icons.settings,
-                    size: 80, color: AppColors.primary),
+                const Icon(
+                  Icons.settings,
+                  size: 120,
+                  color: AppColors.primary,
+                ),
               ),
-              const SizedBox(height: 20),
+
+              const SizedBox(height: 24),
+
               Text(
                 item['label']!,
                 textAlign: TextAlign.center,
@@ -185,40 +199,50 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// TAB SWITCH
+  /// TAB CONTENT SWITCH
   Widget _getContentForTab(int index) {
+
     switch (index) {
+
       case 0:
         return _buildAccountManagement();
+
       case 1:
         return _buildNotificationSettings();
+
       case 2:
-        return _buildExportLogs();
-      case 3:
         return _buildFeedback();
-      case 4:
+
+      case 3:
         return _buildAppInfo();
+
       default:
         return const SizedBox();
     }
   }
 
-  /// ACCOUNT
+  /// ACCOUNT MANAGEMENT
   Widget _buildAccountManagement() {
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+      CrossAxisAlignment.start,
       children: [
 
-        const Text("Account Management",
-            style: AppTextStyles.largeHeading),
+        const Text(
+          "Account Management",
+          style: AppTextStyles.largeHeading,
+        ),
 
         const SizedBox(height: 30),
 
-        _buildTextField("New Phone", "Enter phone number"),
+        _buildTextField(
+            "New Phone", "Enter phone number"),
 
         const SizedBox(height: 20),
 
-        _buildTextField("New Email", "Enter email"),
+        _buildTextField(
+            "New Email", "Enter email"),
 
         const SizedBox(height: 40),
 
@@ -229,64 +253,50 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
 
   /// NOTIFICATIONS
   Widget _buildNotificationSettings() {
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+      CrossAxisAlignment.start,
       children: [
 
-        const Text("Notification Settings",
-            style: AppTextStyles.largeHeading),
+        const Text(
+          "Notification Settings",
+          style: AppTextStyles.largeHeading,
+        ),
 
         const SizedBox(height: 30),
 
-        _buildDropdown("Hall Alerts"),
-
-        const SizedBox(height: 20),
-
-        _buildDropdown("User Requests"),
+        _buildDropdown("Gate Alerts"),
 
         const SizedBox(height: 20),
 
         _buildDropdown("Announcements"),
-      ],
-    );
-  }
 
-  /// EXPORT
-  Widget _buildExportLogs() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+        const SizedBox(height: 20),
 
-        const Text("Export Logs",
-            style: AppTextStyles.largeHeading),
-
-        const SizedBox(height: 40),
-
-        const Text(
-            "This feature is used to export the logged information so it can be used for backup or analyzing behaviour."),
-
-        const SizedBox(height: 60),
-
-        Center(
-          child: _buildPrimaryButton("Export"),
-        ),
+        _buildDropdown("Warnings"),
       ],
     );
   }
 
   /// FEEDBACK
   Widget _buildFeedback() {
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+      CrossAxisAlignment.start,
       children: [
 
-        const Text("Feedback",
-            style: AppTextStyles.largeHeading),
+        const Text(
+          "Feedback",
+          style: AppTextStyles.largeHeading,
+        ),
 
         const SizedBox(height: 30),
 
         Row(
           children: List.generate(5, (index) {
+
             return GestureDetector(
               onTap: () {
                 setState(() {
@@ -314,7 +324,8 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
             filled: true,
             fillColor: Colors.grey[100],
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius:
+              BorderRadius.circular(15),
               borderSide: BorderSide.none,
             ),
           ),
@@ -329,12 +340,16 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
 
   /// APP INFO
   Widget _buildAppInfo() {
+
     return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+      CrossAxisAlignment.start,
       children: [
 
-        Text("App Information",
-            style: AppTextStyles.largeHeading),
+        Text(
+          "App Information",
+          style: AppTextStyles.largeHeading,
+        ),
 
         SizedBox(height: 20),
 
@@ -343,7 +358,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// LOGOUT FUNCTION
+  /// LOGOUT
   Future<void> _logout() async {
 
     final confirm = await showDialog(
@@ -351,18 +366,24 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
       builder: (_) => AlertDialog(
         title: const Text("Confirm Logout"),
         content:
-        const Text("Are you sure you want to logout?"),
+        const Text(
+            "Are you sure you want to logout?"),
         actions: [
 
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () =>
+                Navigator.pop(context, false),
             child: const Text("Cancel"),
           ),
 
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Logout",
-                style: TextStyle(color: Colors.red)),
+            onPressed: () =>
+                Navigator.pop(context, true),
+            child: const Text(
+              "Logout",
+              style:
+              TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -370,17 +391,26 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
 
     if (confirm != true) return;
 
-    final prefs = await SharedPreferences.getInstance();
+    final prefs =
+    await SharedPreferences.getInstance();
 
     await prefs.clear();
 
-    widget.onNavigate(UninexusTab.settings);
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const WelcomePage(),
+      ),
+          (route) => false,
+    );
   }
 
-  /// INPUT
+  /// INPUT FIELD
   Widget _buildTextField(String label, String hint) {
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+      CrossAxisAlignment.start,
       children: [
 
         Text(label),
@@ -393,7 +423,8 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
             filled: true,
             fillColor: Colors.grey[100],
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius:
+              BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
           ),
@@ -404,8 +435,10 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
 
   /// DROPDOWN
   Widget _buildDropdown(String label) {
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+      CrossAxisAlignment.start,
       children: [
 
         Text(label),
@@ -413,11 +446,12 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
         const SizedBox(height: 8),
 
         Container(
-          padding:
-          const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+          padding: const EdgeInsets.symmetric(
+              horizontal: 15, vertical: 12),
           decoration: BoxDecoration(
             color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(12),
+            borderRadius:
+            BorderRadius.circular(12),
           ),
           child: const Row(
             mainAxisAlignment:
@@ -434,12 +468,15 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
 
   /// BUTTON
   Widget _buildPrimaryButton(String text) {
+
     return OutlinedButton(
       onPressed: () {},
       style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: AppColors.primary),
+        side:
+        const BorderSide(color: AppColors.primary),
         padding:
-        const EdgeInsets.symmetric(horizontal: 50, vertical: 16),
+        const EdgeInsets.symmetric(
+            horizontal: 50, vertical: 16),
       ),
       child: Text(text),
     );

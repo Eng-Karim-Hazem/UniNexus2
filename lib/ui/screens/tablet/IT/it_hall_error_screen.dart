@@ -1,8 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-
-import '../../../../uninexus_tab.dart';
-import '../theme/app_theme.dart';
+import 'package:uninexus/theme/uninexus_tab.dart';
+import 'package:uninexus/theme/app_theme.dart';
 
 class _HallError {
   final String hall;
@@ -64,7 +63,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
 
     return ITScreenBackground(
       child: Padding(
-        padding: const EdgeInsets.only(top: 54, left: 28, right: 28, bottom: 28),
+        padding: const EdgeInsets.all(28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -113,7 +112,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                                               style: AppTextStyles.hallListErrorStyle,
                                               overflow: TextOverflow.ellipsis),
                                         ],
-                                      ),
+                                       ),
                                     ),
                                     if (e.hasAttachment)
                                       Padding(
@@ -186,8 +185,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                                   width: 260, height: 155,
                                   decoration: AppDecorations.innerBlueScreen,
                                   child: Center(
-                                    child: Text('Blue Screen',
-                                        style: AppTextStyles.blueScreenLabelStyle),
+                                    child: Text('Blue Screen', style: AppTextStyles.blueScreenLabelStyle),
                                   ),
                                 ),
                               ),
@@ -198,11 +196,9 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                             const Spacer(),
                             Row(
                               children: [
-                                Expanded(
-                                    child: PillButton(label: 'In Repair', onTap: () {})),
+                                Expanded(child: PillButton(label: 'In Repair', onTap: () {})),
                                 const SizedBox(width: 16),
-                                Expanded(
-                                    child: PillButton(label: 'Fixed', onTap: () {})),
+                                Expanded(child: PillButton(label: 'Fixed', onTap: () {})),
                               ],
                             ),
                           ],

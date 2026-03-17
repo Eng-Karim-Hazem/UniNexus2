@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-
-import '../../../../uninexus_tab.dart';
-import '../theme/app_theme.dart';
+import 'package:uninexus/theme/uninexus_tab.dart';
+import 'package:uninexus/theme/app_theme.dart';
 
 class ITIdScreen extends StatefulWidget {
   final void Function(UninexusTab) onNavigate;
@@ -66,7 +65,7 @@ class _ITIdScreenState extends State<ITIdScreen> {
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: AppDecorations.iconBackground,
-                                child: Image.asset('assets/icons/id-card 4 (1).png',
+                                child: Image.asset('assets/mages/qr_code.png',
                                     width: 40, height: 40, fit: BoxFit.contain,
                                     errorBuilder: (_, __, ___) => const Icon(
                                         Icons.badge_outlined, size: 40,
@@ -77,7 +76,7 @@ class _ITIdScreenState extends State<ITIdScreen> {
                                 child: AspectRatio(
                                   aspectRatio: 1,
                                   child: Image.asset(
-                                      'assets/icons/qr-code (1) 1.png',
+                                      'assets/images/qr_new.png',
                                       fit: BoxFit.contain,
                                       errorBuilder: (_, __, ___) => Container(
                                         decoration: AppDecorations.qrPlaceholder,

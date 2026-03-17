@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:uninexus/ui/screens/tablet/request_submitted_page.dart';
-import 'package:uninexus/ui/screens/tablet/theme/app_theme.dart';
+import 'package:uninexus/ui/screens/tablet/IT/request_submitted_page.dart';
+import 'package:uninexus/theme/app_theme.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -50,18 +50,29 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
         clipBehavior: Clip.hardEdge,
         children: [
 
-          // Background top-right rectangle
+// Top-right rectangle
           Positioned(
-            right: -sw * 0.05, top: sh * 0.0,
-            child: Image.asset('assets/images_tab/rectangle_down.png',
-                width: sw * 0.45, height: sw * 0.45, fit: BoxFit.contain),
+            right: -sw * 0.2,
+            top: -sh * 0.27,
+            child: Image.asset(
+              'assets/images/Rectangle1.png',
+              width: sw * 0.55,
+              height: sw * 0.65,
+              fit: BoxFit.contain,
+            ),
           ),
 
-          // Background bottom-right rectangle
+
+// Bottom-right rectangle
           Positioned(
-            right: sw * 0.00, bottom: -sh * 0.10,
-            child: Image.asset('assets/images_tab/Rectangle_up.png',
-                width: sw * 0.45, height: sw * 0.45, fit: BoxFit.contain),
+            right: -sw * 0.001,
+            bottom: -sh * 0.46,
+            child: Image.asset(
+              'assets/images/Rectangle1.png',
+              width: sw * 0.55,
+              height: sw * 0.65,
+              fit: BoxFit.contain,
+            ),
           ),
 
           // Animated page content
@@ -80,7 +91,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                   left: sw * 0.19, top: sh * 0.09,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
-                    child: Image.asset('assets/images_tab/logo2.png',
+                    child: Image.asset('assets/images/uni.jpeg',
                         width: sw * 0.12, height: sw * 0.12, fit: BoxFit.contain),
                   ),
                 ),

@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-
-import '../../../../uninexus_tab.dart';
-import '../theme/app_theme.dart';
-
-
+import 'package:uninexus/theme/uninexus_tab.dart';
+import 'package:uninexus/theme/app_theme.dart';
 
 // Data model
 

@@ -3,24 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
-class ITSidebar extends StatelessWidget {
+class SecuritySidebar extends StatelessWidget {
   final UninexusTab current;
   final void Function(UninexusTab) onNavigate;
 
-  const ITSidebar({
+  const SecuritySidebar({
     super.key,
     required this.current,
     required this.onNavigate,
   });
 
-  // NAVIGATION ITEMS
+  /// SECURITY NAVIGATION ITEMS
   static const _items = [
-    ('assets/images/home_tab.png',       'Dashboard',   UninexusTab.dashboard),
-    ('assets/images/qr_code.png',    'ID',          UninexusTab.id),
-    ('assets/images/error_tab.png',      'Hall Errors', UninexusTab.hallErrors),
-    ('assets/images/request_tab.png',    'Requests',    UninexusTab.requests),
-    ('assets/images/profile_tab.png', 'Profile',     UninexusTab.profile),
-    ('assets/images/settings_tab.png',   'Settings',    UninexusTab.settings),
+    ('assets/images/home_tab.png',     'Dashboard',  UninexusTab.dashboard),
+    ('assets/images/qr_code.png',      'ID',         UninexusTab.id),
+    ('assets/images/gate_entry.png',   'Gate Entry', UninexusTab.requests),
+    ('assets/images/lookup.png',    'ID Look Up', UninexusTab.logs),
+    ('assets/images/profile_tab.png',  'Profile',    UninexusTab.profile),
+    ('assets/images/settings_tab.png', 'Settings',   UninexusTab.settings),
   ];
 
   @override
@@ -29,8 +29,8 @@ class ITSidebar extends StatelessWidget {
       width: 166,
       child: Stack(
         children: [
-          // SIDEBAR BACKGROUND
-          // Gradient background with rounded corners and shadow
+
+          /// SIDEBAR BACKGROUND
           Positioned(
             top: 141,
             left: 0,
@@ -62,8 +62,7 @@ class ITSidebar extends StatelessWidget {
             ),
           ),
 
-          // LOGO
-
+          /// LOGO
           Positioned(
             top: 29,
             left: 34,
@@ -78,10 +77,10 @@ class ITSidebar extends StatelessWidget {
     );
   }
 
-  // NAVIGATION ITEM WIDGET
-
+  /// NAVIGATION ITEM
   Widget _navItem(String iconPath, String label, UninexusTab tab) {
     final isActive = current == tab;
+
     return GestureDetector(
       onTap: () => onNavigate(tab),
       child: Container(
@@ -97,10 +96,19 @@ class ITSidebar extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Icon
-            Image.asset(iconPath, width: 45, height: 45),
+
+            /// ICON
+            Image.asset(
+              iconPath,
+              width: 45,
+              height: 45,
+              errorBuilder: (_, __, ___) =>
+              const Icon(Icons.circle, size: 40, color: Colors.white),
+            ),
+
             const SizedBox(height: 5),
-            // Label
+
+            /// LABEL
             Text(
               label,
               style: AppTextStyles.sidebarLabel,

@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
-class ITProfileScreen extends StatelessWidget {
+class SecurityProfileScreen extends StatelessWidget {
   final void Function(UninexusTab) onNavigate;
-  const ITProfileScreen({super.key, required this.onNavigate});
+
+  const SecurityProfileScreen({super.key, required this.onNavigate});
 
   @override
   Widget build(BuildContext context) {
@@ -14,35 +15,37 @@ class ITProfileScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
             const Text('Profile', style: AppTextStyles.largeHeading),
+
             const SizedBox(height: 20),
 
-            // Profile header card
+            /// HEADER CARD
             GlassCard(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
               child: ProfileHeader(
                 iconAsset: 'assets/icons/user_purple.png',
-                title: 'Ahmed Mohamed Ebrahim Mohamed',
-                subtitle: 'IT203021',
+                title: 'Hassan Ammar Seidel Ibrahim',
+                subtitle: 'SC204553',
               ),
             ),
 
             const SizedBox(height: 16),
 
-            // Profile details card
+            /// DETAILS CARD
             GlassCard(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               child: Column(
                 children: [
-                  _buildInfoRow('Department',  'IT'),
+                  _buildInfoRow('Department', 'Security'),
                   const SizedBox(height: 16),
-                  _buildInfoRow('Position',    'Senior Technician'),
+                  _buildInfoRow('Position', 'Security Officer'),
                   const SizedBox(height: 16),
-                  _buildInfoRow('E-mail',      'ahmed3044@gmail.com'),
+                  _buildInfoRow('E-mail', '-'),
                   const SizedBox(height: 16),
-                  _buildInfoRow('Phone no.',   '01920202343'),
+                  _buildInfoRow('Phone no.', '01564343902'),
                   const SizedBox(height: 16),
-                  _buildInfoRow('National ID', '2838329204792-32'),
+                  _buildInfoRow('National ID', '2855832904792-52'),
                 ],
               ),
             ),
@@ -56,20 +59,24 @@ class ITProfileScreen extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+
         SizedBox(
           width: 120,
           child: Text(label,
               style: AppTextStyles.profileInfoLabelStyle,
               textAlign: TextAlign.right),
         ),
+
         const SizedBox(
           width: 20,
           child: Text(':',
               style: AppTextStyles.profileInfoLabelStyle,
               textAlign: TextAlign.center),
         ),
+
         Expanded(
-          child: Text(value, style: AppTextStyles.profileInfoValueStyle),
+          child: Text(value,
+              style: AppTextStyles.profileInfoValueStyle),
         ),
       ],
     );

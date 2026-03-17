@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../uninexus_tab.dart';
-import '../theme/app_theme.dart';
+import 'package:uninexus/theme/uninexus_tab.dart';
+import 'package:uninexus/theme/app_theme.dart';
 
 class ITAnnouncementsScreen extends StatelessWidget {
   final void Function(UninexusTab) onNavigate;
@@ -44,7 +44,7 @@ class ITAnnouncementsScreen extends StatelessWidget {
                         child: Row(
                           children: [
                             Image.asset(
-                              'assets/icons/bell_outline.png',
+                              'assets/icons/notify_1.png',
                               width: 22, height: 22,
                               errorBuilder: (_, __, ___) => const Icon(
                                   Icons.notifications_outlined,
