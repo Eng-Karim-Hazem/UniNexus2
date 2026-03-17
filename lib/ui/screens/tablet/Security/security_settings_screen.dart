@@ -122,17 +122,6 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                           crossAxisAlignment:
                           CrossAxisAlignment.start,
                           children: [
-
-                            IconButton(
-                              icon:
-                              const Icon(Icons.arrow_back),
-                              onPressed: () {
-                                setState(() {
-                                  selectedSettingTab = null;
-                                });
-                              },
-                            ),
-
                             const SizedBox(height: 20),
 
                             Expanded(

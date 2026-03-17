@@ -18,12 +18,12 @@ class SecurityProfileScreen extends StatelessWidget {
 
             const Text('Profile', style: AppTextStyles.largeHeading),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 45),
 
             /// HEADER CARD
             GlassCard(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
-              child: ProfileHeader(
+              child: const ProfileHeader(
                 iconAsset: 'assets/icons/user_purple.png',
                 title: 'Hassan Ammar Seidel Ibrahim',
                 subtitle: 'SC204553',
@@ -33,21 +33,27 @@ class SecurityProfileScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             /// DETAILS CARD
+            Expanded(child:
             GlassCard(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30), // Increased vertical padding
               child: Column(
                 children: [
                   _buildInfoRow('Department', 'Security'),
-                  const SizedBox(height: 16),
+                  _buildDivider(),
+
                   _buildInfoRow('Position', 'Security Officer'),
-                  const SizedBox(height: 16),
+                  _buildDivider(),
+
                   _buildInfoRow('E-mail', '-'),
-                  const SizedBox(height: 16),
+                  _buildDivider(),
+
                   _buildInfoRow('Phone no.', '01564343902'),
-                  const SizedBox(height: 16),
+                  _buildDivider(),
+
                   _buildInfoRow('National ID', '2855832904792-52'),
                 ],
               ),
+            ),
             ),
           ],
         ),
@@ -55,30 +61,37 @@ class SecurityProfileScreen extends StatelessWidget {
     );
   }
 
+  // EDITED: Now perfectly left-aligned without the awkward SizedBox staggering
   Widget _buildInfoRow(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-
-        SizedBox(
-          width: 120,
-          child: Text(label,
-              style: AppTextStyles.profileInfoLabelStyle,
-              textAlign: TextAlign.right),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), // Matches text spacing to the edges
+      child: RichText(
+        text: TextSpan(
+          style: AppTextStyles.profileInfoLabelStyle, // Makes the Label bold
+          children: [
+            TextSpan(
+              text: '$label : ',
+            ),
+            TextSpan(
+              text: value,
+              style: AppTextStyles.profileInfoValueStyle, // Makes the Value slightly lighter
+            ),
+          ],
         ),
+      ),
+    );
+  }
 
-        const SizedBox(
-          width: 20,
-          child: Text(':',
-              style: AppTextStyles.profileInfoLabelStyle,
-              textAlign: TextAlign.center),
-        ),
-
-        Expanded(
-          child: Text(value,
-              style: AppTextStyles.profileInfoValueStyle),
-        ),
-      ],
+  // EDITED: Increased vertical space to match the new design
+  Widget _buildDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20), // Adds generous vertical spacing
+      child: Divider(
+        color: AppColors.primary.withOpacity(0.6),
+        thickness: 2,
+        height: 2,
+      ),
     );
   }
 }

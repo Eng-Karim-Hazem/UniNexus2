@@ -48,6 +48,8 @@ class SecurityGateEntryScreen extends StatelessWidget {
                     child: GlassCard(
                       padding: const EdgeInsets.all(20),
                       child: ListView(
+                        // EDITED: Removes Flutter's default top padding to bring the first card to the top
+                        padding: EdgeInsets.zero,
                         children: entries
                             .map((e) => _EntryRow(
                           id: e['id']!,
@@ -64,7 +66,7 @@ class SecurityGateEntryScreen extends StatelessWidget {
                   Expanded(
                     flex: 4,
                     child: GlassCard(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(32),
                       child: const _UserDataPanel(),
                     ),
                   ),
@@ -100,33 +102,43 @@ class _EntryRow extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: AppDecorations.smallCard(),
       child: Row(
         children: [
+          // EDITED: Changed back to your avatar image instead of the Icon
+          Image.asset(
+            'assets/images/avatar.png',
+            width: 28,
+            height: 28,
+            errorBuilder: (_, __, ___) => const Icon(Icons.person, color: AppColors.primary, size: 28),
+          ),
 
-          Image.asset('assets/images/avatar.png', width: 26),
-
-          const SizedBox(width: 10),
+          const SizedBox(width: 14),
 
           Container(
-            width: 2,
-            height: 26,
+            width: 4,
+            height: 28,
             color: AppColors.primary.withOpacity(.35),
           ),
 
-          const SizedBox(width: 10),
+          const SizedBox(width: 14),
 
           Expanded(
             child: Text(
               id,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontFamily: AppFonts.spaceGrotesk,
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                color: AppColors.textDark,
+              ),
             ),
           ),
 
           Container(
-            width: 12,
-            height: 12,
+            width: 14,
+            height: 14,
             decoration:
             BoxDecoration(color: color, shape: BoxShape.circle),
           )
@@ -135,73 +147,91 @@ class _EntryRow extends StatelessWidget {
     );
   }
 }
+
 class _UserDataPanel extends StatelessWidget {
   const _UserDataPanel();
 
   @override
   Widget build(BuildContext context) {
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
+      children: [
 
+        /// HEADER
         Row(
           children: [
-            Icon(Icons.person, color: AppColors.primary),
-            SizedBox(width: 10),
-            Text(
+            const Icon(Icons.person, color: AppColors.primary, size: 40),
+
+            const SizedBox(width: 16),
+
+            Container(
+              width: 2.5,
+              height: 40,
+              color: AppColors.primary.withOpacity(0.4),
+            ),
+
+            const SizedBox(width: 16),
+
+            const Text(
               "User Data",
               style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+                fontFamily: AppFonts.batangas,
+                fontWeight: FontWeight.w800,
+                fontSize: 26,
                 color: AppColors.primary,
               ),
             ),
           ],
         ),
 
-        SizedBox(height: 20),
+        const SizedBox(height: 36),
 
-        Text(
-          "Name : Ammar Tarek Mohamed",
-          style: TextStyle(fontWeight: FontWeight.bold),
+        /// DATA ROWS
+        _buildDataRow("Name :", "Ammar Tarek Mohamed"),
+        const SizedBox(height: 24),
+
+        Row(
+          children: [
+            Expanded(flex: 3, child: _buildDataRow("User Type:", "Student")),
+            Expanded(flex: 2, child: _buildDataRow("Year:", "4")),
+          ],
         ),
+        const SizedBox(height: 24),
 
-        SizedBox(height: 10),
+        _buildDataRow("ID:", "ST00453"),
+        const SizedBox(height: 24),
 
-        Text(
-          "User Type: Student   Year: 4",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        _buildDataRow("Faculty:", "ICT"),
+        const SizedBox(height: 24),
 
-        SizedBox(height: 10),
+        _buildDataRow("Status:", "Denied"),
+        const SizedBox(height: 24),
 
-        Text(
-          "ID: ST00453",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-
-        SizedBox(height: 10),
-
-        Text(
-          "Faculty: ICT",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-
-        SizedBox(height: 10),
-
-        Text(
-          "Status: Denied",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-
-        SizedBox(height: 10),
-
-        Text(
-          "Note: Last year's tuition unpaid",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        _buildDataRow("Note:", "Last year's tuition unpaid"),
       ],
+    );
+  }
+
+  // Helper widget to properly bold labels vs values
+  Widget _buildDataRow(String label, String value) {
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(
+          fontFamily: AppFonts.spaceGrotesk,
+          fontSize: 18,
+          color: AppColors.textDark,
+        ),
+        children: [
+          TextSpan(
+            text: '$label ',
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          TextSpan(
+            text: value,
+            style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textMid),
+          ),
+        ],
+      ),
     );
   }
 }

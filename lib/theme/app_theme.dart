@@ -574,7 +574,7 @@ class AppGreetingCard extends StatelessWidget {
           Text(
             'Hi $name!',
             style: const TextStyle(
-              fontSize: 24,
+              fontSize: 28,
               fontWeight: FontWeight.w800,
               fontFamily: AppFonts.batangas,
               color: AppColors.textDark,
@@ -584,7 +584,7 @@ class AppGreetingCard extends StatelessWidget {
           Text(
             subtitle,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               fontFamily: AppFonts.spaceGrotesk,
               color: AppColors.textDark,
@@ -594,7 +594,7 @@ class AppGreetingCard extends StatelessWidget {
           Text(
             date,
             style: const TextStyle(
-              fontSize: 13,
+              fontSize: 15,
               fontWeight: FontWeight.w700,
               fontFamily: AppFonts.spaceGrotesk,
               color: AppColors.primary,
