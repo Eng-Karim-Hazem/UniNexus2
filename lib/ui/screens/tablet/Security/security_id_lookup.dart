@@ -27,13 +27,13 @@ class SecurityIdLookupScreen extends StatelessWidget {
             const Text(
               "ID Lookup",
               style: TextStyle(
-                fontSize: 40,
+                fontSize: 50,
                 fontFamily: AppFonts.batangas,
                 fontWeight: FontWeight.bold,
               ),
             ),
 
-            const SizedBox(height: 55),
+            const SizedBox(height: 45),
 
             Expanded(
               child: Row(
@@ -202,7 +202,7 @@ class _UserDataPanel extends StatelessWidget {
             const SizedBox(width: 16),
 
             Container(
-              width: 2.5,
+              width: 3,
               height: 40,
               color: AppColors.primary.withOpacity(0.4),
             ),

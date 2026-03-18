@@ -160,12 +160,19 @@ class _UserDataPanel extends StatelessWidget {
         /// HEADER
         Row(
           children: [
-            const Icon(Icons.person, color: AppColors.primary, size: 40),
-
+            Image.asset(
+              'assets/images/avatar.png',
+              width: 40,
+              height: 40,
+              errorBuilder: (_, __, ___) => const Icon(
+                Icons.person,
+                color: AppColors.primary,
+                size: 40,
+              ),
+            ),
             const SizedBox(width: 16),
-
             Container(
-              width: 2.5,
+              width: 3,
               height: 40,
               color: AppColors.primary.withOpacity(0.4),
             ),

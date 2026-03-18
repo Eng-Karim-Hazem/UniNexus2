@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:uninexus/theme/app_theme.dart';
+import 'package:uninexus/ui/screens/tablet/request_submitted_page.dart';
 
-import 'IT/request_submitted_page.dart';
+
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 // --- NEW IMPORTS FOR FIREBASE & LOGIC ---
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uninexus/ui/screens/tablet/Admin/admin_shell.dart';
 
 import '../../../theme/app_theme.dart';
 
@@ -136,7 +137,7 @@ class _LoginPageState extends State<LoginPage>
       } else if (userCode.startsWith('SC')) {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SecurityShell()));
       } else if (userCode.startsWith('AD')) {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AdminDashboardScreen(onNavigate: (_) {})));
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AdminShell()));
       } else if (userCode.startsWith('FA')) {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const FacultyHomeScreen()));
       } else if (userCode.startsWith('ST')) {

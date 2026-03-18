@@ -18,7 +18,6 @@ class ITSettingsScreen extends StatefulWidget {
 }
 
 class _ITSettingsScreenState extends State<ITSettingsScreen> {
-
   int? selectedSettingTab;
 
   final TextEditingController _feedbackController = TextEditingController();
@@ -43,33 +42,81 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
   Widget build(BuildContext context) {
     return ITScreenBackground(
       child: Padding(
-        padding: const EdgeInsets.all(28),
+        padding: const EdgeInsets.all(32), // Matched to Security Screen
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            const Text('Settings', style: AppTextStyles.largeHeading),
-            const SizedBox(height: 45),
-
+            const Text(
+              "Settings",
+              style: AppTextStyles.largeHeading,
+            ),
+            const SizedBox(height: 10),
             Expanded(
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
 
-                  // GRID
+                  /// SETTINGS GRID (Using Security Screen Layout)
                   Expanded(
-                    flex: selectedSettingTab == null ? 1 : 35,
-                    child: _buildGrid(),
+                    flex: selectedSettingTab == null ? 1 : 0,
+                    child: Center(
+                      child: SizedBox(
+                        width: selectedSettingTab == null ? 900 : 420,
+                        child: GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: selectedSettingTab == null ? 3 : 2,
+                            mainAxisSpacing: 25,
+                            crossAxisSpacing: 25,
+                            childAspectRatio: 1.1,
+                          ),
+                          itemCount: _items.length,
+                          itemBuilder: (context, index) {
+                            final item = _items[index];
+
+                            return GestureDetector(
+                              onTap: () {
+                                if (index == 5) { // Logout is at index 5
+                                  _logout();
+                                } else {
+                                  setState(() {
+                                    selectedSettingTab = index;
+                                  });
+                                }
+                              },
+                              child: _buildSettingCard(item),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
                   ),
 
-                  // DETAIL PANEL
+                  /// RIGHT PANEL
                   if (selectedSettingTab != null) ...[
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 30),
                     Expanded(
-                      flex: 65,
-                      child: _buildDetailPanel(),
-                    ),
-                  ],
+                      child: Container(
+                        padding: const EdgeInsets.all(40),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(color: AppColors.primary, width: 2),
+                          color: Colors.white,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 20),
+                            Expanded(
+                              child: SingleChildScrollView(
+                                child: _getContentForTab(selectedSettingTab!),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  ]
                 ],
               ),
             ),
@@ -79,77 +126,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  // GRID
-  Widget _buildGrid() {
-
-    final columnCount = selectedSettingTab == null ? 3 : 2;
-    final rowCount    = selectedSettingTab == null ? 2 : 3;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final totalVSpacing = 16.0 * (rowCount - 1);
-        final totalHSpacing = 16.0 * (columnCount - 1);
-        final cardHeight = (constraints.maxHeight - totalVSpacing) / rowCount;
-        final cardWidth  = (constraints.maxWidth  - totalHSpacing) / columnCount;
-        final aspectRatio = cardWidth / cardHeight;
-
-        return GridView.builder(
-          padding: EdgeInsets.zero,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columnCount,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: aspectRatio,
-          ),
-          itemCount: _items.length,
-          itemBuilder: (context, index) {
-            final item = _items[index];
-            return GestureDetector(
-              onTap: () {
-                if (index == 5) {
-                  _logout();
-                } else {
-                  setState(() => selectedSettingTab = index);
-                }
-              },
-              child: _buildSettingCard(item),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // DETAIL PANEL
-  Widget _buildDetailPanel() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppColors.primary, width: 2),
-        color: Colors.white,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => setState(() => selectedSettingTab = null),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: SingleChildScrollView(
-              child: _getContentForTab(selectedSettingTab!),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // SETTINGS CARD
+  /// SETTINGS CARD (Matched to Security Screen sizes)
   Widget _buildSettingCard(Map<String, String> item) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
@@ -157,17 +134,22 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
         filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
         child: Container(
           decoration: GlassDecoration.light,
+          padding: const EdgeInsets.symmetric(horizontal: 15),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(
                 item['icon']!,
-                width: 60, height: 60,
-                errorBuilder: (_, __, ___) =>
-                const Icon(Icons.settings,
-                    size: 60, color: AppColors.primary),
+                width: 80,
+                height: 80,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.settings,
+                  size: 120,
+                  color: AppColors.primary,
+                ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 24),
               Text(
                 item['label']!,
                 textAlign: TextAlign.center,
@@ -180,51 +162,63 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  // TAB SWITCH
+  /// TAB CONTENT SWITCH
   Widget _getContentForTab(int index) {
     switch (index) {
-      case 0:  return _buildAccountManagement();
-      case 1:  return _buildNotificationSettings();
-      case 2:  return _buildExportLogs();
-      case 3:  return _buildFeedback();
-      case 4:  return _buildAppInfo();
-      default: return const SizedBox();
+      case 0:
+        return _buildAccountManagement();
+      case 1:
+        return _buildNotificationSettings();
+      case 2:
+        return _buildExportLogs();
+      case 3:
+        return _buildFeedback();
+      case 4:
+        return _buildAppInfo();
+      default:
+        return const SizedBox();
     }
   }
 
-  // ACCOUNT
+  /// ACCOUNT MANAGEMENT
   Widget _buildAccountManagement() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Account Management', style: AppTextStyles.largeHeading),
+        const Text(
+          "Account Management",
+          style: AppTextStyles.largeHeading,
+        ),
         const SizedBox(height: 30),
-        _buildTextField('New Phone', 'Enter phone number'),
+        _buildTextField("New Phone", "Enter phone number"),
         const SizedBox(height: 20),
-        _buildTextField('New Email', 'Enter email'),
+        _buildTextField("New Email", "Enter email"),
         const SizedBox(height: 40),
-        _buildPrimaryButton('Update'),
+        _buildPrimaryButton("Update"),
       ],
     );
   }
 
-  // NOTIFICATIONS
+  /// NOTIFICATIONS
   Widget _buildNotificationSettings() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Notification Settings', style: AppTextStyles.largeHeading),
+        const Text(
+          "Notification Settings",
+          style: AppTextStyles.largeHeading,
+        ),
         const SizedBox(height: 30),
-        _buildDropdown('Hall Alerts'),
+        _buildDropdown("Hall Alerts"), // Restored IT specific text
         const SizedBox(height: 20),
-        _buildDropdown('User Requests'),
+        _buildDropdown("User Requests"), // Restored IT specific text
         const SizedBox(height: 20),
-        _buildDropdown('Announcements'),
+        _buildDropdown("Announcements"),
       ],
     );
   }
 
-  // EXPORT
+  /// EXPORT LOGS
   Widget _buildExportLogs() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,17 +233,24 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  // FEEDBACK
+  /// FEEDBACK
   Widget _buildFeedback() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Feedback', style: AppTextStyles.largeHeading),
+        const Text(
+          "Feedback",
+          style: AppTextStyles.largeHeading,
+        ),
         const SizedBox(height: 30),
         Row(
           children: List.generate(5, (index) {
             return GestureDetector(
-              onTap: () => setState(() => _rating = index + 1),
+              onTap: () {
+                setState(() {
+                  _rating = index + 1;
+                });
+              },
               child: Icon(
                 Icons.star_rounded,
                 size: 40,
@@ -263,7 +264,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
           controller: _feedbackController,
           maxLines: 4,
           decoration: InputDecoration(
-            hintText: 'Write feedback...',
+            hintText: "Write feedback...",
             filled: true,
             fillColor: Colors.grey[100],
             border: OutlineInputBorder(
@@ -273,39 +274,44 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
           ),
         ),
         const SizedBox(height: 30),
-        _buildPrimaryButton('Submit'),
+        _buildPrimaryButton("Submit"),
       ],
     );
   }
 
-  // APP INFO
+  /// APP INFO
   Widget _buildAppInfo() {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('App Information', style: AppTextStyles.largeHeading),
+        Text(
+          "App Information",
+          style: AppTextStyles.largeHeading,
+        ),
         SizedBox(height: 20),
-        Text('App Version: UN2.0'),
+        Text("App Version: UN2.0"),
       ],
     );
   }
 
-  // LOGOUT
+  /// LOGOUT
   Future<void> _logout() async {
     final confirm = await showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Confirm Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: const Text("Confirm Logout"),
+        content: const Text("Are you sure you want to logout?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: const Text("Cancel"),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Logout',
-                style: TextStyle(color: Colors.red)),
+            child: const Text(
+              "Logout",
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -318,12 +324,14 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
 
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => const WelcomePage()),
+      MaterialPageRoute(
+        builder: (_) => const WelcomePage(),
+      ),
           (route) => false,
     );
   }
 
-  // INPUT
+  /// INPUT FIELD
   Widget _buildTextField(String label, String hint) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -345,7 +353,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  // DROPDOWN
+  /// DROPDOWN
   Widget _buildDropdown(String label) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,7 +369,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Choose alert mode'),
+              Text("Choose alert mode"),
               Icon(Icons.keyboard_arrow_down),
             ],
           ),
@@ -370,7 +378,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  //BUTTON
+  /// BUTTON
   Widget _buildPrimaryButton(String text) {
     return OutlinedButton(
       onPressed: () {},
