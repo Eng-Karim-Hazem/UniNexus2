@@ -4,32 +4,47 @@ import 'package:flutter/material.dart';
 class SignupService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final String _collection = "registration_requests";
-  final String _userCollection = "students"; // Your main student/user table
+
+  // The three main collections to check
+  final List<String> _userCollections = ['students', 'faculty', 'staff'];
 
   Future<bool> registerUser({
     required String nationalId,
-    required String studentId,
+    required String universityId, // Renamed from studentId to be more generic
     required String email,
   }) async {
     try {
-      QuerySnapshot userCheck = await _db
-          .collection(_userCollection)
-          .where('ID', isEqualTo: studentId) // Assuming field is named 'id' or 'studentId'
-          .limit(1)
-          .get();
+      bool userExists = false;
 
-      if (userCheck.docs.isEmpty) {
-        return false; // This ID doesn't exist in the users table
+      // Search through all collections for this ID
+      for (String col in _userCollections) {
+        QuerySnapshot userCheck = await _db
+            .collection(col)
+            .where('ID', isEqualTo: universityId.toUpperCase())
+            .limit(1)
+            .get();
+
+        if (userCheck.docs.isNotEmpty) {
+          userExists = true;
+          break; // Stop searching once we find them!
+        }
       }
 
+      // If the ID isn't in ANY table, reject the registration
+      if (!userExists) {
+        return false;
+      }
+
+      // If found, create the pending request
       await _db.collection(_collection).doc(nationalId).set({
         'nationalId': nationalId,
-        'studentId': studentId,
+        'universityId': universityId.toUpperCase(),
         'email': email,
         'status': 'pending',
         'createdAt': FieldValue.serverTimestamp(),
       });
       return true;
+
     } catch (e) {
       debugPrint("Signup Error: $e");
       return false;

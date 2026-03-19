@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uninexus/theme/app_theme.dart';
 import 'package:uninexus/ui/screens/tablet/request_submitted_page.dart';
+import 'package:uninexus/services/firebase/Forpass_service.dart'; // Ensure path is correct
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -12,10 +13,10 @@ class ForgotPasswordPage extends StatefulWidget {
 class _ForgotPasswordPageState extends State<ForgotPasswordPage>
     with SingleTickerProviderStateMixin, PageEntryAnimation {
 
-  // Email / ID field.
   final _emailController      = TextEditingController();
-  // National ID field.
   final _nationalIdController = TextEditingController();
+
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -24,17 +25,42 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // REMOVED replayPageAnimation() so the keyboard doesn't restart the animation!
-  }
-
-  @override
   void dispose() {
-    disposePageAnimation(); // Clean up the animation controller from the mixin
+    disposePageAnimation();
     _emailController.dispose();
     _nationalIdController.dispose();
     super.dispose();
+  }
+
+  // --- INTEGRATED FORGOT PASS LOGIC ---
+  Future<void> _handleSubmit() async {
+    final emailOrId = _emailController.text.trim();
+    final nId = _nationalIdController.text.trim();
+
+    if (emailOrId.isEmpty || nId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please fill in all fields")));
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    // This service now checks across all 3 user collections
+    bool success = await ForpassService().sendRenewalRequest(
+      emailOrId: emailOrId,
+      nationalId: nId,
+    );
+
+    if (mounted) setState(() => _isLoading = false);
+
+    if (success && mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const RequestSubmittedPage()),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Details do not match our records.")),
+      );
+    }
   }
 
   @override
@@ -48,136 +74,61 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
       body: Stack(
         clipBehavior: Clip.hardEdge,
         children: [
-
-          /// TOP RIGHT SHAPE (Animated)
+          /// BACKGROUND SHAPES (Inherited from your original UI)
           Positioned(
-            right: -sw * 0.2,
-            top: -sh * 0.27,
+            right: -sw * 0.2, top: -sh * 0.27,
             child: FadeTransition(
               opacity: pageAnimController,
               child: SlideTransition(
-                position: Tween<Offset>(begin: const Offset(0.3, -0.3), end: Offset.zero)
-                    .animate(CurvedAnimation(parent: pageAnimController, curve: Curves.easeOutCubic)),
-                child: Image.asset(
-                  'assets/images/Rectangle1.png',
-                  width: sw * 0.55,
-                  height: sw * 0.65,
-                ),
+                position: Tween<Offset>(begin: const Offset(0.3, -0.3), end: Offset.zero).animate(CurvedAnimation(parent: pageAnimController, curve: Curves.easeOutCubic)),
+                child: Image.asset('assets/images/Rectangle1.png', width: sw * 0.55, height: sw * 0.65),
+              ),
+            ),
+          ),
+          Positioned(
+            right: -sw * 0.001, bottom: -sh * 0.46,
+            child: FadeTransition(
+              opacity: pageAnimController,
+              child: SlideTransition(
+                position: Tween<Offset>(begin: const Offset(0.3, 0.3), end: Offset.zero).animate(CurvedAnimation(parent: pageAnimController, curve: Curves.easeOutCubic)),
+                child: Image.asset('assets/images/Rectangle1.png', width: sw * 0.55, height: sw * 0.65),
               ),
             ),
           ),
 
-          /// BOTTOM RIGHT SHAPE (Animated)
-          Positioned(
-            right: -sw * 0.001,
-            bottom: -sh * 0.46,
-            child: FadeTransition(
-              opacity: pageAnimController,
-              child: SlideTransition(
-                position: Tween<Offset>(begin: const Offset(0.3, 0.3), end: Offset.zero)
-                    .animate(CurvedAnimation(parent: pageAnimController, curve: Curves.easeOutCubic)),
-                child: Image.asset(
-                  'assets/images/Rectangle1.png',
-                  width: sw * 0.55,
-                  height: sw * 0.65,
-                ),
-              ),
-            ),
-          ),
-
-          // Animated page content
           animatedPageContent(
             child: Stack(
               children: [
+                Positioned(left: sw * 0.02, top: sh * 0.04, child: AppBackButton(width: sw * 0.12)),
 
-                /// BACK BUTTON
                 Positioned(
-                  left: sw * 0.02,
-                  top: sh * 0.04,
-                  child: AppBackButton(width: sw * 0.12),
-                ),
-
-                /// THE UNIFIED CENTERED FORM
-                Positioned(
-                  left: sw * 0.10,    // Shifts the whole block from the left
-                  width: sw * 0.30,   // Determines how wide the text fields are
-                  top: sh * 0.08,     // Distance from the top of the screen
-                  bottom: 0,
-                  child: SingleChildScrollView( // Prevents keyboard overflow errors!
+                  left: sw * 0.10, width: sw * 0.30, top: sh * 0.08, bottom: 0,
+                  child: SingleChildScrollView(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center, // Centers everything
                       children: [
+                        ClipRRect(borderRadius: BorderRadius.circular(16), child: Image.asset('assets/images/uni.jpeg', width: sw * 0.12, height: sw * 0.12, fit: BoxFit.cover)),
+                        const SizedBox(height: 20),
+                        Text('Forgotten Password', style: AppTextStyles.heading.copyWith(fontSize: 26)),
+                        const Text('Enter your details to renew your credentials', style: AppTextStyles.caption),
+                        const SizedBox(height: 40),
 
-                        /// LOGO
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: Image.asset(
-                            'assets/images/uni.jpeg',
-                            width: sw * 0.12,
-                            height: sw * 0.12,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                        animatedField(anim: field1Anim, child: AppLabeledField(label: 'Email / ID', controller: _emailController, hint: 'Enter Your Email/ID')),
+                        const SizedBox(height: 20),
+                        animatedField(anim: field2Anim, child: AppLabeledField(label: 'National ID', controller: _nationalIdController, hint: 'Enter Your National ID')),
 
-                        SizedBox(height: sh * 0.03),
+                        const SizedBox(height: 40),
 
-                        /// TITLE & SUBTITLE
-                        Text(
-                          'Forgotten Password',
-                          style: AppTextStyles.heading.copyWith(fontSize: 26),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Enter your details to renew your credentials',
-                          style: AppTextStyles.caption,
-                          textAlign: TextAlign.center,
-                        ),
-
-                        SizedBox(height: sh * 0.05),
-
-                        /// EMAIL / ID FIELD
-                        animatedField(
-                          anim: field1Anim,
-                          child: AppLabeledField(
-                            label: 'Email / ID',
-                            controller: _emailController,
-                            hint: 'Enter Your Email/ID',
-                          ),
-                        ),
-
-                        SizedBox(height: sh * 0.03),
-
-                        /// NATIONAL ID FIELD
-                        animatedField(
-                          anim: field2Anim,
-                          child: AppLabeledField(
-                            label: 'National ID',
-                            controller: _nationalIdController,
-                            hint: 'Enter Your National ID',
-                          ),
-                        ),
-
-                        SizedBox(height: sh * 0.05),
-
-                        /// SUBMIT BUTTON
                         animatedField(
                           anim: checkAnim,
-                          child: AppAuthButton(
-                            text: 'Submit',
-                            // navigate to the confirmation page
-                            onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const RequestSubmittedPage()),
-                            ),
-                          ),
+                          child: _isLoading
+                              ? const CircularProgressIndicator()
+                              : AppAuthButton(text: 'Submit', onTap: _handleSubmit),
                         ),
-
-                        SizedBox(height: sh * 0.05), // Extra padding for the bottom
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),
                 ),
-
               ],
             ),
           ),

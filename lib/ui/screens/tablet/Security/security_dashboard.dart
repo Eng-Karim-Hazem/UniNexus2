@@ -15,6 +15,7 @@ class SecurityDashboardScreen extends StatelessWidget {
     {'name': 'Abd el-rahman Mohamed Entered', 'status': 'approved'},
   ];
 
+
   @override
   Widget build(BuildContext context) {
     return ITScreenBackground(

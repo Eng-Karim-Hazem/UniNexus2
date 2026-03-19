@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uninexus/theme/app_theme.dart';
 import 'package:uninexus/ui/screens/tablet/request_submitted_page.dart';
-
-
+import 'package:uninexus/services/firebase/Signup_service.dart'; // Ensure path is correct
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -14,33 +13,60 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage>
     with SingleTickerProviderStateMixin, PageEntryAnimation {
 
-  // National ID field.
   final _nationalIdController = TextEditingController();
-  // Email / ID field.
   final _emailController      = TextEditingController();
-  // Password field.
   final _passwordController   = TextEditingController();
+
+  bool _isLoading = false; // Added loading state
 
   @override
   void initState() {
     super.initState();
-    // entry animation
     initPageAnimation(vsync: this);
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // REMOVED replayPageAnimation() so the keyboard doesn't restart the animation!
-  }
-
-  @override
   void dispose() {
-    disposePageAnimation(); // Clean up the animation controller from the mixin
+    disposePageAnimation();
     _nationalIdController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  // --- INTEGRATED SIGNUP LOGIC ---
+  Future<void> _handleRegister() async {
+    final nId = _nationalIdController.text.trim();
+    final uId = _emailController.text.trim(); // User enters ID here
+    final email = _emailController.text.trim(); // Or separate email logic
+
+    if (nId.isEmpty || uId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill in all fields")),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    // Using the universal service that checks Students, Faculty, and Staff
+    bool success = await SignupService().registerUser(
+      nationalId: nId,
+      universityId: uId,
+      email: email,
+    );
+
+    if (mounted) setState(() => _isLoading = false);
+
+    if (success && mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const RequestSubmittedPage()),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("ID not found in our records. Please contact administration.")),
+      );
+    }
   }
 
   @override
@@ -54,148 +80,71 @@ class _RegisterPageState extends State<RegisterPage>
       body: Stack(
         clipBehavior: Clip.hardEdge,
         children: [
-
-          /// TOP RIGHT SHAPE (Animated)
+          /// TOP RIGHT SHAPE
           Positioned(
-            right: -sw * 0.2,
-            top: -sh * 0.27,
+            right: -sw * 0.2, top: -sh * 0.27,
             child: FadeTransition(
               opacity: pageAnimController,
               child: SlideTransition(
-                position: Tween<Offset>(begin: const Offset(0.3, -0.3), end: Offset.zero)
-                    .animate(CurvedAnimation(parent: pageAnimController, curve: Curves.easeOutCubic)),
-                child: Image.asset(
-                  'assets/images/Rectangle1.png',
-                  width: sw * 0.55,
-                  height: sw * 0.65,
-                ),
+                position: Tween<Offset>(begin: const Offset(0.3, -0.3), end: Offset.zero).animate(CurvedAnimation(parent: pageAnimController, curve: Curves.easeOutCubic)),
+                child: Image.asset('assets/images/Rectangle1.png', width: sw * 0.55, height: sw * 0.65),
               ),
             ),
           ),
 
-          /// BOTTOM RIGHT SHAPE (Animated)
+          /// BOTTOM RIGHT SHAPE
           Positioned(
-            right: -sw * 0.001,
-            bottom: -sh * 0.46,
+            right: -sw * 0.001, bottom: -sh * 0.46,
             child: FadeTransition(
               opacity: pageAnimController,
               child: SlideTransition(
-                position: Tween<Offset>(begin: const Offset(0.3, 0.3), end: Offset.zero)
-                    .animate(CurvedAnimation(parent: pageAnimController, curve: Curves.easeOutCubic)),
-                child: Image.asset(
-                  'assets/images/Rectangle1.png',
-                  width: sw * 0.55,
-                  height: sw * 0.65,
-                ),
+                position: Tween<Offset>(begin: const Offset(0.3, 0.3), end: Offset.zero).animate(CurvedAnimation(parent: pageAnimController, curve: Curves.easeOutCubic)),
+                child: Image.asset('assets/images/Rectangle1.png', width: sw * 0.55, height: sw * 0.65),
               ),
             ),
           ),
 
-          // Animated page content (slide-up + fade-in)
           animatedPageContent(
             child: Stack(
               children: [
-
-                /// BACK BUTTON
                 Positioned(
-                  left: sw * 0.02,
-                  top: sh * 0.04,
+                  left: sw * 0.02, top: sh * 0.04,
                   child: AppBackButton(width: sw * 0.12),
                 ),
 
-                /// THE UNIFIED CENTERED FORM
                 Positioned(
-                  left: sw * 0.10,    // Shifts the whole block from the left
-                  width: sw * 0.30,   // Determines how wide the text fields are
-                  top: sh * 0.08,     // Distance from the top of the screen
-                  bottom: 0,
-                  child: SingleChildScrollView( // Prevents keyboard overflow errors!
+                  left: sw * 0.10, width: sw * 0.30, top: sh * 0.08, bottom: 0,
+                  child: SingleChildScrollView(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center, // Centers everything
                       children: [
-
-                        /// LOGO
                         ClipRRect(
                           borderRadius: BorderRadius.circular(16),
-                          child: Image.asset(
-                            'assets/images/uni.jpeg',
-                            width: sw * 0.12,
-                            height: sw * 0.12,
-                            fit: BoxFit.cover,
-                          ),
+                          child: Image.asset('assets/images/uni.jpeg', width: sw * 0.12, height: sw * 0.12, fit: BoxFit.cover),
                         ),
+                        const SizedBox(height: 20),
+                        Text('Register to UniNexus', style: AppTextStyles.heading.copyWith(fontSize: 26)),
+                        const Text('Start your smart campus journey', style: AppTextStyles.caption),
+                        const SizedBox(height: 40),
 
-                        SizedBox(height: sh * 0.03),
+                        animatedField(anim: field1Anim, child: AppLabeledField(label: 'National ID', controller: _nationalIdController, hint: 'Enter Your National ID')),
+                        const SizedBox(height: 20),
+                        animatedField(anim: field2Anim, child: AppLabeledField(label: 'Email / ID', controller: _emailController, hint: 'Enter Your Email/ID')),
+                        const SizedBox(height: 20),
+                        animatedField(anim: field3Anim, child: AppLabeledField(label: 'Password', controller: _passwordController, hint: 'Enter Your Password', obscure: true)),
 
-                        /// TITLE & SUBTITLE
-                        Text(
-                          'Register to UniNexus',
-                          style: AppTextStyles.heading.copyWith(fontSize: 26),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Start your smart campus journey',
-                          style: AppTextStyles.caption,
-                          textAlign: TextAlign.center,
-                        ),
+                        const SizedBox(height: 40),
 
-                        SizedBox(height: sh * 0.05),
-
-                        /// NATIONAL ID FIELD
-                        animatedField(
-                          anim: field1Anim,
-                          child: AppLabeledField(
-                            label: 'National ID',
-                            controller: _nationalIdController,
-                            hint: 'Enter Your National ID',
-                          ),
-                        ),
-
-                        SizedBox(height: sh * 0.03),
-
-                        /// EMAIL / ID FIELD
-                        animatedField(
-                          anim: field2Anim,
-                          child: AppLabeledField(
-                            label: 'Email / ID',
-                            controller: _emailController,
-                            hint: 'Enter Your Email/ID',
-                          ),
-                        ),
-
-                        SizedBox(height: sh * 0.03),
-
-                        /// PASSWORD FIELD
-                        animatedField(
-                          anim: field3Anim,
-                          child: AppLabeledField(
-                            label: 'Password',
-                            controller: _passwordController,
-                            hint: 'Enter Your Password',
-                            obscure: true,
-                          ),
-                        ),
-
-                        SizedBox(height: sh * 0.05),
-
-                        /// REGISTER BUTTON
                         animatedField(
                           anim: checkAnim,
-                          child: AppAuthButton(
-                            text: 'Register',
-                            onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const RequestSubmittedPage()),
-                            ),
-                          ),
+                          child: _isLoading
+                              ? const CircularProgressIndicator()
+                              : AppAuthButton(text: 'Register', onTap: _handleRegister),
                         ),
-
-                        SizedBox(height: sh * 0.05), // Extra padding for the bottom
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),
                 ),
-
               ],
             ),
           ),
