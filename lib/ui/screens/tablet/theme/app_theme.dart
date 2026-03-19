@@ -262,7 +262,7 @@ class AppTextStyles {
 
   // Settings screen
   static const TextStyle settingsCardTitleStyle = TextStyle(
-    fontSize: 24, fontWeight: FontWeight.w700,
+    fontSize: 20, fontWeight: FontWeight.w700,
     fontFamily: AppFonts.spaceGrotesk, color: AppColors.textDark,
   );
 
@@ -314,6 +314,7 @@ class AppTextStyles {
   // Info rows
   static const TextStyle infoRowLabelStyle = TextStyle(
     fontWeight: FontWeight.w700,
+    fontSize: 18
   );
   static const TextStyle infoRowValueStyle = TextStyle(
     fontWeight: FontWeight.w500, color: AppColors.textMid,

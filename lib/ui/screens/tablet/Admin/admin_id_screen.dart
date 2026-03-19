@@ -92,7 +92,7 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
                                 padding: const EdgeInsets.all(14),
                                 decoration: AppDecorations.iconBackground,
                                 child: Image.asset(
-                                  'assets/mages/qr_new.png', // Fixed typo here
+                                  'assets/images/id_card.png', // Fixed typo here
                                   width: 40,
                                   height: 40,
                                   fit: BoxFit.contain,

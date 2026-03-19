@@ -25,7 +25,6 @@ class ITDashboardScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Greeting card
-            // Greeting card
             const AppGreetingCard(
               name: 'Eng. Ahmed',
               subtitle: 'Good morning',

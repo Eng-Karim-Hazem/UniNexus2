@@ -79,8 +79,8 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('User Requests', style: AppTextStyles.heading),
-            const SizedBox(height: 24),
+            Text('User Requests', style: AppTextStyles.largeHeading),
+            const SizedBox(height: 50),
             Expanded(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,

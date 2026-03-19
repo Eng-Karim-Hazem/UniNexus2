@@ -265,7 +265,7 @@ class AppTextStyles {
 
   // Settings screen
   static const TextStyle settingsCardTitleStyle = TextStyle(
-    fontSize: 24, fontWeight: FontWeight.w700,
+    fontSize: 20, fontWeight: FontWeight.w700,
     fontFamily: AppFonts.spaceGrotesk, color: AppColors.textDark,
   );
 

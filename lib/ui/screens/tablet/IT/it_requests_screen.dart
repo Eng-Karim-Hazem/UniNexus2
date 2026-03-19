@@ -92,7 +92,7 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('User Requests', style: AppTextStyles.largeHeading),
+            const Text('User Requests', style: AppTextStyles.largeHeading,),
             const SizedBox(height: 45),
 
             Expanded(

@@ -187,7 +187,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
       children: [
         const Text(
           "Account Management",
-          style: AppTextStyles.largeHeading,
+          style: AppTextStyles.heading,
         ),
         const SizedBox(height: 30),
         _buildTextField("New Phone", "Enter phone number"),
@@ -206,7 +206,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
       children: [
         const Text(
           "Notification Settings",
-          style: AppTextStyles.largeHeading,
+          style: AppTextStyles.heading,
         ),
         const SizedBox(height: 30),
         _buildDropdown("Hall Alerts"), // Restored IT specific text
@@ -223,7 +223,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Export Logs', style: AppTextStyles.largeHeading),
+        const Text('Export Logs', style: AppTextStyles.heading),
         const SizedBox(height: 40),
         const Text(
             'This feature is used to export the logged information so it can be used for backup or analyzing behaviour.'),
@@ -240,7 +240,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
       children: [
         const Text(
           "Feedback",
-          style: AppTextStyles.largeHeading,
+          style: AppTextStyles.heading,
         ),
         const SizedBox(height: 30),
         Row(
@@ -286,7 +286,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
       children: [
         Text(
           "App Information",
-          style: AppTextStyles.largeHeading,
+          style: AppTextStyles.heading,
         ),
         SizedBox(height: 20),
         Text("App Version: UN2.0"),

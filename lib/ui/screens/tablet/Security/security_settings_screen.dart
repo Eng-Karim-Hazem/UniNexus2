@@ -146,36 +146,28 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
 
   /// SETTINGS CARD (ICONS MADE BIGGER)
   Widget _buildSettingCard(Map<String, String> item) {
-
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
-        filter: ImageFilter.blur(
-            sigmaX: 18, sigmaY: 18),
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
         child: Container(
           decoration: GlassDecoration.light,
           padding: const EdgeInsets.symmetric(horizontal: 15),
           child: Column(
-            mainAxisAlignment:
-            MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-
-              /// BIGGER ICON
               Image.asset(
                 item['icon']!,
                 width: 80,
                 height: 80,
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) =>
-                const Icon(
+                errorBuilder: (_, __, ___) => const Icon(
                   Icons.settings,
                   size: 120,
                   color: AppColors.primary,
                 ),
               ),
-
               const SizedBox(height: 24),
-
               Text(
                 item['label']!,
                 textAlign: TextAlign.center,
@@ -220,7 +212,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
 
         const Text(
           "Account Management",
-          style: AppTextStyles.largeHeading,
+          style: AppTextStyles.heading,
         ),
 
         const SizedBox(height: 30),
@@ -250,7 +242,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
 
         const Text(
           "Notification Settings",
-          style: AppTextStyles.largeHeading,
+          style: AppTextStyles.heading,
         ),
 
         const SizedBox(height: 30),
@@ -278,7 +270,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
 
         const Text(
           "Feedback",
-          style: AppTextStyles.largeHeading,
+          style: AppTextStyles.heading,
         ),
 
         const SizedBox(height: 30),
@@ -337,7 +329,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
 
         Text(
           "App Information",
-          style: AppTextStyles.largeHeading,
+          style: AppTextStyles.heading,
         ),
 
         SizedBox(height: 20),

@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../../admin_tab.dart'; // Ensure this contains your search tab
-import '../theme/app_theme.dart';
+import 'package:uninexus/theme/app_theme.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   final void Function(AdminTab) onNavigate;
@@ -15,7 +15,11 @@ class AdminDashboardScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildGreetingCard("Hi Ms. Sarah!"),
+            const AppGreetingCard(
+              name: 'Ms. Sarah',
+              subtitle: 'Good morning',
+              date: 'October 11, 2026',
+            ),
             const SizedBox(height: 20),
 
             Expanded(
@@ -68,7 +72,7 @@ class AdminDashboardScreen extends StatelessWidget {
                             Expanded(
                               child: _buildQuickActionCard(
                                 "User Search",
-                                Icons.person_search_rounded,
+                                "assets/images/id-card 5.png",
                                 onTap: () => onNavigate(AdminTab.usersearch), // Ensure 'search' is in AdminTab
                               ),
                             ),
@@ -76,7 +80,7 @@ class AdminDashboardScreen extends StatelessWidget {
                             Expanded(
                               child: _buildQuickActionCard(
                                 "Send Notice",
-                                Icons.send_rounded,
+                                "assets/images/send_butt.png",
                                 onTap: () => onNavigate(AdminTab.sentnotices),
                               ),
                             ),
@@ -120,47 +124,76 @@ class AdminDashboardScreen extends StatelessWidget {
 
   // --- UI HELPER METHODS ---
 
-  // Updated to include onTap functionality
-  Widget _buildQuickActionCard(String title, IconData icon, {required VoidCallback onTap}) {
+  // Updated to match the new crisp white design with the top-right icon box!
+  // Updated to use image assets instead of standard icons
+  Widget _buildQuickActionCard(String title, String imagePath, {required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
-      child: GlassCard(
-        padding: const EdgeInsets.symmetric(vertical: 30),
+      child: Container(
+        height: 120,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppColors.primary.withOpacity(0.5),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(icon, size: 35, color: AppColors.primary),
-            const SizedBox(height: 10),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+
+            // TOP RIGHT: Filled Asset Box
+            Align(
+              alignment: Alignment.topRight,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Image.asset(
+                  imagePath, // Uses your custom asset path
+                  width: 30,
+                  height: 30,
+                  //color: Colors.white, // Tints your asset white to match the design!
+                  fit: BoxFit.contain,
+                  // Fallback icon just in case the asset path is mistyped
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.image_not_supported_outlined,
+                    size: 26,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+
+            // BOTTOM LEFT: Bold Title
+            Text(
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 20,
+                fontFamily: AppFonts.spaceGrotesk,
+                color: AppColors.textDark,
+              ),
+            ),
+
           ],
         ),
       ),
     );
   }
 
-  // ... rest of your helper methods (buildGreetingCard, etc.) remain the same
-  Widget _buildGreetingCard(String name) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(24, 18, 24, 18),
-          decoration: AppDecorations.greetingCard,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(name, style: AppTextStyles.greetingTitleStyle),
-              const SizedBox(height: 4),
-              const Text('Good morning', style: AppTextStyles.greetingMorningStyle),
-              const SizedBox(height: 2),
-              const Text('October 11, 2026', style: AppTextStyles.greetingDateStyle),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildRequestSummaryRow(String iconPath, String title, IconData fallback) {
     return Row(

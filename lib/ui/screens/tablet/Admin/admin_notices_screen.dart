@@ -126,7 +126,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
                       children: [
                         Expanded(
                           child: _CategoryButton(
-                            icon: Icons.person_outline_rounded,
+                            imagePath: 'assets/images/avatar.png',
                             label: 'Individual',
                             isActive: _activeCategory == 'Individual',
                             onTap: () => setState(() => _activeCategory = 'Individual'),
@@ -135,7 +135,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
                         const SizedBox(height: 16),
                         Expanded(
                           child: _CategoryButton(
-                            icon: Icons.groups_2_outlined,
+                            imagePath: 'assets/images/multi_users.png',
                             label: 'Specialization',
                             isActive: _activeCategory == 'Specialization',
                             onTap: () => setState(() => _activeCategory = 'Specialization'),
@@ -144,7 +144,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
                         const SizedBox(height: 16),
                         Expanded(
                           child: _CategoryButton(
-                            icon: Icons.hub_outlined,
+                            imagePath: 'assets/images/multi_users.png',
                             label: 'Groups',
                             isActive: _activeCategory == 'Groups',
                             onTap: () => setState(() => _activeCategory = 'Groups'),
@@ -153,7 +153,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
                         const SizedBox(height: 16),
                         Expanded(
                           child: _CategoryButton(
-                            icon: Icons.school_outlined,
+                            imagePath: 'assets/images/multi_users.png',
                             label: 'Program',
                             isActive: _activeCategory == 'Program',
                             onTap: () => setState(() => _activeCategory = 'Program'),
@@ -206,13 +206,13 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
 }
 
 class _CategoryButton extends StatelessWidget {
-  final IconData icon;
+  final String imagePath;
   final String label;
   final bool isActive;
   final VoidCallback onTap;
 
   const _CategoryButton({
-    required this.icon,
+    required this.imagePath,
     required this.label,
     required this.isActive,
     required this.onTap
@@ -223,33 +223,53 @@ class _CategoryButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(24), // Match your glass card curves
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18), // The Glass Effect!
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 250),
-            // Removed fixed height so it can be controlled by Expanded
             width: double.infinity,
             decoration: isActive
                 ? BoxDecoration(
-              color: AppColors.primary.withOpacity(0.2),
+              color: AppColors.primary.withOpacity(0.15), // Slight purple tint when active
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: AppColors.primary, width: 2),
             )
-                : GlassDecoration.light,
+                : GlassDecoration.light, // Your custom theme decoration
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 45, color: AppColors.primary), // Slightly smaller icon for tighter fit
-                const SizedBox(height: 8),
+
+                // IMAGE ASSET
+                Image.asset(
+                  imagePath,
+                  width: 50,  // Matched to the design proportions
+                  height: 60,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(
+                      Icons.image_not_supported,
+                      size: 30,
+                      color: AppColors.primary
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // BOLD TEXT
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Text(
                     label,
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.settingsCardTitleStyle.copyWith(fontSize: 14),
+                    style: const TextStyle(
+                      fontFamily: AppFonts.spaceGrotesk,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800, // Extra bold black text
+                      color: Colors.black87,
+                    ),
                   ),
                 ),
+
               ],
             ),
           ),

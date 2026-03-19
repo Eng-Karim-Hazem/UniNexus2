@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
+
 class SecurityDashboardScreen extends StatelessWidget {
   final void Function(UninexusTab) onNavigate;
 
@@ -52,7 +53,6 @@ class SecurityDashboardScreen extends StatelessWidget {
                             decoration: AppDecorations.smallCard(),
                             child: Row(
                               children: [
-
                                 Image.asset(
                                   'assets/images/avatar.png',
                                   width: 46,
@@ -62,9 +62,7 @@ class SecurityDashboardScreen extends StatelessWidget {
                                       size: 46,
                                       color: AppColors.primary),
                                 ),
-
                                 const SizedBox(width: 70),
-
                                 const Text(
                                   "6 Gate entries today",
                                   style: TextStyle(
@@ -116,14 +114,23 @@ class SecurityDashboardScreen extends StatelessWidget {
 
                           const SizedBox(height: 14),
 
-                          ..._entries.map(
-                                (e) => _EntryRow(
-                              name: e['name'],
-                              status: e['status'],
+                          // THE FIX: Wrap the list of entries in an Expanded + SingleChildScrollView
+                          // This ensures the list scrolls if it's too long, preventing the overflow!
+                          Expanded(
+                            child: SingleChildScrollView(
+                              physics: const BouncingScrollPhysics(),
+                              child: Column(
+                                children: _entries.map(
+                                      (e) => _EntryRow(
+                                    name: e['name'],
+                                    status: e['status'],
+                                  ),
+                                ).toList(),
+                              ),
                             ),
                           ),
 
-                          const Spacer(),
+                          const SizedBox(height: 14),
 
                           Align(
                             alignment: Alignment.centerRight,
@@ -185,7 +192,7 @@ class SecurityDashboardScreen extends StatelessWidget {
                                 child: _ActionCard(
                                   label: "Verify User",
                                   imagePath: "assets/images/id_card.png",
-                                  onTap: () {},
+                                  onTap: () {}
                                 ),
                               ),
 

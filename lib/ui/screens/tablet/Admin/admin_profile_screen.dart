@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../admin_tab.dart';
-import '../../../../uninexus_tab.dart';
 import '../theme/app_theme.dart';
 
 class AdminProfileScreen extends StatelessWidget {
@@ -31,21 +30,29 @@ class AdminProfileScreen extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // Profile details card
-            GlassCard(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              child: Column(
-                children: [
-                  _buildInfoRow('Department',  'Staff'),
-                  const SizedBox(height: 16),
-                  _buildInfoRow('Position',    'Financail'),
-                  const SizedBox(height: 16),
-                  _buildInfoRow('E-mail',      'sarah@gmail.com'),
-                  const SizedBox(height: 16),
-                  _buildInfoRow('Phone no.',   '01920202343'),
-                  const SizedBox(height: 16),
-                  _buildInfoRow('National ID', '2838329204792-32'),
-                ],
+            // Profile details card (UPDATED DESIGN)
+            Expanded(
+              child: GlassCard(
+                padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 10),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start, // Left aligns everything
+                      children: [
+                        _buildInfoRow('Department', 'Staff'),
+                        _buildDivider(),
+                        _buildInfoRow('Position', 'Financial'),
+                        _buildDivider(),
+                        _buildInfoRow('E-mail', 'sarah@gmail.com'),
+                        _buildDivider(),
+                        _buildInfoRow('Phone no.', '01920202343'),
+                        _buildDivider(),
+                        _buildInfoRow('National ID', '2838329204792-32'),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
@@ -54,26 +61,28 @@ class AdminProfileScreen extends StatelessWidget {
     );
   }
 
+  // UPDATED: Combined text, left-aligned, matching the bold design
   Widget _buildInfoRow(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 120,
-          child: Text(label,
-              style: AppTextStyles.profileInfoLabelStyle,
-              textAlign: TextAlign.right),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24.0), // Generous spacing for an airy feel
+      child: Text(
+        '$label : $value',
+        style: const TextStyle(
+          fontFamily: AppFonts.spaceGrotesk,
+          fontSize: 18,
+          fontWeight: FontWeight.w800, // Extra bold to match the screenshot
+          color: AppColors.textDark,
         ),
-        const SizedBox(
-          width: 20,
-          child: Text(':',
-              style: AppTextStyles.profileInfoLabelStyle,
-              textAlign: TextAlign.center),
-        ),
-        Expanded(
-          child: Text(value, style: AppTextStyles.profileInfoValueStyle),
-        ),
-      ],
+      ),
+    );
+  }
+
+  // ADDED: The horizontal line to separate the rows
+  Widget _buildDivider() {
+    return Divider(
+      color: Colors.black.withOpacity(0.3), // A subtle dark grey line
+      thickness: 1,
+      height: 1,
     );
   }
 }
