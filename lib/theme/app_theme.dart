@@ -1,44 +1,43 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-
 //  COLORS
 
 class AppColors {
   // Base colors
-  static const Color primary        = Color(0xFF696BD5);
-  static const Color background     = Color(0xFFF8F9FF);
-  static const Color white          = Colors.white;
+  static const Color primary = Color(0xFF696BD5);
+  static const Color background = Color(0xFFF8F9FF);
+  static const Color white = Colors.white;
 
   // Sidebar gradient
-  static const Color sidebarStart   = Color(0xFF7C7EE6);
-  static const Color sidebarMid     = Color(0xFF8192F0);
-  static const Color sidebarEnd     = Color(0xFFAD92FF);
+  static const Color sidebarStart = Color(0xFF7C7EE6);
+  static const Color sidebarMid = Color(0xFF8192F0);
+  static const Color sidebarEnd = Color(0xFFAD92FF);
 
   // Text colors
-  static const Color textDark       = Color(0xFF222222);
-  static const Color textMid        = Color(0xFF555555);
-  static const Color textLight      = Color(0xFF888888);
-  static const Color textHint       = Color(0xFFB0B8C1);
+  static const Color textDark = Color(0xFF222222);
+  static const Color textMid = Color(0xFF555555);
+  static const Color textLight = Color(0xFF888888);
+  static const Color textHint = Color(0xFFB0B8C1);
 
   // Borders
-  static const Color cardBorder     = Color(0x1A696BD5);
-  static const Color divider        = Color(0x1F696BD5);
+  static const Color cardBorder = Color(0x1A696BD5);
+  static const Color divider = Color(0x1F696BD5);
 
   // Accent colors
-  static const Color alertOrange    = Color(0xFFFF6B35);
-  static const Color blueAccent     = Color(0xFF4DB8FF);
+  static const Color alertOrange = Color(0xFFFF6B35);
+  static const Color blueAccent = Color(0xFF4DB8FF);
 
   // Glass effect
-  static const Color glassWhite     = Color(0xCCFFFFFF);
-  static const Color glassLavender  = Color(0xAAE8EAFF);
+  static const Color glassWhite = Color(0xCCFFFFFF);
+  static const Color glassLavender = Color(0xAAE8EAFF);
 
   // Input fields
   static const Color lightGreyStart = Color(0xFFF3F4F6);
-  static const Color lightGreyEnd   = Color(0xFFE5E7EB);
+  static const Color lightGreyEnd = Color(0xFFE5E7EB);
 
   // Profile info divider stroke
-  static const Color infoDivider    = Color(0xFF32006C);
+  static const Color infoDivider = Color(0xFF32006C);
 
   // Gradients
   static const LinearGradient sidebarGradient = LinearGradient(
@@ -67,252 +66,357 @@ class AppColors {
   );
 }
 
-
 //  FONTS
 
 class AppFonts {
-  static const String batangas     = 'Batangas';
+  static const String batangas = 'Batangas';
   static const String spaceGrotesk = 'SpaceGrotesk';
 }
-
 
 //  TEXT STYLES
 
 class AppTextStyles {
   // Headings
   static const TextStyle largeHeading = TextStyle(
-    fontSize: 48, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.batangas, color: AppColors.textDark,
+    fontSize: 48,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.batangas,
+    color: AppColors.textDark,
   );
   static const TextStyle heading = TextStyle(
-    fontSize: 26, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.batangas, color: AppColors.textDark,
+    fontSize: 26,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.batangas,
+    color: AppColors.textDark,
   );
   static const TextStyle subheading = TextStyle(
-    fontSize: 16, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.primary,
+    fontSize: 16,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.primary,
   );
   static const TextStyle buttonStyle = TextStyle(
-    fontSize: 20, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.batangas, color: AppColors.primary,
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.batangas,
+    color: AppColors.primary,
   );
   static const TextStyle buttonWhiteStyle = TextStyle(
-    fontSize: 20, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.batangas, color: Colors.white,
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.batangas,
+    color: Colors.white,
   );
   static const TextStyle buttonSmallStyle = TextStyle(
-    fontSize: 16, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.batangas, color: AppColors.primary,
+    fontSize: 16,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.batangas,
+    color: AppColors.primary,
   );
   static const TextStyle gradientButtonLabel = TextStyle(
-    fontSize: 15, fontWeight: FontWeight.w600,
-    color: Colors.white, letterSpacing: 0.4,
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
+    color: Colors.white,
+    letterSpacing: 0.4,
   );
   static const TextStyle sidebarLabel = TextStyle(
-    fontSize: 20, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.batangas, color: Colors.white, height: 1.2,
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.batangas,
+    color: Colors.white,
+    height: 1.2,
   );
   static const TextStyle body = TextStyle(
-    fontSize: 14, fontWeight: FontWeight.w400,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textMid,
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textMid,
   );
   static const TextStyle bodySmall = TextStyle(
-    fontSize: 13, fontWeight: FontWeight.w400,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textMid,
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textMid,
   );
   static const TextStyle caption = TextStyle(
-    fontSize: 12, fontWeight: FontWeight.w400,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textLight,
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textLight,
   );
   static const TextStyle labelStyle = TextStyle(
-    fontSize: 14, fontWeight: FontWeight.w600,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textDark,
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textDark,
   );
 
   // Profile screen
   static const TextStyle profileHeaderNameStyle = TextStyle(
-    fontSize: 20, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.batangas, color: AppColors.textDark,
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.batangas,
+    color: AppColors.textDark,
   );
   static const TextStyle profileHeaderIdStyle = TextStyle(
-    fontSize: 20, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.batangas, color: AppColors.textLight,
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.batangas,
+    color: AppColors.textLight,
   );
   static const TextStyle profileInfoLabelStyle = TextStyle(
-    fontSize: 20, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textDark,
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textDark,
   );
   static const TextStyle profileInfoValueStyle = TextStyle(
-    fontSize: 20, fontWeight: FontWeight.w500,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textMid,
+    fontSize: 20,
+    fontWeight: FontWeight.w500,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textMid,
   );
   static const TextStyle greetingNameStyle = TextStyle(
-    fontSize: 26, fontWeight: FontWeight.w800,
-    fontFamily: AppFonts.batangas, color: AppColors.textDark,
+    fontSize: 26,
+    fontWeight: FontWeight.w800,
+    fontFamily: AppFonts.batangas,
+    color: AppColors.textDark,
   );
   static const TextStyle greetingSubStyle = TextStyle(
-    fontSize: 14, fontWeight: FontWeight.w400,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textLight,
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textLight,
   );
   static const TextStyle dateStyle = TextStyle(
-    fontSize: 14, fontWeight: FontWeight.w600,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.primary,
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.primary,
   );
   static const TextStyle viewAllStyle = TextStyle(
-    fontSize: 14, fontWeight: FontWeight.w600,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.primary,
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.primary,
   );
 
   // Logs screen
   static const TextStyle logTextStyle = TextStyle(
-    fontSize: 17, fontWeight: FontWeight.w500,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textDark,
+    fontSize: 17,
+    fontWeight: FontWeight.w500,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textDark,
   );
   static const TextStyle logTimeStyle = TextStyle(
-    fontSize: 14, fontWeight: FontWeight.w400,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textLight,
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textLight,
   );
 
   // Announcements screen
   static const TextStyle announcementSenderStyle = TextStyle(
-    fontSize: 20, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.batangas, color: AppColors.primary,
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.batangas,
+    color: AppColors.primary,
   );
   static const TextStyle announcementMessageStyle = TextStyle(
-    fontSize: 15, fontWeight: FontWeight.w400,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textMid,
+    fontSize: 15,
+    fontWeight: FontWeight.w400,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textMid,
   );
   static const TextStyle senderStyle = TextStyle(
-    fontSize: 14, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.primary,
+    fontSize: 14,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.primary,
   );
   static const TextStyle senderSmallStyle = TextStyle(
-    fontSize: 13, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.primary,
+    fontSize: 13,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.primary,
   );
   static const TextStyle chartLabelStyle = TextStyle(
-    fontSize: 20, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.batangas, color: AppColors.textDark,
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.batangas,
+    color: AppColors.textDark,
   );
   static const TextStyle chartSublabelStyle = TextStyle(
-    fontSize: 14, fontWeight: FontWeight.w400,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textLight,
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textLight,
   );
   static const TextStyle statValueStyle = TextStyle(
-    fontSize: 28, fontWeight: FontWeight.w800,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textDark, height: 1.1,
+    fontSize: 28,
+    fontWeight: FontWeight.w800,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textDark,
+    height: 1.1,
   );
   static const TextStyle statLabelStyle = TextStyle(
-    fontSize: 12, fontWeight: FontWeight.w400,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textLight, height: 1.3,
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textLight,
+    height: 1.3,
   );
   static const TextStyle statSublabelStyle = TextStyle(
-    fontSize: 10, fontWeight: FontWeight.w400,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textLight, height: 1.2,
+    fontSize: 10,
+    fontWeight: FontWeight.w400,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textLight,
+    height: 1.2,
   );
 
   // Hall errors screen
   static const TextStyle hallListNumberStyle = TextStyle(
-    fontSize: 20, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.batangas, color: AppColors.primary,
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.batangas,
+    color: AppColors.primary,
   );
   static const TextStyle hallListErrorStyle = TextStyle(
-    fontSize: 16, fontWeight: FontWeight.w500,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textMid,
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textMid,
   );
   static const TextStyle hallDetailsNumberStyle = TextStyle(
-    fontSize: 32, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.batangas, color: AppColors.primary,
+    fontSize: 32,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.batangas,
+    color: AppColors.primary,
   );
   static const TextStyle hallDetailsErrorStyle = TextStyle(
-    fontSize: 25, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.batangas, color: AppColors.textDark,
+    fontSize: 25,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.batangas,
+    color: AppColors.textDark,
   );
   static const TextStyle hallDetailsDescriptionStyle = TextStyle(
-    fontSize: 20, fontWeight: FontWeight.w500,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textMid, height: 1.5,
+    fontSize: 20,
+    fontWeight: FontWeight.w500,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textMid,
+    height: 1.5,
   );
 
   // Requests screen
   static const TextStyle requestListTitleStyle = TextStyle(
-    fontSize: 20, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.batangas, color: AppColors.primary,
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.batangas,
+    color: AppColors.primary,
   );
   static const TextStyle requestListNameStyle = TextStyle(
-    fontSize: 14, fontWeight: FontWeight.w500,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textMid,
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textMid,
   );
   static const TextStyle requestDetailsHeaderStyle = TextStyle(
-    fontSize: 32, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.batangas, color: AppColors.primary,
+    fontSize: 32,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.batangas,
+    color: AppColors.primary,
   );
   static const TextStyle requestDetailsLabelStyle = TextStyle(
-    fontSize: 24, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.batangas, color: AppColors.textDark,
+    fontSize: 24,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.batangas,
+    color: AppColors.textDark,
   );
   static const TextStyle requestDetailsNameStyle = TextStyle(
-    fontSize: 24, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.batangas, color: AppColors.textDark,
+    fontSize: 24,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.batangas,
+    color: AppColors.textDark,
   );
   static const TextStyle requestDetailsInfoStyle = TextStyle(
-    fontSize: 20, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textDark,
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textDark,
   );
   static const TextStyle requestDetailsValueStyle = TextStyle(
-    fontSize: 20, fontWeight: FontWeight.w500,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textMid,
+    fontSize: 20,
+    fontWeight: FontWeight.w500,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textMid,
   );
 
   // Settings screen
   static const TextStyle settingsCardTitleStyle = TextStyle(
-    fontSize: 20, fontWeight: FontWeight.w700,
-    fontFamily: AppFonts.spaceGrotesk, color: AppColors.textDark,
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textDark,
   );
 
   // Request submitted page
   static const TextStyle requestSubmittedTitleStyle = TextStyle(
     fontFamily: AppFonts.batangas,
-    fontSize: 22, fontWeight: FontWeight.w700,
-    color: Color(0xFF1E1B4B), height: 1.5,
+    fontSize: 22,
+    fontWeight: FontWeight.w700,
+    color: Color(0xFF1E1B4B),
+    height: 1.5,
   );
   static const TextStyle requestSubmittedBodyStyle = TextStyle(
     fontFamily: AppFonts.batangas,
-    fontSize: 13, fontWeight: FontWeight.w700,
-    color: Color(0xFF64748B), height: 1.5,
+    fontSize: 13,
+    fontWeight: FontWeight.w700,
+    color: Color(0xFF64748B),
+    height: 1.5,
   );
 
   // Dashboard
   static const TextStyle greetingTitleStyle = TextStyle(
-    fontSize: 26, fontWeight: FontWeight.w800,
-    fontFamily: AppFonts.batangas, color: AppColors.textDark,
+    fontSize: 26,
+    fontWeight: FontWeight.w800,
+    fontFamily: AppFonts.batangas,
+    color: AppColors.textDark,
   );
   static const TextStyle greetingMorningStyle = TextStyle(
-    fontSize: 14, fontFamily: AppFonts.spaceGrotesk
-    ,color: AppColors.textLight,
+    fontSize: 14,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textLight,
   );
   static const TextStyle greetingDateStyle = TextStyle(
-    fontSize: 14,fontFamily: AppFonts.spaceGrotesk,
-    fontWeight: FontWeight.w600, color: AppColors.primary,
+    fontSize: 14,
+    fontFamily: AppFonts.spaceGrotesk,
+    fontWeight: FontWeight.w600,
+    color: AppColors.primary,
   );
 
   // "View All" links
   static const TextStyle viewLinkStyle = TextStyle(
-    color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 14,
+    color: AppColors.primary,
+    fontWeight: FontWeight.w600,
+    fontSize: 14,
   );
 
   // Log row
   static const TextStyle logRowBodyStyle = TextStyle(
-    fontSize: 14, color: AppColors.textDark,
+    fontSize: 14,
+    color: AppColors.textDark,
   );
 
   // Hall error
   static const TextStyle blueScreenLabelStyle = TextStyle(
-    color: Color(0x80FFFFFF), fontSize: 14,
+    color: Color(0x80FFFFFF),
+    fontSize: 14,
   );
 
   // Empty state
   static const TextStyle emptyStateStyle = TextStyle(
-    color: AppColors.textLight, fontSize: 14,
+    color: AppColors.textLight,
+    fontSize: 14,
   );
 
   // Info rows
@@ -320,10 +424,12 @@ class AppTextStyles {
     fontWeight: FontWeight.w700,
   );
   static const TextStyle infoRowValueStyle = TextStyle(
-    fontWeight: FontWeight.w500, color: AppColors.textMid,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textMid,
   );
   static const TextStyle infoRowValueBoldStyle = TextStyle(
-    fontWeight: FontWeight.w700, color: AppColors.textMid,
+    fontWeight: FontWeight.w700,
+    color: AppColors.textMid,
   );
 }
 
@@ -337,8 +443,9 @@ class AppDecorations {
     border: Border.all(color: AppColors.primary, width: 2),
     boxShadow: [
       BoxShadow(
-        color: AppColors.primary.withOpacity(0.08),
-        blurRadius: 12, offset: const Offset(0, 2),
+        color: AppColors.primary.withValues(alpha: 0.08),
+        blurRadius: 12,
+        offset: const Offset(0, 2),
       ),
     ],
   );
@@ -346,20 +453,20 @@ class AppDecorations {
   static BoxDecoration smallCard({bool isSelected = false, bool isFaded = false}) {
     return BoxDecoration(
       color: isFaded
-          ? AppColors.primary.withOpacity(0.04)
+          ? AppColors.primary.withValues(alpha: 0.04)
           : isSelected
-          ? AppColors.primary.withOpacity(0.1)
-          : Colors.white.withOpacity(0.55),
+              ? AppColors.primary.withValues(alpha: 0.1)
+              : Colors.white.withValues(alpha: 0.55),
       borderRadius: BorderRadius.circular(12),
       border: Border.all(
-        color: isSelected ? AppColors.primary : AppColors.primary.withOpacity(0.3),
+        color: isSelected ? AppColors.primary : AppColors.primary.withValues(alpha: 0.3),
         width: 1.5,
       ),
     );
   }
 
   static BoxDecoration cardSelected = BoxDecoration(
-    color: AppColors.primary.withOpacity(0.06),
+    color: AppColors.primary.withValues(alpha: 0.06),
     borderRadius: BorderRadius.circular(12),
     border: Border.all(color: AppColors.primary, width: 2),
   );
@@ -367,17 +474,18 @@ class AppDecorations {
   static BoxDecoration cardUnselected = BoxDecoration(
     color: Colors.white,
     borderRadius: BorderRadius.circular(12),
-    border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1.5),
+    border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1.5),
   );
 
   static BoxDecoration greetingCard = BoxDecoration(
-    color: Colors.white.withOpacity(0.55),
+    color: Colors.white.withValues(alpha: 0.55),
     borderRadius: BorderRadius.circular(16),
     border: Border.all(color: AppColors.primary, width: 2),
     boxShadow: [
       BoxShadow(
-        color: Colors.black.withOpacity(0.05),
-        blurRadius: 10, offset: const Offset(0, 2),
+        color: Colors.black.withValues(alpha: 0.05),
+        blurRadius: 10,
+        offset: const Offset(0, 2),
       ),
     ],
   );
@@ -385,7 +493,7 @@ class AppDecorations {
   // Buttons
   static BoxDecoration pillButton({Color? color}) {
     return BoxDecoration(
-      color: Colors.white.withOpacity(0.7),
+      color: Colors.white.withValues(alpha: 0.7),
       borderRadius: BorderRadius.circular(30),
       border: Border.all(color: color ?? AppColors.primary, width: 1.5),
     );
@@ -412,8 +520,9 @@ class AppDecorations {
     gradient: AppColors.sidebarGradient,
     boxShadow: [
       BoxShadow(
-        color: AppColors.primary.withOpacity(0.35),
-        blurRadius: 14, offset: const Offset(0, 5),
+        color: AppColors.primary.withValues(alpha: 0.35),
+        blurRadius: 14,
+        offset: const Offset(0, 5),
       ),
     ],
   );
@@ -423,8 +532,9 @@ class AppDecorations {
     gradient: AppColors.sidebarGradient,
     boxShadow: [
       BoxShadow(
-        color: AppColors.primary.withOpacity(0.35),
-        blurRadius: 10, offset: const Offset(0, 4),
+        color: AppColors.primary.withValues(alpha: 0.35),
+        blurRadius: 10,
+        offset: const Offset(0, 4),
       ),
     ],
   );
@@ -433,22 +543,22 @@ class AppDecorations {
   static BoxDecoration idCardInner = BoxDecoration(
     color: const Color(0xFFEEEEEE),
     borderRadius: BorderRadius.circular(16),
-    border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1),
+    border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1),
   );
 
   static BoxDecoration iconBackground = BoxDecoration(
-    color: AppColors.primary.withOpacity(0.15),
+    color: AppColors.primary.withValues(alpha: 0.15),
     borderRadius: BorderRadius.circular(12),
   );
 
   static BoxDecoration qrPlaceholder = BoxDecoration(
     color: Colors.white,
     borderRadius: BorderRadius.circular(8),
-    border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+    border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
   );
 
   static BoxDecoration dot = BoxDecoration(
-    color: AppColors.primary.withOpacity(0.4),
+    color: AppColors.primary.withValues(alpha: 0.4),
     shape: BoxShape.circle,
   );
 
@@ -456,13 +566,13 @@ class AppDecorations {
   static BoxDecoration blueScreen = BoxDecoration(
     color: const Color(0xFF1A1A2E),
     borderRadius: BorderRadius.circular(12),
-    border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1),
+    border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1),
   );
 
   static BoxDecoration innerBlueScreen = BoxDecoration(
     color: const Color(0xFF0066CC),
     borderRadius: BorderRadius.circular(8),
-    border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+    border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
   );
 
   static BoxDecoration cardWithBorderWidth(double width) {
@@ -485,7 +595,6 @@ class AppDecorations {
   );
 }
 
-
 //  GLASS DECORATIONS
 
 class GlassDecoration {
@@ -495,25 +604,26 @@ class GlassDecoration {
     border: Border.all(color: AppColors.primary, width: 2),
     boxShadow: [
       BoxShadow(
-        color: AppColors.primary.withOpacity(0.10),
-        blurRadius: 12, offset: const Offset(0, 2),
+        color: AppColors.primary.withValues(alpha: 0.10),
+        blurRadius: 12,
+        offset: const Offset(0, 2),
       ),
     ],
   );
 
   static BoxDecoration light = BoxDecoration(
     borderRadius: BorderRadius.circular(24),
-    color: Colors.white.withOpacity(0.35),
-    border: Border.all(color: AppColors.primary.withOpacity(0.7), width: 1.2),
+    color: Colors.white.withValues(alpha: 0.35),
+    border: Border.all(color: AppColors.primary.withValues(alpha: 0.7), width: 1.2),
     boxShadow: [
       BoxShadow(
-        color: Colors.black.withOpacity(0.06),
-        blurRadius: 25, offset: const Offset(0, 12),
+        color: Colors.black.withValues(alpha: 0.06),
+        blurRadius: 25,
+        offset: const Offset(0, 12),
       ),
     ],
   );
 }
-
 
 //  INPUT STYLES
 
@@ -561,7 +671,7 @@ class AppGreetingCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 15,
             spreadRadius: 2,
             offset: const Offset(10, 4),
@@ -621,10 +731,10 @@ class ProfileHeader extends StatelessWidget {
     required this.iconAsset,
     required this.title,
     required this.subtitle,
-    this.avatarSize    = 120,
-    this.iconPadding   = 5,
+    this.avatarSize = 120,
+    this.iconPadding = 5,
     this.dividerHeight = 52,
-    this.spacing       = 47,
+    this.spacing = 47,
   });
 
   @override
@@ -637,7 +747,7 @@ class ProfileHeader extends StatelessWidget {
           height: avatarSize,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.primary.withOpacity(0.15),
+            color: AppColors.primary.withValues(alpha: 0.15),
           ),
           child: ClipOval(
             child: Padding(
@@ -674,7 +784,7 @@ class ProfileHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,   style: AppTextStyles.profileHeaderNameStyle),
+              Text(title, style: AppTextStyles.profileHeaderNameStyle),
               const SizedBox(height: 4),
               Text(subtitle, style: AppTextStyles.profileHeaderIdStyle),
             ],
@@ -1036,12 +1146,14 @@ class CircularStat extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: SizedBox(
-        width: 160, height: 160,
+        width: 160,
+        height: 160,
         child: Stack(
           alignment: Alignment.center,
           children: [
             SizedBox(
-              width: 160, height: 160,
+              width: 160,
+              height: 160,
               child: CircularProgressIndicator(
                 value: value,
                 strokeWidth: 14,
@@ -1112,8 +1224,7 @@ mixin PageEntryAnimation {
     );
     _pageAnimInitialized = true;
     Future.delayed(const Duration(milliseconds: 250), () {
-      if (_pageAnimInitialized &&
-          pageAnimController.status == AnimationStatus.dismissed) {
+      if (_pageAnimInitialized && pageAnimController.status == AnimationStatus.dismissed) {
         pageAnimController.forward();
       }
     });

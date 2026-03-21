@@ -5,6 +5,6 @@ enum AdminTab {
   notices,
   profile,
   settings,
-  usersearch,
-  sentnotices,
+  userSearch,
+  sentNotices,
 }

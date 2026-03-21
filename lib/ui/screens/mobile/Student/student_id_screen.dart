@@ -7,7 +7,6 @@ import '../profile_screen.dart';
 import '../settings_screen.dart';
 import 'stu_community.dart';
 
-import 'package:uninexus/ui/screens/mobile//Faculty/qa_screen.dart';
 
 class StudentIDScreen extends StatefulWidget {
   const StudentIDScreen({super.key});

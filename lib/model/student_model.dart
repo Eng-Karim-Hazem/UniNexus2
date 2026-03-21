@@ -33,8 +33,6 @@ class Student {
 
   // From JSON
   factory Student.fromJson(Map<String, dynamic> json) {
-    // Safely parse numbers (int/num) from Firestore
-    int safeParseInt(dynamic value) => (value is num) ? value.toInt() : 0;
 
     return Student(
       id: json['ID'] ?? '',

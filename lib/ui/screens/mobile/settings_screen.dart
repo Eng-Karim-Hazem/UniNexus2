@@ -20,7 +20,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   // No specific index highlighted for Settings
-  int _selectedIndex = -1;
+  final int _selectedIndex = -1;
 
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);

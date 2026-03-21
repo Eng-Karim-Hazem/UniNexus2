@@ -23,7 +23,7 @@ class _StuCommunityState extends State<StuCommunity> {
   // Service
   final _communityService = CommunityService();
 
-  final int _selectedIndex = 0; // Community is selected
+
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
   final Color _textIndigo = const Color(0xFF5C5C80);

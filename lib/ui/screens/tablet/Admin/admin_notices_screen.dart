@@ -92,7 +92,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
 
   Widget _buildDropdown(List<String> items, String? current, ValueChanged<String?> onChanged) {
     return DropdownButtonFormField<String>(
-      value: current,
+      initialValue: current,
       style: AppTextStyles.body,
       items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
       onChanged: onChanged,

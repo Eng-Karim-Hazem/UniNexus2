@@ -6,7 +6,6 @@ import 'package:uninexus/model/community_model.dart';
 import 'package:uninexus/services/firebase/community_service.dart';
 
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
-import '../settings_screen.dart';
 import 'stu_schedule.dart';
 import '../profile_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/qa_screen.dart';
@@ -27,7 +26,6 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
   final _communityService = CommunityService();
 
   final Color _mainPurple = const Color(0xFF7B61FF);
-  final Color _primaryBlue = const Color(0xFF237ABA);
 
   bool _isReplying = false;
   bool _isSending = false;
@@ -207,7 +205,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
           child: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.white.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: _mainPurple),
@@ -237,12 +235,12 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.6),
+        color: Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _mainPurple.withOpacity(0.2), width: 1.5),
+        border: Border.all(color: _mainPurple.withValues(alpha: 0.2), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF237ABA).withOpacity(0.12),
+            color: const Color(0xFF237ABA).withValues(alpha: 0.12),
             blurRadius: 25,
             spreadRadius: 2,
             offset: const Offset(0, 8),
@@ -289,12 +287,12 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.6),
+          color: Colors.white.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: _mainPurple.withOpacity(0.2), width: 1.5),
+          border: Border.all(color: _mainPurple.withValues(alpha: 0.2), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF237ABA).withOpacity(0.12),
+              color: const Color(0xFF237ABA).withValues(alpha: 0.12),
               blurRadius: 25,
               spreadRadius: 2,
               offset: const Offset(0, 8),
@@ -392,7 +390,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
+            boxShadow: [BoxShadow(color: _mainPurple.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8))],
           ),
           child: Center(
               child: Image.asset(
@@ -416,7 +414,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withOpacity(0.6),
+            color: _mainPurple.withValues(alpha: 0.6),
             blurRadius: 25,
             spreadRadius: 6,
             offset: const Offset(0, 2),
@@ -500,7 +498,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 20,
             spreadRadius: 4,
             offset: const Offset(0, -6),

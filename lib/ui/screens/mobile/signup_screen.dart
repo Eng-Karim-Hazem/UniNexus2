@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uninexus/ui/screens/mobile/request_submitted_screen.dart';
-import '../../../services/firebase/Signup_service.dart';
+import '../../../services/firebase/signup_service.dart';
 import 'login_screen.dart';
 
 class SignUpScreen extends StatefulWidget {

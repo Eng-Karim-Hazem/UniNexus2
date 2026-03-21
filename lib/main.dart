@@ -77,7 +77,7 @@ Future<void> _setOrientation() async {
 class UniNexusApp extends StatelessWidget {
   final Widget startScreen;
 
-  const UniNexusApp({Key? key, required this.startScreen}) : super(key: key);
+  const UniNexusApp({super.key, required this.startScreen});
 
   @override
   Widget build(BuildContext context) {

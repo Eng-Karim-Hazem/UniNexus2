@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uninexus/theme/app_theme.dart';
 import 'package:uninexus/ui/screens/tablet/request_submitted_page.dart';
-import 'package:uninexus/services/firebase/Signup_service.dart'; // Ensure path is correct
+import 'package:uninexus/services/firebase/signup_service.dart'; // Ensure path is correct
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});

@@ -16,7 +16,7 @@ class StuQAScreen extends StatefulWidget {
 
 class _StuQAScreenState extends State<StuQAScreen> {
   final QnAService _qnaService = QnAService();
-  int _selectedIndex = 2;
+  final int _selectedIndex = 2;
   int _studentYear = 1;
   bool _isInit = false;
 
@@ -190,8 +190,9 @@ class _StuQAScreenState extends State<StuQAScreen> {
   void _onNavBarTapped(int index) {
     if (index == _selectedIndex) return;
     Widget next;
-    if (index == 0) next = const StuCommunity();
-    else if (index == 1) next = const StuSchedule();
+    if (index == 0) {
+      next = const StuCommunity();
+    } else if (index == 1) next = const StuSchedule();
     else if (index == 3) next = const ProfileScreen();
     else return;
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => next));

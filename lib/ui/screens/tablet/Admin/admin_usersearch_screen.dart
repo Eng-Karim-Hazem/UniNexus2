@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../../admin_tab.dart'; // Ensure this path is correct
 import '../theme/app_theme.dart';
@@ -71,7 +70,7 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
                         children: [
                           _buildProfileHeader(),
                           const SizedBox(height: 32),
-                          ..._userData.entries.map((e) => _buildDataRow(e.key, e.value)).toList(),
+                          ..._userData.entries.map((e) => _buildDataRow(e.key, e.value)),
                         ],
                       ),
                     ),

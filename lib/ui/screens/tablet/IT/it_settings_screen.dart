@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
-import '../login_page.dart';
 import '../welcome_screen.dart';
 
 class ITSettingsScreen extends StatefulWidget {

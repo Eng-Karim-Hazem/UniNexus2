@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 // --- NEW IMPORTS FOR FIREBASE & LOGIC ---
@@ -15,7 +14,6 @@ import 'package:uninexus/ui/screens/tablet/register_page.dart';
 // --- DASHBOARD IMPORTS ---
 import 'package:uninexus/ui/screens/tablet/IT/it_shell.dart';
 import 'package:uninexus/ui/screens/tablet/Security/security_shell.dart';
-import 'package:uninexus/ui/screens/tablet/Admin/admin_dashboard_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/faculty_home_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_home.dart';
 

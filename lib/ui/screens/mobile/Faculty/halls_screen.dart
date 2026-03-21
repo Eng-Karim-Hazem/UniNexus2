@@ -17,17 +17,27 @@ class HallsScreen extends StatefulWidget {
 }
 
 class _HallsScreenState extends State<HallsScreen> {
+  // Controllers & Services
   final HallService _hallService = HallService();
   final TextEditingController _searchController = TextEditingController();
+
+  // State Variables
   String _searchQuery = "";
   int _selectedIndex = 1;
 
+  // Constants & Styles
   final Color _mainPurple = const Color(0xFF7B61FF);
+  final Color _textIndigo = const Color(0xFF5C5C80);
+  final Color _primaryBlue = const Color(0xFF237ABA);
+  final Color _accentIndigo = const Color(0xFF5C7CFA);
+
   final Gradient _fabGradient = const LinearGradient(
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
+
+  // --- Logic Methods ---
 
   String _getCurrentTimeSlot() {
     final now = DateTime.now();
@@ -50,11 +60,21 @@ class _HallsScreenState extends State<HallsScreen> {
   void _onNavBarTapped(int index) async {
     if (index == _selectedIndex) return;
     setState(() => _selectedIndex = index);
-    if (index == 0) await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
-    else if (index == 2) await Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
-    else if (index == 3) await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+
+    final Map<int, Widget> routes = {
+      0: const StuCommunity(),
+      2: const QAScreen(),
+      3: const ProfileScreen(),
+    };
+
+    if (routes.containsKey(index)) {
+      await Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => routes[index]!));
+    }
+
     if (mounted) setState(() => _selectedIndex = 1);
   }
+
+  // --- UI Builders ---
 
   @override
   Widget build(BuildContext context) {
@@ -67,8 +87,11 @@ class _HallsScreenState extends State<HallsScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildBottomBar(),
       body: Container(
-        width: double.infinity, height: double.infinity,
-        decoration: const BoxDecoration(image: DecorationImage(image: AssetImage('assets/images/background.png'), fit: BoxFit.cover)),
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          image: DecorationImage(image: AssetImage('assets/images/background.png'), fit: BoxFit.cover),
+        ),
         child: SafeArea(
           bottom: false,
           child: Stack(
@@ -82,9 +105,14 @@ class _HallsScreenState extends State<HallsScreen> {
                     child: StreamBuilder<List<HallModel>>(
                       stream: _hallService.streamHallsByToday(),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
                         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return Center(child: Text("No halls data for $todayName.", style: const TextStyle(fontFamily: 'SpaceGrotesk')));
+                          return Center(
+                            child: Text("No halls data for $todayName.",
+                                style: const TextStyle(fontFamily: 'SpaceGrotesk')),
+                          );
                         }
 
                         final filteredHalls = snapshot.data!.where((hall) {
@@ -121,9 +149,16 @@ class _HallsScreenState extends State<HallsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen())), child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple)),
-          const Text("Halls", style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
-          ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.asset('assets/images/LOGO.png', width: 36, height: 36)),
+          GestureDetector(
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen())),
+            child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
+          ),
+          Text("Halls",
+              style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
+          ),
         ],
       ),
     );
@@ -133,16 +168,26 @@ class _HallsScreenState extends State<HallsScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Container(
-        decoration: BoxDecoration(color: Colors.white.withOpacity(0.9), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))]),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(color: Colors.grey.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4))
+          ],
+        ),
         child: TextField(
           controller: _searchController,
           onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
           style: const TextStyle(fontFamily: 'SpaceGrotesk'),
           decoration: InputDecoration(
-            hintText: "Search Hall By Name", hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400),
-            border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            hintText: "Search Hall By Name",
+            hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             suffixIcon: Container(
-              margin: const EdgeInsets.all(5), decoration: BoxDecoration(color: _mainPurple.withOpacity(0.8), borderRadius: BorderRadius.circular(12)),
+              margin: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                  color: _mainPurple.withValues(alpha: 0.8), borderRadius: BorderRadius.circular(12)),
               child: const Icon(Icons.send_rounded, color: Colors.white, size: 24),
             ),
           ),
@@ -157,11 +202,12 @@ class _HallsScreenState extends State<HallsScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.6),
+          color: Colors.white.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _mainPurple.withOpacity(0.7)),
-          boxShadow: [BoxShadow(color: const Color(0xFF237ABA).withOpacity(0.08), blurRadius: 10, offset: const Offset(0, 5))]
-      ),
+          border: Border.all(color: _mainPurple.withValues(alpha: 0.7)),
+          boxShadow: [
+            BoxShadow(color: _primaryBlue.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, 5))
+          ]),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -169,14 +215,21 @@ class _HallsScreenState extends State<HallsScreen> {
             children: [
               Image.asset('assets/images/classroom_1.png', width: 28, height: 28, color: _mainPurple),
               const SizedBox(width: 15),
-              Container(height: 35, width: 2.5, color: _mainPurple.withOpacity(0.3)),
+              Container(height: 35, width: 2.5, color: _mainPurple.withValues(alpha: 0.3)),
               const SizedBox(width: 15),
-              Text(name, style: const TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF5C7CFA))),
+              Text(name,
+                  style: TextStyle(
+                      fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: _accentIndigo)),
             ],
           ),
           Container(
-              width: 18, height: 18,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: statusColor, boxShadow: [BoxShadow(color: statusColor.withOpacity(0.4), blurRadius: 6, spreadRadius: 2)])
+            width: 18,
+            height: 18,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: statusColor,
+              boxShadow: [BoxShadow(color: statusColor.withValues(alpha: 0.4), blurRadius: 6, spreadRadius: 2)],
+            ),
           ),
         ],
       ),
@@ -185,12 +238,20 @@ class _HallsScreenState extends State<HallsScreen> {
 
   Widget _buildErrorFab() {
     return Positioned(
-      bottom: 130, right: 24,
+      bottom: 130,
+      right: 24,
       child: GestureDetector(
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const HallErrorScreen())),
         child: Container(
-          width: 80, height: 80,
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))]),
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(color: _mainPurple.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8))
+            ],
+          ),
           child: Center(child: Icon(Icons.warning_amber_rounded, color: _mainPurple, size: 40)),
         ),
       ),
@@ -199,46 +260,92 @@ class _HallsScreenState extends State<HallsScreen> {
 
   Widget _buildHomeFab() {
     return Container(
-      height: 72, width: 72,
-      decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.6), blurRadius: 25, spreadRadius: 6, offset: const Offset(0, 2))]),
+      height: 72,
+      width: 72,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: _mainPurple.withValues(alpha: 0.6),
+            blurRadius: 25,
+            spreadRadius: 6,
+            offset: const Offset(0, 2),
+          )
+        ],
+      ),
       child: FloatingActionButton(
         onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
         backgroundColor: Colors.transparent,
         elevation: 0,
         shape: const CircleBorder(),
-        child: Container(decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient), child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40))),
+        child: Container(
+          decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
+          child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
+        ),
       ),
     );
   }
 
   Widget _buildBottomBar() {
     return Container(
-      decoration: BoxDecoration(color: Colors.transparent, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 20, spreadRadius: 4, offset: const Offset(0, -6))]),
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 20,
+            spreadRadius: 4,
+            offset: const Offset(0, -6),
+          ),
+        ],
+      ),
       child: BottomAppBar(
-        clipBehavior: Clip.antiAlias, shape: const CircularNotchedRectangle(), notchMargin: 9.0, color: Colors.white, elevation: 0, height: 80,
+        clipBehavior: Clip.antiAlias,
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 9.0,
+        color: Colors.white,
+        elevation: 0,
+        height: 80,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [_buildNavBarItem('assets/images/solidarity_1.png', "Community", 0), _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1)])),
+            _buildNavSection([
+              _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
+              _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1),
+            ]),
             const SizedBox(width: 72),
-            Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [_buildNavBarItem('assets/images/qa.png', "Q&A", 2), _buildNavBarItem('assets/images/user.png', "Profile", 3)])),
+            _buildNavSection([
+              _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
+              _buildNavBarItem('assets/images/user.png', "Profile", 3),
+            ]),
           ],
         ),
       ),
     );
   }
 
+  Widget _buildNavSection(List<Widget> items) =>
+      Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: items));
+
   Widget _buildNavBarItem(String iconPath, String label, int index) {
     final bool isSelected = _selectedIndex == index;
+    final Color itemColor = isSelected ? _mainPurple : Colors.grey.shade500;
     return GestureDetector(
       onTap: () => _onNavBarTapped(index),
       behavior: HitTestBehavior.opaque,
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset(iconPath, width: 28, height: 28, color: isSelected ? _mainPurple : Colors.grey.shade500),
+          Image.asset(iconPath, width: 28, height: 28, color: itemColor),
           const SizedBox(height: 5),
-          Text(label, style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 12, color: isSelected ? _mainPurple : Colors.grey.shade600, fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600)),
+          Text(label,
+              style: TextStyle(
+                fontFamily: 'SpaceGrotesk',
+                fontSize: 12,
+                color: itemColor,
+                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+              )),
         ],
       ),
     );

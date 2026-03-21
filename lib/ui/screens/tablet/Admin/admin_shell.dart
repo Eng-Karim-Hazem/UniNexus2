@@ -53,10 +53,10 @@ class _AdminShellState extends State<AdminShell> {
       case AdminTab.settings:
         return AdminSettingsScreen(onNavigate: _navigate);
 
-      case AdminTab.usersearch:
+      case AdminTab.userSearch:
         return AdminUserSearchScreen(onNavigate: _navigate);
 
-      case AdminTab.sentnotices:
+      case AdminTab.sentNotices:
         return AdminSentNoticesScreen(onNavigate: _navigate);
       case AdminTab.id:
         return AdminIdScreen(onNavigate: _navigate);

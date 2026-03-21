@@ -15,7 +15,7 @@ class HallService {
         .where('day', isEqualTo: today) //
         .snapshots()
         .map((snapshot) => snapshot.docs
-        .map((doc) => HallModel.fromFirestore(doc.data() as Map<String, dynamic>))
+        .map((doc) => HallModel.fromFirestore(doc.data()))
         .toList());
   }
 }

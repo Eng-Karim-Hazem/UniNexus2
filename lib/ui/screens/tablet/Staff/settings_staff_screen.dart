@@ -12,7 +12,7 @@ class _SettingsStaffScreenState extends State<SettingsStaffScreen> {
 
   /// ===== FEEDBACK LOGIC =====
   final TextEditingController _feedbackController = TextEditingController();
-  int _rating = 4;
+  final int _rating = 4;
 
   @override
   void dispose() {

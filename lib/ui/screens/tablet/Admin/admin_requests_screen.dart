@@ -1,7 +1,6 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../../admin_tab.dart';
-import '../../../../uninexus_tab.dart'; // Ensure AdminTab is imported
+// Ensure AdminTab is imported
 import '../theme/app_theme.dart';
 
 // Data model (shared or duplicated for Admin context)

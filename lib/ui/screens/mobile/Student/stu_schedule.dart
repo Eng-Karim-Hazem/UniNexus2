@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/model/schedule_model.dart';
-import 'package:uninexus/services/firebase/Schedule_service.dart';
+import 'package:uninexus/services/firebase/schedule_service.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import '../profile_screen.dart';

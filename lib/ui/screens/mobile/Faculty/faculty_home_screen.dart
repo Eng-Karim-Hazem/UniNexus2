@@ -30,8 +30,12 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   String _storedLastName = "";
   String _storedUserID = "";
 
+  // Constants & Styles
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
+  final Color _textIndigo = const Color(0xFF5C5C80);
+  final Color _darkText = const Color(0xFF1A1A1A);
+  final Color _dateBlue = const Color(0xFF5BA4F5);
 
   final Gradient _fabGradient = const LinearGradient(
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
@@ -49,30 +53,32 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
 
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _storedFirstName = prefs.getString('fName') ?? "Faculty";
-      _storedLastName = prefs.getString('lName') ?? "";
-      _storedUserID = prefs.getString('ID') ?? "No ID";
-    });
+    if (mounted) {
+      setState(() {
+        _storedFirstName = prefs.getString('fName') ?? "Faculty";
+        _storedLastName = prefs.getString('lName') ?? "";
+        _storedUserID = prefs.getString('ID') ?? "No ID";
+      });
+    }
   }
 
   String _getCurrentDate() {
     return DateFormat('MMMM d, yyyy').format(DateTime.now());
   }
 
-  void _onItemTapped(int index) async {
+  void _onNavBarTapped(int index) async {
     if (index == _selectedIndex) return;
-
     setState(() => _selectedIndex = index);
 
-    if (index == 0) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
-    } else if (index == 1) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen()));
-    } else if (index == 2) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
-    } else if (index == 3) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+    final Map<int, Widget> routes = {
+      0: const StuCommunity(),
+      1: const HallsScreen(),
+      2: const QAScreen(),
+      3: const ProfileScreen(),
+    };
+
+    if (routes.containsKey(index)) {
+      await Navigator.push(context, MaterialPageRoute(builder: (context) => routes[index]!));
     }
 
     // Reset highlight when popped back to the home screen
@@ -116,7 +122,6 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
                 child: _buildActionButtons(),
               ),
               const SizedBox(height: 24),
-
               // EXPANDED fills the rest of the screen
               Expanded(
                 child: _buildNotificationsArea(),
@@ -132,27 +137,12 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // --- ADDED NAVIGATION HERE ---
         GestureDetector(
-          onTap: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen())
-            );
-          },
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen())),
           child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
         ),
-
-        const Text(
-            "Home",
-            style: TextStyle(
-                fontFamily: 'Batangas',
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF5C5C80)
-            )
-        ),
-
+        Text("Home",
+            style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -166,10 +156,10 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 24, offset: const Offset(0, 10)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 24, offset: const Offset(0, 10)),
         ],
       ),
       child: Column(
@@ -177,10 +167,11 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         children: [
           Text(
             "Hi Dr. $_storedFirstName $_storedLastName!",
-            style: const TextStyle(fontFamily: 'Batangas', fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF1A1A1A)),
+            style: TextStyle(fontFamily: 'Batangas', fontSize: 26, fontWeight: FontWeight.w900, color: _darkText),
           ),
           const SizedBox(height: 8),
-          Text(_getCurrentDate(), style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Color(0xFF5BA4F5), fontWeight: FontWeight.w600)),
+          Text(_getCurrentDate(),
+              style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: _dateBlue, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -189,9 +180,21 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   Widget _buildActionButtons() {
     return Row(
       children: [
-        Expanded(child: _buildActionCard("Halls", 'assets/images/classroom_1.png', () => Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen())))),
+        Expanded(
+          child: _buildActionCard(
+              "Halls",
+              'assets/images/classroom_1.png',
+              () => Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen()))
+          ),
+        ),
         const SizedBox(width: 16),
-        Expanded(child: _buildActionCard("Attendance", 'assets/images/user-check_1.png', () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AttendanceSessionScreen())))),
+        Expanded(
+          child: _buildActionCard(
+              "Attendance",
+              'assets/images/user-check_1.png',
+              () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AttendanceSessionScreen()))
+          ),
+        ),
       ],
     );
   }
@@ -202,14 +205,16 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
       child: Container(
         height: 125,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9),
+          color: Colors.white.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(24),
-          boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.1), blurRadius: 15, offset: const Offset(0, 8))],
+          boxShadow: [
+            BoxShadow(color: _mainPurple.withValues(alpha: 0.1), blurRadius: 15, offset: const Offset(0, 8))
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(iconPath, width: 38, height: 38, color: const Color(0xFF5C5C80)),
+            Image.asset(iconPath, width: 38, height: 38, color: _textIndigo),
             const SizedBox(height: 12),
             Text(title, style: TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold, color: _mainPurple)),
           ],
@@ -221,13 +226,14 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   Widget _buildNotificationsArea() {
     return Container(
       width: double.infinity,
-      // MARGIN: This pushes the box up so it stops right at the top of the Nav Bar
       margin: const EdgeInsets.fromLTRB(24, 0, 24, 115),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.6),
+        color: Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
-        boxShadow: [BoxShadow(color: const Color(0xFF237ABA).withOpacity(0.12), blurRadius: 25, offset: const Offset(0, 8))],
+        border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
+        boxShadow: [
+          BoxShadow(color: _primaryBlue.withValues(alpha: 0.12), blurRadius: 25, offset: const Offset(0, 8))
+        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
@@ -251,15 +257,20 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   Widget _buildNotifyItem(String title, String msg) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: const Color(0xFFEAF4FF).withOpacity(0.9), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+          color: const Color(0xFFEAF4FF).withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(20)
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            Icon(Icons.notifications_active_outlined, color: _mainPurple, size: 20),
-            const SizedBox(width: 8),
-            Text(title, style: TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.bold, color: _mainPurple)),
-          ]),
+          Row(
+            children: [
+              Icon(Icons.notifications_active_outlined, color: _mainPurple, size: 20),
+              const SizedBox(width: 8),
+              Text(title, style: TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.bold, color: _mainPurple)),
+            ],
+          ),
           const SizedBox(height: 4),
           Text(msg, style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Colors.black87)),
         ],
@@ -267,7 +278,6 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     );
   }
 
-  // --- GLOWING FAB ---
   Widget _buildFab() {
     return Container(
       height: 72,
@@ -276,7 +286,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withOpacity(0.6),
+            color: _mainPurple.withValues(alpha: 0.6),
             blurRadius: 25,
             spreadRadius: 6,
             offset: const Offset(0, 2),
@@ -299,14 +309,13 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     );
   }
 
-  // --- BOTTOM NAVIGATION BAR WITH NATIVE CUTOUT SHADOW ---
   Widget _buildBottomBar() {
     return Container(
       decoration: BoxDecoration(
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 20,
             spreadRadius: 4,
             offset: const Offset(0, -6),
@@ -352,18 +361,15 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
 
   Widget _buildNavBarItem(String iconPath, String label, int index) {
     final bool isSelected = _selectedIndex == index;
+    final Color itemColor = isSelected ? _mainPurple : Colors.grey.shade500;
+
     return GestureDetector(
-      onTap: () => _onItemTapped(index),
+      onTap: () => _onNavBarTapped(index),
       behavior: HitTestBehavior.opaque,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(
-            iconPath,
-            width: 28,
-            height: 28,
-            color: isSelected ? _mainPurple : Colors.grey.shade500,
-          ),
+          Image.asset(iconPath, width: 28, height: 28, color: itemColor),
           const SizedBox(height: 5),
           Text(
             label,

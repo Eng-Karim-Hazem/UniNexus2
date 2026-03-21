@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uninexus/model/qna_model.dart';
 import 'package:uninexus/services/firebase/qna_service.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
@@ -97,7 +96,7 @@ class _QARequestScreenState extends State<QARequestScreen> {
         subject: _selectedCourse!,
         sEmail: prefs.getString('email') ?? "",
         sName: fullName,
-        ID: prefs.getString('ID') ?? "",
+        id: prefs.getString('ID') ?? "",
       );
 
       await _qnaService.submitQuestion(qna);
@@ -178,9 +177,9 @@ class _QARequestScreenState extends State<QARequestScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.4),
+        color: Colors.white.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: _mainPurple.withOpacity(0.5), width: 1.5),
+        border: Border.all(color: _mainPurple.withValues(alpha: 0.5), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,7 +192,7 @@ class _QARequestScreenState extends State<QARequestScreen> {
               return Container(
                 height: 55,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.grey.withOpacity(0.2))),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _selectedCourse,
@@ -226,7 +225,7 @@ class _QARequestScreenState extends State<QARequestScreen> {
 
   Widget _buildTextField(String hint, TextEditingController controller, {int maxLines = 1}) {
     return Container(
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.grey.withOpacity(0.2))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
       child: TextField(
         controller: controller,
         maxLines: maxLines,
@@ -242,7 +241,7 @@ class _QARequestScreenState extends State<QARequestScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: _mainPurple.withOpacity(0.6), width: 1.5),
+        border: Border.all(color: _mainPurple.withValues(alpha: 0.6), width: 1.5),
       ),
       child: TextButton(
         onPressed: _isSubmitting ? null : _handleSubmit,
@@ -256,7 +255,7 @@ class _QARequestScreenState extends State<QARequestScreen> {
   Widget _buildHomeFab() {
     return Container(
       height: 72, width: 72,
-      decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.4), blurRadius: 20, spreadRadius: 2, offset: const Offset(0, 2))]),
+      decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: _mainPurple.withValues(alpha: 0.4), blurRadius: 20, spreadRadius: 2, offset: const Offset(0, 2))]),
       child: FloatingActionButton(
         onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
         backgroundColor: Colors.transparent, elevation: 0, shape: const CircleBorder(),
@@ -270,7 +269,7 @@ class _QARequestScreenState extends State<QARequestScreen> {
 
   Widget _buildBottomBar() {
     return Container(
-      decoration: BoxDecoration(boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, -5))]),
+      decoration: BoxDecoration(boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, -5))]),
       child: BottomAppBar(
         clipBehavior: Clip.antiAlias,
         shape: const CircularNotchedRectangle(),

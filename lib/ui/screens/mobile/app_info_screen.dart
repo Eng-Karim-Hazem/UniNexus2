@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_schedule.dart';
@@ -15,7 +14,7 @@ class AppInfoScreen extends StatefulWidget {
 
 class _AppInfoScreenState extends State<AppInfoScreen> {
   // No specific index highlighted
-  int _selectedIndex = -1;
+  final int _selectedIndex = -1;
 
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);

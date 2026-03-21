@@ -5,7 +5,6 @@ import 'package:uninexus/model/community_model.dart';
 import 'package:uninexus/services/firebase/community_service.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 
-import '../settings_screen.dart';
 import 'stu_schedule.dart';
 import '../profile_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/qa_screen.dart';
@@ -206,7 +205,7 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
           child: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.white.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: _mainPurple),
@@ -235,12 +234,12 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.6),
+        color: Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _mainPurple.withOpacity(0.6), width: 1.5),
+        border: Border.all(color: _mainPurple.withValues(alpha: 0.6), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF237ABA).withOpacity(0.1),
+            color: const Color(0xFF237ABA).withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -337,7 +336,7 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withOpacity(0.6),
+            color: _mainPurple.withValues(alpha: 0.6),
             blurRadius: 25,
             spreadRadius: 6,
             offset: const Offset(0, 2),
@@ -426,7 +425,7 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 20,
             spreadRadius: 4,
             offset: const Offset(0, -6),

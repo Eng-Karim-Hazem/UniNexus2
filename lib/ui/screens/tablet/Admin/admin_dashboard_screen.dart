@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../../admin_tab.dart'; // Ensure this contains your search tab
 import 'package:uninexus/theme/app_theme.dart';
@@ -73,7 +72,7 @@ class AdminDashboardScreen extends StatelessWidget {
                               child: _buildQuickActionCard(
                                 "User Search",
                                 "assets/images/id-card 5.png",
-                                onTap: () => onNavigate(AdminTab.usersearch), // Ensure 'search' is in AdminTab
+                                onTap: () => onNavigate(AdminTab.userSearch), // Ensure 'search' is in AdminTab
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -81,7 +80,7 @@ class AdminDashboardScreen extends StatelessWidget {
                               child: _buildQuickActionCard(
                                 "Send Notice",
                                 "assets/images/send_butt.png",
-                                onTap: () => onNavigate(AdminTab.sentnotices),
+                                onTap: () => onNavigate(AdminTab.sentNotices),
                               ),
                             ),
                           ],
