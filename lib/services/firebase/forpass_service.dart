@@ -12,44 +12,36 @@ class ForpassService {
   Future<bool> sendRenewalRequest({
     required String emailOrId,
     required String nationalId,
+    required String newPassword, // <--- Add this requirement
   }) async {
     try {
       String? foundDocId;
       String? foundCollection;
 
-      // Determine if they typed an email or an ID
       final bool isEmail = emailOrId.contains('@');
       final String queryField = isEmail ? 'email' : 'ID';
       final String searchValue = isEmail ? emailOrId.toLowerCase() : emailOrId.toUpperCase();
 
-      // Search through all collections
       for (String col in _userCollections) {
-        QuerySnapshot userCheck = await _db
-            .collection(col)
-            .where(queryField, isEqualTo: searchValue)
-            .limit(1)
-            .get();
+        QuerySnapshot userCheck = await _db.collection(col).where(queryField, isEqualTo: searchValue).limit(1).get();
 
         if (userCheck.docs.isNotEmpty) {
           foundDocId = userCheck.docs.first.id;
-          foundCollection = col; // Keeps track of whether they are staff/faculty/student
+          foundCollection = col;
           break;
         }
       }
 
-      // If not found in any table, reject the request
-      if (foundDocId == null) {
-        return false;
-      }
+      if (foundDocId == null) return false;
 
-      // If valid, add to ForgotPass_request collection
       await _db.collection(_requestCollection).add({
         'emailOrId': emailOrId,
         'nationalId': nationalId,
+        'newPassword': newPassword, // <--- Save it to Firestore here!
         'requestDate': FieldValue.serverTimestamp(),
         'isProcessed': false,
         'userDocRef': foundDocId,
-        'userRole': foundCollection, // Helpful for admins to know who requested it!
+        'userRole': foundCollection,
       });
 
       return true;

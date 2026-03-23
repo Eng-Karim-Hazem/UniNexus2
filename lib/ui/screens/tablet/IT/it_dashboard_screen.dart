@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
-
-// CHANGED TO STATEFUL WIDGET
 class ITDashboardScreen extends StatefulWidget {
   final void Function(UninexusTab) onNavigate;
   const ITDashboardScreen({super.key, required this.onNavigate});
@@ -17,40 +16,115 @@ class ITDashboardScreen extends StatefulWidget {
 class _ITDashboardScreenState extends State<ITDashboardScreen> {
   // STATE VARIABLES
   String _userName = 'Loading...';
-  bool _isLoading = true;
 
-  static const List<Map<String, String>> _logs = [
-    {'text': 'Hall B201 marked as fixed',    'time': '10:34 AM'},
-    {'text': 'Password reset approved',       'time': '11:02 AM'},
-    {'text': 'Hall A108 marked as fixed',     'time': '12:45 PM'},
-    {'text': 'Hall C203 marked as in repair', 'time': '01:32 PM'},
-    {'text': 'Hall B401 marked as fixed',     'time': '02:15 PM'},
-  ];
+  // GRAPH VARIABLES
+  int _activeIssuesCount = 0;
+  double _resolutionRate = 0.0;
+  bool _isLoadingStats = true;
+
+  // WE REMOVED THE STATIC _logs LIST HERE!
 
   @override
   void initState() {
     super.initState();
-    _fetchUserName(); // Fetch the name as soon as the screen loads
+    _fetchUserName();
+    _fetchWeeklyStats();
   }
 
+  String _getFormattedDate() {
+    final now = DateTime.now();
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return '${months[now.month - 1]} ${now.day}, ${now.year}';
+  }
 
-  // INSTANT FETCH FROM LOCAL STORAGE
+  // Helper to format Time (e.g., 10:34 AM) for the logs
+  String _formatTime(Timestamp? timestamp) {
+    if (timestamp == null) return '';
+    final DateTime date = timestamp.toDate();
+    int hour = date.hour;
+    String period = hour >= 12 ? 'PM' : 'AM';
+    if (hour == 0) hour = 12;
+    if (hour > 12) hour -= 12;
+    String minute = date.minute.toString().padLeft(2, '0');
+    return '$hour:$minute $period';
+  }
+
   Future<void> _fetchUserName() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-
-      // Grab the fName you already saved during login
       final String firstName = prefs.getString('fName') ?? 'Guest';
-
       setState(() {
         _userName = 'Eng. $firstName';
-        _isLoading = false;
       });
     } catch (e) {
       setState(() {
         _userName = 'Eng. Error';
-        _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _fetchWeeklyStats() async {
+    try {
+      final db = FirebaseFirestore.instance;
+
+      final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
+      final timestampLimit = Timestamp.fromDate(sevenDaysAgo);
+
+      int totalWeeklyIssues = 0;
+      int resolvedWeeklyIssues = 0;
+      int activeIssuesCurrently = 0;
+
+      final hallQuery = await db.collection('HallErrors')
+          .where('timestamp', isGreaterThanOrEqualTo: timestampLimit)
+          .get();
+
+      for (var doc in hallQuery.docs) {
+        totalWeeklyIssues++;
+        final status = doc.data()['status']?.toString().toLowerCase() ?? 'pending';
+        if (status == 'fixed') {
+          resolvedWeeklyIssues++;
+        } else {
+          activeIssuesCurrently++;
+        }
+      }
+
+      final passQuery = await db.collection('ForgotPass_request')
+          .where('requestDate', isGreaterThanOrEqualTo: timestampLimit)
+          .get();
+
+      for (var doc in passQuery.docs) {
+        totalWeeklyIssues++;
+        final isProcessed = doc.data()['isProcessed'] == true;
+        if (isProcessed) {
+          resolvedWeeklyIssues++;
+        } else {
+          activeIssuesCurrently++;
+        }
+      }
+
+      double rate = 0.0;
+      if (totalWeeklyIssues > 0) {
+        rate = resolvedWeeklyIssues / totalWeeklyIssues;
+      }
+
+      if (mounted) {
+        setState(() {
+          _activeIssuesCount = activeIssuesCurrently;
+          _resolutionRate = rate;
+          _isLoadingStats = false;
+        });
+      }
+
+    } catch (e) {
+      print("Error fetching weekly stats: $e");
+      if (mounted) {
+        setState(() {
+          _isLoadingStats = false;
+        });
+      }
     }
   }
 
@@ -62,32 +136,62 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // GREETING CARD (Now uses dynamic data!)
             AppGreetingCard(
               name: _userName,
               subtitle: 'Good morning',
-              date: 'October 11, 2026', // We can make this dynamic next if you want!
+              date: _getFormattedDate(),
             ),
 
             const SizedBox(height: 20),
 
-            // Main content
             Expanded(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Recent Logs
-                  // Recent Logs
+                  // --- RECENT LOGS SECTION ---
                   Expanded(
                     flex: 5,
                     child: GlassCard(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                       child: Column(
                         children: [
-                          ..._logs.map((l) => _LogRow(text: l['text']!, time: l['time']!)),
-                          const Spacer(),
+                          Expanded(
+                            child: StreamBuilder<QuerySnapshot>(
+                              stream: FirebaseFirestore.instance
+                                  .collection('IT_Logs')
+                                  .orderBy('timestamp', descending: true)
+                                  .limit(5) // Only fetch the 5 most recent!
+                                  .snapshots(),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState == ConnectionState.waiting) {
+                                  return const Center(child: CircularProgressIndicator());
+                                }
+                                if (snapshot.hasError) {
+                                  return const Center(child: Text('Error loading logs.', style: TextStyle(color: Colors.red)));
+                                }
+                                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                                  return const Center(child: Text('No recent activity.', style: TextStyle(color: Colors.grey)));
+                                }
 
-                          // Reverted to just the right-aligned View Logs button
+                                final docs = snapshot.data!.docs;
+
+                                return ListView.builder(
+                                  padding: EdgeInsets.zero,
+                                  itemCount: docs.length,
+                                  itemBuilder: (context, index) {
+                                    final logData = docs[index].data() as Map<String, dynamic>;
+                                    final message = logData['message'] ?? 'Unknown Action';
+                                    final timeStr = _formatTime(logData['timestamp'] as Timestamp?);
+
+                                    return _LogRow(text: message, time: timeStr);
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+
+                          const SizedBox(height: 8),
+
                           Align(
                             alignment: Alignment.centerRight,
                             child: GestureDetector(
@@ -95,7 +199,6 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
                               child: const Text('View Logs >', style: AppTextStyles.viewLinkStyle),
                             ),
                           ),
-
                         ],
                       ),
                     ),
@@ -103,7 +206,7 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
 
                   const SizedBox(width: 20),
 
-                  // Right column
+                  // --- RIGHT COLUMN ---
                   Expanded(
                     flex: 4,
                     child: Column(
@@ -129,7 +232,7 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: GestureDetector(
-                                    onTap: () => widget.onNavigate(UninexusTab.announcements), // Updated
+                                    onTap: () => widget.onNavigate(UninexusTab.announcements),
                                     child: const Text('View All >', style: AppTextStyles.viewLinkStyle),
                                   ),
                                 ),
@@ -140,34 +243,37 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
 
                         const SizedBox(height: 16),
 
-                        // Stats row
+                        // --- STATS ROW ---
                         SizedBox(
                           height: 250,
                           child: Row(
                             children: [
                               Expanded(
                                 child: GlassCard(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 24, horizontal: 12),
-                                  child: const CircularStat(
-                                    value: 0.65,
+                                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
+                                  child: _isLoadingStats
+                                      ? const Center(child: CircularProgressIndicator())
+                                      : CircularStat(
+                                    value: _resolutionRate,
                                     line1: 'Resolution',
                                     line2: 'Rate',
-                                    valueLabel: '65%',
+                                    valueLabel: '${(_resolutionRate * 100).toInt()}%',
                                     color: AppColors.primary,
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 14),
+
                               Expanded(
                                 child: GlassCard(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 24, horizontal: 12),
-                                  child: const CircularStat(
-                                    value: 0.70,
+                                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
+                                  child: _isLoadingStats
+                                      ? const Center(child: CircularProgressIndicator())
+                                      : CircularStat(
+                                    value: (_activeIssuesCount > 0) ? (_activeIssuesCount / 20.0).clamp(0.1, 1.0) : 0.0,
                                     line1: 'Open',
                                     line2: 'Issues',
-                                    valueLabel: '7',
+                                    valueLabel: '$_activeIssuesCount',
                                     sublabel: 'Active\nissues',
                                     color: AppColors.blueAccent,
                                   ),
@@ -189,69 +295,67 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
   }
 }
 
-// ... Keep your _LogRow and _AnnouncementCard exactly as they are below this
-  
-  class _LogRow extends StatelessWidget {
-    final String text;
-    final String time;
-    const _LogRow({required this.text, required this.time});
-  
-    @override
-    Widget build(BuildContext context) {
-      return Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        decoration: AppDecorations.smallCard(),
-        child: Row(
-          children: [
-            Image.asset('assets/icons/restore.png', width: 26, height: 26,
-                errorBuilder: (_, __, ___) =>
-                const Icon(Icons.history, size: 26, color: AppColors.primary)),
-            const SizedBox(width: 12),
-            Container(width: 1.5, height: 24, color: AppColors.divider),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(text, style: AppTextStyles.logRowBodyStyle),
-            ),
-            Text(time, style: AppTextStyles.caption),
-          ],
-        ),
-      );
-    }
+class _LogRow extends StatelessWidget {
+  final String text;
+  final String time;
+  const _LogRow({required this.text, required this.time});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: AppDecorations.smallCard(),
+      child: Row(
+        children: [
+          Image.asset('assets/icons/restore.png', width: 26, height: 26,
+              errorBuilder: (_, __, ___) =>
+              const Icon(Icons.history, size: 26, color: AppColors.primary)),
+          const SizedBox(width: 12),
+          Container(width: 1.5, height: 24, color: AppColors.divider),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(text, style: AppTextStyles.logRowBodyStyle),
+          ),
+          Text(time, style: AppTextStyles.caption),
+        ],
+      ),
+    );
   }
-  
-  class _AnnouncementCard extends StatelessWidget {
-    final String sender;
-    final String message;
-    const _AnnouncementCard({required this.sender, required this.message});
-  
-    @override
-    Widget build(BuildContext context) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: AppDecorations.smallCard(),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Image.asset('assets/icons/bell_outline.png', width: 26, height: 26,
-                errorBuilder: (_, __, ___) =>
-                const Icon(Icons.notifications_outlined, size: 26, color: AppColors.primary)),
-            const SizedBox(width: 12),
-            Container(width: 1.5, height: 36, color: AppColors.divider),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(sender, style: AppTextStyles.senderStyle),
-                  const SizedBox(height: 2),
-                  Text(message, style: AppTextStyles.bodySmall),
-                ],
-              ),
+}
+
+class _AnnouncementCard extends StatelessWidget {
+  final String sender;
+  final String message;
+  const _AnnouncementCard({required this.sender, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: AppDecorations.smallCard(),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Image.asset('assets/icons/bell_outline.png', width: 26, height: 26,
+              errorBuilder: (_, __, ___) =>
+              const Icon(Icons.notifications_outlined, size: 26, color: AppColors.primary)),
+          const SizedBox(width: 12),
+          Container(width: 1.5, height: 36, color: AppColors.divider),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(sender, style: AppTextStyles.senderStyle),
+                const SizedBox(height: 2),
+                Text(message, style: AppTextStyles.bodySmall),
+              ],
             ),
-          ],
-        ),
-      );
-    }
+          ),
+        ],
+      ),
+    );
   }
+}

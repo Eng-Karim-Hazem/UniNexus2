@@ -18,6 +18,12 @@ class _ITProfileScreenState extends State<ITProfileScreen> {
   String _id = 'Loading...';
   String _email = 'Loading...';
   String _phone = 'Loading...';
+
+  // NEW VARIABLES
+  String _department = 'Loading...';
+  String _position = 'Loading...';
+  String _nationalId = 'Loading...';
+
   String? _base64Photo;
   bool _isLoading = true;
 
@@ -25,6 +31,15 @@ class _ITProfileScreenState extends State<ITProfileScreen> {
   void initState() {
     super.initState();
     _loadProfileData();
+  }
+
+  // Helper to safely assign a dash if the data is missing or empty
+  String _getValidString(SharedPreferences prefs, String key) {
+    final value = prefs.getString(key);
+    if (value == null || value.trim().isEmpty) {
+      return '-';
+    }
+    return value;
   }
 
   // INSTANT FETCH FROM LOCAL STORAGE
@@ -37,9 +52,14 @@ class _ITProfileScreenState extends State<ITProfileScreen> {
       final lName = prefs.getString('lName') ?? 'User';
       _fullName = '$fName $lName';
 
-      _id = prefs.getString('ID') ?? 'N/A';
-      _email = prefs.getString('email') ?? 'N/A';
-      _phone = prefs.getString('pNum') ?? 'N/A';
+      _id = _getValidString(prefs, 'ID');
+      _email = _getValidString(prefs, 'email');
+      _phone = _getValidString(prefs, 'pNum');
+
+      // Fetching the new dynamic fields
+      _department = _getValidString(prefs, 'department');
+      _position = _getValidString(prefs, 'position');
+      _nationalId = _getValidString(prefs, 'nationalId');
 
       // Grab the Base64 photo string
       _base64Photo = prefs.getString('photo');
@@ -68,8 +88,8 @@ class _ITProfileScreenState extends State<ITProfileScreen> {
                 children: [
                   // PROFILE PICTURE LOGIC
                   Container(
-                    width: 70,
-                    height: 70,
+                    width: 110,
+                    height: 110,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white,
@@ -127,15 +147,15 @@ class _ITProfileScreenState extends State<ITProfileScreen> {
                     : Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildInfoRow('Department',  'IT'), // Static for this dashboard
+                    _buildInfoRow('Department',  _department),
                     AppDecorations.profileInfoDivider,
-                    _buildInfoRow('Position',    'Senior Technician'), // Static for this dashboard
+                    _buildInfoRow('Position',    _position),
                     AppDecorations.profileInfoDivider,
                     _buildInfoRow('E-mail',      _email),
                     AppDecorations.profileInfoDivider,
                     _buildInfoRow('Phone no.',   _phone),
                     AppDecorations.profileInfoDivider,
-                    _buildInfoRow('National ID', '2838329204792-32'), // Keep static if not in DB
+                    _buildInfoRow('National ID', _nationalId),
                   ],
                 ),
               ),

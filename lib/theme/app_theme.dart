@@ -308,6 +308,18 @@ class AppTextStyles {
   );
 
   // Requests screen
+  static const TextStyle requestHeading = TextStyle(
+    fontSize: 26,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.batangas,
+    color: AppColors.primary,
+  );
+  static const TextStyle requestSubheading = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w700,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textDark,
+  );
   static const TextStyle requestListTitleStyle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w700,

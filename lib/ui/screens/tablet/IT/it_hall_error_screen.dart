@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
+import '../../../../services/firebase/it_Logs_service.dart';
+
 class ITHallErrorScreen extends StatefulWidget {
   final void Function(UninexusTab) onNavigate;
   const ITHallErrorScreen({super.key, required this.onNavigate});
@@ -14,7 +16,8 @@ class ITHallErrorScreen extends StatefulWidget {
 
 class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
   int _selectedIndex = 0;
-// Helper to color-code the status badges
+
+  // Helper to color-code the status badges
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'fixed':
@@ -28,6 +31,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
         return Colors.grey;
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return ITScreenBackground(
@@ -42,10 +46,9 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
             Expanded(
               // --- FIREBASE STREAM BUILDER ---
               child: StreamBuilder<QuerySnapshot>(
-                // Listening to the 'HallErrors' collection, newest first
+                // REMOVED .orderBy() so we can handle the custom sorting locally
                 stream: FirebaseFirestore.instance
                     .collection('HallErrors')
-                    .orderBy('timestamp', descending: true)
                     .snapshots(),
                 builder: (context, snapshot) {
 
@@ -67,7 +70,33 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                     );
                   }
 
-                  final docs = snapshot.data!.docs;
+                  // 4. CUSTOM SORTING LOGIC (Active on top, Fixed on bottom)
+                  final docs = snapshot.data!.docs.toList();
+
+                  docs.sort((a, b) {
+                    final dataA = a.data() as Map<String, dynamic>;
+                    final dataB = b.data() as Map<String, dynamic>;
+
+                    final statusA = dataA['status']?.toString().toLowerCase() ?? 'pending';
+                    final statusB = dataB['status']?.toString().toLowerCase() ?? 'pending';
+
+                    final bool isFixedA = statusA == 'fixed';
+                    final bool isFixedB = statusB == 'fixed';
+
+                    // If one is fixed and the other isn't, float the unfixed one to the top
+                    if (isFixedA != isFixedB) {
+                      return isFixedA ? 1 : -1;
+                    }
+
+                    // If they are both fixed or both active, sort by timestamp (newest first)
+                    final Timestamp? timeA = dataA['timestamp'] as Timestamp?;
+                    final Timestamp? timeB = dataB['timestamp'] as Timestamp?;
+
+                    if (timeA != null && timeB != null) {
+                      return timeB.compareTo(timeA); // Descending order
+                    }
+                    return 0;
+                  });
 
                   // Safety check: if a document is deleted, the index might go out of bounds
                   if (_selectedIndex >= docs.length) {
@@ -302,57 +331,63 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                                 const Spacer(),
 
                                 // ACTION BUTTONS
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: PillButton(
-                                          label: 'In Repair',
-                                          onTap: () async {
-                                            try {
-                                              // Update the status field in Firestore
-                                              await selectedDoc.reference.update({'status': 'in repair'});
+                                // Hide buttons if already fixed to prevent redundant actions
+                                if (selectedData['status']?.toString().toLowerCase() != 'fixed')
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: PillButton(
+                                            label: 'In Repair',
+                                            onTap: () async {
+                                              try {
+                                                await selectedDoc.reference.update({'status': 'in repair'});
 
-                                              if (context.mounted) {
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  const SnackBar(content: Text('Status updated to: In Repair')),
-                                                );
-                                              }
-                                            } catch (e) {
-                                              if (context.mounted) {
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(content: Text('Error updating status: $e')),
-                                                );
+                                                // ---> THE NEW LOGGING LINE <---
+                                                await ITLogService.logAction('Hall ${selectedData['hallName']} marked as in repair');
+
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(content: Text('Status updated to: In Repair')),
+                                                  );
+                                                }
+                                              } catch (e) {
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(content: Text('Error updating status: $e')),
+                                                  );
+                                                }
                                               }
                                             }
-                                          }
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: PillButton(
-                                          label: 'Fixed',
-                                          onTap: () async {
-                                            try {
-                                              // Update the status field in Firestore
-                                              await selectedDoc.reference.update({'status': 'fixed'});
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: PillButton(
+                                            label: 'Fixed',
+                                            onTap: () async {
+                                              try {
+                                                await selectedDoc.reference.update({'status': 'fixed'});
 
-                                              if (context.mounted) {
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  const SnackBar(content: Text('Status updated to: Fixed')),
-                                                );
-                                              }
-                                            } catch (e) {
-                                              if (context.mounted) {
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(content: Text('Error updating status: $e')),
-                                                );
+                                                // ---> THE NEW LOGGING LINE <---
+                                                await ITLogService.logAction('Hall ${selectedData['hallName']} marked as fixed');
+
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(content: Text('Status updated to: Fixed')),
+                                                  );
+                                                }
+                                              } catch (e) {
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(content: Text('Error updating status: $e')),
+                                                  );
+                                                }
                                               }
                                             }
-                                          }
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
+                                    ],
+                                  ),
                               ],
                             ),
                           ),

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:uninexus/ui/screens/mobile/request_submitted_screen.dart';
 
-
 import '/../../services/firebase/forpass_service.dart';
 import 'login_screen.dart';
-
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -18,6 +16,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
   final _emailController = TextEditingController();
   final _nationalIdController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   bool _isFormValid = false;
   bool _isLoading = false;
@@ -27,14 +27,20 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
   late Animation<double> _field1Anim;
   late Animation<double> _field2Anim;
+  late Animation<double> _field3Anim;
+  late Animation<double> _field4Anim;
 
   @override
   void initState() {
     super.initState();
-    _contentController = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _contentController = AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
     _contentIntro = Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero).animate(CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic));
-    _field1Anim = CurvedAnimation(parent: _contentController, curve: const Interval(0.25, 0.6, curve: Curves.easeOut));
-    _field2Anim = CurvedAnimation(parent: _contentController, curve: const Interval(0.45, 0.8, curve: Curves.easeOut));
+
+    // Staggered animations for all 4 fields
+    _field1Anim = CurvedAnimation(parent: _contentController, curve: const Interval(0.15, 0.5, curve: Curves.easeOut));
+    _field2Anim = CurvedAnimation(parent: _contentController, curve: const Interval(0.30, 0.65, curve: Curves.easeOut));
+    _field3Anim = CurvedAnimation(parent: _contentController, curve: const Interval(0.45, 0.80, curve: Curves.easeOut));
+    _field4Anim = CurvedAnimation(parent: _contentController, curve: const Interval(0.60, 0.95, curve: Curves.easeOut));
 
     Future.delayed(const Duration(milliseconds: 250), () {
       if (mounted) _contentController.forward();
@@ -42,22 +48,35 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
     _emailController.addListener(_validate);
     _nationalIdController.addListener(_validate);
+    _newPasswordController.addListener(_validate);
+    _confirmPasswordController.addListener(_validate);
   }
 
   void _validate() {
     setState(() {
-      _isFormValid = _emailController.text.isNotEmpty && _nationalIdController.text.isNotEmpty;
+      _isFormValid = _emailController.text.isNotEmpty &&
+          _nationalIdController.text.isNotEmpty &&
+          _newPasswordController.text.isNotEmpty &&
+          _confirmPasswordController.text.isNotEmpty;
     });
   }
 
   Future<void> _submit() async {
     if (!_isFormValid) return;
 
+    if (_newPasswordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Passwords do not match.", style: TextStyle(fontFamily: 'SpaceGrotesk'))),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     bool success = await ForpassService().sendRenewalRequest(
       emailOrId: _emailController.text,
       nationalId: _nationalIdController.text,
+      newPassword: _newPasswordController.text, // Sending the new password!
     );
 
     if (mounted) setState(() => _isLoading = false);
@@ -69,7 +88,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
       );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error sending renewal request.", style: TextStyle(fontFamily: 'SpaceGrotesk'))),
+        const SnackBar(content: Text("Error sending renewal request. Details may not match.", style: TextStyle(fontFamily: 'SpaceGrotesk'))),
       );
     }
   }
@@ -79,6 +98,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     _contentController.dispose();
     _emailController.dispose();
     _nationalIdController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -116,10 +137,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                         children: [
                           ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.asset("assets/images/uni.jpeg", width: 90, fit: BoxFit.cover)),
                           const SizedBox(height: 10),
-                          const Text("Forgotten Password", style: TextStyle(fontFamily: 'Batangas', fontSize: 30, fontWeight: FontWeight.bold)),
+                          const Text("Forgotten Password", style: TextStyle(fontFamily: 'Batangas', fontSize: 26, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 2),
-                          const Text("Enter your details to renew your credentials", style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.black54, fontSize: 17)),
-                          const SizedBox(height: 40),
+                          const Text("Enter your details to renew your credentials", style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.black54, fontSize: 15), textAlign: TextAlign.center),
+                          const SizedBox(height: 35),
+
                           FadeTransition(
                             opacity: _field1Anim,
                             child: SlideTransition(
@@ -127,7 +149,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                               child: _modernField(label: "Email / ID", hint: "Enter Your Email/ID", controller: _emailController),
                             ),
                           ),
-                          const SizedBox(height: 55),
+                          const SizedBox(height: 20),
+
                           FadeTransition(
                             opacity: _field2Anim,
                             child: SlideTransition(
@@ -135,12 +158,33 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                               child: _modernField(label: "National ID", hint: "Enter Your National ID", controller: _nationalIdController),
                             ),
                           ),
-                          const SizedBox(height: 280),
+                          const SizedBox(height: 20),
+
+                          FadeTransition(
+                            opacity: _field3Anim,
+                            child: SlideTransition(
+                              position: Tween<Offset>(begin: const Offset(-0.3, 0), end: Offset.zero).animate(_field3Anim),
+                              child: _modernField(label: "New Password", hint: "Enter Your New Password", controller: _newPasswordController, obscureText: true),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          FadeTransition(
+                            opacity: _field4Anim,
+                            child: SlideTransition(
+                              position: Tween<Offset>(begin: const Offset(-0.3, 0), end: Offset.zero).animate(_field4Anim),
+                              child: _modernField(label: "Confirm Password", hint: "Confirm Your New Password", controller: _confirmPasswordController, obscureText: true),
+                            ),
+                          ),
+
+                          const SizedBox(height: 40),
+
                           _mainButton(
                             text: _isLoading ? "Submitting..." : "Submit",
                             enabled: _isFormValid && !_isLoading,
                             onTap: _submit,
                           ),
+
                           const SizedBox(height: 6),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -165,7 +209,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     );
   }
 
-  Widget _modernField({required String label, required String hint, required TextEditingController controller}) {
+  // UPDATED: Added obscureText parameter
+  Widget _modernField({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    bool obscureText = false, // defaults to false for normal fields
+  }) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Padding(padding: const EdgeInsets.only(left: 10, bottom: 1), child: Text(label, style: const TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold))),
       Container(
@@ -173,6 +223,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1.4)),
         child: TextField(
             controller: controller,
+            obscureText: obscureText, // Hides the password
             style: const TextStyle(fontFamily: 'SpaceGrotesk'),
             decoration: InputDecoration(
                 hintText: hint,

@@ -1,32 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
-// Data model
-
-class _UserRequest {
-  final String id;
-  final String type;
-  final String requesterName;
-  final String userType;
-  final String userId;
-  final String email;
-  final int year;
-  final String faculty;
-
-  const _UserRequest({
-    required this.id,
-    required this.type,
-    required this.requesterName,
-    required this.userType,
-    required this.userId,
-    required this.email,
-    required this.year,
-    required this.faculty,
-  });
-}
-
-// Screen
+import '../../../../services/firebase/it_Logs_service.dart';
 
 class ITRequestsScreen extends StatefulWidget {
   final void Function(UninexusTab) onNavigate;
@@ -37,51 +14,51 @@ class ITRequestsScreen extends StatefulWidget {
 }
 
 class _ITRequestsScreenState extends State<ITRequestsScreen> {
-  final List<_UserRequest> _requests = [
-    const _UserRequest(
-      id: '1', type: 'Password Reset',
-      requesterName: 'Moaz Osama Gamil', userType: 'Student',
-      userId: 'ST20222', email: 'MoazOsama@gmail.com', year: 4, faculty: 'ICT',
-    ),
-    const _UserRequest(
-      id: '2', type: 'Password Reset',
-      requesterName: 'Eslam Bahy', userType: 'Student',
-      userId: 'ST20180', email: 'EslamBahy@gmail.com', year: 3, faculty: 'Engineering',
-    ),
-    const _UserRequest(
-      id: '3', type: 'Password Reset',
-      requesterName: 'Ammar Tarek', userType: 'Student',
-      userId: 'ST20195', email: 'AmmarTarek@gmail.com', year: 2, faculty: 'Science',
-    ),
-    const _UserRequest(
-      id: '4', type: 'Password Reset',
-      requesterName: 'Hossam Medhat', userType: 'Staff',
-      userId: 'ST20100', email: 'HossamMedhat@gmail.com', year: 1, faculty: 'Arts',
-    ),
-  ];
+  int _selectedIndex = 0;
 
-  _UserRequest? _selected;
-
-  @override
-  void initState() {
-    super.initState();
-    if (_requests.isNotEmpty) _selected = _requests.first;
+  // Helper to format the Firebase Timestamp into a readable string
+  String _formatDate(Timestamp? timestamp) {
+    if (timestamp == null) return 'Unknown Date';
+    final DateTime date = timestamp.toDate();
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} at ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
-  void _approve() {
-    if (_selected == null) return;
-    setState(() {
-      _requests.removeWhere((r) => r.id == _selected!.id);
-      _selected = _requests.isNotEmpty ? _requests.first : null;
-    });
+  // Helper to capitalize first letter
+  String _capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1).toLowerCase();
   }
 
-  void _reject() {
-    if (_selected == null) return;
-    setState(() {
-      _requests.removeWhere((r) => r.id == _selected!.id);
-      _selected = _requests.isNotEmpty ? _requests.first : null;
-    });
+  // --- BULLETPROOF USER FETCHER ---
+  Future<Map<String, dynamic>?> _fetchUserDetails(String emailOrId, String expectedRole) async {
+    if (emailOrId.isEmpty) return null;
+
+    final isEmail = emailOrId.contains('@');
+    final queryField = isEmail ? 'email' : 'ID';
+    final searchValue = isEmail ? emailOrId.toLowerCase() : emailOrId.toUpperCase();
+
+    List<String> collections = expectedRole.isNotEmpty
+        ? [expectedRole, 'students', 'faculty', 'staff']
+        : ['students', 'faculty', 'staff'];
+
+    for (String col in collections) {
+      try {
+        final query = await FirebaseFirestore.instance
+            .collection(col)
+            .where(queryField, isEqualTo: searchValue)
+            .limit(1)
+            .get();
+
+        if (query.docs.isNotEmpty) {
+          final data = query.docs.first.data();
+          data['foundRole'] = col;
+          return data;
+        }
+      } catch (e) {
+        print("Error fetching from $col: $e");
+      }
+    }
+    return null;
   }
 
   @override
@@ -92,58 +69,224 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('User Requests', style: AppTextStyles.largeHeading,),
+            const Text('User Requests', style: AppTextStyles.largeHeading),
             const SizedBox(height: 45),
 
             Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Left panel
-                  Expanded(
-                    flex: 45,
-                    child: GlassCard(
-                      padding: const EdgeInsets.all(12),
-                      child: _requests.isEmpty
-                          ? Center(
-                          child: Text('No pending requests',
-                              style: AppTextStyles.emptyStateStyle))
-                          : ListView.builder(
-                        padding: EdgeInsets.zero,
-                        itemCount: _requests.length,
-                        itemBuilder: (_, i) {
-                          final r = _requests[i];
-                          return _RequestTile(
-                            request: r,
-                            isSelected: _selected?.id == r.id,
-                            onTap: () => setState(() => _selected = r),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('ForgotPass_request')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                  const SizedBox(width: 16),
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error loading requests: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
+                  }
 
-                  // Right panel
-                  Expanded(
-                    flex: 55,
-                    child: _selected == null
-                        ? GlassCard(
-                      child: Center(
-                        child: Text(
-                          'Select a request to view details',
-                          style: AppTextStyles.emptyStateStyle,
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(
+                      child: Text('No reset requests found.', style: TextStyle(fontSize: 18, color: Colors.grey)),
+                    );
+                  }
+
+                  final docs = snapshot.data!.docs.toList();
+
+                  // Sort: Pending first, then by date
+                  docs.sort((a, b) {
+                    final dataA = a.data() as Map<String, dynamic>;
+                    final dataB = b.data() as Map<String, dynamic>;
+
+                    final bool isProcessedA = dataA['isProcessed'] == true;
+                    final bool isProcessedB = dataB['isProcessed'] == true;
+
+                    if (isProcessedA != isProcessedB) return isProcessedA ? 1 : -1;
+
+                    final Timestamp? timeA = dataA['requestDate'] as Timestamp?;
+                    final Timestamp? timeB = dataB['requestDate'] as Timestamp?;
+
+                    if (timeA != null && timeB != null) return timeB.compareTo(timeA);
+                    return 0;
+                  });
+
+                  if (_selectedIndex >= docs.length) _selectedIndex = 0;
+
+                  final selectedDoc = docs[_selectedIndex];
+                  final Map<String, dynamic> selectedData = selectedDoc.data() as Map<String, dynamic>;
+
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // --- LEFT PANEL: REQUEST LIST ---
+                      Expanded(
+                        flex: 45,
+                        child: GlassCard(
+                          padding: const EdgeInsets.all(12),
+                          child: ListView.builder(
+                            padding: EdgeInsets.zero,
+                            itemCount: docs.length,
+                            itemBuilder: (context, index) {
+                              final docData = docs[index].data() as Map<String, dynamic>;
+                              final emailOrId = docData['emailOrId'] ?? 'Unknown User';
+                              final reqDate = _formatDate(docData['requestDate'] as Timestamp?);
+
+                              final statusStr = docData['status']?.toString().toLowerCase() ?? (docData['isProcessed'] == true ? 'processed' : 'pending');
+                              final isResolved = statusStr == 'accepted' || statusStr == 'rejected' || statusStr == 'processed';
+                              final isSelected = _selectedIndex == index;
+
+                              return GestureDetector(
+                                onTap: () => setState(() => _selectedIndex = index),
+                                child: Opacity(
+                                  opacity: isResolved ? 0.6 : 1.0,
+                                  child: Container(
+                                    margin: const EdgeInsets.only(bottom: 10),
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+                                    decoration: AppDecorations.smallCard(isSelected: isSelected),
+                                    child: Row(
+                                      children: [
+                                        isResolved
+                                            ? Icon(
+                                          statusStr == 'rejected' ? Icons.cancel_outlined : Icons.check_circle_outline,
+                                          size: 28, color: statusStr == 'rejected' ? Colors.red : Colors.green,
+                                        )
+                                            : Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primary.withOpacity(0.1),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(Icons.person_outline, size: 24, color: AppColors.primary),
+                                        ),
+
+                                        const SizedBox(width: 12),
+                                        Container(width: 1.5, height: 38, color: isResolved ? Colors.grey.withOpacity(0.3) : AppColors.primary.withOpacity(0.3)),
+                                        const SizedBox(width: 12),
+
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(emailOrId, style: AppTextStyles.hallListNumberStyle.copyWith(
+                                                decoration: isResolved ? TextDecoration.lineThrough : null,
+                                                color: isResolved ? Colors.grey : null,
+                                              )),
+                                              const SizedBox(height: 4),
+                                              Text(reqDate, style: AppTextStyles.caption),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ),
-                    )
-                        : _RequestDetailPanel(
-                      request: _selected!,
-                      onApprove: _approve,
-                      onReject: _reject,
-                    ),
-                  ),
-                ],
+
+                      const SizedBox(width: 16),
+
+                      // --- RIGHT PANEL: REQUEST DETAIL ---
+                      Expanded(
+                        flex: 55,
+                        child: GlassCard(
+                          child: Padding(
+                            padding: const EdgeInsets.all(18),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // HEADER
+                                Row(
+                                  children: [
+                                    const Icon(Icons.lock_reset_rounded, size: 36, color: AppColors.primary),
+                                    const SizedBox(width: 16),
+                                    Text("Password Reset", style: AppTextStyles.heading.copyWith(color: AppColors.primary, fontSize: 24)),
+                                  ],
+                                ),
+                                const SizedBox(height: 30),
+
+                                // FUTURE BUILDER
+                                Expanded(
+                                  child: FutureBuilder<Map<String, dynamic>?>(
+                                    future: _fetchUserDetails(
+                                        selectedData['emailOrId']?.toString() ?? '',
+                                        selectedData['userRole']?.toString() ?? ''
+                                    ),
+                                    builder: (context, userSnap) {
+                                      if (userSnap.connectionState == ConnectionState.waiting) {
+                                        return const Align(
+                                            alignment: Alignment.topCenter,
+                                            child: CircularProgressIndicator()
+                                        );
+                                      }
+
+                                      if (!userSnap.hasData || userSnap.data == null) {
+                                        return Text(
+                                          "Warning: User '${selectedData['emailOrId']}' could not be found in any database collection.",
+                                          style: const TextStyle(color: Colors.red),
+                                        );
+                                      }
+
+                                      final userData = userSnap.data!;
+                                      final fName = userData['fName'] ?? '';
+                                      final lName = userData['lName'] ?? '';
+                                      final fullName = '$fName $lName'.trim();
+                                      final foundRole = userData['foundRole'] ?? 'Unknown';
+
+                                      return Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          _buildFigmaDetailRow('Requested by', fullName.isEmpty ? 'Unknown' : fullName),
+                                          _buildFigmaDetailRow('User Type', _capitalize(foundRole)),
+                                          _buildFigmaDetailRow('ID', userData['ID'] ?? selectedData['emailOrId'] ?? 'N/A'),
+                                          _buildFigmaDetailRow('Email', userData['email'] ?? 'N/A'),
+
+                                          // --- NEW: DISPLAY THE NEW PASSWORD ---
+                                          _buildFigmaDetailRow('New Password', selectedData['newPassword'] ?? 'Not provided'),
+
+                                          if (userData.containsKey('year'))
+                                            _buildFigmaDetailRow('Year', userData['year'].toString()),
+                                          if (userData.containsKey('faculty'))
+                                            _buildFigmaDetailRow('Faculty', userData['faculty']),
+
+                                          const SizedBox(height: 20),
+                                          _buildFigmaDetailRow('Time of Request', _formatDate(selectedData['requestDate'] as Timestamp?)),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ),
+
+                                // ACTION BUTTONS
+                                if (selectedData['isProcessed'] != true)
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: PillButton(
+                                          label: 'Reject',
+                                          onTap: () => _updateRequestStatus(selectedDoc, 'rejected'),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: PillButton(
+                                          label: 'Approve',
+                                          onTap: () => _updateRequestStatus(selectedDoc, 'accepted'),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ],
@@ -151,168 +294,67 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
       ),
     );
   }
-}
 
-// Request tile
+  // --- UPDATED LOGIC TO CHANGE THE ACTUAL PASSWORD ---
+  Future<void> _updateRequestStatus(DocumentSnapshot doc, String status) async {
+    try {
+      final data = doc.data() as Map<String, dynamic>;
 
-class _RequestTile extends StatelessWidget {
-  final _UserRequest request;
-  final bool isSelected;
-  final VoidCallback onTap;
+      // If accepted, update the user's actual password in their collection
+      if (status == 'accepted') {
+        final newPassword = data['newPassword'];
+        final userRole = data['userRole'];
+        final userDocRef = data['userDocRef'];
 
-  const _RequestTile({
-    required this.request,
-    required this.isSelected,
-    required this.onTap,
-  });
+        if (newPassword != null && userRole != null && userDocRef != null) {
+          // Go to the specific user table and update their password field!
+          await FirebaseFirestore.instance
+              .collection(userRole)
+              .doc(userDocRef)
+              .update({'pass': newPassword});
+        } else {
+          throw Exception("Missing user reference or password data in this request.");
+        }
+      }
 
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: AppDecorations.smallCard(isSelected: isSelected),
-        child: Row(
-          children: [
-            Image.asset(
-              'assets/icons/rotation_lock.png',
-              width: 28, height: 28,
-              fit: BoxFit.contain,
-              color: AppColors.primary,
-              errorBuilder: (_, __, ___) => const Icon(
-                  Icons.lock_reset_rounded, color: AppColors.primary, size: 28),
-            ),
-            const SizedBox(width: 12),
-            Container(
-              width: 1.5,
-              height: 38,
-              color: AppColors.primary.withOpacity(0.3),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(request.type, style: AppTextStyles.requestListTitleStyle),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${request.requesterName} send a request',
-                    style: AppTextStyles.requestListNameStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+      // 1. Update the request database document
+      await doc.reference.update({
+        'isProcessed': true,
+        'status': status,
+      });
+
+      // 2. Add it to the logs
+      final userId = data['emailOrId'] ?? 'Unknown User';
+      final actionStr = status == 'accepted' ? 'approved' : 'rejected';
+      await ITLogService.logAction('Password reset $actionStr for $userId');
+
+      // 3. Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(status == 'accepted'
+                ? 'Request Approved & Password Updated in Database!'
+                : 'Request Rejected'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
   }
-}
 
-// Request detail panel
-
-class _RequestDetailPanel extends StatelessWidget {
-  final _UserRequest request;
-  final VoidCallback onApprove;
-  final VoidCallback onReject;
-
-  const _RequestDetailPanel({
-    required this.request,
-    required this.onApprove,
-    required this.onReject,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GlassCard(
-      padding: const EdgeInsets.all(24),
-      child: Column(
+  // Figma-style text rows
+  Widget _buildFigmaDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Image.asset(
-                'assets/icons/rotation_lock.png',
-                width: 40, height: 40,
-                fit: BoxFit.contain,
-                color: AppColors.primary,
-                errorBuilder: (_, __, ___) => const Icon(
-                    Icons.lock_reset_rounded, color: AppColors.primary, size: 40),
-              ),
-              const SizedBox(width: 16),
-              Container(width: 2, height: 50, color: AppColors.divider),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(request.type, style: AppTextStyles.requestDetailsHeaderStyle),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 24),
-
-          // Fields
-          _InfoRow(label: 'Requested by', value: request.requesterName, bold: true),
-          const SizedBox(height: 14),
-          _InfoRow(label: 'User Type', value: request.userType),
-          const SizedBox(height: 10),
-          _InfoRow(label: 'ID', value: request.userId),
-          const SizedBox(height: 10),
-          _InfoRow(label: 'Email', value: request.email),
-          const SizedBox(height: 10),
-          _InfoRow(label: 'Year', value: request.year.toString()),
-          const SizedBox(height: 10),
-          _InfoRow(label: 'Faculty', value: request.faculty),
-
-          const Spacer(),
-
-          // Buttons
-          Row(
-            children: [
-              Expanded(child: PillButton(label: 'Approve', onTap: onApprove)),
-              const SizedBox(width: 16),
-              Expanded(child: PillButton(label: 'Reject', onTap: onReject)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Info row widget
-
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool bold;
-
-  const _InfoRow({
-    required this.label,
-    required this.value,
-    this.bold = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return RichText(
-      text: TextSpan(
-        style: AppTextStyles.requestDetailsInfoStyle,
-        children: [
-          TextSpan(
-            text: '$label : ',
-            style: AppTextStyles.infoRowLabelStyle,
-          ),
-          TextSpan(
-            text: value,
-            style: bold
-                ? AppTextStyles.infoRowValueBoldStyle
-                : AppTextStyles.infoRowValueStyle,
+          Text('$label : ', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 16)),
+          Expanded(
+            child: Text(value, style: const TextStyle(fontSize: 16, color: Colors.black54, fontWeight: FontWeight.w500)),
           ),
         ],
       ),
