@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
+import 'package:uninexus/ui/screens/tablet/Security/security_entries_log.dart';
 
 import 'package:uninexus/ui/widgets/security_sidebar_widget.dart';
 
@@ -41,6 +42,9 @@ class _SecurityShellState extends State<SecurityShell> {
 
       case UninexusTab.requests:
         return SecurityGateEntryScreen(onNavigate: _navigate);
+
+      case UninexusTab.hallErrors:
+         return GateLogScreen(onNavigate: _navigate);
 
       case UninexusTab.logs:
         return SecurityIdLookupScreen(onNavigate: _navigate);

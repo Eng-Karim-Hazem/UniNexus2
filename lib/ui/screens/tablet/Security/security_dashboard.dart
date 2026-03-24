@@ -208,7 +208,7 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
                                       label: "Entries Log",
                                       imagePath: "assets/images/log.png",
                                       // Updated: goes to gate entry log
-                                      onTap: () => widget.onNavigate(UninexusTab.requests),
+                                      onTap: () => widget.onNavigate(UninexusTab.hallErrors),
                                     ),
                                   ),
                                 ],
