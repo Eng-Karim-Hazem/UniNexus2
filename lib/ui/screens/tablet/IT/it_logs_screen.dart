@@ -7,7 +7,7 @@ class ITLogsScreen extends StatelessWidget {
   final void Function(UninexusTab) onNavigate;
   const ITLogsScreen({super.key, required this.onNavigate});
 
-  // Helper to format Time (e.g. 10:34 AM)
+  /// Formats time (e.g., 10:34 AM)
   String _formatTime(Timestamp? timestamp) {
     if (timestamp == null) return '';
     final DateTime date = timestamp.toDate();
@@ -19,7 +19,7 @@ class ITLogsScreen extends StatelessWidget {
     return '$hour:$minute $period';
   }
 
-  // Helper to format Date (e.g. Oct 11, 2026)
+  /// Formats date (e.g., Oct 11, 2026)
   String _formatDate(Timestamp? timestamp) {
     if (timestamp == null) return '';
     final DateTime date = timestamp.toDate();
@@ -35,32 +35,28 @@ class ITLogsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('LOGs', style: AppTextStyles.largeHeading),
-            const SizedBox(height: 20),
+            const PageHeading('LOGs'),
+            const SizedBox(height: 47),
 
             Expanded(
               child: GlassCard(
                 padding: const EdgeInsets.all(16),
                 child: StreamBuilder<QuerySnapshot>(
-                  // Fetching logs from newest to oldest
                   stream: FirebaseFirestore.instance
                       .collection('IT_Logs')
                       .orderBy('timestamp', descending: true)
                       .snapshots(),
                   builder: (context, snapshot) {
-
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const LoadingState();
                     }
 
                     if (snapshot.hasError) {
-                      return Center(child: Text('Error loading logs: ${snapshot.error}'));
+                      return ErrorState(message: 'Error loading logs: ${snapshot.error}');
                     }
 
                     if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                      return const Center(
-                        child: Text('No system activity recorded yet.', style: TextStyle(fontSize: 18, color: Colors.grey)),
-                      );
+                      return const EmptyState(message: 'No system activity recorded yet.');
                     }
 
                     final docs = snapshot.data!.docs;
@@ -75,7 +71,6 @@ class ITLogsScreen extends StatelessWidget {
                         return Container(
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          // Notice we removed the 'isFaded' parameter here entirely!
                           decoration: AppDecorations.smallCard(),
                           child: Row(
                             children: [
@@ -87,14 +82,11 @@ class ITLogsScreen extends StatelessWidget {
                                     Icons.history, size: 24, color: AppColors.primary),
                               ),
                               const SizedBox(width: 12),
-                              // Assuming you have a SectionDivider widget in your app_theme
                               Container(width: 1.5, height: 24, color: AppColors.divider),
                               const SizedBox(width: 12),
-
                               Expanded(
                                 child: Text(message, style: AppTextStyles.logTextStyle),
                               ),
-
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 mainAxisAlignment: MainAxisAlignment.center,

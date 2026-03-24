@@ -18,10 +18,10 @@ class ITSettingsScreen extends StatefulWidget {
 
 class _ITSettingsScreenState extends State<ITSettingsScreen> {
   int? selectedSettingTab;
-
   final TextEditingController _feedbackController = TextEditingController();
   int _rating = 4;
 
+  /// Settings menu items
   static const List<Map<String, String>> _items = [
     {'icon': 'assets/icons/information.png', 'label': 'Account management'},
     {'icon': 'assets/icons/notify.png',      'label': 'Notification settings'},
@@ -41,20 +41,16 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
   Widget build(BuildContext context) {
     return ITScreenBackground(
       child: Padding(
-        padding: const EdgeInsets.all(32), // Matched to Security Screen
+        padding: const EdgeInsets.all(32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Settings",
-              style: AppTextStyles.largeHeading,
-            ),
+            const PageHeading('Settings'),
             const SizedBox(height: 10),
             Expanded(
               child: Row(
                 children: [
-
-                  /// SETTINGS GRID (Using Security Screen Layout)
+                  /// Settings grid panel
                   Expanded(
                     flex: selectedSettingTab == null ? 1 : 0,
                     child: Center(
@@ -72,10 +68,11 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
                           itemCount: _items.length,
                           itemBuilder: (context, index) {
                             final item = _items[index];
-
-                            return GestureDetector(
+                            return SettingsCard(
+                              iconPath: item['icon']!,
+                              label: item['label']!,
                               onTap: () {
-                                if (index == 5) { // Logout is at index 5
+                                if (index == 5) {
                                   _logout();
                                 } else {
                                   setState(() {
@@ -83,7 +80,6 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
                                   });
                                 }
                               },
-                              child: _buildSettingCard(item),
                             );
                           },
                         ),
@@ -91,7 +87,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
                     ),
                   ),
 
-                  /// RIGHT PANEL
+                  /// Right panel - detail view
                   if (selectedSettingTab != null) ...[
                     const SizedBox(width: 30),
                     Expanded(
@@ -125,43 +121,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// SETTINGS CARD (Matched to Security Screen sizes)
-  Widget _buildSettingCard(Map<String, String> item) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
-          decoration: GlassDecoration.light,
-          padding: const EdgeInsets.symmetric(horizontal: 15),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                item['icon']!,
-                width: 80,
-                height: 80,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Icon(
-                  Icons.settings,
-                  size: 120,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                item['label']!,
-                textAlign: TextAlign.center,
-                style: AppTextStyles.settingsCardTitleStyle,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// TAB CONTENT SWITCH
+  /// Returns the content widget for the selected settings tab
   Widget _getContentForTab(int index) {
     switch (index) {
       case 0:
@@ -179,7 +139,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     }
   }
 
-  /// ACCOUNT MANAGEMENT
+  /// Account management form
   Widget _buildAccountManagement() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,7 +158,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// NOTIFICATIONS
+  /// Notification settings form
   Widget _buildNotificationSettings() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,16 +168,16 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
           style: AppTextStyles.heading,
         ),
         const SizedBox(height: 30),
-        _buildDropdown("Hall Alerts"), // Restored IT specific text
+        _buildDropdown("Hall Alerts"),
         const SizedBox(height: 20),
-        _buildDropdown("User Requests"), // Restored IT specific text
+        _buildDropdown("User Requests"),
         const SizedBox(height: 20),
         _buildDropdown("Announcements"),
       ],
     );
   }
 
-  /// EXPORT LOGS
+  /// Export logs feature
   Widget _buildExportLogs() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,7 +192,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// FEEDBACK
+  /// Feedback form with star rating
   Widget _buildFeedback() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -278,7 +238,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// APP INFO
+  /// App information display
   Widget _buildAppInfo() {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -293,7 +253,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// LOGOUT
+  /// Logs out the user and clears session
   Future<void> _logout() async {
     final confirm = await showDialog(
       context: context,
@@ -307,10 +267,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              "Logout",
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text("Logout", style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -323,14 +280,12 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
 
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (_) => const WelcomePage(),
-      ),
+      MaterialPageRoute(builder: (_) => const WelcomePage()),
           (route) => false,
     );
   }
 
-  /// INPUT FIELD
+  /// Text input field
   Widget _buildTextField(String label, String hint) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,7 +307,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// DROPDOWN
+  /// Dropdown selector
   Widget _buildDropdown(String label) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -377,7 +332,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// BUTTON
+  /// Primary outlined button
   Widget _buildPrimaryButton(String text) {
     return OutlinedButton(
       onPressed: () {},

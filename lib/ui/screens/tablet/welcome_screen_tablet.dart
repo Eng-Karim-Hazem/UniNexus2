@@ -159,8 +159,8 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
 
           // Left decorative rectangle
           Positioned(
-            left: -sw * 0.34,
-            top: -sh * 0.14,
+            left: -sw * 0.35,
+            top: -sh * 0.10,
             child: SlideTransition(
               position: _leftIntro,
               child: SlideTransition(
@@ -168,7 +168,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                 child: Image.asset(
                   'assets/images/Rectangle.png',
                   width: sw * 0.70,
-                  height: sw * 0.60,
+                  height: sw * 0.59,
                   fit: BoxFit.contain,
                 ),
               ),

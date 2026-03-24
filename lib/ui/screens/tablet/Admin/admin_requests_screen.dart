@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../admin_tab.dart';
 // Ensure AdminTab is imported
-import '../theme/app_theme.dart';
+import 'package:uninexus/theme/app_theme.dart';
 
 // Data model (shared or duplicated for Admin context)
 class _AdminRequest {

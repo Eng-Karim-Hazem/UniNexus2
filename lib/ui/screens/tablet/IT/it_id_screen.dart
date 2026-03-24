@@ -21,7 +21,7 @@ class _ITIdScreenState extends State<ITIdScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('ID', style: AppTextStyles.largeHeading),
+            const PageHeading('ID'),
             const SizedBox(height: 20),
 
             Expanded(
@@ -33,12 +33,13 @@ class _ITIdScreenState extends State<ITIdScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // ID card inner
+                        /// Digital ID card display
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: AppDecorations.idCardInner,
                           child: Row(
                             children: [
+                              /// Left decorative elements
                               Column(
                                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                 children: [
@@ -62,6 +63,8 @@ class _ITIdScreenState extends State<ITIdScreen> {
                                 ],
                               ),
                               const SizedBox(width: 16),
+
+                              /// ID card icon
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: AppDecorations.iconBackground,
@@ -72,6 +75,8 @@ class _ITIdScreenState extends State<ITIdScreen> {
                                         color: AppColors.primary)),
                               ),
                               const SizedBox(width: 24),
+
+                              /// QR Code
                               Expanded(
                                 child: AspectRatio(
                                   aspectRatio: 1,
@@ -90,10 +95,9 @@ class _ITIdScreenState extends State<ITIdScreen> {
                             ],
                           ),
                         ),
-
                         const SizedBox(height: 28),
 
-                        // Punch IN / OUT button
+                        /// Punch IN/OUT button
                         GestureDetector(
                           onTap: () => setState(() => _isPunchedIn = !_isPunchedIn),
                           child: AnimatedContainer(

@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:uninexus/ui/screens/tablet/theme/app_theme.dart';
+import 'package:uninexus/theme/app_theme.dart';
 import 'login_page.dart';
 import 'register_page.dart';
 

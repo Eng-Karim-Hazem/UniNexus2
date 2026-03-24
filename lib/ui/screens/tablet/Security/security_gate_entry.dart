@@ -3,11 +3,11 @@ import 'package:uninexus/theme/app_theme.dart';
 import 'package:uninexus/theme/uninexus_tab.dart';
 
 class SecurityGateEntryScreen extends StatelessWidget {
-
   final void Function(UninexusTab) onNavigate;
 
   const SecurityGateEntryScreen({super.key, required this.onNavigate});
 
+  /// Sample gate entry data
   static const entries = [
     {'id': 'ST00453', 'status': 'denied'},
     {'id': 'ST78077', 'status': 'denied'},
@@ -19,35 +19,24 @@ class SecurityGateEntryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return ITScreenBackground(
       child: Padding(
-        padding: const EdgeInsets.all(30),
+        padding: const EdgeInsets.all(28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            const Text(
-              "Gate Entry",
-              style: TextStyle(
-                  fontSize: 40,
-                  fontFamily: AppFonts.batangas,
-                  fontWeight: FontWeight.bold),
-            ),
-
-            const SizedBox(height: 55),
+            const PageHeading('Gate Entry'),
+            const SizedBox(height: 47),
 
             Expanded(
               child: Row(
                 children: [
-
-                  /// LIST
+                  /// Left side - entry list
                   Expanded(
                     flex: 5,
                     child: GlassCard(
                       padding: const EdgeInsets.all(20),
                       child: ListView(
-                        // EDITED: Removes Flutter's default top padding to bring the first card to the top
                         padding: EdgeInsets.zero,
                         children: entries
                             .map((e) => _EntryRow(
@@ -58,10 +47,9 @@ class SecurityGateEntryScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   const SizedBox(width: 24),
 
-                  /// USER PANEL
+                  /// Right side - user data panel
                   Expanded(
                     flex: 4,
                     child: GlassCard(
@@ -85,44 +73,27 @@ class _EntryRow extends StatelessWidget {
 
   const _EntryRow({required this.id, required this.status});
 
-  Color get color {
-    switch (status) {
-      case 'approved':
-        return Colors.green;
-      case 'denied':
-        return Colors.red;
-      default:
-        return Colors.yellow;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: AppDecorations.smallCard(),
       child: Row(
         children: [
-          // EDITED: Changed back to your avatar image instead of the Icon
           Image.asset(
             'assets/images/avatar.png',
             width: 28,
             height: 28,
             errorBuilder: (_, __, ___) => const Icon(Icons.person, color: AppColors.primary, size: 28),
           ),
-
           const SizedBox(width: 14),
-
           Container(
             width: 4,
             height: 28,
             color: AppColors.primary.withOpacity(.35),
           ),
-
           const SizedBox(width: 14),
-
           Expanded(
             child: Text(
               id,
@@ -134,13 +105,7 @@ class _EntryRow extends StatelessWidget {
               ),
             ),
           ),
-
-          Container(
-            width: 14,
-            height: 14,
-            decoration:
-            BoxDecoration(color: color, shape: BoxShape.circle),
-          )
+          StatusBadge(status: status, isDot: true),
         ],
       ),
     );
@@ -155,8 +120,7 @@ class _UserDataPanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
-        /// HEADER
+        /// Header
         Row(
           children: [
             Image.asset(
@@ -175,9 +139,7 @@ class _UserDataPanel extends StatelessWidget {
               height: 40,
               color: AppColors.primary.withOpacity(0.4),
             ),
-
             const SizedBox(width: 16),
-
             const Text(
               "User Data",
               style: TextStyle(
@@ -189,55 +151,32 @@ class _UserDataPanel extends StatelessWidget {
             ),
           ],
         ),
-
         const SizedBox(height: 36),
 
-        /// DATA ROWS
-        _buildDataRow("Name :", "Ammar Tarek Mohamed"),
+        /// User data rows
+        buildDataRow("Name", "Ammar Tarek Mohamed"),
         const SizedBox(height: 24),
 
         Row(
           children: [
-            Expanded(flex: 3, child: _buildDataRow("User Type:", "Student")),
-            Expanded(flex: 2, child: _buildDataRow("Year:", "4")),
+            Expanded(flex: 3, child: buildDataRow("User Type", "Student")),
+            const SizedBox(width: 16),
+            Expanded(flex: 2, child: buildDataRow("Year", "4")),
           ],
         ),
         const SizedBox(height: 24),
 
-        _buildDataRow("ID:", "ST00453"),
+        buildDataRow("ID", "ST00453"),
         const SizedBox(height: 24),
 
-        _buildDataRow("Faculty:", "ICT"),
+        buildDataRow("Faculty", "ICT"),
         const SizedBox(height: 24),
 
-        _buildDataRow("Status:", "Denied"),
+        buildDataRow("Status", "Denied"),
         const SizedBox(height: 24),
 
-        _buildDataRow("Note:", "Last year's tuition unpaid"),
+        buildDataRow("Note", "Last year's tuition unpaid"),
       ],
-    );
-  }
-
-  // Helper widget to properly bold labels vs values
-  Widget _buildDataRow(String label, String value) {
-    return RichText(
-      text: TextSpan(
-        style: const TextStyle(
-          fontFamily: AppFonts.spaceGrotesk,
-          fontSize: 18,
-          color: AppColors.textDark,
-        ),
-        children: [
-          TextSpan(
-            text: '$label ',
-            style: const TextStyle(fontWeight: FontWeight.w800),
-          ),
-          TextSpan(
-            text: value,
-            style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textMid),
-          ),
-        ],
-      ),
     );
   }
 }

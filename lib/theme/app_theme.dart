@@ -1,45 +1,36 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-//  COLORS
+// ==================== COLORS ====================
 
 class AppColors {
-  // Base colors
   static const Color primary = Color(0xFF696BD5);
   static const Color background = Color(0xFFF8F9FF);
   static const Color white = Colors.white;
 
-  // Sidebar gradient
   static const Color sidebarStart = Color(0xFF7C7EE6);
   static const Color sidebarMid = Color(0xFF8192F0);
   static const Color sidebarEnd = Color(0xFFAD92FF);
 
-  // Text colors
   static const Color textDark = Color(0xFF222222);
   static const Color textMid = Color(0xFF555555);
   static const Color textLight = Color(0xFF888888);
   static const Color textHint = Color(0xFFB0B8C1);
 
-  // Borders
   static const Color cardBorder = Color(0x1A696BD5);
   static const Color divider = Color(0x1F696BD5);
 
-  // Accent colors
   static const Color alertOrange = Color(0xFFFF6B35);
   static const Color blueAccent = Color(0xFF4DB8FF);
 
-  // Glass effect
   static const Color glassWhite = Color(0xCCFFFFFF);
   static const Color glassLavender = Color(0xAAE8EAFF);
 
-  // Input fields
   static const Color lightGreyStart = Color(0xFFF3F4F6);
   static const Color lightGreyEnd = Color(0xFFE5E7EB);
 
-  // Profile info divider stroke
   static const Color infoDivider = Color(0xFF32006C);
 
-  // Gradients
   static const LinearGradient sidebarGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
@@ -66,59 +57,65 @@ class AppColors {
   );
 }
 
-//  FONTS
+// ==================== FONTS ====================
 
 class AppFonts {
   static const String batangas = 'Batangas';
   static const String spaceGrotesk = 'SpaceGrotesk';
 }
 
-//  TEXT STYLES
+// ==================== TEXT STYLES ====================
 
 class AppTextStyles {
-  // Headings
   static const TextStyle largeHeading = TextStyle(
     fontSize: 48,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.batangas,
     color: AppColors.textDark,
   );
+
   static const TextStyle heading = TextStyle(
     fontSize: 26,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.batangas,
     color: AppColors.textDark,
   );
+
   static const TextStyle subheading = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.spaceGrotesk,
     color: AppColors.primary,
   );
+
   static const TextStyle buttonStyle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.batangas,
     color: AppColors.primary,
   );
+
   static const TextStyle buttonWhiteStyle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.batangas,
     color: Colors.white,
   );
+
   static const TextStyle buttonSmallStyle = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.batangas,
     color: AppColors.primary,
   );
+
   static const TextStyle gradientButtonLabel = TextStyle(
     fontSize: 15,
     fontWeight: FontWeight.w600,
     color: Colors.white,
     letterSpacing: 0.4,
   );
+
   static const TextStyle sidebarLabel = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w700,
@@ -126,24 +123,28 @@ class AppTextStyles {
     color: Colors.white,
     height: 1.2,
   );
+
   static const TextStyle body = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w400,
     fontFamily: AppFonts.spaceGrotesk,
     color: AppColors.textMid,
   );
+
   static const TextStyle bodySmall = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w400,
     fontFamily: AppFonts.spaceGrotesk,
     color: AppColors.textMid,
   );
+
   static const TextStyle caption = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w400,
     fontFamily: AppFonts.spaceGrotesk,
     color: AppColors.textLight,
   );
+
   static const TextStyle labelStyle = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w600,
@@ -151,49 +152,55 @@ class AppTextStyles {
     color: AppColors.textDark,
   );
 
-  // Profile screen
   static const TextStyle profileHeaderNameStyle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.batangas,
     color: AppColors.textDark,
   );
+
   static const TextStyle profileHeaderIdStyle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.batangas,
     color: AppColors.textLight,
   );
+
   static const TextStyle profileInfoLabelStyle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.spaceGrotesk,
     color: AppColors.textDark,
   );
+
   static const TextStyle profileInfoValueStyle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w500,
     fontFamily: AppFonts.spaceGrotesk,
     color: AppColors.textMid,
   );
+
   static const TextStyle greetingNameStyle = TextStyle(
     fontSize: 26,
     fontWeight: FontWeight.w800,
     fontFamily: AppFonts.batangas,
     color: AppColors.textDark,
   );
+
   static const TextStyle greetingSubStyle = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w400,
     fontFamily: AppFonts.spaceGrotesk,
     color: AppColors.textLight,
   );
+
   static const TextStyle dateStyle = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w600,
     fontFamily: AppFonts.spaceGrotesk,
     color: AppColors.primary,
   );
+
   static const TextStyle viewAllStyle = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w600,
@@ -201,13 +208,13 @@ class AppTextStyles {
     color: AppColors.primary,
   );
 
-  // Logs screen
   static const TextStyle logTextStyle = TextStyle(
     fontSize: 17,
     fontWeight: FontWeight.w500,
     fontFamily: AppFonts.spaceGrotesk,
     color: AppColors.textDark,
   );
+
   static const TextStyle logTimeStyle = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w400,
@@ -215,43 +222,48 @@ class AppTextStyles {
     color: AppColors.textLight,
   );
 
-  // Announcements screen
   static const TextStyle announcementSenderStyle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.batangas,
     color: AppColors.primary,
   );
+
   static const TextStyle announcementMessageStyle = TextStyle(
     fontSize: 15,
     fontWeight: FontWeight.w400,
     fontFamily: AppFonts.spaceGrotesk,
     color: AppColors.textMid,
   );
+
   static const TextStyle senderStyle = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.spaceGrotesk,
     color: AppColors.primary,
   );
+
   static const TextStyle senderSmallStyle = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.spaceGrotesk,
     color: AppColors.primary,
   );
+
   static const TextStyle chartLabelStyle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.batangas,
     color: AppColors.textDark,
   );
+
   static const TextStyle chartSublabelStyle = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w400,
     fontFamily: AppFonts.spaceGrotesk,
     color: AppColors.textLight,
   );
+
   static const TextStyle statValueStyle = TextStyle(
     fontSize: 28,
     fontWeight: FontWeight.w800,
@@ -259,6 +271,7 @@ class AppTextStyles {
     color: AppColors.textDark,
     height: 1.1,
   );
+
   static const TextStyle statLabelStyle = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w400,
@@ -266,6 +279,7 @@ class AppTextStyles {
     color: AppColors.textLight,
     height: 1.3,
   );
+
   static const TextStyle statSublabelStyle = TextStyle(
     fontSize: 10,
     fontWeight: FontWeight.w400,
@@ -274,31 +288,34 @@ class AppTextStyles {
     height: 1.2,
   );
 
-  // Hall errors screen
   static const TextStyle hallListNumberStyle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.batangas,
     color: AppColors.primary,
   );
+
   static const TextStyle hallListErrorStyle = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w500,
     fontFamily: AppFonts.spaceGrotesk,
     color: AppColors.textMid,
   );
+
   static const TextStyle hallDetailsNumberStyle = TextStyle(
     fontSize: 32,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.batangas,
     color: AppColors.primary,
   );
+
   static const TextStyle hallDetailsErrorStyle = TextStyle(
     fontSize: 25,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.batangas,
     color: AppColors.textDark,
   );
+
   static const TextStyle hallDetailsDescriptionStyle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w500,
@@ -307,55 +324,62 @@ class AppTextStyles {
     height: 1.5,
   );
 
-  // Requests screen
   static const TextStyle requestHeading = TextStyle(
     fontSize: 26,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.batangas,
     color: AppColors.primary,
   );
+
   static const TextStyle requestSubheading = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.spaceGrotesk,
     color: AppColors.textDark,
   );
+
   static const TextStyle requestListTitleStyle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.batangas,
     color: AppColors.primary,
   );
+
   static const TextStyle requestListNameStyle = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w500,
     fontFamily: AppFonts.spaceGrotesk,
     color: AppColors.textMid,
   );
+
   static const TextStyle requestDetailsHeaderStyle = TextStyle(
     fontSize: 32,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.batangas,
     color: AppColors.primary,
   );
+
   static const TextStyle requestDetailsLabelStyle = TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.batangas,
     color: AppColors.textDark,
   );
+
   static const TextStyle requestDetailsNameStyle = TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.batangas,
     color: AppColors.textDark,
   );
+
   static const TextStyle requestDetailsInfoStyle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w700,
     fontFamily: AppFonts.spaceGrotesk,
     color: AppColors.textDark,
   );
+
   static const TextStyle requestDetailsValueStyle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w500,
@@ -363,7 +387,51 @@ class AppTextStyles {
     color: AppColors.textMid,
   );
 
-  // Settings screen
+  static const TextStyle gateEntriesCountStyle = TextStyle(
+    fontSize: 28,
+    fontFamily: AppFonts.batangas,
+    fontWeight: FontWeight.bold,
+    color: AppColors.textDark,
+  );
+
+  static const TextStyle legendLabelStyle = TextStyle(
+    fontWeight: FontWeight.bold,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textDark,
+  );
+
+  static const TextStyle recentEntriesLabelStyle = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.bold,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textDark,
+  );
+
+  static const TextStyle entryRowNameStyle = TextStyle(
+    fontWeight: FontWeight.bold,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textDark,
+  );
+
+  static const TextStyle announcementTitleStyle = TextStyle(
+    fontWeight: FontWeight.bold,
+    color: AppColors.primary,
+    fontFamily: AppFonts.spaceGrotesk,
+  );
+
+  static const TextStyle announcementBodyStyle = TextStyle(
+    fontWeight: FontWeight.bold,
+    fontFamily: AppFonts.spaceGrotesk,
+    color: AppColors.textDark,
+  );
+
+  static const TextStyle actionCardLabelStyle = TextStyle(
+    fontWeight: FontWeight.bold,
+    fontFamily: AppFonts.batangas,
+    fontSize: 22,
+    color: AppColors.textDark,
+  );
+
   static const TextStyle settingsCardTitleStyle = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w700,
@@ -371,7 +439,6 @@ class AppTextStyles {
     color: AppColors.textDark,
   );
 
-  // Request submitted page
   static const TextStyle requestSubmittedTitleStyle = TextStyle(
     fontFamily: AppFonts.batangas,
     fontSize: 22,
@@ -379,6 +446,7 @@ class AppTextStyles {
     color: Color(0xFF1E1B4B),
     height: 1.5,
   );
+
   static const TextStyle requestSubmittedBodyStyle = TextStyle(
     fontFamily: AppFonts.batangas,
     fontSize: 13,
@@ -387,18 +455,19 @@ class AppTextStyles {
     height: 1.5,
   );
 
-  // Dashboard
   static const TextStyle greetingTitleStyle = TextStyle(
     fontSize: 26,
     fontWeight: FontWeight.w800,
     fontFamily: AppFonts.batangas,
     color: AppColors.textDark,
   );
+
   static const TextStyle greetingMorningStyle = TextStyle(
     fontSize: 14,
     fontFamily: AppFonts.spaceGrotesk,
     color: AppColors.textLight,
   );
+
   static const TextStyle greetingDateStyle = TextStyle(
     fontSize: 14,
     fontFamily: AppFonts.spaceGrotesk,
@@ -406,49 +475,46 @@ class AppTextStyles {
     color: AppColors.primary,
   );
 
-  // "View All" links
   static const TextStyle viewLinkStyle = TextStyle(
     color: AppColors.primary,
     fontWeight: FontWeight.w600,
     fontSize: 14,
   );
 
-  // Log row
   static const TextStyle logRowBodyStyle = TextStyle(
     fontSize: 14,
     color: AppColors.textDark,
   );
 
-  // Hall error
   static const TextStyle blueScreenLabelStyle = TextStyle(
     color: Color(0x80FFFFFF),
     fontSize: 14,
   );
 
-  // Empty state
   static const TextStyle emptyStateStyle = TextStyle(
     color: AppColors.textLight,
     fontSize: 14,
   );
 
-  // Info rows
   static const TextStyle infoRowLabelStyle = TextStyle(
     fontWeight: FontWeight.w700,
+    fontSize: 18,
   );
+
   static const TextStyle infoRowValueStyle = TextStyle(
     fontWeight: FontWeight.w500,
     color: AppColors.textMid,
   );
+
   static const TextStyle infoRowValueBoldStyle = TextStyle(
     fontWeight: FontWeight.w700,
     color: AppColors.textMid,
   );
 }
 
-//  DECORATIONS
+// ==================== DECORATIONS ====================
 
 class AppDecorations {
-  // Cards
   static BoxDecoration card = BoxDecoration(
     color: Colors.white,
     borderRadius: BorderRadius.circular(16),
@@ -467,8 +533,8 @@ class AppDecorations {
       color: isFaded
           ? AppColors.primary.withValues(alpha: 0.04)
           : isSelected
-              ? AppColors.primary.withValues(alpha: 0.1)
-              : Colors.white.withValues(alpha: 0.55),
+          ? AppColors.primary.withValues(alpha: 0.1)
+          : Colors.white.withValues(alpha: 0.55),
       borderRadius: BorderRadius.circular(12),
       border: Border.all(
         color: isSelected ? AppColors.primary : AppColors.primary.withValues(alpha: 0.3),
@@ -502,7 +568,6 @@ class AppDecorations {
     ],
   );
 
-  // Buttons
   static BoxDecoration pillButton({Color? color}) {
     return BoxDecoration(
       color: Colors.white.withValues(alpha: 0.7),
@@ -551,7 +616,6 @@ class AppDecorations {
     ],
   );
 
-  // ID screen
   static BoxDecoration idCardInner = BoxDecoration(
     color: const Color(0xFFEEEEEE),
     borderRadius: BorderRadius.circular(16),
@@ -574,7 +638,6 @@ class AppDecorations {
     shape: BoxShape.circle,
   );
 
-  // Hall error screen
   static BoxDecoration blueScreen = BoxDecoration(
     color: const Color(0xFF1A1A2E),
     borderRadius: BorderRadius.circular(12),
@@ -599,7 +662,6 @@ class AppDecorations {
     return Container(width: 1.5, height: height, color: AppColors.divider);
   }
 
-  // Profile info horizontal divider
   static const Divider profileInfoDivider = Divider(
     color: AppColors.infoDivider,
     thickness: 1,
@@ -607,7 +669,7 @@ class AppDecorations {
   );
 }
 
-//  GLASS DECORATIONS
+// ==================== GLASS DECORATIONS ====================
 
 class GlassDecoration {
   static BoxDecoration standard = BoxDecoration(
@@ -637,7 +699,7 @@ class GlassDecoration {
   );
 }
 
-//  INPUT STYLES
+// ==================== INPUT STYLES ====================
 
 class AppInputStyles {
   static InputDecoration textField({required String hint}) {
@@ -659,8 +721,35 @@ class AppInputStyles {
   }
 }
 
-//  SHARED WIDGETS
-// Greeting Card (Solid White with Soft Shadow)
+// ==================== SHARED WIDGETS ====================
+
+class ITScreenBackground extends StatelessWidget {
+  final Widget child;
+  const ITScreenBackground({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.background,
+      child: Stack(
+        children: [
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: IgnorePointer(
+              child: Image.asset(
+                'assets/images/background_tab.png',
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
 class AppGreetingCard extends StatelessWidget {
   final String name;
   final String subtitle;
@@ -728,7 +817,6 @@ class AppGreetingCard extends StatelessWidget {
   }
 }
 
-// Profile header with avatar and name/ID
 class ProfileHeader extends StatelessWidget {
   final String iconAsset;
   final String title;
@@ -753,7 +841,6 @@ class ProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // Avatar circle
         Container(
           width: avatarSize,
           height: avatarSize,
@@ -776,10 +863,7 @@ class ProfileHeader extends StatelessWidget {
             ),
           ),
         ),
-
         SizedBox(width: spacing),
-
-        // Purple divider
         Container(
           width: 3,
           height: dividerHeight,
@@ -788,10 +872,7 @@ class ProfileHeader extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
           ),
         ),
-
         SizedBox(width: spacing),
-
-        // Name and ID
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -807,38 +888,6 @@ class ProfileHeader extends StatelessWidget {
   }
 }
 
-// Background for IT screens with triangle
-class ITScreenBackground extends StatelessWidget {
-  final Widget child;
-
-  const ITScreenBackground({super.key, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.background,
-      child: Stack(
-        children: [
-          // Bottom-right triangle
-          Positioned(
-            bottom: 0,
-            right: 0,
-            child: IgnorePointer(
-              child: Image.asset(
-                'assets/images/background_tab.png',
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-          // Screen content
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-// Text input field
 class AppTextField extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
@@ -862,7 +911,6 @@ class AppTextField extends StatelessWidget {
   }
 }
 
-// Label + text field
 class AppLabeledField extends StatelessWidget {
   final String label;
   final TextEditingController controller;
@@ -890,7 +938,6 @@ class AppLabeledField extends StatelessWidget {
   }
 }
 
-// Gradient pill button
 class AppGradientButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
@@ -921,7 +968,6 @@ class AppGradientButton extends StatelessWidget {
   }
 }
 
-// Full-width auth button
 class AppAuthButton extends StatelessWidget {
   final String text;
   final VoidCallback onTap;
@@ -943,10 +989,8 @@ class AppAuthButton extends StatelessWidget {
   }
 }
 
-// Back button
 class AppBackButton extends StatelessWidget {
   final double width;
-
   const AppBackButton({super.key, this.width = 80});
 
   @override
@@ -968,7 +1012,6 @@ class AppBackButton extends StatelessWidget {
   }
 }
 
-// Generic card
 class AppCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -1007,7 +1050,16 @@ class AppCard extends StatelessWidget {
   }
 }
 
-// Glass card
+class PageHeading extends StatelessWidget {
+  final String title;
+  const PageHeading(this.title, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(title, style: AppTextStyles.largeHeading);
+  }
+}
+
 class GlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -1034,7 +1086,6 @@ class GlassCard extends StatelessWidget {
   }
 }
 
-// Outlined pill button
 class PillButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
@@ -1068,10 +1119,8 @@ class PillButton extends StatelessWidget {
   }
 }
 
-// Vertical divider
 class SectionDivider extends StatelessWidget {
   final double height;
-
   const SectionDivider({super.key, this.height = 28});
 
   @override
@@ -1080,10 +1129,8 @@ class SectionDivider extends StatelessWidget {
   }
 }
 
-// Small circle
 class Dot extends StatelessWidget {
   final double size;
-
   const Dot({super.key, this.size = 12});
 
   @override
@@ -1092,7 +1139,6 @@ class Dot extends StatelessWidget {
   }
 }
 
-// Label : Value row
 class DetailRow extends StatelessWidget {
   final String label;
   final String value;
@@ -1135,7 +1181,6 @@ class DetailRow extends StatelessWidget {
   }
 }
 
-// Circular progress
 class CircularStat extends StatelessWidget {
   final double value;
   final String line1;
@@ -1195,8 +1240,370 @@ class CircularStat extends StatelessWidget {
   }
 }
 
-//  PAGE ENTRY ANIMATION MIXIN
-//  Add to pages for slide-up + fade animations.
+// ==================== INFO ROW WIDGET ====================
+
+class InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final double fontSize;
+  final FontWeight labelWeight;
+  final FontWeight valueWeight;
+  final Color? labelColor;
+  final Color? valueColor;
+  final double verticalPadding;
+  final CrossAxisAlignment crossAlignment;
+
+  const InfoRow({
+    super.key,
+    required this.label,
+    required this.value,
+    this.fontSize = 18,
+    this.labelWeight = FontWeight.w800,
+    this.valueWeight = FontWeight.w600,
+    this.labelColor,
+    this.valueColor,
+    this.verticalPadding = 0,
+    this.crossAlignment = CrossAxisAlignment.start,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: verticalPadding),
+      child: Row(
+        crossAxisAlignment: crossAlignment,
+        children: [
+          Text(
+            '$label : ',
+            style: TextStyle(
+              fontFamily: AppFonts.spaceGrotesk,
+              fontSize: fontSize,
+              fontWeight: labelWeight,
+              color: labelColor ?? AppColors.textDark,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontFamily: AppFonts.spaceGrotesk,
+                fontSize: fontSize,
+                fontWeight: valueWeight,
+                color: valueColor ?? AppColors.textMid,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ==================== PRE-CONFIGURED INFO ROW FUNCTIONS ====================
+
+Widget buildFigmaDetailRow(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 16.0),
+    child: InfoRow(
+      label: label,
+      value: value,
+      fontSize: 16,
+      labelWeight: FontWeight.bold,
+      valueWeight: FontWeight.w500,
+      labelColor: Colors.black87,
+      valueColor: Colors.black54,
+      verticalPadding: 0,
+      crossAlignment: CrossAxisAlignment.start,
+    ),
+  );
+}
+
+Widget buildInfoRow(String label, String value) {
+  return InfoRow(
+    label: label,
+    value: value,
+    fontSize: 20,
+    labelWeight: FontWeight.w700,
+    valueWeight: FontWeight.w500,
+    verticalPadding: 18,
+    crossAlignment: CrossAxisAlignment.center,
+  );
+}
+
+Widget buildDataRow(String label, String value) {
+  return InfoRow(
+    label: label,
+    value: value,
+    fontSize: 18,
+    labelWeight: FontWeight.w800,
+    valueWeight: FontWeight.w600,
+    verticalPadding: 0,
+    crossAlignment: CrossAxisAlignment.start,
+  );
+}
+
+Widget buildSecurityInfoRow(String label, String value) {
+  return InfoRow(
+    label: label,
+    value: value,
+    fontSize: 20,
+    labelWeight: FontWeight.w700,
+    valueWeight: FontWeight.w500,
+    verticalPadding: 18,
+    crossAlignment: CrossAxisAlignment.center,
+  );
+}
+
+// ==================== STATUS BADGE ====================
+
+class StatusBadge extends StatelessWidget {
+  final String status;
+  final bool isDot;
+
+  const StatusBadge({
+    super.key,
+    required this.status,
+    this.isDot = false,
+  });
+
+  Color _getColor() {
+    switch (status.toLowerCase()) {
+      case 'approved':
+      case 'accepted':
+      case 'fixed':
+        return Colors.green;
+      case 'denied':
+      case 'rejected':
+        return Colors.red;
+      case 'in repair':
+        return Colors.orange;
+      case 'pending':
+      case 'informed':
+        return AppColors.primary;
+      case 'unknown':
+        return Colors.yellow;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _getColor();
+
+    if (isDot) {
+      return Container(
+        width: 14,
+        height: 14,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Text(
+        status.toUpperCase(),
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+Color getStatusColor(String status) {
+  switch (status.toLowerCase()) {
+    case 'approved':
+    case 'accepted':
+    case 'fixed':
+      return Colors.green;
+    case 'denied':
+    case 'rejected':
+      return Colors.red;
+    case 'in repair':
+      return Colors.orange;
+    case 'pending':
+    case 'informed':
+      return AppColors.primary;
+    case 'unknown':
+      return Colors.yellow;
+    default:
+      return Colors.grey;
+  }
+}
+
+// ==================== SETTINGS CARD ====================
+
+class SettingsCard extends StatelessWidget {
+  final String iconPath;
+  final String label;
+  final VoidCallback onTap;
+
+  const SettingsCard({
+    super.key,
+    required this.iconPath,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            decoration: GlassDecoration.light,
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  iconPath,
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.settings,
+                    size: 80,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.settingsCardTitleStyle,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ==================== STATE WIDGETS ====================
+
+class EmptyState extends StatelessWidget {
+  final String message;
+  final IconData? icon;
+  final double fontSize;
+
+  const EmptyState({
+    super.key,
+    required this.message,
+    this.icon,
+    this.fontSize = 18,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 48, color: Colors.grey),
+            const SizedBox(height: 16),
+          ],
+          Text(
+            message,
+            style: TextStyle(fontSize: fontSize, color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback? onRetry;
+
+  const ErrorState({
+    super.key,
+    required this.message,
+    this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: const TextStyle(fontSize: 16, color: Colors.red),
+            textAlign: TextAlign.center,
+          ),
+          if (onRetry != null) ...[
+            const SizedBox(height: 16),
+            TextButton(onPressed: onRetry, child: const Text('Retry')),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class LoadingState extends StatelessWidget {
+  final String? message;
+  final bool isCentered;
+
+  const LoadingState({
+    super.key,
+    this.message,
+    this.isCentered = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget loadingWidget = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const CircularProgressIndicator(),
+        if (message != null) ...[
+          const SizedBox(height: 16),
+          Text(message!, style: AppTextStyles.caption),
+        ],
+      ],
+    );
+
+    if (isCentered) {
+      return Center(child: loadingWidget);
+    }
+
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 40),
+        child: loadingWidget,
+      ),
+    );
+  }
+}
+
+// ==================== PAGE ENTRY ANIMATION MIXIN ====================
+
 mixin PageEntryAnimation {
   late AnimationController pageAnimController;
   late Animation<Offset> contentIntro;

@@ -13,17 +13,13 @@ class ITProfileScreen extends StatefulWidget {
 }
 
 class _ITProfileScreenState extends State<ITProfileScreen> {
-  // Variables to hold the fetched data
   String _fullName = 'Loading...';
   String _id = 'Loading...';
   String _email = 'Loading...';
   String _phone = 'Loading...';
-
-  // NEW VARIABLES
   String _department = 'Loading...';
   String _position = 'Loading...';
   String _nationalId = 'Loading...';
-
   String? _base64Photo;
   bool _isLoading = true;
 
@@ -33,21 +29,18 @@ class _ITProfileScreenState extends State<ITProfileScreen> {
     _loadProfileData();
   }
 
-  // Helper to safely assign a dash if the data is missing or empty
+  /// Returns a valid string or '-' if empty/null
   String _getValidString(SharedPreferences prefs, String key) {
     final value = prefs.getString(key);
-    if (value == null || value.trim().isEmpty) {
-      return '-';
-    }
+    if (value == null || value.trim().isEmpty) return '-';
     return value;
   }
 
-  // INSTANT FETCH FROM LOCAL STORAGE
+  /// Loads profile data from shared preferences
   Future<void> _loadProfileData() async {
     final prefs = await SharedPreferences.getInstance();
 
     setState(() {
-      // Piece together the first and last name saved during login
       final fName = prefs.getString('fName') ?? 'Unknown';
       final lName = prefs.getString('lName') ?? 'User';
       _fullName = '$fName $lName';
@@ -55,15 +48,10 @@ class _ITProfileScreenState extends State<ITProfileScreen> {
       _id = _getValidString(prefs, 'ID');
       _email = _getValidString(prefs, 'email');
       _phone = _getValidString(prefs, 'pNum');
-
-      // Fetching the new dynamic fields
       _department = _getValidString(prefs, 'department');
       _position = _getValidString(prefs, 'position');
       _nationalId = _getValidString(prefs, 'nationalId');
-
-      // Grab the Base64 photo string
       _base64Photo = prefs.getString('photo');
-
       _isLoading = false;
     });
   }
@@ -76,24 +64,24 @@ class _ITProfileScreenState extends State<ITProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Profile', style: AppTextStyles.largeHeading),
+            const PageHeading('Profile'),
             const SizedBox(height: 45),
 
-            // --- DYNAMIC PROFILE HEADER CARD ---
+            /// Profile header card
             GlassCard(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : Row(
                 children: [
-                  // PROFILE PICTURE LOGIC
                   Container(
                     width: 110,
                     height: 110,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white,
-                      border: Border.all(color: AppColors.primary.withOpacity(0.5), width: 2),
+                      border: Border.all(
+                          color: AppColors.primary.withOpacity(0.5), width: 2),
                     ),
                     child: ClipOval(
                       child: _base64Photo != null && _base64Photo!.isNotEmpty
@@ -105,10 +93,7 @@ class _ITProfileScreenState extends State<ITProfileScreen> {
                           : _buildFallbackIcon(),
                     ),
                   ),
-
                   const SizedBox(width: 20),
-
-                  // NAME AND ID
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,10 +120,9 @@ class _ITProfileScreenState extends State<ITProfileScreen> {
                 ],
               ),
             ),
-
             const SizedBox(height: 16),
 
-            // --- DYNAMIC PROFILE DETAILS CARD ---
+            /// Profile details card
             Expanded(
               child: GlassCard(
                 padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 0),
@@ -147,15 +131,15 @@ class _ITProfileScreenState extends State<ITProfileScreen> {
                     : Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildInfoRow('Department',  _department),
+                    buildInfoRow('Department', _department),
                     AppDecorations.profileInfoDivider,
-                    _buildInfoRow('Position',    _position),
+                    buildInfoRow('Position', _position),
                     AppDecorations.profileInfoDivider,
-                    _buildInfoRow('E-mail',      _email),
+                    buildInfoRow('E-mail', _email),
                     AppDecorations.profileInfoDivider,
-                    _buildInfoRow('Phone no.',   _phone),
+                    buildInfoRow('Phone no.', _phone),
                     AppDecorations.profileInfoDivider,
-                    _buildInfoRow('National ID', _nationalId),
+                    buildInfoRow('National ID', _nationalId),
                   ],
                 ),
               ),
@@ -166,28 +150,13 @@ class _ITProfileScreenState extends State<ITProfileScreen> {
     );
   }
 
-  // Fallback icon if the user has no photo yet
+  /// Fallback icon when photo is not available
   Widget _buildFallbackIcon() {
     return Padding(
       padding: const EdgeInsets.all(12.0),
       child: Image.asset(
         'assets/icons/user_purple.png',
         fit: BoxFit.contain,
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 18),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text('$label : ', style: AppTextStyles.profileInfoLabelStyle),
-          Expanded(
-            child: Text(value, style: AppTextStyles.profileInfoValueStyle),
-          ),
-        ],
       ),
     );
   }

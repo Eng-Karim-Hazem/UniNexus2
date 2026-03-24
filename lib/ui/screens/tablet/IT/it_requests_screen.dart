@@ -16,20 +16,22 @@ class ITRequestsScreen extends StatefulWidget {
 class _ITRequestsScreenState extends State<ITRequestsScreen> {
   int _selectedIndex = 0;
 
-  // Helper to format the Firebase Timestamp into a readable string
+  /// Formats Firestore timestamp to readable string
   String _formatDate(Timestamp? timestamp) {
     if (timestamp == null) return 'Unknown Date';
     final DateTime date = timestamp.toDate();
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} at ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day
+        .toString().padLeft(2, '0')} at ${date.hour.toString().padLeft(
+        2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
-  // Helper to capitalize first letter
+  /// Capitalizes first letter of text
   String _capitalize(String text) {
     if (text.isEmpty) return text;
     return text[0].toUpperCase() + text.substring(1).toLowerCase();
   }
 
-  // --- BULLETPROOF USER FETCHER ---
+  /// Fetches user details from Firestore
   Future<Map<String, dynamic>?> _fetchUserDetails(String emailOrId, String expectedRole) async {
     if (emailOrId.isEmpty) return null;
 
@@ -69,7 +71,7 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('User Requests', style: AppTextStyles.largeHeading),
+            const PageHeading('User Requests'),
             const SizedBox(height: 45),
 
             Expanded(
@@ -79,22 +81,20 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const LoadingState();
                   }
 
                   if (snapshot.hasError) {
-                    return Center(child: Text('Error loading requests: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
+                    return ErrorState(message: 'Error loading requests: ${snapshot.error}');
                   }
 
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return const Center(
-                      child: Text('No reset requests found.', style: TextStyle(fontSize: 18, color: Colors.grey)),
-                    );
+                    return const EmptyState(message: 'No reset requests found.');
                   }
 
                   final docs = snapshot.data!.docs.toList();
 
-                  // Sort: Pending first, then by date
+                  /// Sort: pending first, then by date
                   docs.sort((a, b) {
                     final dataA = a.data() as Map<String, dynamic>;
                     final dataB = b.data() as Map<String, dynamic>;
@@ -119,7 +119,7 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // --- LEFT PANEL: REQUEST LIST ---
+                      /// Left panel - request list
                       Expanded(
                         flex: 45,
                         child: GlassCard(
@@ -132,7 +132,8 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                               final emailOrId = docData['emailOrId'] ?? 'Unknown User';
                               final reqDate = _formatDate(docData['requestDate'] as Timestamp?);
 
-                              final statusStr = docData['status']?.toString().toLowerCase() ?? (docData['isProcessed'] == true ? 'processed' : 'pending');
+                              final statusStr = docData['status']?.toString().toLowerCase() ??
+                                  (docData['isProcessed'] == true ? 'processed' : 'pending');
                               final isResolved = statusStr == 'accepted' || statusStr == 'rejected' || statusStr == 'processed';
                               final isSelected = _selectedIndex == index;
 
@@ -149,7 +150,8 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                                         isResolved
                                             ? Icon(
                                           statusStr == 'rejected' ? Icons.cancel_outlined : Icons.check_circle_outline,
-                                          size: 28, color: statusStr == 'rejected' ? Colors.red : Colors.green,
+                                          size: 28,
+                                          color: statusStr == 'rejected' ? Colors.red : Colors.green,
                                         )
                                             : Container(
                                           padding: const EdgeInsets.all(8),
@@ -159,19 +161,19 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                                           ),
                                           child: const Icon(Icons.person_outline, size: 24, color: AppColors.primary),
                                         ),
-
                                         const SizedBox(width: 12),
-                                        Container(width: 1.5, height: 38, color: isResolved ? Colors.grey.withOpacity(0.3) : AppColors.primary.withOpacity(0.3)),
+                                        Container(width: 1.5, height: 38,
+                                            color: isResolved ? Colors.grey.withOpacity(0.3) : AppColors.primary.withOpacity(0.3)),
                                         const SizedBox(width: 12),
-
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Text(emailOrId, style: AppTextStyles.hallListNumberStyle.copyWith(
-                                                decoration: isResolved ? TextDecoration.lineThrough : null,
-                                                color: isResolved ? Colors.grey : null,
-                                              )),
+                                              Text(emailOrId,
+                                                  style: AppTextStyles.hallListNumberStyle.copyWith(
+                                                    decoration: isResolved ? TextDecoration.lineThrough : null,
+                                                    color: isResolved ? Colors.grey : null,
+                                                  )),
                                               const SizedBox(height: 4),
                                               Text(reqDate, style: AppTextStyles.caption),
                                             ],
@@ -186,10 +188,9 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                           ),
                         ),
                       ),
-
                       const SizedBox(width: 16),
 
-                      // --- RIGHT PANEL: REQUEST DETAIL ---
+                      /// Right panel - request details
                       Expanded(
                         flex: 55,
                         child: GlassCard(
@@ -198,17 +199,18 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // HEADER
+                                /// Header
                                 Row(
                                   children: [
                                     const Icon(Icons.lock_reset_rounded, size: 36, color: AppColors.primary),
                                     const SizedBox(width: 16),
-                                    Text("Password Reset", style: AppTextStyles.heading.copyWith(color: AppColors.primary, fontSize: 24)),
+                                    Text("Password Reset", style: AppTextStyles.heading.copyWith(
+                                        color: AppColors.primary, fontSize: 24)),
                                   ],
                                 ),
                                 const SizedBox(height: 30),
 
-                                // FUTURE BUILDER
+                                /// User details
                                 Expanded(
                                   child: FutureBuilder<Map<String, dynamic>?>(
                                     future: _fetchUserDetails(
@@ -217,10 +219,7 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                                     ),
                                     builder: (context, userSnap) {
                                       if (userSnap.connectionState == ConnectionState.waiting) {
-                                        return const Align(
-                                            alignment: Alignment.topCenter,
-                                            child: CircularProgressIndicator()
-                                        );
+                                        return const LoadingState(isCentered: false);
                                       }
 
                                       if (!userSnap.hasData || userSnap.data == null) {
@@ -239,28 +238,26 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                                       return Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          _buildFigmaDetailRow('Requested by', fullName.isEmpty ? 'Unknown' : fullName),
-                                          _buildFigmaDetailRow('User Type', _capitalize(foundRole)),
-                                          _buildFigmaDetailRow('ID', userData['ID'] ?? selectedData['emailOrId'] ?? 'N/A'),
-                                          _buildFigmaDetailRow('Email', userData['email'] ?? 'N/A'),
-
-                                          // --- NEW: DISPLAY THE NEW PASSWORD ---
-                                          _buildFigmaDetailRow('New Password', selectedData['newPassword'] ?? 'Not provided'),
-
+                                          buildFigmaDetailRow('Requested by',
+                                              fullName.isEmpty ? 'Unknown' : fullName),
+                                          buildFigmaDetailRow('User Type', _capitalize(foundRole)),
+                                          buildFigmaDetailRow('ID', userData['ID'] ?? selectedData['emailOrId'] ?? 'N/A'),
+                                          buildFigmaDetailRow('Email', userData['email'] ?? 'N/A'),
+                                          buildFigmaDetailRow('New Password', selectedData['newPassword'] ?? 'Not provided'),
                                           if (userData.containsKey('year'))
-                                            _buildFigmaDetailRow('Year', userData['year'].toString()),
+                                            buildFigmaDetailRow('Year', userData['year'].toString()),
                                           if (userData.containsKey('faculty'))
-                                            _buildFigmaDetailRow('Faculty', userData['faculty']),
-
+                                            buildFigmaDetailRow('Faculty', userData['faculty']),
                                           const SizedBox(height: 20),
-                                          _buildFigmaDetailRow('Time of Request', _formatDate(selectedData['requestDate'] as Timestamp?)),
+                                          buildFigmaDetailRow('Time of Request', _formatDate(
+                                              selectedData['requestDate'] as Timestamp?)),
                                         ],
                                       );
                                     },
                                   ),
                                 ),
 
-                                // ACTION BUTTONS
+                                /// Action buttons
                                 if (selectedData['isProcessed'] != true)
                                   Row(
                                     children: [
@@ -295,19 +292,17 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
     );
   }
 
-  // --- UPDATED LOGIC TO CHANGE THE ACTUAL PASSWORD ---
+  /// Updates request status and updates user password if approved
   Future<void> _updateRequestStatus(DocumentSnapshot doc, String status) async {
     try {
       final data = doc.data() as Map<String, dynamic>;
 
-      // If accepted, update the user's actual password in their collection
       if (status == 'accepted') {
         final newPassword = data['newPassword'];
         final userRole = data['userRole'];
         final userDocRef = data['userDocRef'];
 
         if (newPassword != null && userRole != null && userDocRef != null) {
-          // Go to the specific user table and update their password field!
           await FirebaseFirestore.instance
               .collection(userRole)
               .doc(userDocRef)
@@ -317,18 +312,15 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
         }
       }
 
-      // 1. Update the request database document
       await doc.reference.update({
         'isProcessed': true,
         'status': status,
       });
 
-      // 2. Add it to the logs
       final userId = data['emailOrId'] ?? 'Unknown User';
       final actionStr = status == 'accepted' ? 'approved' : 'rejected';
       await ITLogService.logAction('Password reset $actionStr for $userId');
 
-      // 3. Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -340,24 +332,9 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e')));
       }
     }
-  }
-
-  // Figma-style text rows
-  Widget _buildFigmaDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('$label : ', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 16)),
-          Expanded(
-            child: Text(value, style: const TextStyle(fontSize: 16, color: Colors.black54, fontWeight: FontWeight.w500)),
-          ),
-        ],
-      ),
-    );
   }
 }

@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../../admin_tab.dart';
-import '../theme/app_theme.dart';
+import 'package:uninexus/theme/app_theme.dart';
 
 class AdminNoticesScreen extends StatefulWidget {
   final void Function(AdminTab) onNavigate;

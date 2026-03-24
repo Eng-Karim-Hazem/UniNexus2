@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/app_theme.dart';
 import '../../admin_tab.dart';
-import '../screens/tablet/theme/app_theme.dart';
 class AdminSidebar extends StatelessWidget {
   final AdminTab current;
   final void Function(AdminTab) onNavigate;

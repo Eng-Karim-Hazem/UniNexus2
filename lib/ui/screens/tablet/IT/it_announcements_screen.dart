@@ -6,14 +6,15 @@ class ITAnnouncementsScreen extends StatelessWidget {
   final void Function(UninexusTab) onNavigate;
   const ITAnnouncementsScreen({super.key, required this.onNavigate});
 
+  /// Sample announcements data
   static const List<Map<String, String>> _announcements = [
-    {'sender': 'Management',  'message': 'We need to update our policy rules'},
-    {'sender': 'Management',  'message': 'The next board meeting will be on 27/5'},
-    {'sender': 'Management',  'message': 'We need to update our policy rules'},
-    {'sender': 'Management',  'message': 'The next board meeting will be on 27/5'},
-    {'sender': 'Management',  'message': 'We need to update our policy rules'},
-    {'sender': 'Management',  'message': 'The next board meeting will be on 27/5'},
-    {'sender': 'Management',  'message': 'We need to update our policy rules'},
+    {'sender': 'Management', 'message': 'We need to update our policy rules'},
+    {'sender': 'Management', 'message': 'The next board meeting will be on 27/5'},
+    {'sender': 'Management', 'message': 'We need to update our policy rules'},
+    {'sender': 'Management', 'message': 'The next board meeting will be on 27/5'},
+    {'sender': 'Management', 'message': 'We need to update our policy rules'},
+    {'sender': 'Management', 'message': 'The next board meeting will be on 27/5'},
+    {'sender': 'Management', 'message': 'We need to update our policy rules'},
   ];
 
   @override
@@ -24,8 +25,9 @@ class ITAnnouncementsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Announcements', style: AppTextStyles.largeHeading),
-            const SizedBox(height: 20),
+            const PageHeading('Announcements'),
+            const SizedBox(height: 47),
+
             Expanded(
               child: GlassCard(
                 padding: const EdgeInsets.all(16),
@@ -38,8 +40,7 @@ class ITAnnouncementsScreen extends StatelessWidget {
                       opacity: isFaded ? 0.5 : 1.0,
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         decoration: AppDecorations.smallCard(isFaded: isFaded),
                         child: Row(
                           children: [

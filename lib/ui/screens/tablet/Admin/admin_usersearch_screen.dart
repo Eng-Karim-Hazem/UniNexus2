@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../admin_tab.dart'; // Ensure this path is correct
-import '../theme/app_theme.dart';
+import 'package:uninexus/theme/app_theme.dart';
 
 class AdminUserSearchScreen extends StatefulWidget {
   final void Function(AdminTab) onNavigate; // Uses AdminTab enum

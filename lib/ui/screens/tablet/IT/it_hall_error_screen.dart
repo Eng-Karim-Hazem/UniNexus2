@@ -17,21 +17,6 @@ class ITHallErrorScreen extends StatefulWidget {
 class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
   int _selectedIndex = 0;
 
-  // Helper to color-code the status badges
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'fixed':
-        return Colors.green;
-      case 'in repair':
-        return Colors.orange;
-      case 'informed':
-      case 'pending':
-        return AppColors.primary; // Or Colors.blue
-      default:
-        return Colors.grey;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return ITScreenBackground(
@@ -40,39 +25,33 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Hall Errors', style: AppTextStyles.largeHeading),
+            const PageHeading('Hall Errors'),
             const SizedBox(height: 45),
 
             Expanded(
-              // --- FIREBASE STREAM BUILDER ---
               child: StreamBuilder<QuerySnapshot>(
-                // REMOVED .orderBy() so we can handle the custom sorting locally
                 stream: FirebaseFirestore.instance
                     .collection('HallErrors')
                     .snapshots(),
                 builder: (context, snapshot) {
-
-                  // 1. Handle Loading State
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const LoadingState();
                   }
 
-                  // 2. Handle Error State
                   if (snapshot.hasError) {
-                    return Center(child: Text('Error loading data: ${snapshot.error}'));
+                    return ErrorState(message: 'Error loading data: ${snapshot.error}');
                   }
 
-                  // 3. Handle Empty State
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return const Center(
-                      child: Text('Hooray! No hall errors reported right now.',
-                          style: TextStyle(fontSize: 18, color: Colors.grey)),
+                    return const EmptyState(
+                      message: 'Hooray! No hall errors reported right now.',
+                      icon: Icons.celebration,
                     );
                   }
 
-                  // 4. CUSTOM SORTING LOGIC (Active on top, Fixed on bottom)
                   final docs = snapshot.data!.docs.toList();
 
+                  /// Sort: pending/in repair first, then by date
                   docs.sort((a, b) {
                     final dataA = a.data() as Map<String, dynamic>;
                     final dataB = b.data() as Map<String, dynamic>;
@@ -83,35 +62,30 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                     final bool isFixedA = statusA == 'fixed';
                     final bool isFixedB = statusB == 'fixed';
 
-                    // If one is fixed and the other isn't, float the unfixed one to the top
                     if (isFixedA != isFixedB) {
                       return isFixedA ? 1 : -1;
                     }
 
-                    // If they are both fixed or both active, sort by timestamp (newest first)
                     final Timestamp? timeA = dataA['timestamp'] as Timestamp?;
                     final Timestamp? timeB = dataB['timestamp'] as Timestamp?;
 
                     if (timeA != null && timeB != null) {
-                      return timeB.compareTo(timeA); // Descending order
+                      return timeB.compareTo(timeA);
                     }
                     return 0;
                   });
 
-                  // Safety check: if a document is deleted, the index might go out of bounds
                   if (_selectedIndex >= docs.length) {
                     _selectedIndex = 0;
                   }
 
-                  // Get the currently selected document for the Right Panel
                   final selectedDoc = docs[_selectedIndex];
                   final Map<String, dynamic> selectedData = selectedDoc.data() as Map<String, dynamic>;
 
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-
-                      // --- LEFT PANEL: ERROR LIST ---
+                      /// Left panel - error list
                       Expanded(
                         flex: 45,
                         child: GlassCard(
@@ -120,24 +94,19 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                             padding: EdgeInsets.zero,
                             itemCount: docs.length,
                             itemBuilder: (context, index) {
-
-                              // Extract data from Firestore document
                               final docData = docs[index].data() as Map<String, dynamic>;
                               final hallName = docData['hallName'] ?? 'Unknown';
                               final errorType = docData['errorType'] ?? 'Unknown Issue';
                               final attachment = docData['attachment']?.toString() ?? '';
                               final hasAttachment = attachment.isNotEmpty;
 
-                              // Check if the status is fixed
                               final statusStr = docData['status']?.toString().toLowerCase() ?? 'pending';
                               final isFixed = statusStr == 'fixed';
-
                               final isSelected = _selectedIndex == index;
 
                               return GestureDetector(
                                 onTap: () => setState(() => _selectedIndex = index),
                                 child: Opacity(
-                                  // Dim the entire card slightly if it's already fixed
                                   opacity: isFixed ? 0.6 : 1.0,
                                   child: Container(
                                     margin: const EdgeInsets.only(bottom: 10),
@@ -145,8 +114,6 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                                     decoration: AppDecorations.smallCard(isSelected: isSelected),
                                     child: Row(
                                       children: [
-
-                                        // Change the icon to a checkmark if fixed, otherwise keep the warning
                                         isFixed
                                             ? const Icon(Icons.check_circle_outline, size: 28, color: Colors.green)
                                             : Image.asset('assets/icons/warning.png',
@@ -154,17 +121,13 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                                             errorBuilder: (_, __, ___) => const Icon(
                                                 Icons.warning_amber_rounded,
                                                 size: 28, color: AppColors.primary)),
-
                                         const SizedBox(width: 12),
-
                                         Container(
                                             width: 1.5,
                                             height: 38,
                                             color: isFixed ? Colors.grey.withOpacity(0.3) : AppColors.primary.withOpacity(0.3)
                                         ),
-
                                         const SizedBox(width: 12),
-
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,7 +135,6 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                                               Text(
                                                   hallName,
                                                   style: AppTextStyles.hallListNumberStyle.copyWith(
-                                                    // Add the strikethrough here
                                                     decoration: isFixed ? TextDecoration.lineThrough : null,
                                                     color: isFixed ? Colors.grey : null,
                                                   )
@@ -181,7 +143,6 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                                               Text(
                                                   errorType,
                                                   style: AppTextStyles.hallListErrorStyle.copyWith(
-                                                    // And add the strikethrough here
                                                     decoration: isFixed ? TextDecoration.lineThrough : null,
                                                     color: isFixed ? Colors.grey : null,
                                                   ),
@@ -190,7 +151,6 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                                             ],
                                           ),
                                         ),
-
                                         if (hasAttachment)
                                           Padding(
                                             padding: const EdgeInsets.only(left: 6),
@@ -206,10 +166,9 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                           ),
                         ),
                       ),
-
                       const SizedBox(width: 16),
 
-                      // --- RIGHT PANEL: ERROR DETAIL ---
+                      /// Right panel - error details
                       Expanded(
                         flex: 55,
                         child: GlassCard(
@@ -218,8 +177,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-
-                                // HEADER
+                                /// Header
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -231,7 +189,6 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                                     const SizedBox(width: 16),
                                     Container(width: 2, height: 50, color: AppColors.divider),
                                     const SizedBox(width: 16),
-                                    // ... (Image warning icon and divider are above this) ...
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,50 +198,22 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                                           const SizedBox(height: 4),
                                           Text(selectedData['errorType'] ?? 'No issue specified',
                                               style: AppTextStyles.hallDetailsErrorStyle),
-
                                           const SizedBox(height: 10),
-
-                                          // --- THE NEW DYNAMIC STATUS BADGE ---
-                                          Builder(
-                                              builder: (context) {
-                                                final statusStr = selectedData['status']?.toString() ?? 'pending';
-                                                final badgeColor = _getStatusColor(statusStr);
-
-                                                return Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                                  decoration: BoxDecoration(
-                                                    color: badgeColor.withOpacity(0.15),
-                                                    borderRadius: BorderRadius.circular(8),
-                                                    border: Border.all(color: badgeColor.withOpacity(0.5)),
-                                                  ),
-                                                  child: Text(
-                                                    statusStr.toUpperCase(),
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight: FontWeight.bold,
-                                                      letterSpacing: 0.5,
-                                                      color: badgeColor,
-                                                    ),
-                                                  ),
-                                                );
-                                              }
+                                          StatusBadge(
+                                            status: selectedData['status']?.toString() ?? 'pending',
+                                            isDot: false,
                                           ),
-                                          // ------------------------------------
-
                                         ],
                                       ),
                                     ),
                                   ],
                                 ),
-
                                 const SizedBox(height: 24),
 
-                                // IMAGE ATTACHMENT OR FALLBACK
+                                /// Image attachment
                                 Builder(
                                     builder: (context) {
                                       final attachmentStr = selectedData['attachment']?.toString() ?? '';
-
-                                      // If there is a Base64 image, decode and show it
                                       if (attachmentStr.isNotEmpty) {
                                         return Container(
                                           width: double.infinity,
@@ -303,8 +232,6 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                                           ),
                                         );
                                       }
-
-                                      // Otherwise, show your original Blue Screen UI
                                       return Container(
                                         width: double.infinity,
                                         height: 220,
@@ -321,17 +248,14 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                                       );
                                     }
                                 ),
-
                                 const SizedBox(height: 20),
 
-                                // DESCRIPTION
+                                /// Description
                                 Text(selectedData['description'] ?? 'No description provided.',
                                     style: AppTextStyles.hallDetailsDescriptionStyle),
-
                                 const Spacer(),
 
-                                // ACTION BUTTONS
-                                // Hide buttons if already fixed to prevent redundant actions
+                                /// Action buttons
                                 if (selectedData['status']?.toString().toLowerCase() != 'fixed')
                                   Row(
                                     children: [
@@ -341,10 +265,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                                             onTap: () async {
                                               try {
                                                 await selectedDoc.reference.update({'status': 'in repair'});
-
-                                                // ---> THE NEW LOGGING LINE <---
                                                 await ITLogService.logAction('Hall ${selectedData['hallName']} marked as in repair');
-
                                                 if (context.mounted) {
                                                   ScaffoldMessenger.of(context).showSnackBar(
                                                     const SnackBar(content: Text('Status updated to: In Repair')),
@@ -367,10 +288,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                                             onTap: () async {
                                               try {
                                                 await selectedDoc.reference.update({'status': 'fixed'});
-
-                                                // ---> THE NEW LOGGING LINE <---
                                                 await ITLogService.logAction('Hall ${selectedData['hallName']} marked as fixed');
-
                                                 if (context.mounted) {
                                                   ScaffoldMessenger.of(context).showSnackBar(
                                                     const SnackBar(content: Text('Status updated to: Fixed')),

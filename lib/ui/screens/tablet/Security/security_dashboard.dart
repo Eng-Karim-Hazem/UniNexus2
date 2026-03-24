@@ -2,43 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
-
 class SecurityDashboardScreen extends StatelessWidget {
   final void Function(UninexusTab) onNavigate;
 
   const SecurityDashboardScreen({super.key, required this.onNavigate});
 
+  /// Sample entry data for recent entries
   static const List<Map<String, dynamic>> _entries = [
     {'name': 'User Scanned', 'status': 'unknown'},
     {'name': 'Moaz Osama Entered', 'status': 'denied'},
     {'name': 'Abd el-rahman Mohamed Entered', 'status': 'approved'},
   ];
 
-
   @override
   Widget build(BuildContext context) {
     return ITScreenBackground(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            /// GREETING CARD
-            // Greeting card
             const AppGreetingCard(
               name: 'Hassan',
               subtitle: 'Good morning',
               date: 'October 11, 2026',
             ),
-
-            const SizedBox(height: 28),
+            const SizedBox(height: 20),
 
             Expanded(
               child: Row(
                 children: [
-
-                  /// LEFT PANEL
+                  /// Left panel - recent entries
                   Expanded(
                     flex: 5,
                     child: GlassCard(
@@ -46,8 +40,7 @@ class SecurityDashboardScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-
-                          /// GATE ENTRIES CARD
+                          /// Gate entries count card
                           Container(
                             padding: const EdgeInsets.all(18),
                             decoration: AppDecorations.smallCard(),
@@ -65,26 +58,19 @@ class SecurityDashboardScreen extends StatelessWidget {
                                 const SizedBox(width: 70),
                                 const Text(
                                   "6 Gate entries today",
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontFamily: "Batangas",
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: AppTextStyles.gateEntriesCountStyle,
                                 ),
                               ],
                             ),
                           ),
-
                           const SizedBox(height: 20),
-
                           Divider(
                             color: AppColors.primary.withOpacity(0.35),
                             thickness: 1.5,
                           ),
-
                           const SizedBox(height: 20),
 
-                          /// STATUS LEGEND
+                          /// Status legend
                           Row(
                             children: const [
                               _LegendDot(color: Colors.green, label: "Approved"),
@@ -94,28 +80,19 @@ class SecurityDashboardScreen extends StatelessWidget {
                               _LegendDot(color: Colors.red, label: "Denied"),
                             ],
                           ),
-
                           const SizedBox(height: 20),
-
                           Divider(
                             color: AppColors.primary.withOpacity(0.35),
                             thickness: 1.5,
                           ),
-
                           const SizedBox(height: 20),
 
                           const Text(
                             "Recent Entries",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: AppTextStyles.recentEntriesLabelStyle,
                           ),
-
                           const SizedBox(height: 14),
 
-                          // THE FIX: Wrap the list of entries in an Expanded + SingleChildScrollView
-                          // This ensures the list scrolls if it's too long, preventing the overflow!
                           Expanded(
                             child: SingleChildScrollView(
                               physics: const BouncingScrollPhysics(),
@@ -129,7 +106,6 @@ class SecurityDashboardScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 14),
 
                           Align(
@@ -138,10 +114,7 @@ class SecurityDashboardScreen extends StatelessWidget {
                               onTap: () => onNavigate(UninexusTab.logs),
                               child: const Text(
                                 "View Entries >",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
-                                ),
+                                style: AppTextStyles.viewLinkStyle,
                               ),
                             ),
                           ),
@@ -149,55 +122,49 @@ class SecurityDashboardScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   const SizedBox(width: 26),
 
-                  /// RIGHT PANEL
+                  /// Right panel - announcements and actions
                   Expanded(
                     flex: 4,
                     child: Column(
                       children: [
-
-                        /// ANNOUNCEMENTS
+                        /// Announcements card
                         Expanded(
                           child: GlassCard(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            children: const [
-                              _SecurityAnnouncement(
-                                title: "Management",
-                                message:
-                                "We need to update our gate policy rules",
-                              ),
-                              SizedBox(height: 14),
-                              _SecurityAnnouncement(
-                                title: "Management",
-                                message:
-                                "All security personnel will be needed at the end of the day",
-                              ),
-                            ],
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              children: const [
+                                _SecurityAnnouncement(
+                                  title: "Management",
+                                  message:
+                                  "We need to update our gate policy rules",
+                                ),
+                                SizedBox(height: 14),
+                                _SecurityAnnouncement(
+                                  title: "Management",
+                                  message:
+                                  "All security personnel will be needed at the end of the day",
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        ),
-
                         const SizedBox(height: 26),
 
-                        /// ACTION BUTTONS
+                        /// Action buttons
                         SizedBox(
                           height: 160,
                           child: Row(
                             children: [
-
                               Expanded(
                                 child: _ActionCard(
-                                  label: "Verify User",
-                                  imagePath: "assets/images/id_card.png",
-                                  onTap: () {}
+                                    label: "Verify User",
+                                    imagePath: "assets/images/id_card.png",
+                                    onTap: () {}
                                 ),
                               ),
-
                               const SizedBox(width: 18),
-
                               Expanded(
                                 child: _ActionCard(
                                   label: "Entries Log",
@@ -238,7 +205,7 @@ class _LegendDot extends StatelessWidget {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 8),
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+        Text(label, style: AppTextStyles.legendLabelStyle),
       ],
     );
   }
@@ -250,27 +217,14 @@ class _EntryRow extends StatelessWidget {
 
   const _EntryRow({required this.name, required this.status});
 
-  Color get color {
-    switch (status) {
-      case 'approved':
-        return Colors.green;
-      case 'denied':
-        return Colors.red;
-      default:
-        return Colors.yellow;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: AppDecorations.smallCard(),
       child: Row(
         children: [
-
           Image.asset(
             'assets/images/avatar.png',
             width: 26,
@@ -278,32 +232,20 @@ class _EntryRow extends StatelessWidget {
             errorBuilder: (_, __, ___) =>
             const Icon(Icons.person, color: AppColors.primary),
           ),
-
           const SizedBox(width: 12),
-
           Container(
             width: 2,
             height: 26,
             color: AppColors.primary.withOpacity(0.35),
           ),
-
           const SizedBox(width: 12),
-
           Expanded(
             child: Text(
               name,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: AppTextStyles.entryRowNameStyle,
             ),
           ),
-
-          Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
-          ),
+          StatusBadge(status: status, isDot: true),
         ],
       ),
     );
@@ -321,44 +263,32 @@ class _SecurityAnnouncement extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: AppDecorations.smallCard(),
       child: Row(
         children: [
-
           const Icon(Icons.notifications,
               color: AppColors.primary, size: 28),
-
           const SizedBox(width: 10),
-
           Container(
             width: 2,
             height: 34,
             color: AppColors.primary.withOpacity(0.35),
           ),
-
           const SizedBox(width: 10),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
+                  style: AppTextStyles.announcementTitleStyle,
                 ),
-
                 const SizedBox(height: 4),
-
                 Text(
                   message,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: AppTextStyles.announcementBodyStyle,
                 ),
               ],
             ),
@@ -382,15 +312,13 @@ class _ActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return GestureDetector(
       onTap: onTap,
       child: GlassCard(
         padding: const EdgeInsets.all(18),
         child: Stack(
           children: [
-
-            /// ICON TOP RIGHT
+            /// Icon positioned at top right
             Positioned(
               top: 0,
               right: 0,
@@ -404,16 +332,12 @@ class _ActionCard extends StatelessWidget {
               ),
             ),
 
-            /// TEXT
+            /// Label at bottom left
             Align(
               alignment: Alignment.bottomLeft,
               child: Text(
                 label,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontFamily: AppFonts.batangas,
-                  fontSize: 22,
-                ),
+                style: AppTextStyles.actionCardLabelStyle,
               ),
             ),
           ],
