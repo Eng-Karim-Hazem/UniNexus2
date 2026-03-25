@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
-//test
+
 class ITLogService {
   static Future<void> logAction(String message) async {
     try {
