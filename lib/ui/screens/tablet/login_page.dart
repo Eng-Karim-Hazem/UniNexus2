@@ -1,10 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/ui/screens/tablet/Admin/admin_shell.dart';
 
 import '../../../theme/app_theme.dart';
-
 import 'package:uninexus/ui/screens/tablet/forgot_password_page.dart';
 import 'package:uninexus/ui/screens/tablet/register_page.dart';
 
@@ -26,6 +26,9 @@ class _LoginPageState extends State<LoginPage>
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
+  // CHANGED: Initialized to false so it is NOT checked at first
+  bool _rememberMe = false;
+
   @override
   void initState() {
     super.initState();
@@ -39,10 +42,6 @@ class _LoginPageState extends State<LoginPage>
     _passwordController.dispose();
     super.dispose();
   }
-
-  ////////////////////////////////////////////////////////////
-  /// REAL FIREBASE LOGIN LOGIC
-  ////////////////////////////////////////////////////////////
 
   Future<void> _handleLogin() async {
     final inputId = _emailController.text.trim();
@@ -97,9 +96,12 @@ class _LoginPageState extends State<LoginPage>
         return;
       }
 
-      // Login Successful! Save data
+      // Login Successful!
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('rememberMe', true);
+
+      // Save the checkbox state to control auto-login in main.dart
+      await prefs.setBool('rememberMe', _rememberMe);
+
       await prefs.setString('ID', userCode);
       await prefs.setString('fName', userData['fName'] ?? '');
       await prefs.setString('lName', userData['lName'] ?? '');
@@ -120,7 +122,6 @@ class _LoginPageState extends State<LoginPage>
       } else if (userCode.startsWith('AD')) {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AdminShell()));
       } else {
-        // This easily catches 'FA', 'ST', and anything else!
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Access Denied: Please use the mobile app for Student/Faculty access.", style: TextStyle(color: Colors.white)),
@@ -138,10 +139,6 @@ class _LoginPageState extends State<LoginPage>
     }
   }
 
-  ////////////////////////////////////////////////////////////
-  /// UI
-  ////////////////////////////////////////////////////////////
-
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -152,7 +149,6 @@ class _LoginPageState extends State<LoginPage>
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-
           /// TOP RIGHT SHAPE
           Positioned(
             right: -sw * 0.2,
@@ -162,11 +158,7 @@ class _LoginPageState extends State<LoginPage>
               child: SlideTransition(
                 position: Tween<Offset>(begin: const Offset(0.3, -0.3), end: Offset.zero)
                     .animate(CurvedAnimation(parent: pageAnimController, curve: Curves.easeOutCubic)),
-                child: Image.asset(
-                  'assets/images/Rectangle1.png',
-                  width: sw * 0.55,
-                  height: sw * 0.65,
-                ),
+                child: Image.asset('assets/images/Rectangle1.png', width: sw * 0.55, height: sw * 0.65),
               ),
             ),
           ),
@@ -180,11 +172,7 @@ class _LoginPageState extends State<LoginPage>
               child: SlideTransition(
                 position: Tween<Offset>(begin: const Offset(0.3, 0.3), end: Offset.zero)
                     .animate(CurvedAnimation(parent: pageAnimController, curve: Curves.easeOutCubic)),
-                child: Image.asset(
-                  'assets/images/Rectangle1.png',
-                  width: sw * 0.55,
-                  height: sw * 0.65,
-                ),
+                child: Image.asset('assets/images/Rectangle1.png', width: sw * 0.55, height: sw * 0.65),
               ),
             ),
           ),
@@ -192,7 +180,6 @@ class _LoginPageState extends State<LoginPage>
           animatedPageContent(
             child: Stack(
               children: [
-
                 /// BACK BUTTON
                 Positioned(
                   left: sw * 0.02,
@@ -200,7 +187,7 @@ class _LoginPageState extends State<LoginPage>
                   child: AppBackButton(width: sw * 0.12),
                 ),
 
-                /// THE UNIFIED CENTERED FORM
+                /// CENTERED FORM
                 Positioned(
                   left: sw * 0.10,
                   width: sw * 0.30,
@@ -210,33 +197,14 @@ class _LoginPageState extends State<LoginPage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-
-                        /// LOGO
                         ClipRRect(
                           borderRadius: BorderRadius.circular(16),
-                          child: Image.asset(
-                            'assets/images/uni.jpeg',
-                            width: sw * 0.12,
-                            height: sw * 0.12,
-                            fit: BoxFit.cover,
-                          ),
+                          child: Image.asset('assets/images/uni.jpeg', width: sw * 0.12, height: sw * 0.12, fit: BoxFit.cover),
                         ),
-
                         SizedBox(height: sh * 0.03),
-
-                        /// TITLE
-                        Text(
-                          'Log in to UniNexus',
-                          style: AppTextStyles.heading.copyWith(fontSize: 26),
-                          textAlign: TextAlign.center,
-                        ),
+                        Text('Log in to UniNexus', style: AppTextStyles.heading.copyWith(fontSize: 26), textAlign: TextAlign.center),
                         const SizedBox(height: 6),
-                        Text(
-                          'Access your campus services securely',
-                          style: AppTextStyles.caption,
-                          textAlign: TextAlign.center,
-                        ),
-
+                        Text('Access your campus services securely', style: AppTextStyles.caption, textAlign: TextAlign.center),
                         SizedBox(height: sh * 0.05),
 
                         /// EMAIL FIELD
@@ -248,7 +216,6 @@ class _LoginPageState extends State<LoginPage>
                             hint: 'Enter Your Email/ID',
                           ),
                         ),
-
                         SizedBox(height: sh * 0.03),
 
                         /// PASSWORD FIELD
@@ -262,6 +229,36 @@ class _LoginPageState extends State<LoginPage>
                           ),
                         ),
 
+                        /// REMEMBER ME (Animated & Unchecked)
+                        animatedField(
+                          anim: field2Anim,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  height: 24, width: 24,
+                                  child: Checkbox(
+                                    value: _rememberMe,
+                                    activeColor: AppColors.primary,
+                                    side: BorderSide(color: AppColors.primary.withOpacity(0.5), width: 1.5),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                    onChanged: (val) => setState(() => _rememberMe = val ?? false),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                GestureDetector(
+                                  onTap: () => setState(() => _rememberMe = !_rememberMe),
+                                  child: Text(
+                                      'Remember Me',
+                                      style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w500)
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
                         SizedBox(height: sh * 0.05),
 
                         /// LOGIN BUTTON
@@ -271,51 +268,26 @@ class _LoginPageState extends State<LoginPage>
                               ? const Center(child: CircularProgressIndicator())
                               : SizedBox(
                             width: 300,
-                            child: AppAuthButton(
-                              text: 'Log In',
-                              onTap: _handleLogin,
-                            ),
+                            child: AppAuthButton(text: 'Log In', onTap: _handleLogin),
                           ),
                         ),
 
                         SizedBox(height: sh * 0.04),
-
-                        /// FORGOT PASSWORD
                         GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const ForgotPasswordPage()),
-                            );
-                          },
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordPage())),
                           child: Text('Forgot Password?', style: AppTextStyles.caption),
                         ),
-
                         SizedBox(height: sh * 0.02),
-
-                        /// REGISTER
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text("Don't have an account? ", style: AppTextStyles.caption),
                             GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (_) => const RegisterPage()),
-                                );
-                              },
-                              child: Text(
-                                'Register',
-                                style: AppTextStyles.caption.copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterPage())),
+                              child: Text('Register', style: AppTextStyles.caption.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
                             ),
                           ],
                         ),
-
                         SizedBox(height: sh * 0.05),
                       ],
                     ),
