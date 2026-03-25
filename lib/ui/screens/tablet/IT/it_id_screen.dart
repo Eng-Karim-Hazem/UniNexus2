@@ -49,7 +49,7 @@ class _ITIdScreenState extends State<ITIdScreen> {
     }
 
     // Dynamic QR Data: Appends .in or .out
-    final String qrData = _isPunchedIn ? "out.$_userID" : "in.$_userID";
+    final String qrData = _isPunchedIn ? "OUT_$_userID" : "IN_$_userID";
 
     // Dynamic QR Colors for the ShaderMask
     final List<Color> qrColors = _isPunchedIn

@@ -49,7 +49,7 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
       );
     }
 
-    final String qrData = _isPunchedIn ? 'out.$_userID' : 'in.$_userID';
+    final String qrData = _isPunchedIn ? 'OUT_$_userID' : 'IN_$_userID';
     final List<Color> qrColors = _isPunchedIn
         ? [_secondaryPurple, _primaryBlue]
         : [_primaryBlue, _secondaryPurple];

@@ -23,8 +23,8 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
   static const List<Map<String, String>> _items = [
     {'icon': 'assets/icons/information.png', 'label': 'Account management'},
     {'icon': 'assets/icons/notify.png',      'label': 'Notification settings'},
-    {'icon': 'assets/icons/merge.png',       'label': 'App Information'},
     {'icon': 'assets/icons/review.png',      'label': 'Feedback'},
+    {'icon': 'assets/icons/merge.png',       'label': 'App Information'},
     {'icon': 'assets/icons/logout.png',      'label': 'Logout'},
   ];
 
@@ -166,9 +166,9 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
       case 1:
         return _buildNotificationSettings();
       case 2:
-        return _buildAppInfo(); // Adjusted for Admin list order
+        return _buildFeedback();
       case 3:
-        return _buildFeedback(); // Adjusted for Admin list order
+        return _buildAppInfo();
       default:
         return const SizedBox();
     }
@@ -203,11 +203,11 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
           style: AppTextStyles.heading,
         ),
         const SizedBox(height: 30),
-        _buildDropdown("System Alerts"),
-        const SizedBox(height: 20),
-        _buildDropdown("User Requests"),
+        _buildDropdown("Gate Alerts"),
         const SizedBox(height: 20),
         _buildDropdown("Announcements"),
+        const SizedBox(height: 20),
+        _buildDropdown("Warnings"),
       ],
     );
   }
@@ -268,7 +268,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
           style: AppTextStyles.heading,
         ),
         SizedBox(height: 20),
-        Text("App Version: UN2.0 Admin"),
+        Text("App Version: UN2.0"),
       ],
     );
   }

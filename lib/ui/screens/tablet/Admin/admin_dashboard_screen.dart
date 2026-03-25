@@ -14,12 +14,18 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  static const String _requestReadKey = 'admin_read_recent_request_ids';
+  static const String _noticeReadKey = 'admin_read_notice_ids';
+  static const String _pendingRequestSelectionKey = 'admin_selected_request_id';
+
   String _adminName = 'Admin';
   int _registrationCount = 0;
   int _passwordResetCount = 0;
   bool _loading = true;
-  List<String> _recentRequests = [];
+  List<Map<String, String>> _recentRequests = [];
   List<Map<String, String>> _recentNotices = [];
+  Set<String> _readRequestIds = <String>{};
+  Set<String> _readNoticeIds = <String>{};
 
   @override
   void initState() {
@@ -31,6 +37,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       final String fName = (prefs.getString('fName') ?? '').trim();
+      final String adminId = (prefs.getString('ID') ?? '').trim();
+      _readRequestIds = (prefs.getStringList(_requestReadKey) ?? const []).toSet();
+      _readNoticeIds = (prefs.getStringList(_noticeReadKey) ?? const []).toSet();
 
       final FirebaseFirestore db = FirebaseFirestore.instance;
 
@@ -39,7 +48,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       final noticeFuture = db
           .collection('Notifications')
           .orderBy('date', descending: true)
-          .limit(4)
+          .limit(100)
           .get();
 
       final results = await Future.wait([regFuture, passFuture, noticeFuture]);
@@ -48,28 +57,74 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       final pass = results[1] as QuerySnapshot<Map<String, dynamic>>;
       final notices = results[2] as QuerySnapshot<Map<String, dynamic>>;
 
-      final List<String> requestItems = [
-        ...reg.docs
-            .take(3)
-            .map((doc) => '${(doc.data()['fullName'] ?? doc.data()['name'] ?? 'User').toString()} submitted a request'),
-        ...pass.docs.take(3).map(
-                (doc) => '${(doc.data()['emailOrId'] ?? 'User').toString()} submitted a request'),
-      ];
-
-      final List<Map<String, String>> noticesList = notices.docs.map((doc) {
+      final List<Map<String, String>> resetRequests = pass.docs
+          .where((doc) {
+        final data = doc.data();
+        final status = (data['status'] ?? '').toString().toLowerCase();
+        final isProcessed = data['isProcessed'] == true;
+        final isClosed = status == 'accepted' || status == 'rejected' || status == 'processed';
+        return !(isProcessed || isClosed);
+      })
+          .map((doc) {
         final data = doc.data();
         return {
-          'sender': (data['sentBy'] ?? 'Management').toString(),
-          'message': (data['description'] ?? '').toString(),
+          'id': 'pass_${doc.id}',
+          'text': '${(data['emailOrId'] ?? 'User').toString()} submitted a password reset request',
+        };
+      })
+          .toList();
+
+      final List<Map<String, String>> registrationRequests = reg.docs.where((doc) {
+        final data = doc.data();
+        final status = (data['status'] ?? '').toString().toLowerCase();
+        final isClosed = status == 'accepted' || status == 'rejected' || status == 'processed';
+        return !isClosed;
+      }).map((doc) {
+        final data = doc.data();
+        final name = (data['fullName'] ?? data['name'] ?? data['fName'] ?? 'User').toString();
+        return {
+          'id': 'reg_${doc.id}',
+          'text': '$name submitted a registration request',
         };
       }).toList();
+
+      final List<Map<String, String>> requestItems = [
+        ...registrationRequests,
+        ...resetRequests,
+      ].take(10).toList();
+
+      final List<Map<String, String>> noticesList = notices.docs
+          .where((doc) {
+        if (_readNoticeIds.contains(doc.id)) return false;
+        final data = doc.data();
+        final List<String> recipientIds = List<String>.from(data['recipientIds'] ?? const []);
+        final String legacyRecipientId = (data['ID'] ?? '').toString().trim();
+        final String type = (data['type'] ?? '').toString().toLowerCase();
+        final String targetValue = (data['targetValue'] ?? '').toString().toLowerCase();
+        final bool sentToMe = recipientIds.contains(adminId) || legacyRecipientId == adminId;
+        final bool sentToAdminGroup = type == 'group' && targetValue == 'admin';
+        return sentToMe || sentToAdminGroup;
+      })
+          .take(10)
+          .map((doc) {
+        final data = doc.data();
+        final Timestamp? timestamp = data['date'] as Timestamp?;
+        final String receivedAt = timestamp == null ? '' : _formatNoticeTime(timestamp.toDate());
+        return {
+          'id': doc.id,
+          'sender': (data['sentBy'] ?? 'Management').toString(),
+          'message': (data['description'] ?? '').toString(),
+          'receivedAt': receivedAt,
+        };
+      })
+          .toList();
 
       if (!mounted) return;
       setState(() {
         _adminName = fName.isNotEmpty ? fName : 'Admin';
         _registrationCount = reg.docs.length;
         _passwordResetCount = pass.docs.length;
-        _recentRequests = requestItems.take(3).toList();
+        _recentRequests = requestItems;
         _recentNotices = noticesList;
         _loading = false;
       });
@@ -96,6 +151,38 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       'December'
     ];
     return '${months[now.month - 1]} ${now.day}, ${now.year}';
+  }
+
+  String _formatNoticeTime(DateTime date) {
+    final hh = date.hour.toString().padLeft(2, '0');
+    final mm = date.minute.toString().padLeft(2, '0');
+    final dd = date.day.toString().padLeft(2, '0');
+    final mo = date.month.toString().padLeft(2, '0');
+    return '$dd/$mo ${date.year} $hh:$mm';
+  }
+
+  Future<void> _openRecentRequest(Map<String, String> request) async {
+    final id = request['id'];
+    if (id == null || id.isEmpty) return;
+    _readRequestIds.add(id);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_requestReadKey, _readRequestIds.toList());
+    await prefs.setString(_pendingRequestSelectionKey, id.replaceFirst(RegExp(r'^(pass_|reg_)'), ''));
+    if (!mounted) return;
+    setState(() {});
+    widget.onNavigate(AdminTab.requests);
+  }
+
+  Future<void> _openNotice(Map<String, String> notice) async {
+    final id = notice['id'];
+    if (id == null || id.isEmpty) return;
+    _readNoticeIds.add(id);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_noticeReadKey, _readNoticeIds.toList());
+    if (!mounted) return;
+    setState(() {
+      _recentNotices.removeWhere((item) => item['id'] == id);
+    });
   }
 
   @override
@@ -145,7 +232,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           const SizedBox(height: 12),
                           ..._recentRequests.map(
                                 (item) => _buildRecentRequestItem(
-                                item, Icons.assignment),
+                              item['text'] ?? '',
+                              Icons.assignment,
+                              isRead: _readRequestIds.contains(item['id']),
+                              onTap: () => _openRecentRequest(item),
+                            ),
                           ),
                           if (_recentRequests.isEmpty)
                             const Text('No recent requests.',
@@ -180,9 +271,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             const SizedBox(width: 16),
                             Expanded(
                               child: _buildQuickActionCard(
-                                'Send Notice',
+                                'Sent Notice',
                                 'assets/images/send_butt.png',
-                                onTap: () => widget.onNavigate(AdminTab.notices),
+                                onTap: () => widget.onNavigate(AdminTab.sentNotices),
                               ),
                             ),
                           ],
@@ -195,26 +286,34 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 ? const Center(child: CircularProgressIndicator())
                                 : Column(
                               children: [
-                                ..._recentNotices.map((n) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: _buildNoticeItem(
-                                    n['sender'] ?? 'Management',
-                                    n['message'] ?? '',
+                                Expanded(
+                                  child: _recentNotices.isEmpty
+                                      ? const Center(
+                                    child: Text('No notices yet.',
+                                        style: AppTextStyles.body),
+                                  )
+                                      : ListView.builder(
+                                    itemCount: _recentNotices.length,
+                                    itemBuilder: (context, index) {
+                                      final n = _recentNotices[index];
+                                      return Padding(
+                                        padding: const EdgeInsets.only(bottom: 12),
+                                        child: _buildNoticeItem(
+                                          n['sender'] ?? 'Management',
+                                          n['message'] ?? '',
+                                          n['receivedAt'] ?? '',
+                                          isRead: _readNoticeIds.contains(n['id']),
+                                          onTap: () => _openNotice(n),
+                                        ),
+                                      );
+                                    },
                                   ),
-                                )),
-                                if (_recentNotices.isEmpty)
-                                  const Expanded(
-                                    child: Center(
-                                      child: Text('No notices yet.',
-                                          style: AppTextStyles.body),
-                                    ),
-                                  ),
-                                const Spacer(),
+                                ),
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: GestureDetector(
-                                    onTap: () => widget.onNavigate(AdminTab.sentNotices),
-                                    child: const Text('View Sent Notices >',
+                                    onTap: () => widget.onNavigate(AdminTab.receivedNotices),
+                                    child: const Text('View Notices >',
                                         style: AppTextStyles.viewLinkStyle),
                                   ),
                                 ),
@@ -315,39 +414,80 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildRecentRequestItem(String text, IconData icon) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: AppDecorations.smallCard(),
-      child: Row(
-        children: [
-          Icon(icon, size: 22, color: AppColors.primary),
-          const SizedBox(width: 12),
-          Expanded(child: Text(text, style: AppTextStyles.logRowBodyStyle)),
-        ],
+  Widget _buildRecentRequestItem(
+      String text,
+      IconData icon, {
+        required bool isRead,
+        required VoidCallback onTap,
+      }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
+        decoration: AppDecorations.smallCard(),
+        child: Row(
+          children: [
+            Icon(icon, size: 22, color: AppColors.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                text,
+                style: AppTextStyles.logRowBodyStyle.copyWith(
+                  fontWeight: isRead ? FontWeight.w400 : FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildNoticeItem(String sender, String msg) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: AppDecorations.smallCard(),
-      child: Row(
-        children: [
-          const Icon(Icons.notifications_none_rounded, color: AppColors.primary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(sender, style: AppTextStyles.senderStyle),
-                Text(msg, style: AppTextStyles.bodySmall),
-              ],
+  Widget _buildNoticeItem(
+      String sender,
+      String msg,
+      String receivedAt, {
+        required bool isRead,
+        required VoidCallback onTap,
+      }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: AppDecorations.smallCard(),
+        child: Row(
+          children: [
+            const Icon(Icons.notifications_none_rounded, color: AppColors.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          sender,
+                          style: AppTextStyles.senderStyle.copyWith(
+                            fontWeight: isRead ? FontWeight.w500 : FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      Text(receivedAt, style: AppTextStyles.caption),
+                    ],
+                  ),
+                  Text(
+                    msg,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontWeight: isRead ? FontWeight.w400 : FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

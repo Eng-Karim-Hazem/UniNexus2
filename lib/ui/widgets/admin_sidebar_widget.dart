@@ -39,7 +39,6 @@ class AdminSidebar extends StatelessWidget {
                 gradient: AppColors.sidebarGradient,
                 borderRadius: BorderRadius.only(
                   topRight: Radius.circular(32),
-                  bottomRight: Radius.circular(32),
                 ),
                 boxShadow: [
                   BoxShadow(

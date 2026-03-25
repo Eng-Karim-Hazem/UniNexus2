@@ -1,13 +1,41 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../admin_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
-class AdminSentNoticesScreen extends StatelessWidget {
+class AdminSentNoticesScreen extends StatefulWidget {
   final void Function(AdminTab) onNavigate;
 
   const AdminSentNoticesScreen({super.key, required this.onNavigate});
+
+  @override
+  State<AdminSentNoticesScreen> createState() => _AdminSentNoticesScreenState();
+}
+
+class _AdminSentNoticesScreenState extends State<AdminSentNoticesScreen> {
+  String _senderName = 'Admin';
+  String _adminId = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSender();
+  }
+
+  Future<void> _loadSender() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String firstName = (prefs.getString('fName') ?? '').trim();
+    final String lastName = (prefs.getString('lName') ?? '').trim();
+    final String id = (prefs.getString('ID') ?? '').trim();
+    final String fullName = '$firstName $lastName'.trim();
+    if (!mounted) return;
+    setState(() {
+      _senderName = fullName.isEmpty ? 'Admin' : fullName;
+      _adminId = id;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +67,13 @@ class AdminSentNoticesScreen extends StatelessWidget {
                             return const Center(child: Text('Error loading notices.'));
                           }
 
-                          final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
-                              snapshot.data?.docs ?? const [];
+                          final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs = (snapshot.data?.docs ?? const [])
+                              .where((doc) {
+                            final data = doc.data();
+                            final sender = (data['sentBy'] ?? data['sender'] ?? '').toString().trim();
+                            final legacyId = (data['senderId'] ?? '').toString().trim();
+                            return sender == _senderName || (_adminId.isNotEmpty && legacyId == _adminId);
+                          }).toList();
 
                           if (docs.isEmpty) {
                             return const Center(

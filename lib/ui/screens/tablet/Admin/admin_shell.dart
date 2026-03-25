@@ -15,6 +15,7 @@ import 'package:uninexus/ui/screens/tablet/Admin/admin_profile_screen.dart';
 import 'package:uninexus/ui/screens/tablet/Admin/admin_settings_screen.dart';
 import 'package:uninexus/ui/screens/tablet/Admin/admin_usersearch_screen.dart';
 import 'package:uninexus/ui/screens/tablet/Admin/admin_sentnotices_screen.dart';
+import 'package:uninexus/ui/screens/tablet/Admin/admin_received_notices.dart';
 
 import '../../../../admin_tab.dart';
 
@@ -58,6 +59,8 @@ class _AdminShellState extends State<AdminShell> {
 
       case AdminTab.sentNotices:
         return AdminSentNoticesScreen(onNavigate: _navigate);
+      case AdminTab.receivedNotices:
+        return AdminReceivedNoticesScreen(onNavigate: _navigate);
       case AdminTab.id:
         return AdminIdScreen(onNavigate: _navigate);
     }
