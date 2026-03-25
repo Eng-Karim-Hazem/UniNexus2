@@ -20,9 +20,9 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
   String _userName = "";
   bool _isLoading = true;
   int _selectedIndex = -1;
-  bool _isPunchedIn = false;
+  bool _isPunchedIn = false; // Toggle state matched to Security ID screen
 
-  // Constants & Styles
+  // Colors preserved from your design
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
   final Color _secondaryPurple = const Color(0xFF9C2CF3);
@@ -55,34 +55,19 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
     }
   }
 
-  void _onNavBarTapped(int index) async {
-    if (index == _selectedIndex) return;
-    setState(() => _selectedIndex = index);
-
-    final Map<int, Widget> routes = {
-      0: const StuCommunity(),
-      1: const HallsScreen(),
-      2: const QAScreen(),
-      3: const ProfileScreen(),
-    };
-
-    if (routes.containsKey(index)) {
-      await Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => routes[index]!),
-      );
-    }
-
-    if (mounted) {
-      setState(() => _selectedIndex = -1);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+
+    // Functionality change: Dynamic QR Data suffix (.in or .out)
+    final String qrData = _isPunchedIn ? "out.$_userID" : "in.$_userID";
+
+    // Functionality change: Dynamic QR Colors matching Security ID logic
+    final List<Color> qrColors = _isPunchedIn
+        ? [_secondaryPurple, _primaryBlue]
+        : [_primaryBlue, _secondaryPurple];
 
     return Scaffold(
       extendBody: true,
@@ -106,7 +91,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
               children: [
                 _buildTopHeader(),
                 const SizedBox(height: 30),
-                _buildMainCard(),
+                _buildMainCard(qrData, qrColors),
                 const SizedBox(height: 30),
                 _buildWidePunchButton(),
                 const SizedBox(height: 20),
@@ -146,25 +131,21 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
     );
   }
 
-  Widget _buildMainCard() {
-    final List<Color> qrColors = _isPunchedIn
-        ? [_secondaryPurple, _primaryBlue]
-        : [_primaryBlue, _secondaryPurple];
-
+  Widget _buildMainCard(String qrData, List<Color> qrColors) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 30),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
+        color: Colors.white.withOpacity(0.85),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: _primaryBlue.withValues(alpha: 0.1),
+            color: _primaryBlue.withOpacity(0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           )
         ],
-        border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 2),
+        border: Border.all(color: Colors.white.withOpacity(0.6), width: 2),
       ),
       child: Column(
         children: [
@@ -217,7 +198,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
                 ).createShader(bounds),
                 blendMode: BlendMode.srcIn,
                 child: QrImageView(
-                  data: _userID,
+                  data: qrData, // Uses the dynamic .in/.out data
                   version: QrVersions.auto,
                   size: 240.0,
                   errorCorrectionLevel: QrErrorCorrectLevel.H,
@@ -239,12 +220,12 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
           ),
           const SizedBox(height: 30),
           Text(
-            _isPunchedIn ? "Active Session - Scan to Punch Out" : "Scan for Identity Verification",
+            "Scan for Identity Verification",
             style: TextStyle(
               fontFamily: 'SpaceGrotesk',
-              color: _isPunchedIn ? _primaryBlue : Colors.grey,
+              color: Colors.grey,
               fontSize: 14,
-              fontWeight: _isPunchedIn ? FontWeight.bold : FontWeight.normal,
+              fontWeight:FontWeight.bold,
             ),
           ),
         ],
@@ -266,7 +247,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
           border: Border.all(color: activeColor, width: 2),
           boxShadow: [
             BoxShadow(
-              color: activeColor.withValues(alpha: 0.2),
+              color: activeColor.withOpacity(0.2),
               blurRadius: 15,
               offset: const Offset(0, 5),
             )
@@ -289,10 +270,10 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
   }
 
   Widget _buildDot() => Container(
-        width: 12,
-        height: 12,
-        decoration: const BoxDecoration(color: Color(0xFFE0E0FF), shape: BoxShape.circle),
-      );
+    width: 12,
+    height: 12,
+    decoration: const BoxDecoration(color: Color(0xFFE0E0FF), shape: BoxShape.circle),
+  );
 
   Widget _buildHomeFab() {
     return Container(
@@ -302,7 +283,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withValues(alpha: 0.6),
+            color: _mainPurple.withOpacity(0.6),
             blurRadius: 25,
             spreadRadius: 6,
             offset: const Offset(0, 2),
@@ -326,51 +307,21 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
   }
 
   Widget _buildBottomBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 20,
-            spreadRadius: 4,
-            offset: const Offset(0, -6),
-          ),
+    return BottomAppBar(
+      clipBehavior: Clip.antiAlias,
+      shape: const CircularNotchedRectangle(),
+      notchMargin: 9.0,
+      color: Colors.white,
+      height: 80,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _navItem('assets/images/solidarity_1.png', 'Community', 0),
+          _navItem('assets/images/classroom_1.png', 'Halls', 1),
+          const SizedBox(width: 72),
+          _navItem('assets/images/qa.png', 'Q&A', 2),
+          _navItem('assets/images/user.png', 'Profile', 3),
         ],
-      ),
-      child: BottomAppBar(
-        clipBehavior: Clip.antiAlias,
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 9.0,
-        color: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        shadowColor: Colors.transparent,
-        height: 80,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _navItem('assets/images/solidarity_1.png', 'Community', 0),
-                  _navItem('assets/images/classroom_1.png', 'Halls', 1),
-                ],
-              ),
-            ),
-            const SizedBox(width: 72),
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _navItem('assets/images/qa.png', 'Q&A', 2),
-                  _navItem('assets/images/user.png', 'Profile', 3),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -381,7 +332,6 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
 
     return GestureDetector(
       onTap: () => _onNavBarTapped(index),
-      behavior: HitTestBehavior.opaque,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -399,5 +349,25 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
         ],
       ),
     );
+  }
+
+  void _onNavBarTapped(int index) async {
+    if (index == _selectedIndex) return;
+    setState(() => _selectedIndex = index);
+
+    final Map<int, Widget> routes = {
+      0: const StuCommunity(),
+      1: const HallsScreen(),
+      2: const QAScreen(),
+      3: const ProfileScreen(),
+    };
+
+    if (routes.containsKey(index)) {
+      await Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => routes[index]!),
+      );
+    }
+    if (mounted) setState(() => _selectedIndex = -1);
   }
 }
