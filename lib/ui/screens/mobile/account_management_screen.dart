@@ -20,7 +20,6 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
   final int _selectedIndex = -1;
 
   final Color _mainPurple = const Color(0xFF7B61FF);
-  final Color _primaryBlue = const Color(0xFF237ABA);
 
   final Gradient _fabGradient = const LinearGradient(
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
@@ -106,12 +105,12 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.6),
+        color: Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _mainPurple.withOpacity(0.6), width: 1.5),
+        border: Border.all(color: _mainPurple.withValues(alpha: 0.6), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF237ABA).withOpacity(0.1),
+            color: const Color(0xFF237ABA).withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           )
@@ -222,7 +221,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withOpacity(0.6),
+            color: _mainPurple.withValues(alpha: 0.6),
             blurRadius: 25,
             spreadRadius: 6,
             offset: const Offset(0, 2),
@@ -252,7 +251,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 20,
             spreadRadius: 4,
             offset: const Offset(0, -6),

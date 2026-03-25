@@ -94,7 +94,7 @@ class _SettingsStaffScreenState extends State<SettingsStaffScreen> {
                               entry.value['label']!,
                               style: TextStyle(
                                 color: Colors.white
-                                    .withOpacity(isSelected ? 1 : 0.7),
+                                    .withValues(alpha: isSelected ? 1 : 0.7),
                                 fontSize: 12,
                                 fontWeight: isSelected
                                     ? FontWeight.w600

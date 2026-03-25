@@ -81,7 +81,7 @@ class _ITProfileScreenState extends State<ITProfileScreen> {
                       shape: BoxShape.circle,
                       color: Colors.white,
                       border: Border.all(
-                          color: AppColors.primary.withOpacity(0.5), width: 2),
+                          color: AppColors.primary.withValues(alpha: 0.5), width: 2),
                     ),
                     child: ClipOval(
                       child: _base64Photo != null && _base64Photo!.isNotEmpty
@@ -111,7 +111,7 @@ class _ITProfileScreenState extends State<ITProfileScreen> {
                           _id,
                           style: TextStyle(
                             fontSize: 16,
-                            color: Colors.black.withOpacity(0.6),
+                            color: Colors.black.withValues(alpha: 0.6),
                           ),
                         ),
                       ],

@@ -100,9 +100,9 @@ class _LogEntryItem extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.4),
+        color: Colors.white.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
@@ -112,7 +112,7 @@ class _LogEntryItem extends StatelessWidget {
             errorBuilder: (_, __, ___) => const Icon(Icons.person, color: AppColors.primary, size: 32),
           ),
           const SizedBox(width: 16),
-          Container(width: 2, height: 32, color: AppColors.primary.withOpacity(0.2)),
+          Container(width: 2, height: 32, color: AppColors.primary.withValues(alpha: 0.2)),
           const SizedBox(width: 16),
           Expanded(
             child: RichText(

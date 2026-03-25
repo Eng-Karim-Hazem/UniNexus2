@@ -153,7 +153,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                   color: isFixed ? Colors.green : AppColors.primary
               ),
               const SizedBox(width: 12),
-              Container(width: 1.5, height: 38, color: AppColors.primary.withOpacity(0.3)),
+              Container(width: 1.5, height: 38, color: AppColors.primary.withValues(alpha: 0.3)),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -238,9 +238,9 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : Colors.white.withOpacity(0.1),
+                color: isSelected ? AppColors.primary : Colors.white.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
               ),
               child: Text(dept, style: TextStyle(color: isSelected ? Colors.white : AppColors.primary, fontWeight: FontWeight.bold)),
             ),

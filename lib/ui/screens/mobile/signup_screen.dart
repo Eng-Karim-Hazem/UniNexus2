@@ -262,7 +262,7 @@ class _SignUpScreenState extends State<SignUpScreen>
             color: Colors.white,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: Colors.grey.withOpacity(0.3),
+              color: Colors.grey.withValues(alpha: 0.3),
               width: 1.4,
             ),
           ),
@@ -291,7 +291,7 @@ class _SignUpScreenState extends State<SignUpScreen>
       height: 65,
       decoration: BoxDecoration(
         border: Border.all(
-            color: Colors.white.withOpacity(0.3), width: 1.5),
+            color: Colors.white.withValues(alpha: 0.3), width: 1.5),
         gradient: const LinearGradient(
           colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)],
         ),

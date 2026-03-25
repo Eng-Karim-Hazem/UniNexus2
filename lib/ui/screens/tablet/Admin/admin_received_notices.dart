@@ -102,9 +102,9 @@ class _AdminReceivedNoticesScreenState extends State<AdminReceivedNoticesScreen>
                               return Container(
                                 padding: const EdgeInsets.all(20),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.5),
+                                  color: Colors.white.withValues(alpha: 0.5),
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: Colors.white.withOpacity(0.5)),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
                                 ),
                                 child: Row(
                                   children: [

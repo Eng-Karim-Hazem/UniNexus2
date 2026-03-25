@@ -39,11 +39,13 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.reload();
-    setState(() {
-      _firstName = prefs.getString('fName') ?? 'Student';
-      _lastName = prefs.getString('lName') ?? '';
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _firstName = prefs.getString('fName') ?? 'Student';
+        _lastName = prefs.getString('lName') ?? '';
+        _isLoading = false;
+      });
+    }
   }
 
   String _getCurrentDate() {
@@ -88,7 +90,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                   },
                   child: _buildWhiteCard(
                     opacity: 0.4,
-                    borderColor: _mainPurple.withOpacity(0.5),
+                    borderColor: _mainPurple.withValues(alpha: 0.5),
                     child: Row(
                       children: [
                         Expanded(
@@ -97,7 +99,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                             style: TextStyle(
                               fontFamily: 'Batangas',
                               fontSize: 20,
-                              color: Colors.black.withOpacity(0.8),
+                              color: Colors.black.withValues(alpha: 0.8),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -114,9 +116,9 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                     margin: const EdgeInsets.only(bottom: 100),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.4),
+                      color: Colors.white.withValues(alpha: 0.4),
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1.5),
                     ),
                     child: ListView(
                       physics: const BouncingScrollPhysics(),
@@ -143,12 +145,11 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.8),
+        color: Colors.white.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          // INCREASED OPACITY TO 0.1
-          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 24, offset: const Offset(0, -12)),
-          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 24, offset: const Offset(0, 7)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 24, offset: const Offset(0, -12)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 24, offset: const Offset(0, 7)),
         ],
       ),
       child: Column(
@@ -171,9 +172,9 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF4FF).withOpacity(0.95),
+        color: const Color(0xFFEAF4FF).withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _mainPurple.withOpacity(0.2)),
+        border: Border.all(color: _mainPurple.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,10 +198,10 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(opacity),
+        color: Colors.white.withValues(alpha: opacity),
         borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: borderColor ?? _primaryBlue.withOpacity(0.2), width: 1.5),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 5))],
+        border: Border.all(color: borderColor ?? _primaryBlue.withValues(alpha: 0.2), width: 1.5),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15, offset: const Offset(0, 5))],
       ),
       child: child,
     );
@@ -210,7 +211,6 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // --- ADDED NAVIGATION HERE ---
         GestureDetector(
           onTap: () {
             Navigator.push(
@@ -239,7 +239,6 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
     );
   }
 
-  // --- UPDATED GLOWING FAB ---
   Widget _buildFab() {
     return Container(
       height: 72,
@@ -248,10 +247,10 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withOpacity(0.6),
-            blurRadius: 25, // High blur for a soft glow
-            spreadRadius: 4, // Pushes the glow outwards
-            offset: const Offset(0, 2), // Centered so it radiates in all directions evenly
+            color: _mainPurple.withValues(alpha: 0.6),
+            blurRadius: 25,
+            spreadRadius: 4,
+            offset: const Offset(0, 2),
           )
         ],
       ),
@@ -265,24 +264,22 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
         shape: const CircleBorder(),
         child: Container(
           decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
-          // Increased Icon Size to 38
           child: Center(child: Image.asset('assets/images/qr_code.png', width: 38, height: 38, color: Colors.white)),
         ),
       ),
     );
   }
 
-  // --- UPDATED BOTTOM NAVIGATION BAR WITH NATIVE CUTOUT SHADOW ---
   Widget _buildBottomBar() {
     return Container(
       decoration: BoxDecoration(
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 20,
             spreadRadius: 4,
-            offset: const Offset(0, -6), // 👈 negative Y = shadow goes UPWARD
+            offset: const Offset(0, -6),
           ),
         ],
       ),
@@ -292,7 +289,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
         notchMargin: 9.0,
         color: Colors.white,
         surfaceTintColor: Colors.transparent,
-        elevation: 0, // 👈 disable native elevation, we handle it above
+        elevation: 0,
         shadowColor: Colors.transparent,
         height: 80,
         child: Row(
@@ -307,7 +304,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                 ],
               ),
             ),
-            const SizedBox(width: 72), // Space for the FAB notch
+            const SizedBox(width: 72),
             Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,

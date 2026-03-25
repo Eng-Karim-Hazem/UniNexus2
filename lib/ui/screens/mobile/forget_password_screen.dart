@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:uninexus/ui/screens/mobile/request_submitted_screen.dart';
 
 
-import '/../../services/firebase/Forpass_service.dart';
+import '/../../services/firebase/for_pass_service.dart';
 import 'login_screen.dart';
 
 
@@ -231,7 +231,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
       Padding(padding: const EdgeInsets.only(left: 10, bottom: 1), child: Text(label, style: const TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold))),
       Container(
         height: 50,
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1.4)),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.grey.withValues(alpha: 0.3), width: 1.4)),
         child: TextField(
             controller: controller,
             style: const TextStyle(fontFamily: 'SpaceGrotesk'),
@@ -257,7 +257,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
       Padding(padding: const EdgeInsets.only(left: 10, bottom: 1), child: Text(label, style: const TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold))),
       Container(
         height: 50,
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1.4)),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.grey.withValues(alpha: 0.3), width: 1.4)),
         child: TextField(
           controller: controller,
           obscureText: obscure,
@@ -280,7 +280,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
   Widget _mainButton({required String text, required bool enabled, required VoidCallback onTap}) {
     return Container(
       width: 280, height: 65,
-      decoration: BoxDecoration(border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5), gradient: const LinearGradient(colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)]), borderRadius: BorderRadius.circular(24)),
+      decoration: BoxDecoration(border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5), gradient: const LinearGradient(colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)]), borderRadius: BorderRadius.circular(24)),
       child: ElevatedButton(
         onPressed: enabled ? onTap : null,
         style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent, elevation: 0),

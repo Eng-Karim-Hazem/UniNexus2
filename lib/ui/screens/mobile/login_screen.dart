@@ -349,7 +349,7 @@ class _LoginScreenState extends State<LoginScreen>
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1.4),
+            border: Border.all(color: Colors.grey.withValues(alpha: 0.3), width: 1.4),
           ),
           child: TextField(
             controller: controller,
@@ -378,7 +378,7 @@ class _LoginScreenState extends State<LoginScreen>
       width: 280,
       height: 65,
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
         gradient: const LinearGradient(colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)]),
         borderRadius: BorderRadius.circular(24),
       ),

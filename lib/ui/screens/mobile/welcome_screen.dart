@@ -228,7 +228,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       height: 64,
       margin: const EdgeInsets.symmetric(horizontal: 65),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.4),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.4),
         gradient: const LinearGradient(
           colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)],
         ),

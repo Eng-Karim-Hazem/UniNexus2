@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:uninexus/model/gatescan_model.dart';
+import 'package:uninexus/model/gate_scan_model.dart';
 import 'package:uninexus/services/firebase/gatescan_service.dart';
 import 'package:uninexus/theme/app_theme.dart';
 import 'package:uninexus/theme/uninexus_tab.dart';
@@ -156,9 +156,9 @@ class _SecurityGateEntryScreenState extends State<SecurityGateEntryScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.white.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.primary.withOpacity(0.4)),
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
             ),
             child: Row(
               children: [
@@ -190,7 +190,7 @@ class _EntryRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: (AppDecorations.smallCard() as BoxDecoration).copyWith(
-        color: isSelected ? AppColors.primary.withOpacity(0.1) : null,
+        color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : null,
         border: isSelected ? Border.all(color: AppColors.primary, width: 2) : null,
       ),
       child: Row(
@@ -201,7 +201,7 @@ class _EntryRow extends StatelessWidget {
             errorBuilder: (_, __, ___) => const Icon(Icons.person, color: AppColors.primary, size: 28),
           ),
           const SizedBox(width: 14),
-          Container(width: 4, height: 28, color: AppColors.primary.withOpacity(.35)),
+          Container(width: 4, height: 28, color: AppColors.primary.withValues(alpha: .35)),
           const SizedBox(width: 14),
           Expanded(
             child: Text(id, style: const TextStyle(fontFamily: AppFonts.spaceGrotesk, fontWeight: FontWeight.w700, fontSize: 18, color: AppColors.textDark)),
@@ -234,7 +234,7 @@ class _UserDataPanel extends StatelessWidget {
               errorBuilder: (_, __, ___) => const Icon(Icons.person, color: AppColors.primary, size: 40),
             ),
             const SizedBox(width: 16),
-            Container(width: 3, height: 40, color: AppColors.primary.withOpacity(0.4)),
+            Container(width: 3, height: 40, color: AppColors.primary.withValues(alpha: 0.4)),
             const SizedBox(width: 16),
             const Text("User Data", style: TextStyle(fontFamily: AppFonts.batangas, fontWeight: FontWeight.w800, fontSize: 26, color: AppColors.primary)),
           ],

@@ -93,7 +93,7 @@ class _ITIdScreenState extends State<ITIdScreen> {
                                       errorBuilder: (_, __, ___) => Container(
                                         width: 4, height: 80,
                                         decoration: BoxDecoration(
-                                          color: AppColors.primary.withOpacity(0.35),
+                                          color: AppColors.primary.withValues(alpha: 0.35),
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                       )),

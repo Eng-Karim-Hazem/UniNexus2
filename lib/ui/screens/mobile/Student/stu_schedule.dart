@@ -121,12 +121,12 @@ class _StuScheduleState extends State<StuSchedule> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 25),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.8),
+        color: Colors.white.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           // INCREASED OPACITY TO 0.1
-          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 24, offset: const Offset(0, -12)),
-          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 24, offset: const Offset(0, 7)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 24, offset: const Offset(0, -12)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 24, offset: const Offset(0, 7)),
         ],
       ),
       child: Column(
@@ -145,9 +145,9 @@ class _StuScheduleState extends State<StuSchedule> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.4),
+        color: Colors.white.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _mainPurple.withOpacity(0.5), width: 1.5),
+        border: Border.all(color: _mainPurple.withValues(alpha: 0.5), width: 1.5),
       ),
       child: ListView.builder(
         physics: const BouncingScrollPhysics(),
@@ -177,7 +177,7 @@ class _StuScheduleState extends State<StuSchedule> {
             children: [
               SizedBox(width: 75, child: Text("$start\n$end", style: const TextStyle(fontFamily: 'SpaceGrotesk', fontWeight: FontWeight.bold, fontSize: 13))),
               const SizedBox(width: 10),
-              Container(width: 1.5, height: 40, color: _mainPurple.withOpacity(0.3)),
+              Container(width: 1.5, height: 40, color: _mainPurple.withValues(alpha: 0.3)),
               const SizedBox(width: 15),
               Expanded(
                 child: Column(
@@ -191,7 +191,7 @@ class _StuScheduleState extends State<StuSchedule> {
             ],
           ),
         ),
-        Divider(color: _mainPurple.withOpacity(0.1)),
+        Divider(color: _mainPurple.withValues(alpha: 0.1)),
       ],
     );
   }
@@ -205,7 +205,7 @@ class _StuScheduleState extends State<StuSchedule> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withOpacity(0.6),
+            color: _mainPurple.withValues(alpha: 0.6),
             blurRadius: 25,
             spreadRadius: 6,
             offset: const Offset(0, 2),
@@ -235,7 +235,7 @@ class _StuScheduleState extends State<StuSchedule> {
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 20,
             spreadRadius: 4,
             offset: const Offset(0, -6),

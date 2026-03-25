@@ -77,7 +77,7 @@ class ITLogsScreen extends StatelessWidget {
                               Image.asset(
                                 'assets/icons/restore.png',
                                 width: 24, height: 24,
-                                color: AppColors.primary.withOpacity(0.7),
+                                color: AppColors.primary.withValues(alpha: 0.7),
                                 errorBuilder: (_, __, ___) => const Icon(
                                     Icons.history, size: 24, color: AppColors.primary),
                               ),

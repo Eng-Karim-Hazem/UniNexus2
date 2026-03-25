@@ -27,7 +27,6 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
-  final Color _textIndigo = const Color(0xFF5C5C80);
 
   // Identity and Contact Variables
   String _displayFirstName = "User";
@@ -156,9 +155,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _mainPurple.withOpacity(0.5), width: 1.5),
+        border: Border.all(color: _mainPurple.withValues(alpha: 0.5), width: 1.5),
       ),
       child: Row(
         children: [
@@ -190,9 +189,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.6),
+        color: Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _mainPurple.withOpacity(0.4), width: 1.5),
+        border: Border.all(color: _mainPurple.withValues(alpha: 0.4), width: 1.5),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
@@ -226,7 +225,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 4),
           Text(value, style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
           const SizedBox(height: 8),
-          Divider(color: _mainPurple.withOpacity(0.1), thickness: 1),
+          Divider(color: _mainPurple.withValues(alpha: 0.1), thickness: 1),
         ],
       ),
     );
@@ -241,7 +240,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: _mainPurple.withOpacity(0.6),
+              color: _mainPurple.withValues(alpha: 0.6),
               blurRadius: 25,
               spreadRadius: 6,
               offset: const Offset(0, 2),
@@ -347,7 +346,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 20,
             spreadRadius: 4,
             offset: const Offset(0, -6),

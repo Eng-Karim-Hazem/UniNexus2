@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
-import '../../../../services/firebase/it_Logs_service.dart';
+import '../../../../services/firebase/it_logs_service.dart';
 
 class ITRequestsScreen extends StatefulWidget {
   final void Function(UninexusTab) onNavigate;
@@ -156,14 +156,14 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                                             : Container(
                                           padding: const EdgeInsets.all(8),
                                           decoration: BoxDecoration(
-                                            color: AppColors.primary.withOpacity(0.1),
+                                            color: AppColors.primary.withValues(alpha: 0.1),
                                             shape: BoxShape.circle,
                                           ),
                                           child: const Icon(Icons.person_outline, size: 24, color: AppColors.primary),
                                         ),
                                         const SizedBox(width: 12),
                                         Container(width: 1.5, height: 38,
-                                            color: isResolved ? Colors.grey.withOpacity(0.3) : AppColors.primary.withOpacity(0.3)),
+                                            color: isResolved ? Colors.grey.withValues(alpha: 0.3) : AppColors.primary.withValues(alpha: 0.3)),
                                         const SizedBox(width: 12),
                                         Expanded(
                                           child: Column(

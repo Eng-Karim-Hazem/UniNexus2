@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uninexus/theme/app_theme.dart';
 import 'package:uninexus/ui/screens/tablet/request_submitted_page.dart';
-import 'package:uninexus/services/firebase/forpass_service.dart'; // Ensure path is correct
+import 'package:uninexus/services/firebase/for_pass_service.dart'; // Ensure path is correct
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});

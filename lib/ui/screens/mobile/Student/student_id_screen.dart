@@ -22,7 +22,6 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
   int _selectedIndex = -1; // -1 to not highlight anything when just viewing the ID
 
   final Color _mainPurple = const Color(0xFF7B61FF);
-  final Color _primaryBlue = const Color(0xFF237ABA);
 
   final Gradient _fabGradient = const LinearGradient(
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
@@ -129,16 +128,16 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 30),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.85),
+        color: Colors.white.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF237ABA).withOpacity(0.1),
+            color: const Color(0xFF237ABA).withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           )
         ],
-        border: Border.all(color: Colors.white.withOpacity(0.6), width: 2),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 2),
       ),
       child: Column(
         children: [
@@ -206,7 +205,7 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withOpacity(0.6),
+            color: _mainPurple.withValues(alpha: 0.6),
             blurRadius: 25,
             spreadRadius: 6,
             offset: const Offset(0, 2),
@@ -236,7 +235,7 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 20,
             spreadRadius: 4,
             offset: const Offset(0, -6),

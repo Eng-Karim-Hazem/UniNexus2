@@ -177,9 +177,9 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
       decoration: InputDecoration(
         hintText: hint,
         counterText: '',
-        hintStyle: TextStyle(color: Colors.black.withOpacity(0.3)),
+        hintStyle: TextStyle(color: Colors.black.withValues(alpha: 0.3)),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.7),
+        fillColor: Colors.white.withValues(alpha: 0.7),
         contentPadding: const EdgeInsets.all(20),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -203,9 +203,9 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
       icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.black.withOpacity(0.3)),
+        hintStyle: TextStyle(color: Colors.black.withValues(alpha: 0.3)),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.7),
+        fillColor: Colors.white.withValues(alpha: 0.7),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -439,7 +439,7 @@ class _CategoryButton extends StatelessWidget {
             width: double.infinity,
             decoration: isActive
                 ? BoxDecoration(
-              color: AppColors.primary.withOpacity(0.15),
+              color: AppColors.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: AppColors.primary, width: 2),
             )

@@ -53,9 +53,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
       final results = await Future.wait([regFuture, passFuture, noticeFuture]);
 
-      final reg = results[0] as QuerySnapshot<Map<String, dynamic>>;
-      final pass = results[1] as QuerySnapshot<Map<String, dynamic>>;
-      final notices = results[2] as QuerySnapshot<Map<String, dynamic>>;
+      final reg = results[0];
+      final pass = results[1];
+      final notices = results[2];
 
       final List<Map<String, String>> resetRequests = pass.docs
           .where((doc) {
@@ -344,12 +344,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: AppColors.primary.withOpacity(0.5),
+            color: AppColors.primary.withValues(alpha: 0.5),
             width: 1.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withValues(alpha: 0.02),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),

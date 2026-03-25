@@ -82,7 +82,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                       shape: BoxShape.circle,
                       color: Colors.white,
                       border: Border.all(
-                        color: AppColors.primary.withOpacity(0.5),
+                        color: AppColors.primary.withValues(alpha: 0.5),
                         width: 2,
                       ),
                     ),
@@ -114,7 +114,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                           _id,
                           style: TextStyle(
                             fontSize: 16,
-                            color: Colors.black.withOpacity(0.6),
+                            color: Colors.black.withValues(alpha: 0.6),
                           ),
                         ),
                       ],
@@ -182,7 +182,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
 
   Widget _buildDivider() {
     return Divider(
-      color: Colors.black.withOpacity(0.3),
+      color: Colors.black.withValues(alpha: 0.3),
       thickness: 1,
       height: 1,
     );

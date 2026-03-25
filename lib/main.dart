@@ -2,13 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uninexus/admin_tab.dart';
-import 'package:uninexus/theme/uninexus_tab.dart';
-import 'package:uninexus/ui/screens/tablet/Admin/admin_dashboard_screen.dart';
 import 'package:uninexus/ui/screens/tablet/Admin/admin_shell.dart';
-import 'package:uninexus/ui/screens/tablet/IT/it_dashboard_screen.dart';
 import 'package:uninexus/ui/screens/tablet/IT/it_shell.dart';
-import 'package:uninexus/ui/screens/tablet/Security/security_dashboard.dart';
 import 'package:uninexus/ui/screens/tablet/Security/security_shell.dart';
 
 import 'firebase_options.dart';

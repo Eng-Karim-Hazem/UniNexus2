@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -241,7 +240,7 @@ class _LoginPageState extends State<LoginPage>
                                   child: Checkbox(
                                     value: _rememberMe,
                                     activeColor: AppColors.primary,
-                                    side: BorderSide(color: AppColors.primary.withOpacity(0.5), width: 1.5),
+                                    side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5), width: 1.5),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                                     onChanged: (val) => setState(() => _rememberMe = val ?? false),
                                   ),

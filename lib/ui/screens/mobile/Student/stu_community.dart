@@ -126,7 +126,7 @@ class _StuCommunityState extends State<StuCommunity> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
-                      boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
+                      boxShadow: [BoxShadow(color: _mainPurple.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8))],
                     ),
                     child: Center(
                       child: Image.asset(
@@ -189,7 +189,7 @@ class _StuCommunityState extends State<StuCommunity> {
         padding: const EdgeInsets.only(right: 25),
         alignment: Alignment.centerRight,
         decoration: BoxDecoration(
-          color: Colors.redAccent.withOpacity(0.9),
+          color: Colors.redAccent.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(20), // Match the card radius
         ),
         child: const Icon(Icons.delete_forever_rounded, color: Colors.white, size: 32),
@@ -223,12 +223,12 @@ class _StuCommunityState extends State<StuCommunity> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9),
+            color: Colors.white.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: _mainPurple.withOpacity(0.15), width: 1.5),
+            border: Border.all(color: _mainPurple.withValues(alpha: 0.15), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.12),
+                color: Colors.black.withValues(alpha: 0.12),
                 blurRadius: 18,
                 spreadRadius: 2,
                 offset: const Offset(0, 6),
@@ -262,7 +262,7 @@ class _StuCommunityState extends State<StuCommunity> {
                   if (post.replyCount > 0)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(color: _mainPurple.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                      decoration: BoxDecoration(color: _mainPurple.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
                       child: Text("${post.replyCount}", style: TextStyle(color: _mainPurple, fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   const SizedBox(width: 5),
@@ -291,7 +291,7 @@ class _StuCommunityState extends State<StuCommunity> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withOpacity(0.6),
+            color: _mainPurple.withValues(alpha: 0.6),
             blurRadius: 25,
             spreadRadius: 6,
             offset: const Offset(0, 2),
@@ -375,7 +375,7 @@ class _StuCommunityState extends State<StuCommunity> {
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 20,
             spreadRadius: 4,
             offset: const Offset(0, -6),

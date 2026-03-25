@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../admin_tab.dart';
-import '../../../../services/firebase/it_Logs_service.dart';
+import '../../../../services/firebase/it_logs_service.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
 class AdminRequestsScreen extends StatefulWidget {
@@ -244,7 +244,7 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                                                     : Container(
                                                   padding: const EdgeInsets.all(8),
                                                   decoration: BoxDecoration(
-                                                    color: AppColors.primary.withOpacity(0.1),
+                                                    color: AppColors.primary.withValues(alpha: 0.1),
                                                     shape: BoxShape.circle,
                                                   ),
                                                   child: const Icon(
@@ -258,8 +258,8 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                                                   width: 1.5,
                                                   height: 38,
                                                   color: isResolved
-                                                      ? Colors.grey.withOpacity(0.3)
-                                                      : AppColors.primary.withOpacity(0.3),
+                                                      ? Colors.grey.withValues(alpha: 0.3)
+                                                      : AppColors.primary.withValues(alpha: 0.3),
                                                 ),
                                                 const SizedBox(width: 12),
                                                 Expanded(

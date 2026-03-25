@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../admin_tab.dart'; // Ensure this path is correct
 import 'package:uninexus/model/student_model.dart';
-import 'package:uninexus/services/firebase/idlookup_service.dart';
+import 'package:uninexus/services/firebase/id_lookup_service.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
 class AdminUserSearchScreen extends StatefulWidget {
@@ -151,7 +151,7 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
     return Container(
       width: 400,
       decoration: BoxDecoration(
-        color: Colors.grey.withOpacity(0.1),
+        color: Colors.grey.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
       ),
       child: TextField(
@@ -159,7 +159,7 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
         style: AppTextStyles.body,
         decoration: InputDecoration(
           hintText: 'Search User By ID',
-          hintStyle: TextStyle(color: Colors.black.withOpacity(0.3)),
+          hintStyle: TextStyle(color: Colors.black.withValues(alpha: 0.3)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           border: InputBorder.none,
           suffixIcon: GestureDetector(
@@ -191,7 +191,7 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.5),
+          color: Colors.white.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(

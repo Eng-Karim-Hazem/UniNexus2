@@ -23,7 +23,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final int _selectedIndex = -1;
 
   final Color _mainPurple = const Color(0xFF7B61FF);
-  final Color _primaryBlue = const Color(0xFF237ABA);
 
   final Gradient _fabGradient = const LinearGradient(
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
@@ -132,7 +131,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.white.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: _mainPurple),
@@ -179,15 +178,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         margin: const EdgeInsets.only(bottom: 20),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.6),
+          color: Colors.white.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-              color: isLogout ? Colors.red.withOpacity(0.4) : _mainPurple.withOpacity(0.3),
+              color: isLogout ? Colors.red.withValues(alpha: 0.4) : _mainPurple.withValues(alpha: 0.3),
               width: 1
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF237ABA).withOpacity(0.08),
+              color: const Color(0xFF237ABA).withValues(alpha: 0.08),
               blurRadius: 15,
               offset: const Offset(0, 5),
             )
@@ -206,7 +205,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Container(
               height: 35, // Matched height from previous tweaks
               width: 2.5,
-              color: isLogout ? Colors.red.withOpacity(0.3) : _mainPurple.withOpacity(0.3),
+              color: isLogout ? Colors.red.withValues(alpha: 0.3) : _mainPurple.withValues(alpha: 0.3),
             ),
             const SizedBox(width: 15),
             Expanded(
@@ -234,7 +233,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withOpacity(0.6),
+            color: _mainPurple.withValues(alpha: 0.6),
             blurRadius: 25,
             spreadRadius: 6,
             offset: const Offset(0, 2),
@@ -263,7 +262,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 20,
             spreadRadius: 4,
             offset: const Offset(0, -6),

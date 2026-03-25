@@ -13,8 +13,8 @@ import 'package:uninexus/ui/screens/tablet/Admin/admin_requests_screen.dart';
 import 'package:uninexus/ui/screens/tablet/Admin/admin_notices_screen.dart';
 import 'package:uninexus/ui/screens/tablet/Admin/admin_profile_screen.dart';
 import 'package:uninexus/ui/screens/tablet/Admin/admin_settings_screen.dart';
-import 'package:uninexus/ui/screens/tablet/Admin/admin_usersearch_screen.dart';
-import 'package:uninexus/ui/screens/tablet/Admin/admin_sentnotices_screen.dart';
+import 'package:uninexus/ui/screens/tablet/Admin/admin_user_search_screen.dart';
+import 'package:uninexus/ui/screens/tablet/Admin/admin_sent_notices_screen.dart';
 import 'package:uninexus/ui/screens/tablet/Admin/admin_received_notices.dart';
 
 import '../../../../admin_tab.dart';

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/model/student_model.dart';
-import 'package:uninexus/services/firebase/idlookup_service.dart';
+import 'package:uninexus/services/firebase/id_lookup_service.dart';
 import 'package:uninexus/theme/app_theme.dart';
 import 'package:uninexus/theme/uninexus_tab.dart';
 
@@ -183,7 +183,7 @@ class _UserRow extends StatelessWidget {
         children: [
           const Icon(Icons.person, color: AppColors.primary, size: 28),
           const SizedBox(width: 14),
-          Container(width: 2, height: 28, color: AppColors.primary.withOpacity(.35)),
+          Container(width: 2, height: 28, color: AppColors.primary.withValues(alpha: .35)),
           const SizedBox(width: 14),
           Expanded(child: Text(name, style: const TextStyle(fontFamily: AppFonts.spaceGrotesk, fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textDark))),
           Container(width: 10, height: 10, decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle)),

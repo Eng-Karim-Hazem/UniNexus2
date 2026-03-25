@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../model/gatescan_model.dart';
+import '../../model/gate_scan_model.dart';
 
 class GateService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;

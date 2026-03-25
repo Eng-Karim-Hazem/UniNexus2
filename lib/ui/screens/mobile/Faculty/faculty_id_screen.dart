@@ -136,16 +136,16 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 30),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.85),
+        color: Colors.white.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: _primaryBlue.withOpacity(0.1),
+            color: _primaryBlue.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           )
         ],
-        border: Border.all(color: Colors.white.withOpacity(0.6), width: 2),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 2),
       ),
       child: Column(
         children: [
@@ -247,7 +247,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
           border: Border.all(color: activeColor, width: 2),
           boxShadow: [
             BoxShadow(
-              color: activeColor.withOpacity(0.2),
+              color: activeColor.withValues(alpha: 0.2),
               blurRadius: 15,
               offset: const Offset(0, 5),
             )
@@ -283,7 +283,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withOpacity(0.6),
+            color: _mainPurple.withValues(alpha: 0.6),
             blurRadius: 25,
             spreadRadius: 6,
             offset: const Offset(0, 2),
