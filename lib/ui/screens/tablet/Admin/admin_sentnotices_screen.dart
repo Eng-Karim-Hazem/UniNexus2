@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+
 import '../../../../admin_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
@@ -9,17 +11,6 @@ class AdminSentNoticesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Mock data for sent notices
-    final List<Map<String, String>> sentNotices = List.generate(
-      7,
-          (index) => {
-        'sender': index % 2 == 0 ? 'Managemet' : 'Management',
-        'message': index % 2 == 0
-            ? 'We need to update our policy rules'
-            : 'The next board meeting will be on 27/5',
-      },
-    );
-
     return ITScreenBackground(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -31,23 +22,49 @@ class AdminSentNoticesScreen extends StatelessWidget {
             Expanded(
               child: Row(
                 children: [
-                  // Main Content Area
                   Expanded(
                     child: GlassCard(
                       padding: const EdgeInsets.all(24),
-                      child: ListView.separated(
-                        itemCount: sentNotices.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 16),
-                        itemBuilder: (context, index) {
-                          return _buildSentNoticeItem(
-                            sentNotices[index]['sender']!,
-                            sentNotices[index]['message']!,
+                      child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                        stream: FirebaseFirestore.instance
+                            .collection('Notifications')
+                            .orderBy('date', descending: true)
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+
+                          if (snapshot.hasError) {
+                            return const Center(child: Text('Error loading notices.'));
+                          }
+
+                          final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
+                              snapshot.data?.docs ?? const [];
+
+                          if (docs.isEmpty) {
+                            return const Center(
+                              child: Text('No sent notices yet.', style: AppTextStyles.body),
+                            );
+                          }
+
+                          return ListView.separated(
+                            itemCount: docs.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 16),
+                            itemBuilder: (context, index) {
+                              final Map<String, dynamic> data = docs[index].data();
+                              final String sender =
+                              (data['sentBy'] ?? data['sender'] ?? 'Admin').toString();
+                              final String message =
+                              (data['description'] ?? data['message'] ?? '').toString();
+
+                              return _buildSentNoticeItem(sender, message);
+                            },
                           );
                         },
                       ),
                     ),
                   ),
-                  // Spacer to match dashboard layout width
                   const SizedBox(width: 300),
                 ],
               ),
@@ -68,7 +85,8 @@ class AdminSentNoticesScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.notifications_none_rounded, color: AppColors.primary, size: 28),
+          const Icon(Icons.notifications_none_rounded,
+              color: AppColors.primary, size: 28),
           const SizedBox(width: 20),
           const Text('|', style: TextStyle(fontSize: 24, color: Colors.grey)),
           const SizedBox(width: 20),

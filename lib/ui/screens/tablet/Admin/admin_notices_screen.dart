@@ -1,10 +1,16 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../../../admin_tab.dart';
+import '../../../../model/notices_model.dart';
+import '../../../../services/firebase/notices_service.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
 class AdminNoticesScreen extends StatefulWidget {
   final void Function(AdminTab) onNavigate;
+
   const AdminNoticesScreen({super.key, required this.onNavigate});
 
   @override
@@ -12,6 +18,8 @@ class AdminNoticesScreen extends StatefulWidget {
 }
 
 class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
+  final NoticesService _noticesService = NoticesService();
+
   String _activeCategory = 'Individual';
   final TextEditingController _idController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
@@ -19,6 +27,77 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
   String? _selectedSpecialization;
   String? _selectedGroup;
   String? _selectedProgram;
+
+  bool _isSending = false;
+  String _senderName = 'Admin';
+  bool _isLoadingSpecializations = true;
+  List<String> _specializations = const [];
+
+  static const List<String> _groups = [
+    'IT',
+    'Security',
+    'Admin',
+    'Students',
+    'Faculty',
+  ];
+  static const List<String> _programs = [
+    'ICT',
+    'Renewable Energy',
+    'Mechatronics',
+    'Autotronics',
+    'Artificial Limbs',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSpecializations();
+    _loadSenderName();
+  }
+
+  @override
+  void dispose() {
+    _idController.dispose();
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadSpecializations() async {
+    try {
+      final List<String> loaded =
+      await _noticesService.getAvailableSpecializations();
+      if (!mounted) return;
+      setState(() {
+        _specializations = loaded;
+        _isLoadingSpecializations = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _specializations = const [];
+        _isLoadingSpecializations = false;
+      });
+    }
+  }
+
+
+  Future<void> _loadSenderName() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String firstName = (prefs.getString('fName') ?? '').trim();
+    final String lastName = (prefs.getString('lName') ?? '').trim();
+
+    String composed = '';
+    if (firstName.isNotEmpty && lastName.isNotEmpty) {
+      composed = '$firstName $lastName';
+    } else if (firstName.isNotEmpty) {
+      composed = firstName;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _senderName = composed.isNotEmpty ? composed : 'Admin';
+    });
+  }
 
   Widget _buildInputSection() {
     switch (_activeCategory) {
@@ -31,27 +110,32 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
         return _buildFormLayout(
           label: 'Choose Specialization',
           child: _buildDropdown(
-              ['TA', 'Professors', 'Students' ,'Staff'],
-              _selectedSpecialization,
-                  (v) => setState(() => _selectedSpecialization = v)
+            _specializations,
+            _selectedSpecialization,
+                (v) => setState(() => _selectedSpecialization = v),
+            hint: _isLoadingSpecializations
+                ? 'Loading specializations...'
+                : 'Choose the Specialization',
           ),
         );
       case 'Groups':
         return _buildFormLayout(
           label: 'Choose Groups',
           child: _buildDropdown(
-              ['Group A', 'Group B', 'Group C'],
-              _selectedGroup,
-                  (v) => setState(() => _selectedGroup = v)
+            _groups,
+            _selectedGroup,
+                (v) => setState(() => _selectedGroup = v),
+            hint: 'Choose the Group',
           ),
         );
       case 'Program':
         return _buildFormLayout(
           label: 'Choose Program',
           child: _buildDropdown(
-              ['ICT', 'Mechatronics', 'Ortho','Auto','Renewable Energy','Petro'],
-              _selectedProgram,
-                  (v) => setState(() => _selectedProgram = v)
+            _programs,
+            _selectedProgram,
+                (v) => setState(() => _selectedProgram = v),
+            hint: 'Choose the program',
           ),
         );
       default:
@@ -69,41 +153,169 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
         const SizedBox(height: 32),
         const Text('Notice message', style: AppTextStyles.infoRowLabelStyle),
         const SizedBox(height: 12),
-        _buildTextField(_messageController, 'Enter Notice Body (max 100 characters)', maxLines: 6),
+        _buildTextField(
+          _messageController,
+          'Enter Notice Body (max 120 characters)',
+          maxLines: 6,
+          maxLength: 120,
+        ),
       ],
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, {int maxLines = 1}) {
+  Widget _buildTextField(
+      TextEditingController controller,
+      String hint, {
+        int maxLines = 1,
+        int? maxLength,
+      }) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
+      maxLength: maxLength,
       style: AppTextStyles.body,
+      decoration: InputDecoration(
+        hintText: hint,
+        counterText: '',
+        hintStyle: TextStyle(color: Colors.black.withOpacity(0.3)),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.7),
+        contentPadding: const EdgeInsets.all(20),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdown(
+      List<String> items,
+      String? current,
+      ValueChanged<String?> onChanged, {
+        required String hint,
+      }) {
+    return DropdownButtonFormField<String>(
+      initialValue: current,
+      style: AppTextStyles.body,
+      items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+      onChanged: items.isEmpty ? null : onChanged,
+      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: Colors.black.withOpacity(0.3)),
         filled: true,
         fillColor: Colors.white.withOpacity(0.7),
-        contentPadding: const EdgeInsets.all(20),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
       ),
     );
   }
 
-  Widget _buildDropdown(List<String> items, String? current, ValueChanged<String?> onChanged) {
-    return DropdownButtonFormField<String>(
-      initialValue: current,
-      style: AppTextStyles.body,
-      items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-      onChanged: onChanged,
-      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.white.withOpacity(0.7),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-      ),
-    );
+  Future<void> _sendNotice() async {
+    final String message = _messageController.text.trim();
+
+    if (message.isEmpty) {
+      _showSnack('Please enter a notice message.');
+      return;
+    }
+
+    setState(() => _isSending = true);
+
+    try {
+      late final List<String> recipientIds;
+      late final NoticeTargetType targetType;
+      late final String targetValue;
+      late final String title;
+
+      switch (_activeCategory) {
+        case 'Individual':
+          final String id = _idController.text.trim();
+          if (id.isEmpty) {
+            throw Exception('Please enter a user ID.');
+          }
+          recipientIds = [id];
+          targetType = NoticeTargetType.individual;
+          targetValue = id;
+          title = 'Individual Notice';
+          break;
+
+        case 'Groups':
+          final String? group = _selectedGroup;
+          if (group == null || group.isEmpty) {
+            throw Exception('Please choose a group.');
+          }
+          recipientIds = await _noticesService.getAllUserIdsByGroup(group);
+          targetType = NoticeTargetType.group;
+          targetValue = group;
+          title = 'Group Notice: $group';
+          break;
+
+        case 'Specialization':
+          final String? specialization = _selectedSpecialization;
+          if (specialization == null || specialization.isEmpty) {
+            throw Exception('Please choose a specialization.');
+          }
+          recipientIds =
+          await _noticesService.getFacultyIdsBySubject(specialization);
+          targetType = NoticeTargetType.specialization;
+          targetValue = specialization;
+          title = 'Specialization Notice: $specialization';
+          break;
+
+        case 'Program':
+          final String? program = _selectedProgram;
+          if (program == null || program.isEmpty) {
+            throw Exception('Please choose a program.');
+          }
+          recipientIds = await _noticesService.getStudentIdsByProgram(program);
+          targetType = NoticeTargetType.program;
+          targetValue = program;
+          title = 'Program Notice: $program';
+          break;
+
+        default:
+          throw Exception('Unknown notice category.');
+      }
+
+      if (recipientIds.isEmpty) {
+        throw Exception('No users matched the selected target.');
+      }
+
+      final NoticeModel notice = NoticeModel(
+        title: title,
+        description: message,
+        targetType: targetType,
+        targetValue: targetValue,
+        recipientIds: recipientIds,
+        createdAt: DateTime.now(),
+        sentBy: _senderName,
+      );
+
+      await _noticesService.sendNotice(notice);
+
+      if (!mounted) return;
+
+      _messageController.clear();
+      if (_activeCategory == 'Individual') {
+        _idController.clear();
+      }
+
+      _showSnack('Notice sent successfully to ${recipientIds.length} user(s).');
+    } catch (e) {
+      _showSnack(e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) {
+        setState(() => _isSending = false);
+      }
+    }
+  }
+
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -119,7 +331,6 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
             Expanded(
               child: Row(
                 children: [
-                  // FIXED SIDEBAR (Non-scrollable)
                   SizedBox(
                     width: 180,
                     child: Column(
@@ -138,7 +349,8 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
                             imagePath: 'assets/images/multi_users.png',
                             label: 'Specialization',
                             isActive: _activeCategory == 'Specialization',
-                            onTap: () => setState(() => _activeCategory = 'Specialization'),
+                            onTap: () =>
+                                setState(() => _activeCategory = 'Specialization'),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -162,10 +374,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
                       ],
                     ),
                   ),
-
                   const SizedBox(width: 40),
-
-                  // Main Form Area
                   Expanded(
                     child: GlassCard(
                       padding: const EdgeInsets.all(40),
@@ -182,11 +391,10 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
                             child: SizedBox(
                               width: 240,
                               child: PillButton(
-                                label: 'Send',
+                                label: _isSending ? 'Sending...' : 'Send',
                                 onTap: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Processing Notice...'))
-                                  );
+                                  if (_isSending) return;
+                                  _sendNotice();
                                 },
                               ),
                             ),
@@ -215,7 +423,7 @@ class _CategoryButton extends StatelessWidget {
     required this.imagePath,
     required this.label,
     required this.isActive,
-    required this.onTap
+    required this.onTap,
   });
 
   @override
@@ -223,39 +431,34 @@ class _CategoryButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24), // Match your glass card curves
+        borderRadius: BorderRadius.circular(24),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18), // The Glass Effect!
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 250),
             width: double.infinity,
             decoration: isActive
                 ? BoxDecoration(
-              color: AppColors.primary.withOpacity(0.15), // Slight purple tint when active
+              color: AppColors.primary.withOpacity(0.15),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: AppColors.primary, width: 2),
             )
-                : GlassDecoration.light, // Your custom theme decoration
+                : GlassDecoration.light,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-
-                // IMAGE ASSET
                 Image.asset(
                   imagePath,
-                  width: 50,  // Matched to the design proportions
+                  width: 50,
                   height: 60,
                   fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => const Icon(
-                      Icons.image_not_supported,
-                      size: 30,
-                      color: AppColors.primary
+                    Icons.image_not_supported,
+                    size: 30,
+                    color: AppColors.primary,
                   ),
                 ),
-
                 const SizedBox(height: 10),
-
-                // BOLD TEXT
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Text(
@@ -264,12 +467,11 @@ class _CategoryButton extends StatelessWidget {
                     style: const TextStyle(
                       fontFamily: AppFonts.spaceGrotesk,
                       fontSize: 18,
-                      fontWeight: FontWeight.w800, // Extra bold black text
+                      fontWeight: FontWeight.w800,
                       color: Colors.black87,
                     ),
                   ),
                 ),
-
               ],
             ),
           ),

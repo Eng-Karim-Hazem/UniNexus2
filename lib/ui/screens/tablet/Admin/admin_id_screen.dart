@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:uninexus/theme/app_theme.dart';
 
@@ -14,10 +16,44 @@ class AdminIdScreen extends StatefulWidget {
 }
 
 class _AdminIdScreenState extends State<AdminIdScreen> {
+  String _userID = '';
+  bool _isLoading = true;
   bool _isPunchedIn = false;
+
+  final Color _primaryBlue = const Color(0xFF237ABA);
+  final Color _secondaryPurple = const Color(0xFF9C2CF3);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDataFromPrefs();
+  }
+
+  Future<void> _loadDataFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+
+    if (!mounted) return;
+
+    setState(() {
+      _userID = prefs.getString('userCode') ?? prefs.getString('ID') ?? 'N/A';
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const ITScreenBackground(
+        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      );
+    }
+
+    final String qrData = _isPunchedIn ? 'out.$_userID' : 'in.$_userID';
+    final List<Color> qrColors = _isPunchedIn
+        ? [_secondaryPurple, _primaryBlue]
+        : [_primaryBlue, _secondaryPurple];
+
     return ITScreenBackground(
       child: Padding(
         padding: const EdgeInsets.all(28),
@@ -26,7 +62,6 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
           children: [
             const Text('ID', style: AppTextStyles.largeHeading),
             const SizedBox(height: 20),
-
             Expanded(
               child: Center(
                 child: GlassCard(
@@ -36,15 +71,11 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-
-                        /// ID CARD
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: AppDecorations.idCardInner,
                           child: Row(
                             children: [
-
-                              /// LEFT DECORATION
                               Column(
                                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                 children: [
@@ -55,9 +86,7 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
                                     fit: BoxFit.contain,
                                     errorBuilder: (_, __, ___) => const Dot(),
                                   ),
-
                                   const SizedBox(height: 8),
-
                                   Image.asset(
                                     'assets/icons/Rectangle 25 (1).png',
                                     width: 20,
@@ -72,9 +101,7 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
                                       ),
                                     ),
                                   ),
-
                                   const SizedBox(height: 8),
-
                                   Image.asset(
                                     'assets/icons/Ellipse 3 (1).png',
                                     width: 28,
@@ -84,15 +111,12 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
                                   ),
                                 ],
                               ),
-
                               const SizedBox(width: 16),
-
-                              /// BADGE ICON
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: AppDecorations.iconBackground,
                                 child: Image.asset(
-                                  'assets/images/id_card.png', // Fixed typo here
+                                  'assets/images/id_card.png',
                                   width: 40,
                                   height: 40,
                                   fit: BoxFit.contain,
@@ -103,36 +127,47 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
                                   ),
                                 ),
                               ),
-
                               const SizedBox(width: 24),
-
-                              /// QR CODE
                               Expanded(
                                 child: AspectRatio(
                                   aspectRatio: 1,
-                                  child: Image.asset(
-                                    'assets/images/qr_new.png',
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (_, __, ___) => Container(
-                                      decoration: AppDecorations.qrPlaceholder,
-                                      child: const Center(
-                                        child: Icon(
-                                          Icons.qr_code_2,
-                                          size: 100,
-                                          color: AppColors.primary,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      ShaderMask(
+                                        shaderCallback: (bounds) => LinearGradient(
+                                          colors: qrColors,
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ).createShader(bounds),
+                                        blendMode: BlendMode.srcIn,
+                                        child: QrImageView(
+                                          data: qrData,
+                                          version: QrVersions.auto,
+                                          size: 240.0,
+                                          errorCorrectionLevel: QrErrorCorrectLevel.H,
                                         ),
                                       ),
-                                    ),
+                                      Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Image.asset(
+                                          'assets/images/LOGO.png',
+                                          fit: BoxFit.contain,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-
                         const SizedBox(height: 28),
-
-                        /// PUNCH BUTTON
                         GestureDetector(
                           onTap: () => setState(() => _isPunchedIn = !_isPunchedIn),
                           child: AnimatedContainer(
@@ -165,7 +200,6 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
                             ),
                           ),
                         ),
-
                       ],
                     ),
                   ),

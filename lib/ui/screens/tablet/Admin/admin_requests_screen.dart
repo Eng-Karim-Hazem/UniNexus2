@@ -1,33 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+
 import '../../../../admin_tab.dart';
-// Ensure AdminTab is imported
+import '../../../../services/firebase/it_Logs_service.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
-// Data model (shared or duplicated for Admin context)
-class _AdminRequest {
-  final String id;
-  final String type; // e.g., 'Password Reset' or 'Registration'
-  final String requesterName;
-  final String userType;
-  final String userId;
-  final String email;
-  final int year;
-  final String faculty;
-
-  const _AdminRequest({
-    required this.id,
-    required this.type,
-    required this.requesterName,
-    required this.userType,
-    required this.userId,
-    required this.email,
-    required this.year,
-    required this.faculty,
-  });
-}
-
 class AdminRequestsScreen extends StatefulWidget {
-  final void Function(AdminTab) onNavigate; // Updated to AdminTab
+  final void Function(AdminTab) onNavigate;
   const AdminRequestsScreen({super.key, required this.onNavigate});
 
   @override
@@ -35,209 +14,324 @@ class AdminRequestsScreen extends StatefulWidget {
 }
 
 class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
-  // Mock data matching the Admin dashboard counts
-  final List<_AdminRequest> _requests = [
-    const _AdminRequest(
-      id: '1', type: 'Password Reset',
-      requesterName: 'Moaz Osama Gamil', userType: 'Student',
-      userId: 'ST20222', email: 'MoazOsama@gmail.com', year: 4, faculty: 'ICT',
-    ),
-    const _AdminRequest(
-      id: '2', type: 'Registration',
-      requesterName: 'Ammar Tarek', userType: 'Student',
-      userId: 'ST20195', email: 'AmmarTarek@gmail.com', year: 2, faculty: 'Science',
-    ),
-    const _AdminRequest(
-      id: '3', type: 'Registration',
-      requesterName: 'Youssef Salama', userType: 'Student',
-      userId: 'ST20210', email: 'YoussefS@gmail.com', year: 1, faculty: 'Engineering',
-    ),
-  ];
+  int _selectedIndex = 0;
 
-  _AdminRequest? _selected;
-
-  @override
-  void initState() {
-    super.initState();
-    if (_requests.isNotEmpty) _selected = _requests.first;
+  String _formatDate(Timestamp? timestamp) {
+    if (timestamp == null) return 'Unknown Date';
+    final DateTime date = timestamp.toDate();
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} at '
+        '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
-  void _handleAction() {
-    if (_selected == null) return;
-    setState(() {
-      _requests.removeWhere((r) => r.id == _selected!.id);
-      _selected = _requests.isNotEmpty ? _requests.first : null;
-    });
+  String _capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1).toLowerCase();
+  }
+
+  Future<Map<String, dynamic>?> _fetchUserDetails(String emailOrId, String expectedRole) async {
+    if (emailOrId.isEmpty) return null;
+
+    final isEmail = emailOrId.contains('@');
+    final queryField = isEmail ? 'email' : 'ID';
+    final searchValue = isEmail ? emailOrId.toLowerCase() : emailOrId.toUpperCase();
+
+    final collections = expectedRole.isNotEmpty
+        ? [expectedRole, 'students', 'faculty', 'staff']
+        : ['students', 'faculty', 'staff'];
+
+    for (final col in collections) {
+      try {
+        final query = await FirebaseFirestore.instance
+            .collection(col)
+            .where(queryField, isEqualTo: searchValue)
+            .limit(1)
+            .get();
+
+        if (query.docs.isNotEmpty) {
+          final data = query.docs.first.data();
+          data['foundRole'] = col;
+          return data;
+        }
+      } catch (_) {
+        continue;
+      }
+    }
+
+    return null;
+  }
+
+  Future<void> _updateRequestStatus(DocumentSnapshot doc, String status) async {
+    try {
+      final data = doc.data() as Map<String, dynamic>;
+
+      if (status == 'accepted') {
+        final newPassword = data['newPassword'];
+        final userRole = data['userRole'];
+        final userDocRef = data['userDocRef'];
+
+        if (newPassword != null && userRole != null && userDocRef != null) {
+          await FirebaseFirestore.instance.collection(userRole).doc(userDocRef).update({'pass': newPassword});
+        } else {
+          throw Exception('Missing user reference or password data in this request.');
+        }
+      }
+
+      await doc.reference.update({'isProcessed': true, 'status': status});
+
+      final userId = data['emailOrId'] ?? 'Unknown User';
+      final actionStr = status == 'accepted' ? 'approved' : 'rejected';
+      await ITLogService.logAction('Password reset $actionStr for $userId');
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            status == 'accepted'
+                ? 'Request Approved & Password Updated in Database!'
+                : 'Request Rejected',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return ITScreenBackground( // Reusing the established background wrapper
+    return ITScreenBackground(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('User Requests', style: AppTextStyles.largeHeading),
-            const SizedBox(height: 50),
+            const Text('User Requests', style: AppTextStyles.largeHeading),
+            const SizedBox(height: 45),
             Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // LEFT PANEL: List of Requests
-                  Expanded(
-                    flex: 4,
-                    child: GlassCard(
-                      padding: const EdgeInsets.all(14),
-                      child: _requests.isEmpty
-                          ? const Center(child: Text('No pending requests', style: AppTextStyles.body))
-                          : ListView.separated(
-                        itemCount: _requests.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 12),
-                        itemBuilder: (_, i) {
-                          final r = _requests[i];
-                          return _AdminRequestTile(
-                            request: r,
-                            isSelected: _selected?.id == r.id,
-                            onTap: () => setState(() => _selected = r),
-                          );
-                        },
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance.collection('ForgotPass_request').snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const LoadingState();
+                  }
+                  if (snapshot.hasError) {
+                    return ErrorState(message: 'Error loading requests: ${snapshot.error}');
+                  }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const EmptyState(message: 'No reset requests found.');
+                  }
+
+                  final docs = snapshot.data!.docs.toList();
+                  docs.sort((a, b) {
+                    final dataA = a.data() as Map<String, dynamic>;
+                    final dataB = b.data() as Map<String, dynamic>;
+
+                    final bool isProcessedA = dataA['isProcessed'] == true;
+                    final bool isProcessedB = dataB['isProcessed'] == true;
+                    if (isProcessedA != isProcessedB) return isProcessedA ? 1 : -1;
+
+                    final Timestamp? timeA = dataA['requestDate'] as Timestamp?;
+                    final Timestamp? timeB = dataB['requestDate'] as Timestamp?;
+                    if (timeA != null && timeB != null) return timeB.compareTo(timeA);
+                    return 0;
+                  });
+
+                  if (_selectedIndex >= docs.length) _selectedIndex = 0;
+
+                  final selectedDoc = docs[_selectedIndex];
+                  final selectedData = selectedDoc.data() as Map<String, dynamic>;
+
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        flex: 45,
+                        child: GlassCard(
+                          padding: const EdgeInsets.all(12),
+                          child: ListView.builder(
+                            padding: EdgeInsets.zero,
+                            itemCount: docs.length,
+                            itemBuilder: (context, index) {
+                              final docData = docs[index].data() as Map<String, dynamic>;
+                              final emailOrId = docData['emailOrId'] ?? 'Unknown User';
+                              final reqDate = _formatDate(docData['requestDate'] as Timestamp?);
+
+                              final statusStr = docData['status']?.toString().toLowerCase() ??
+                                  (docData['isProcessed'] == true ? 'processed' : 'pending');
+                              final isResolved =
+                                  statusStr == 'accepted' || statusStr == 'rejected' || statusStr == 'processed';
+                              final isSelected = _selectedIndex == index;
+
+                              return GestureDetector(
+                                onTap: () => setState(() => _selectedIndex = index),
+                                child: Opacity(
+                                  opacity: isResolved ? 0.6 : 1,
+                                  child: Container(
+                                    margin: const EdgeInsets.only(bottom: 10),
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+                                    decoration: AppDecorations.smallCard(isSelected: isSelected),
+                                    child: Row(
+                                      children: [
+                                        isResolved
+                                            ? Icon(
+                                          statusStr == 'rejected'
+                                              ? Icons.cancel_outlined
+                                              : Icons.check_circle_outline,
+                                          size: 28,
+                                          color: statusStr == 'rejected' ? Colors.red : Colors.green,
+                                        )
+                                            : Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primary.withOpacity(0.1),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.person_outline,
+                                            size: 24,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Container(
+                                          width: 1.5,
+                                          height: 38,
+                                          color: isResolved
+                                              ? Colors.grey.withOpacity(0.3)
+                                              : AppColors.primary.withOpacity(0.3),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                emailOrId,
+                                                style: AppTextStyles.hallListNumberStyle.copyWith(
+                                                  decoration: isResolved ? TextDecoration.lineThrough : null,
+                                                  color: isResolved ? Colors.grey : null,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(reqDate, style: AppTextStyles.caption),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 55,
+                        child: GlassCard(
+                          child: Padding(
+                            padding: const EdgeInsets.all(18),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.lock_reset_rounded, size: 36, color: AppColors.primary),
+                                    const SizedBox(width: 16),
+                                    Text(
+                                      'Password Reset',
+                                      style: AppTextStyles.heading.copyWith(
+                                        color: AppColors.primary,
+                                        fontSize: 24,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 30),
+                                Expanded(
+                                  child: FutureBuilder<Map<String, dynamic>?>(
+                                    future: _fetchUserDetails(
+                                      selectedData['emailOrId']?.toString() ?? '',
+                                      selectedData['userRole']?.toString() ?? '',
+                                    ),
+                                    builder: (context, userSnap) {
+                                      if (userSnap.connectionState == ConnectionState.waiting) {
+                                        return const LoadingState(isCentered: false);
+                                      }
 
-                  const SizedBox(width: 20),
+                                      if (!userSnap.hasData || userSnap.data == null) {
+                                        return Text(
+                                          "Warning: User '${selectedData['emailOrId']}' could not be found in any database collection.",
+                                          style: const TextStyle(color: Colors.red),
+                                        );
+                                      }
 
-                  // RIGHT PANEL: Details & Actions
-                  Expanded(
-                    flex: 5,
-                    child: _selected == null
-                        ? const GlassCard(child: Center(child: Text('Select a request', style: AppTextStyles.emptyStateStyle)))
-                        : _AdminDetailPanel(
-                      request: _selected!,
-                      onApprove: _handleAction,
-                      onReject: _handleAction,
-                    ),
-                  ),
-                ],
+                                      final userData = userSnap.data!;
+                                      final fName = userData['fName'] ?? '';
+                                      final lName = userData['lName'] ?? '';
+                                      final fullName = '$fName $lName'.trim();
+                                      final foundRole = userData['foundRole'] ?? 'Unknown';
+
+                                      return Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          buildFigmaDetailRow('Requested by', fullName.isEmpty ? 'Unknown' : fullName),
+                                          buildFigmaDetailRow('User Type', _capitalize(foundRole)),
+                                          buildFigmaDetailRow(
+                                            'ID',
+                                            userData['ID'] ?? selectedData['emailOrId'] ?? 'N/A',
+                                          ),
+                                          buildFigmaDetailRow('Email', userData['email'] ?? 'N/A'),
+                                          buildFigmaDetailRow(
+                                            'New Password',
+                                            selectedData['newPassword'] ?? 'Not provided',
+                                          ),
+                                          if (userData.containsKey('year'))
+                                            buildFigmaDetailRow('Year', userData['year'].toString()),
+                                          if (userData.containsKey('faculty'))
+                                            buildFigmaDetailRow('Faculty', userData['faculty']),
+                                          const SizedBox(height: 20),
+                                          buildFigmaDetailRow(
+                                            'Time of Request',
+                                            _formatDate(selectedData['requestDate'] as Timestamp?),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ),
+                                if (selectedData['isProcessed'] != true)
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: PillButton(
+                                          label: 'Reject',
+                                          onTap: () => _updateRequestStatus(selectedDoc, 'rejected'),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: PillButton(
+                                          label: 'Approve',
+                                          onTap: () => _updateRequestStatus(selectedDoc, 'accepted'),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// Sub-widgets specifically for Admin context
-
-class _AdminRequestTile extends StatelessWidget {
-  final _AdminRequest request;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _AdminRequestTile({required this.request, required this.isSelected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    // Icons based on type
-    final IconData icon = request.type == 'Password Reset' ? Icons.lock_reset : Icons.assignment_ind_outlined;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.12) : Colors.white.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isSelected ? AppColors.primary : AppColors.primary.withOpacity(0.2)),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: AppColors.primary, size: 32),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(request.type, style: AppTextStyles.requestListTitleStyle),
-                  Text('${request.requesterName} send a request', style: AppTextStyles.requestListNameStyle),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _AdminDetailPanel extends StatelessWidget {
-  final _AdminRequest request;
-  final VoidCallback onApprove;
-  final VoidCallback onReject;
-
-  const _AdminDetailPanel({required this.request, required this.onApprove, required this.onReject});
-
-  @override
-  Widget build(BuildContext context) {
-    return GlassCard(
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(request.type == 'Password Reset' ? Icons.lock_reset : Icons.assignment_ind_outlined,
-                  color: AppColors.primary, size: 40),
-              const SizedBox(width: 14),
-              Container(width: 2, height: 36, color: AppColors.divider),
-              const SizedBox(width: 14),
-              Text(request.type, style: AppTextStyles.requestDetailsHeaderStyle),
-            ],
-          ),
-          const SizedBox(height: 28),
-          _InfoRow(label: 'Requested by', value: request.requesterName, bold: true),
-          const SizedBox(height: 14),
-          _InfoRow(label: 'User Type', value: request.userType),
-          const SizedBox(height: 10),
-          _InfoRow(label: 'ID', value: request.userId),
-          const SizedBox(height: 10),
-          _InfoRow(label: 'Email', value: request.email),
-          const SizedBox(height: 10),
-          _InfoRow(label: 'Year', value: request.year.toString()),
-          const SizedBox(height: 10),
-          _InfoRow(label: 'Faculty', value: request.faculty),
-          const Spacer(),
-          Row(
-            children: [
-              Expanded(child: PillButton(label: 'Approve', onTap: onApprove)),
-              const SizedBox(width: 16),
-              Expanded(child: PillButton(label: 'Reject', onTap: onReject)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool bold;
-  const _InfoRow({required this.label, required this.value, this.bold = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return RichText(
-      text: TextSpan(
-        style: AppTextStyles.requestDetailsInfoStyle,
-        children: [
-          TextSpan(text: '$label : ', style: AppTextStyles.infoRowLabelStyle),
-          TextSpan(text: value, style: bold ? AppTextStyles.infoRowValueBoldStyle : AppTextStyles.infoRowValueStyle),
-        ],
       ),
     );
   }

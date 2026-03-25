@@ -1,10 +1,102 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../../../../admin_tab.dart'; // Ensure this contains your search tab
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../admin_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
+class AdminDashboardScreen extends StatefulWidget {
   final void Function(AdminTab) onNavigate;
   const AdminDashboardScreen({super.key, required this.onNavigate});
+
+  @override
+  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  String _adminName = 'Admin';
+  int _registrationCount = 0;
+  int _passwordResetCount = 0;
+  bool _loading = true;
+  List<String> _recentRequests = [];
+  List<Map<String, String>> _recentNotices = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboard();
+  }
+
+  Future<void> _loadDashboard() async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String fName = (prefs.getString('fName') ?? '').trim();
+
+      final FirebaseFirestore db = FirebaseFirestore.instance;
+
+      final regFuture = db.collection('registration_requests').get();
+      final passFuture = db.collection('ForgotPass_request').get();
+      final noticeFuture = db
+          .collection('Notifications')
+          .orderBy('date', descending: true)
+          .limit(4)
+          .get();
+
+      final results = await Future.wait([regFuture, passFuture, noticeFuture]);
+
+      final reg = results[0] as QuerySnapshot<Map<String, dynamic>>;
+      final pass = results[1] as QuerySnapshot<Map<String, dynamic>>;
+      final notices = results[2] as QuerySnapshot<Map<String, dynamic>>;
+
+      final List<String> requestItems = [
+        ...reg.docs
+            .take(3)
+            .map((doc) => '${(doc.data()['fullName'] ?? doc.data()['name'] ?? 'User').toString()} submitted a request'),
+        ...pass.docs.take(3).map(
+                (doc) => '${(doc.data()['emailOrId'] ?? 'User').toString()} submitted a request'),
+      ];
+
+      final List<Map<String, String>> noticesList = notices.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'sender': (data['sentBy'] ?? 'Management').toString(),
+          'message': (data['description'] ?? '').toString(),
+        };
+      }).toList();
+
+      if (!mounted) return;
+      setState(() {
+        _adminName = fName.isNotEmpty ? fName : 'Admin';
+        _registrationCount = reg.docs.length;
+        _passwordResetCount = pass.docs.length;
+        _recentRequests = requestItems.take(3).toList();
+        _recentNotices = noticesList;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+    }
+  }
+
+  String _today() {
+    final now = DateTime.now();
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
+    ];
+    return '${months[now.month - 1]} ${now.day}, ${now.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,95 +106,116 @@ class AdminDashboardScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const AppGreetingCard(
-              name: 'Ms. Sarah',
+            AppGreetingCard(
+              name: _adminName,
               subtitle: 'Good morning',
-              date: 'October 11, 2026',
+              date: _today(),
             ),
             const SizedBox(height: 20),
-
             Expanded(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // LEFT COLUMN: Requests Overview
                   Expanded(
                     flex: 5,
                     child: GlassCard(
                       padding: const EdgeInsets.all(20),
-                      child: Column(
+                      child: _loading
+                          ? const Center(child: CircularProgressIndicator())
+                          : Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildRequestSummaryRow('assets/icons/clipboard.png', "6 Registration requests", Icons.assignment),
+                          _buildRequestSummaryRow(
+                            'assets/icons/clipboard.png',
+                            '$_registrationCount Registration requests',
+                            Icons.assignment,
+                          ),
                           const SizedBox(height: 15),
-                          _buildRequestSummaryRow('assets/icons/lock_reset.png', "3 Password reset requests", Icons.lock_reset),
+                          _buildRequestSummaryRow(
+                            'assets/icons/lock_reset.png',
+                            '$_passwordResetCount Password reset requests',
+                            Icons.lock_reset,
+                          ),
                           const Padding(
                             padding: EdgeInsets.symmetric(vertical: 20),
                             child: Divider(),
                           ),
-                          const Text("Recent Requests", style: AppTextStyles.senderStyle),
+                          const Text('Recent Requests',
+                              style: AppTextStyles.senderStyle),
                           const SizedBox(height: 12),
-                          _buildRecentRequestItem("Ammar Tarek submitted a request", Icons.assignment),
-                          _buildRecentRequestItem("Youssef Salama submitted a request", Icons.lock_reset),
-                          _buildRecentRequestItem("Karim Hazem submitted a request", Icons.assignment),
+                          ..._recentRequests.map(
+                                (item) => _buildRecentRequestItem(
+                                item, Icons.assignment),
+                          ),
+                          if (_recentRequests.isEmpty)
+                            const Text('No recent requests.',
+                                style: AppTextStyles.body),
                           const Spacer(),
                           Align(
                             alignment: Alignment.centerRight,
                             child: GestureDetector(
-                              onTap: () => onNavigate(AdminTab.requests),
-                              child: const Text('View Requests >', style: AppTextStyles.viewLinkStyle),
+                              onTap: () => widget.onNavigate(AdminTab.requests),
+                              child: const Text('View Requests >',
+                                  style: AppTextStyles.viewLinkStyle),
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-
                   const SizedBox(width: 20),
-
-                  // RIGHT COLUMN: Quick Actions & Notices
                   Expanded(
                     flex: 5,
                     child: Column(
                       children: [
                         Row(
                           children: [
-                            // FIXED: User Search now navigates to the search screen
                             Expanded(
                               child: _buildQuickActionCard(
-                                "User Search",
-                                "assets/images/id-card 5.png",
-                                onTap: () => onNavigate(AdminTab.userSearch), // Ensure 'search' is in AdminTab
+                                'User Search',
+                                'assets/images/id-card 5.png',
+                                onTap: () => widget.onNavigate(AdminTab.userSearch),
                               ),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
                               child: _buildQuickActionCard(
-                                "Send Notice",
-                                "assets/images/send_butt.png",
-                                onTap: () => onNavigate(AdminTab.sentNotices),
+                                'Send Notice',
+                                'assets/images/send_butt.png',
+                                onTap: () => widget.onNavigate(AdminTab.notices),
                               ),
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 20),
-
-                        // NOTICES SECTION
                         Expanded(
                           child: GlassCard(
                             padding: const EdgeInsets.all(20),
-                            child: Column(
+                            child: _loading
+                                ? const Center(child: CircularProgressIndicator())
+                                : Column(
                               children: [
-                                _buildNoticeItem("Management", "We need to update our policy rules"),
-                                const SizedBox(height: 12),
-                                _buildNoticeItem("Management", "The next board meeting will be on 27/5"),
+                                ..._recentNotices.map((n) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _buildNoticeItem(
+                                    n['sender'] ?? 'Management',
+                                    n['message'] ?? '',
+                                  ),
+                                )),
+                                if (_recentNotices.isEmpty)
+                                  const Expanded(
+                                    child: Center(
+                                      child: Text('No notices yet.',
+                                          style: AppTextStyles.body),
+                                    ),
+                                  ),
                                 const Spacer(),
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: GestureDetector(
-                                    onTap: () =>  onNavigate(AdminTab.notices),
-                                    child: const Text('View Sent Notices >', style: AppTextStyles.viewLinkStyle),
+                                    onTap: () => widget.onNavigate(AdminTab.sentNotices),
+                                    child: const Text('View Sent Notices >',
+                                        style: AppTextStyles.viewLinkStyle),
                                   ),
                                 ),
                               ],
@@ -121,11 +234,8 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  // --- UI HELPER METHODS ---
-
-  // Updated to match the new crisp white design with the top-right icon box!
-  // Updated to use image assets instead of standard icons
-  Widget _buildQuickActionCard(String title, String imagePath, {required VoidCallback onTap}) {
+  Widget _buildQuickActionCard(String title, String imagePath,
+      {required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -150,8 +260,6 @@ class AdminDashboardScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-
-            // TOP RIGHT: Filled Asset Box
             Align(
               alignment: Alignment.topRight,
               child: Container(
@@ -161,12 +269,10 @@ class AdminDashboardScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Image.asset(
-                  imagePath, // Uses your custom asset path
+                  imagePath,
                   width: 30,
                   height: 30,
-                  //color: Colors.white, // Tints your asset white to match the design!
                   fit: BoxFit.contain,
-                  // Fallback icon just in case the asset path is mistyped
                   errorBuilder: (context, error, stackTrace) => const Icon(
                     Icons.image_not_supported_outlined,
                     size: 26,
@@ -175,8 +281,6 @@ class AdminDashboardScreen extends StatelessWidget {
                 ),
               ),
             ),
-
-            // BOTTOM LEFT: Bold Title
             Text(
               title,
               style: const TextStyle(
@@ -186,24 +290,27 @@ class AdminDashboardScreen extends StatelessWidget {
                 color: AppColors.textDark,
               ),
             ),
-
           ],
         ),
       ),
     );
   }
 
-
   Widget _buildRequestSummaryRow(String iconPath, String title, IconData fallback) {
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(
+              color: Colors.white, borderRadius: BorderRadius.circular(12)),
           child: Icon(fallback, color: AppColors.primary, size: 28),
         ),
         const SizedBox(width: 16),
-        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+        Text(title,
+            style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87)),
       ],
     );
   }
