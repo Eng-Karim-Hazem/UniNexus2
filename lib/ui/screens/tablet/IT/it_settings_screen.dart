@@ -1,6 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+// --- NEW IMPORTS FOR CSV EXPORT ---
+import 'package:csv/csv.dart';
+import 'dart:typed_data';
+import 'package:file_saver/file_saver.dart';
 
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
@@ -20,6 +26,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
   int? selectedSettingTab;
   final TextEditingController _feedbackController = TextEditingController();
   int _rating = 4;
+  bool _isExporting = false; // Added to show loading state during export
 
   /// Settings menu items
   static const List<Map<String, String>> _items = [
@@ -35,6 +42,82 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
   void dispose() {
     _feedbackController.dispose();
     super.dispose();
+  }
+
+  // --- CSV EXPORT LOGIC ---
+  Future<void> _exportLogsToCSV() async {
+    setState(() => _isExporting = true);
+
+    try {
+      // 1. Fetch data from Firestore
+      final QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('IT_Logs')
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      if (snapshot.docs.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("No logs available to export.")));
+        }
+        setState(() => _isExporting = false);
+        return;
+      }
+
+      // 2. Prepare the CSV Header Row
+      List<List<dynamic>> rows = [];
+      rows.add(["Date", "Time", "Action Message"]);
+
+      // 3. Loop through data and format it
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final String message = data['message'] ?? 'Unknown Action';
+        final Timestamp? timestamp = data['timestamp'] as Timestamp?;
+
+        String dateStr = 'Unknown Date';
+        String timeStr = 'Unknown Time';
+
+        if (timestamp != null) {
+          final DateTime dt = timestamp.toDate();
+          dateStr = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+
+          int hour = dt.hour;
+          String period = hour >= 12 ? 'PM' : 'AM';
+          if (hour == 0) hour = 12;
+          if (hour > 12) hour -= 12;
+          String minute = dt.minute.toString().padLeft(2, '0');
+          timeStr = '$hour:$minute $period';
+        }
+
+        // Add the row
+        rows.add([dateStr, timeStr, message]);
+      }
+
+      // 4. Convert to CSV string, then to Bytes
+      String csvData = const ListToCsvConverter().convert(rows);
+      Uint8List bytes = Uint8List.fromList(csvData.codeUnits);
+
+      // 5. Trigger Native Save Dialog via file_saver
+      await FileSaver.instance.saveAs(
+        name: 'IT_Logs_Report_${DateTime.now().millisecondsSinceEpoch}',
+        bytes: bytes,
+        ext: 'csv',
+        mimeType: MimeType.csv,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Logs successfully exported!"), backgroundColor: Colors.green));
+      }
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error exporting logs: $e"), backgroundColor: Colors.red));
+      }
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
+    }
   }
 
   @override
@@ -153,7 +236,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
         const SizedBox(height: 20),
         _buildTextField("New Email", "Enter email"),
         const SizedBox(height: 40),
-        _buildPrimaryButton("Update"),
+        _buildPrimaryButton("Update", onPressed: () {}),
       ],
     );
   }
@@ -187,7 +270,11 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
         const Text(
             'This feature is used to export the logged information so it can be used for backup or analyzing behaviour.'),
         const SizedBox(height: 60),
-        Center(child: _buildPrimaryButton('Export')),
+        Center(
+          child: _isExporting
+              ? const CircularProgressIndicator()
+              : _buildPrimaryButton('Export', onPressed: _exportLogsToCSV),
+        ),
       ],
     );
   }
@@ -233,7 +320,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
           ),
         ),
         const SizedBox(height: 30),
-        _buildPrimaryButton("Submit"),
+        _buildPrimaryButton("Submit", onPressed: () {}),
       ],
     );
   }
@@ -332,10 +419,10 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// Primary outlined button
-  Widget _buildPrimaryButton(String text) {
+  /// Primary outlined button (Modified to accept an onPressed callback!)
+  Widget _buildPrimaryButton(String text, {required VoidCallback onPressed}) {
     return OutlinedButton(
-      onPressed: () {},
+      onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         side: const BorderSide(color: AppColors.primary),
         padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 16),

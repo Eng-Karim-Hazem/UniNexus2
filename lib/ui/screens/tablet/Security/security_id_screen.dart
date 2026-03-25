@@ -48,7 +48,7 @@ class _SecurityIdScreenState extends State<SecurityIdScreen> {
     }
 
     // Dynamic QR Data: Appends .in or .out
-    final String qrData = _isPunchedIn ? "$_userID.in" : "$_userID.out";
+    final String qrData = _isPunchedIn ? "in.$_userID" : "out.$_userID";
 
     // Dynamic QR Colors for the ShaderMask
     final List<Color> qrColors = _isPunchedIn

@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-
-// --- NEW IMPORTS FOR FIREBASE & LOGIC ---
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/ui/screens/tablet/Admin/admin_shell.dart';
 
 import '../../../theme/app_theme.dart';
-
 
 import 'package:uninexus/ui/screens/tablet/forgot_password_page.dart';
 import 'package:uninexus/ui/screens/tablet/register_page.dart';
@@ -14,8 +11,6 @@ import 'package:uninexus/ui/screens/tablet/register_page.dart';
 // --- DASHBOARD IMPORTS ---
 import 'package:uninexus/ui/screens/tablet/IT/it_shell.dart';
 import 'package:uninexus/ui/screens/tablet/Security/security_shell.dart';
-import 'package:uninexus/ui/screens/mobile/Faculty/faculty_home_screen.dart';
-import 'package:uninexus/ui/screens/mobile/Student/stu_home.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -29,17 +24,12 @@ class _LoginPageState extends State<LoginPage>
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false; // Added to manage loading state
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     initPageAnimation(vsync: this);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
   }
 
   @override
@@ -68,17 +58,13 @@ class _LoginPageState extends State<LoginPage>
     setState(() => _isLoading = true);
 
     try {
-      // Determine if the user entered an email or an ID
       final bool isEmail = inputId.contains('@');
       final String queryField = isEmail ? 'email' : 'ID';
-
-      // If it's an ID, convert to uppercase to match Firestore (e.g., ST2022...)
       final String searchValue = isEmail ? inputId.toLowerCase() : inputId.toUpperCase();
 
       Map<String, dynamic>? userData;
       String userCode = "";
 
-      // Look for the user in all 3 primary collections
       final List<String> collections = ['students', 'faculty', 'staff'];
 
       for (String col in collections) {
@@ -91,11 +77,10 @@ class _LoginPageState extends State<LoginPage>
         if (query.docs.isNotEmpty) {
           userData = query.docs.first.data();
           userCode = userData['ID']?.toString().toUpperCase() ?? "";
-          break; // Stop searching once found
+          break;
         }
       }
 
-      // User not found in any collection
       if (userData == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Account not found. Please check your ID/Email.")),
@@ -104,7 +89,6 @@ class _LoginPageState extends State<LoginPage>
         return;
       }
 
-      // Check Password
       if (userData['pass'] != pass) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Incorrect password")),
@@ -113,7 +97,7 @@ class _LoginPageState extends State<LoginPage>
         return;
       }
 
-      // Login Successful! Save data to SharedPreferences
+      // Login Successful! Save data
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('rememberMe', true);
       await prefs.setString('ID', userCode);
@@ -123,26 +107,25 @@ class _LoginPageState extends State<LoginPage>
       await prefs.setString('photo', userData['photo'] ?? '');
       await prefs.setString('pNum', userData['pNum'] ?? '');
 
-      // Save collection-specific data
       if (userData.containsKey('faculty')) await prefs.setString('faculty', userData['faculty']);
       if (userData.containsKey('year')) await prefs.setString('year', userData['year'].toString());
 
       if (!mounted) return;
 
-      // Route the user based on their ID prefix
+      // --- ROUTING LOGIC ---
       if (userCode.startsWith('MN')) {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ITShell()));
       } else if (userCode.startsWith('SC')) {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SecurityShell()));
       } else if (userCode.startsWith('AD')) {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AdminShell()));
-      } else if (userCode.startsWith('FA')) {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const FacultyHomeScreen()));
-      } else if (userCode.startsWith('ST')) {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuHomeScreen()));
       } else {
+        // This easily catches 'FA', 'ST', and anything else!
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Unknown user role for ID: $userCode")),
+          const SnackBar(
+            content: Text("Access Denied: Please use the mobile app for Student/Faculty access.", style: TextStyle(color: Colors.white)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
 
@@ -170,7 +153,7 @@ class _LoginPageState extends State<LoginPage>
       body: Stack(
         children: [
 
-          /// TOP RIGHT SHAPE (Animated)
+          /// TOP RIGHT SHAPE
           Positioned(
             right: -sw * 0.2,
             top: -sh * 0.27,
@@ -188,7 +171,7 @@ class _LoginPageState extends State<LoginPage>
             ),
           ),
 
-          /// BOTTOM RIGHT SHAPE (Animated)
+          /// BOTTOM RIGHT SHAPE
           Positioned(
             right: -sw * 0.001,
             bottom: -sh * 0.46,
@@ -219,13 +202,13 @@ class _LoginPageState extends State<LoginPage>
 
                 /// THE UNIFIED CENTERED FORM
                 Positioned(
-                  left: sw * 0.10,    // Shifts the whole block from the left
-                  width: sw * 0.30,   // Determines how wide the text fields are
-                  top: sh * 0.08,     // Distance from the top of the screen
+                  left: sw * 0.10,
+                  width: sw * 0.30,
+                  top: sh * 0.08,
                   bottom: 0,
-                  child: SingleChildScrollView( // Prevents keyboard overflow errors!
+                  child: SingleChildScrollView(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center, // Centers everything
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
 
                         /// LOGO
@@ -286,9 +269,12 @@ class _LoginPageState extends State<LoginPage>
                           anim: checkAnim,
                           child: _isLoading
                               ? const Center(child: CircularProgressIndicator())
-                              : AppAuthButton(
-                            text: 'Log In',
-                            onTap: _handleLogin,
+                              : SizedBox(
+                            width: 300,
+                            child: AppAuthButton(
+                              text: 'Log In',
+                              onTap: _handleLogin,
+                            ),
                           ),
                         ),
 
@@ -309,7 +295,7 @@ class _LoginPageState extends State<LoginPage>
 
                         /// REGISTER
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.center, // Centers the Row text
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text("Don't have an account? ", style: AppTextStyles.caption),
                             GestureDetector(
@@ -330,7 +316,7 @@ class _LoginPageState extends State<LoginPage>
                           ],
                         ),
 
-                        SizedBox(height: sh * 0.05), // Extra padding for the bottom
+                        SizedBox(height: sh * 0.05),
                       ],
                     ),
                   ),

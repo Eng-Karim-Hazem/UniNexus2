@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
@@ -11,10 +13,49 @@ class ITIdScreen extends StatefulWidget {
 }
 
 class _ITIdScreenState extends State<ITIdScreen> {
+  String _userID = "";
+  bool _isLoading = true;
   bool _isPunchedIn = false;
+
+  // Colors for the QR Shader
+  final Color _primaryBlue = const Color(0xFF237ABA);
+  final Color _secondaryPurple = const Color(0xFF9C2CF3);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDataFromPrefs();
+  }
+
+  // Fetch the ID dynamically from storage
+  Future<void> _loadDataFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+
+    if (mounted) {
+      setState(() {
+        _userID = prefs.getString('userCode') ?? prefs.getString('ID') ?? "N/A";
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const ITScreenBackground(
+        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      );
+    }
+
+    // Dynamic QR Data: Appends .in or .out
+    final String qrData = _isPunchedIn ? "out.$_userID" : "in.$_userID";
+
+    // Dynamic QR Colors for the ShaderMask
+    final List<Color> qrColors = _isPunchedIn
+        ? [_secondaryPurple, _primaryBlue]
+        : [_primaryBlue, _secondaryPurple];
+
     return ITScreenBackground(
       child: Padding(
         padding: const EdgeInsets.all(28),
@@ -76,20 +117,38 @@ class _ITIdScreenState extends State<ITIdScreen> {
                               ),
                               const SizedBox(width: 24),
 
-                              /// QR Code
+                              /// QR Code (Replaced static image with dynamic generator)
                               Expanded(
                                 child: AspectRatio(
                                   aspectRatio: 1,
-                                  child: Image.asset(
-                                      'assets/images/qr_new.png',
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (_, __, ___) => Container(
-                                        decoration: AppDecorations.qrPlaceholder,
-                                        child: const Center(
-                                          child: Icon(Icons.qr_code_2,
-                                              size: 100, color: AppColors.primary),
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      ShaderMask(
+                                        shaderCallback: (bounds) => LinearGradient(
+                                          colors: qrColors,
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ).createShader(bounds),
+                                        blendMode: BlendMode.srcIn,
+                                        child: QrImageView(
+                                          data: qrData,
+                                          version: QrVersions.auto,
+                                          size: 240.0,
+                                          errorCorrectionLevel: QrErrorCorrectLevel.H,
                                         ),
-                                      )),
+                                      ),
+                                      Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Image.asset('assets/images/LOGO.png', fit: BoxFit.contain),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],
@@ -97,7 +156,7 @@ class _ITIdScreenState extends State<ITIdScreen> {
                         ),
                         const SizedBox(height: 28),
 
-                        /// Punch IN/OUT button
+                        /// Punch IN/OUT button (Kept your beautiful animation!)
                         GestureDetector(
                           onTap: () => setState(() => _isPunchedIn = !_isPunchedIn),
                           child: AnimatedContainer(
@@ -124,7 +183,9 @@ class _ITIdScreenState extends State<ITIdScreen> {
                                 child: Text(
                                   _isPunchedIn ? 'Punch OUT' : 'Punch IN',
                                   key: ValueKey(_isPunchedIn),
-                                  style: AppTextStyles.buttonStyle,
+                                  style: AppTextStyles.buttonStyle.copyWith(
+                                    color: _isPunchedIn ? AppColors.primary : AppColors.primary,
+                                  ),
                                 ),
                               ),
                             ),

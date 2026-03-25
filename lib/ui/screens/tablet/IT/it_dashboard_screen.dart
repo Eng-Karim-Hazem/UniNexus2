@@ -22,8 +22,6 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
   double _resolutionRate = 0.0;
   bool _isLoadingStats = true;
 
-  // WE REMOVED THE STATIC _logs LIST HERE!
-
   @override
   void initState() {
     super.initState();
@@ -160,7 +158,7 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
                               stream: FirebaseFirestore.instance
                                   .collection('IT_Logs')
                                   .orderBy('timestamp', descending: true)
-                                  .limit(5) // Only fetch the 5 most recent!
+                                  .limit(5)
                                   .snapshots(),
                               builder: (context, snapshot) {
                                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -211,23 +209,75 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
                     flex: 4,
                     child: Column(
                       children: [
+                        // --- DYNAMIC NOTIFICATIONS (ANNOUNCEMENTS) ---
                         Expanded(
                           child: GlassCard(
                             padding: const EdgeInsets.all(16),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const _AnnouncementCard(
-                                  sender: 'Management',
-                                  message: 'We need to update our policy rules',
-                                ),
-                                const SizedBox(height: 10),
-                                const _AnnouncementCard(
-                                  sender: 'Management',
-                                  message: 'The next board meeting will be on 27/5',
+                                Expanded(
+                                  child: StreamBuilder<QuerySnapshot>(
+                                    stream: FirebaseFirestore.instance
+                                        .collection('Notifications')
+                                        .snapshots(),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.connectionState == ConnectionState.waiting) {
+                                        return const Center(child: CircularProgressIndicator());
+                                      }
+
+                                      if (snapshot.hasError) {
+                                        return const Center(child: Text('Error loading notifications.', style: TextStyle(color: Colors.red)));
+                                      }
+
+                                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                                        return const Center(child: Text('No new announcements.', style: TextStyle(color: Colors.grey)));
+                                      }
+
+                                      // 1. Filter for IT targeted notifications locally to avoid Firebase Index requirements
+                                      var docs = snapshot.data!.docs.where((doc) {
+                                        final data = doc.data() as Map<String, dynamic>;
+                                        return data['targetValue'] == 'IT' || data['targetValue'] == 'All'; // Include 'All' if you use global broadcasts
+                                      }).toList();
+
+                                      // 2. Sort by date newest first
+                                      docs.sort((a, b) {
+                                        final timeA = (a.data() as Map<String, dynamic>)['date'] as Timestamp?;
+                                        final timeB = (b.data() as Map<String, dynamic>)['date'] as Timestamp?;
+                                        if (timeA != null && timeB != null) return timeB.compareTo(timeA);
+                                        return 0;
+                                      });
+
+                                      // 3. Keep only the top 2 for the dashboard preview
+                                      final previewDocs = docs.take(2).toList();
+
+                                      if (previewDocs.isEmpty) {
+                                        return const Center(child: Text('No new announcements for IT.', style: TextStyle(color: Colors.grey)));
+                                      }
+
+                                      return ListView.builder(
+                                        padding: EdgeInsets.zero,
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        itemCount: previewDocs.length,
+                                        itemBuilder: (context, index) {
+                                          final data = previewDocs[index].data() as Map<String, dynamic>;
+                                          final sender = data['sentBy'] ?? 'Management';
+                                          final message = data['description'] ?? 'No details provided.';
+
+                                          return Padding(
+                                            padding: const EdgeInsets.only(bottom: 10),
+                                            child: _AnnouncementCard(
+                                              sender: sender,
+                                              message: message,
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
                                 ),
 
-                                const Spacer(),
+                                const SizedBox(height: 8),
 
                                 Align(
                                   alignment: Alignment.centerRight,
@@ -350,7 +400,7 @@ class _AnnouncementCard extends StatelessWidget {
               children: [
                 Text(sender, style: AppTextStyles.senderStyle),
                 const SizedBox(height: 2),
-                Text(message, style: AppTextStyles.bodySmall),
+                Text(message, style: AppTextStyles.bodySmall, maxLines: 2, overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
