@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_schedule.dart';
@@ -16,6 +19,8 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
 
+  bool _isLoading = false; // Added to manage loading state
+
   // No specific index highlighted
   final int _selectedIndex = -1;
 
@@ -26,6 +31,13 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     begin: Alignment.topLeft, end: Alignment.bottomRight,
   );
 
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
+
   void _onNavBarTapped(int index) async {
     if (index == 0) {
       await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
@@ -35,6 +47,86 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuQAScreen()));
     } else if (index == 3) {
       await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+    }
+  }
+
+  // --- THE FIREBASE UPDATE LOGIC ---
+  Future<void> _updateContactInfo() async {
+    final newPhone = _phoneController.text.trim();
+    final newEmail = _emailController.text.trim();
+
+    // 1. Validate Input
+    if (newPhone.isEmpty && newEmail.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter a new phone number or email.", style: TextStyle(fontFamily: 'SpaceGrotesk'))),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 2. Fetch the current User ID
+      final prefs = await SharedPreferences.getInstance();
+      final String userId = prefs.getString('ID') ?? '';
+
+      if (userId.isEmpty) throw Exception("User ID not found.");
+
+      // 3. The Prefix Trick: Determine which collection this user lives in!
+      String targetCollection = 'students'; // default fallback
+      final prefix = userId.toUpperCase();
+
+      if (prefix.startsWith('FA')) {
+        targetCollection = 'faculty';
+      } else if (prefix.startsWith('ST')) {
+        targetCollection = 'students';
+      }
+
+      // 4. Find their specific document
+      final query = await FirebaseFirestore.instance
+          .collection(targetCollection)
+          .where('ID', isEqualTo: prefix)
+          .limit(1)
+          .get();
+
+      if (query.docs.isEmpty) {
+        throw Exception("Could not find your profile in the database.");
+      }
+
+      final docRef = query.docs.first.reference;
+
+      // 5. Build the update package
+      Map<String, dynamic> updates = {};
+      if (newPhone.isNotEmpty) updates['pNum'] = newPhone;
+      if (newEmail.isNotEmpty) updates['email'] = newEmail;
+
+      // 6. Push to Firebase
+      await docRef.update(updates);
+
+      // 7. Update SharedPreferences so the app remembers the new info locally
+      if (newPhone.isNotEmpty) await prefs.setString('pNum', newPhone);
+      if (newEmail.isNotEmpty) await prefs.setString('email', newEmail);
+
+      // 8. Success Feedback
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Contact info updated successfully!", style: TextStyle(fontFamily: 'SpaceGrotesk')),
+            backgroundColor: Colors.green,
+          ),
+        );
+        _phoneController.clear();
+        _emailController.clear();
+      }
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -76,7 +168,6 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Back Button (Settings Icon)
         GestureDetector(
           onTap: () => Navigator.pop(context),
           child: Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: _mainPurple),
@@ -134,14 +225,14 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           // Phone Input
           _buildLabel("New Phone No."),
           const SizedBox(height: 8),
-          _buildTextField(_phoneController, "Enter the new Phone no."),
+          _buildTextField(_phoneController, "Enter the new Phone no.", TextInputType.phone),
 
           const SizedBox(height: 16),
 
           // Email Input
           _buildLabel("New E-mail"),
           const SizedBox(height: 8),
-          _buildTextField(_emailController, "Enter the new Email"),
+          _buildTextField(_emailController, "Enter the new Email", TextInputType.emailAddress),
         ],
       ),
     );
@@ -159,7 +250,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint) {
+  Widget _buildTextField(TextEditingController controller, String hint, TextInputType keyboardType) {
     return Container(
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -169,6 +260,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       ),
       child: TextField(
         controller: controller,
+        keyboardType: keyboardType,
         style: const TextStyle(fontFamily: 'SpaceGrotesk'),
         decoration: InputDecoration(
           hintText: hint,
@@ -189,17 +281,19 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       width: 200,
       height: 50,
       child: OutlinedButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Information Updated!")),
-          );
-        },
+        onPressed: _isLoading ? null : _updateContactInfo,
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: _mainPurple, width: 1.5),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           backgroundColor: Colors.white,
         ),
-        child: Text(
+        child: _isLoading
+            ? SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(color: _mainPurple, strokeWidth: 2)
+        )
+            : Text(
           "Update",
           style: TextStyle(
             fontFamily: 'Batangas',

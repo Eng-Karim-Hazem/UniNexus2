@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_schedule.dart';
 import 'package:uninexus/ui/screens/mobile/profile_screen.dart';
-
 
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
@@ -15,6 +17,7 @@ class FeedbackScreen extends StatefulWidget {
 class _FeedbackScreenState extends State<FeedbackScreen> {
   final TextEditingController _feedbackController = TextEditingController();
   int _rating = 4; // Default rating
+  bool _isLoading = false; // To manage the loading state
 
   // No specific index highlighted
   final int _selectedIndex = -1;
@@ -25,6 +28,59 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
     begin: Alignment.topLeft, end: Alignment.bottomRight,
   );
+
+  @override
+  void dispose() {
+    _feedbackController.dispose();
+    super.dispose();
+  }
+
+  // --- THE FIREBASE SUBMIT LOGIC ---
+  Future<void> _submitFeedback() async {
+    final feedbackText = _feedbackController.text.trim();
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 1. Fetch user data to attach to the feedback
+      final prefs = await SharedPreferences.getInstance();
+      final String userId = prefs.getString('ID') ?? 'Unknown ID';
+      final String fName = prefs.getString('fName') ?? '';
+      final String lName = prefs.getString('lName') ?? '';
+      final String fullName = '$fName $lName'.trim();
+
+      // 2. Send the data to the (newly auto-created) 'Feedback' collection
+      await FirebaseFirestore.instance.collection('Feedback').add({
+        'userId': userId,
+        'userName': fullName.isEmpty ? 'Unknown User' : fullName,
+        'rating': _rating,
+        'message': feedbackText,
+        'timestamp': FieldValue.serverTimestamp(), // Records the exact time!
+      });
+
+      // 3. Show success message and clear the form
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Feedback Submitted! Thank you.", style: TextStyle(fontFamily: 'SpaceGrotesk')),
+            backgroundColor: Colors.green,
+          ),
+        );
+        _feedbackController.clear();
+        setState(() {
+          _rating = 4; // Reset stars to default
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   void _onNavBarTapped(int index) async {
     if (index == 0) {
@@ -210,17 +266,16 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       width: 200,
       height: 50,
       child: OutlinedButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Feedback Submitted! Thank you.")),
-          );
-        },
+        // Hooked up the button to the new Firebase function!
+        onPressed: _isLoading ? null : _submitFeedback,
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: _mainPurple, width: 1.5),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           backgroundColor: Colors.white,
         ),
-        child: Text(
+        child: _isLoading
+            ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: _mainPurple, strokeWidth: 2))
+            : Text(
           "Submit",
           style: TextStyle(
             fontFamily: 'Batangas',

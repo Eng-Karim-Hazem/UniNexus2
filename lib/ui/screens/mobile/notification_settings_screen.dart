@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_schedule.dart';
@@ -17,17 +20,110 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
   String? _selectedQA;
   String? _selectedAnnouncements;
 
+  bool _isLoading = false; // To show a loading spinner on the button
+
   final List<String> _alertModes = ['Sound', 'Vibrate', 'Silent', 'Priority'];
 
-  // No specific index highlighted
   final int _selectedIndex = -1;
-
   final Color _mainPurple = const Color(0xFF7B61FF);
-
   final Gradient _fabGradient = const LinearGradient(
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
     begin: Alignment.topLeft, end: Alignment.bottomRight,
   );
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedSettings();
+  }
+
+  // --- 1. LOAD SAVED SETTINGS WHEN SCREEN OPENS ---
+  Future<void> _loadSavedSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        // Fetch saved settings, or leave null if they haven't set them yet
+        _selectedGeneral = prefs.getString('notif_general');
+        _selectedQA = prefs.getString('notif_qa');
+        _selectedAnnouncements = prefs.getString('notif_announcements');
+      });
+    }
+  }
+
+  // --- 2. SAVE SETTINGS TO FIREBASE AND LOCAL STORAGE ---
+  Future<void> _saveSettings() async {
+    // Make sure they actually selected something before updating
+    if (_selectedGeneral == null && _selectedQA == null && _selectedAnnouncements == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please make a selection to update.", style: TextStyle(fontFamily: 'SpaceGrotesk'))),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String userId = prefs.getString('ID') ?? '';
+
+      if (userId.isEmpty) throw Exception("User ID not found.");
+
+      // Find which collection this user belongs to
+      String targetCollection = 'students';
+      final prefix = userId.toUpperCase();
+
+      if (prefix.startsWith('FA')) {
+        targetCollection = 'faculty';
+      } else if (prefix.startsWith('ST')) {
+        targetCollection = 'students';
+      }
+
+      // Query their exact document
+      final query = await FirebaseFirestore.instance
+          .collection(targetCollection)
+          .where('ID', isEqualTo: prefix)
+          .limit(1)
+          .get();
+
+      if (query.docs.isEmpty) throw Exception("Could not find user profile in database.");
+
+      final docRef = query.docs.first.reference;
+
+      // Group the settings neatly into a Map for Firebase
+      Map<String, dynamic> notifSettings = {};
+      if (_selectedGeneral != null) notifSettings['general'] = _selectedGeneral;
+      if (_selectedQA != null) notifSettings['qa'] = _selectedQA;
+      if (_selectedAnnouncements != null) notifSettings['announcements'] = _selectedAnnouncements;
+
+      // Push to Firebase (Saving it cleanly inside a 'notification_settings' object)
+      await docRef.update({
+        'notification_settings': notifSettings
+      });
+
+      // Save locally so the app remembers instantly
+      if (_selectedGeneral != null) await prefs.setString('notif_general', _selectedGeneral!);
+      if (_selectedQA != null) await prefs.setString('notif_qa', _selectedQA!);
+      if (_selectedAnnouncements != null) await prefs.setString('notif_announcements', _selectedAnnouncements!);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Notification Settings Updated!", style: TextStyle(fontFamily: 'SpaceGrotesk')),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error saving settings: $e"), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   void _onNavBarTapped(int index) async {
     if (index == 0) {
@@ -79,7 +175,6 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Back Button (Settings Icon)
         GestureDetector(
           onTap: () => Navigator.pop(context),
           child: Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: _mainPurple),
@@ -134,7 +229,6 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           ),
           const SizedBox(height: 20),
 
-          // General Dropdown
           _buildLabel("General"),
           const SizedBox(height: 8),
           _buildDropdownField(
@@ -145,7 +239,6 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
           const SizedBox(height: 16),
 
-          // Q&A Dropdown
           _buildLabel("Q&A"),
           const SizedBox(height: 8),
           _buildDropdownField(
@@ -156,7 +249,6 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
           const SizedBox(height: 16),
 
-          // Announcements Dropdown
           _buildLabel("Announcements"),
           const SizedBox(height: 8),
           _buildDropdownField(
@@ -186,7 +278,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F2F2), // Light grey background
+        color: const Color(0xFFF2F2F2),
         borderRadius: BorderRadius.circular(16),
       ),
       child: DropdownButtonHideUnderline(
@@ -222,17 +314,16 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       width: 200,
       height: 50,
       child: OutlinedButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Notification Settings Updated!")),
-          );
-        },
+        // Hook up the button to our new Firebase function!
+        onPressed: _isLoading ? null : _saveSettings,
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: _mainPurple, width: 1.5),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           backgroundColor: Colors.white,
         ),
-        child: Text(
+        child: _isLoading
+            ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: _mainPurple, strokeWidth: 2))
+            : Text(
           "Update",
           style: TextStyle(
             fontFamily: 'Batangas',

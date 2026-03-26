@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import '../settings_screen.dart';
 import 'faculty_id_screen.dart';
@@ -24,7 +26,6 @@ class FacultyHomeScreen extends StatefulWidget {
 }
 
 class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
-  // SET TO -1: Ensures no icon is highlighted on the Home Screen
   int _selectedIndex = -1;
   String _storedFirstName = "";
   String _storedLastName = "";
@@ -81,7 +82,6 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
       await Navigator.push(context, MaterialPageRoute(builder: (context) => routes[index]!));
     }
 
-    // Reset highlight when popped back to the home screen
     if (mounted) {
       setState(() => _selectedIndex = -1);
     }
@@ -122,7 +122,6 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
                 child: _buildActionButtons(),
               ),
               const SizedBox(height: 24),
-              // EXPANDED fills the rest of the screen
               Expanded(
                 child: _buildNotificationsArea(),
               ),
@@ -184,7 +183,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
           child: _buildActionCard(
               "Halls",
               'assets/images/classroom_1.png',
-              () => Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen()))
+                  () => Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen()))
           ),
         ),
         const SizedBox(width: 16),
@@ -192,7 +191,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
           child: _buildActionCard(
               "Attendance",
               'assets/images/user-check_1.png',
-              () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AttendanceSessionScreen()))
+                  () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AttendanceSessionScreen()))
           ),
         ),
       ],
@@ -237,24 +236,75 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          physics: const BouncingScrollPhysics(),
-          children: [
-            _buildNotifyItem("Management", "Faculty meeting today at 12:30 PM"),
-            const SizedBox(height: 12),
-            _buildNotifyItem("System Update", "Student portal maintenance scheduled"),
-            const SizedBox(height: 12),
-            _buildNotifyItem("Reminder", "Submit grades by Friday"),
-            const SizedBox(height: 12),
-            _buildNotifyItem("Event", "Campus tech fair next week"),
-          ],
+        child: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('Notifications').snapshots(),
+          builder: (context, snapshot) {
+
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator(color: _mainPurple));
+            }
+
+            if (snapshot.hasError) {
+              return const Center(
+                child: Text('Error loading notifications.', style: TextStyle(color: Colors.red, fontFamily: 'SpaceGrotesk')),
+              );
+            }
+
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return const Center(
+                child: Text('No new announcements.', style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.black54)),
+              );
+            }
+
+            var docs = snapshot.data!.docs.where((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              final target = data['targetValue']?.toString() ?? '';
+              return target == 'Faculty' || target == 'faculty' || target == 'All';
+            }).toList();
+
+            docs.sort((a, b) {
+              final timeA = (a.data() as Map<String, dynamic>)['date'] as Timestamp?;
+              final timeB = (b.data() as Map<String, dynamic>)['date'] as Timestamp?;
+              if (timeA != null && timeB != null) return timeB.compareTo(timeA);
+              return 0;
+            });
+
+            if (docs.isEmpty) {
+              return const Center(
+                child: Text('No new announcements for Faculty.', style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.black54)),
+              );
+            }
+
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              physics: const BouncingScrollPhysics(),
+              itemCount: docs.length,
+              itemBuilder: (context, index) {
+                final data = docs[index].data() as Map<String, dynamic>;
+                final sender = data['sentBy'] ?? 'Management';
+                final message = data['description'] ?? 'No details provided.';
+                final timestamp = data['date'] as Timestamp?;
+
+                // Format the time (e.g., "Mar 25, 3:57 PM" or just "3:57 PM")
+                String timeStr = '';
+                if (timestamp != null) {
+                  timeStr = DateFormat('MMM d, h:mm a').format(timestamp.toDate());
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildNotifyItem(sender, message, timeStr),
+                );
+              },
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildNotifyItem(String title, String msg) {
+  // UPDATED: Now accepts a timestamp string and renders it on the right
+  Widget _buildNotifyItem(String title, String msg, String time) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -268,10 +318,15 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
             children: [
               Icon(Icons.notifications_active_outlined, color: _mainPurple, size: 20),
               const SizedBox(width: 8),
-              Text(title, style: TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.bold, color: _mainPurple)),
+              Expanded(
+                child: Text(title, style: TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.bold, color: _mainPurple)),
+              ),
+              // NEW: Render the time right here!
+              if (time.isNotEmpty)
+                Text(time, style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 11, color: Colors.grey.shade600)),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(msg, style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Colors.black87)),
         ],
       ),
@@ -343,7 +398,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
                 ],
               ),
             ),
-            const SizedBox(width: 72), // Space for the FAB notch
+            const SizedBox(width: 72),
             Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
