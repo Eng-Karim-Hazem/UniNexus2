@@ -1,3 +1,4 @@
+import 'dart:convert'; // Required for base64Decode
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
@@ -39,6 +40,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _displayYear = "N/A";
   String _displaySection = "N/A";
 
+  // Photo Variable
+  String? _base64Photo;
+
   bool _isStudent = true;
   bool _isLoading = true;
 
@@ -64,7 +68,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _displayEmail = prefs.getString('email') ?? "N/A";
           _displayPhone = prefs.getString('pNum') ?? "N/A";
           _displayFaculty = prefs.getString('faculty') ?? "N/A";
-          _displayNID = prefs.getString('nationalID') ?? "N/A";
+          _displayNID = prefs.getString('nID') ?? "N/A";
+
+          // Load the photo from SharedPreferences
+          _base64Photo = prefs.getString('photo');
 
           if (_isStudent) {
             _displayYear = prefs.getString('year') ?? "N/A";
@@ -122,7 +129,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // --- ADDED NAVIGATION HERE ---
         GestureDetector(
           onTap: () {
             Navigator.push(
@@ -161,10 +167,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 35,
-            backgroundColor: _mainPurple,
-            child: const Icon(Icons.person, color: Colors.white, size: 40),
+          // Updated Photo Logic
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _mainPurple.withValues(alpha: 0.1),
+            ),
+            child: ClipOval(
+              child: _base64Photo != null && _base64Photo!.isNotEmpty
+                  ? Image.memory(
+                base64Decode(_base64Photo!),
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _buildFallbackIcon(),
+              )
+                  : _buildFallbackIcon(),
+            ),
           ),
           const SizedBox(width: 15),
           Container(height: 40, width: 1, color: Colors.grey.shade300),
@@ -182,6 +201,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  // Fallback icon helper
+  Widget _buildFallbackIcon() {
+    return Center(
+      child: Icon(Icons.person, color: _mainPurple, size: 40),
     );
   }
 
@@ -231,7 +257,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // --- GLOWING HOME FAB ---
   Widget _buildHomeFab() {
     return Container(
       height: 72,
@@ -268,8 +293,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // --- BOTTOM NAVIGATION BARS WITH NATIVE CUTOUT SHADOW ---
-
   Widget _buildStudentBottomBar() {
     return _bottomNavWrapper(
       child: Row(
@@ -288,7 +311,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 72), // Space for the FAB notch
+          const SizedBox(width: 72),
           Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -323,7 +346,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 72), // Space for the FAB notch
+          const SizedBox(width: 72),
           Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,

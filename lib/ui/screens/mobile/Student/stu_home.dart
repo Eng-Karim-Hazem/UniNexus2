@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Added Firestore
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import '../settings_screen.dart';
 import 'student_id_screen.dart' hide StuSchedule;
@@ -16,9 +17,11 @@ class StuHomeScreen extends StatefulWidget {
 }
 
 class _StuHomeScreenState extends State<StuHomeScreen> {
-  int _selectedIndex = -1; // -1 ensures nothing is highlighted by default
+  int _selectedIndex = -1;
   String _firstName = 'Student';
   String _lastName = '';
+  String _studentID = ''; // Added to track ID for notifications
+  String _faculty = '';   // Added to track Faculty for notifications
   bool _isLoading = true;
 
   final Color _mainPurple = const Color(0xFF7B61FF);
@@ -43,6 +46,8 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
       setState(() {
         _firstName = prefs.getString('fName') ?? 'Student';
         _lastName = prefs.getString('lName') ?? '';
+        _studentID = prefs.getString('ID') ?? ''; // Loading Student ID
+        _faculty = prefs.getString('faculty') ?? ''; // Loading Faculty
         _isLoading = false;
       });
     }
@@ -110,6 +115,8 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
+
+                // --- DYNAMIC NOTIFICATION SECTION ---
                 Expanded(
                   child: Container(
                     width: double.infinity,
@@ -120,15 +127,62 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1.5),
                     ),
-                    child: ListView(
-                      physics: const BouncingScrollPhysics(),
-                      children: [
-                        _buildStudentNotification(
-                          title: "Finance",
-                          message: "Your tuition date is due",
-                          icon: Icons.notifications_none_rounded,
-                        ),
-                      ],
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('Notifications')
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+
+                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                          return _buildEmptyNotices();
+                        }
+
+                        // Filter for "All", "Student", Specific Faculty, or Specific Student ID
+                        var filteredDocs = snapshot.data!.docs.where((doc) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          final target = data['targetValue']?.toString() ?? '';
+                          final List<dynamic> recipientIds = data['recipientIds'] ?? [];
+
+                          return target == 'All' ||
+                              target == 'Student' ||
+                              target == _faculty ||
+                              target == _studentID ||
+                              recipientIds.contains(_studentID);
+                        }).toList();
+
+                        // Sort by date (Assuming there is a 'date' field of type Timestamp)
+                        filteredDocs.sort((a, b) {
+                          final timeA = (a.data() as Map<String, dynamic>)['date'];
+                          final timeB = (b.data() as Map<String, dynamic>)['date'];
+                          if (timeA is Timestamp && timeB is Timestamp) {
+                            return timeB.compareTo(timeA);
+                          }
+                          return 0;
+                        });
+
+                        if (filteredDocs.isEmpty) {
+                          return _buildEmptyNotices();
+                        }
+
+                        return ListView.builder(
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: filteredDocs.length,
+                          itemBuilder: (context, index) {
+                            final data = filteredDocs[index].data() as Map<String, dynamic>;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12.0),
+                              child: _buildStudentNotification(
+                                title: data['sentBy'] ?? "University Notice",
+                                message: data['description'] ?? "",
+                                icon: Icons.notifications_none_rounded,
+                              ),
+                            );
+                          },
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -136,6 +190,15 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyNotices() {
+    return const Center(
+      child: Text(
+        "No notifications for you yet.",
+        style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.black54),
       ),
     );
   }
@@ -183,7 +246,9 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
             children: [
               Icon(icon, color: _mainPurple, size: 28),
               const SizedBox(width: 12),
-              Text(title, style: TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: _mainPurple)),
+              Expanded(
+                child: Text(title, style: TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: _mainPurple)),
+              ),
             ],
           ),
           const SizedBox(height: 8),

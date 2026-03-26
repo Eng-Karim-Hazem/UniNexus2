@@ -51,7 +51,7 @@ class _ITProfileScreenState extends State<ITProfileScreen> {
       _phone = _getValidString(prefs, 'pNum');
       _department = _getValidString(prefs, 'department');
       _position = _getValidString(prefs, 'position');
-      _nationalId = _getValidString(prefs, 'nationalId');
+      _nationalId = _getValidString(prefs, 'nID');
       _base64Photo = prefs.getString('photo');
       _isLoading = false;
     });

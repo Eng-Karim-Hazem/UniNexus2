@@ -124,7 +124,8 @@ class _LoginScreenState extends State<LoginScreen>
         await prefs.setString('email', userData['email'] ?? "N/A");
         await prefs.setString('pNum', userData['pNum'] ?? "N/A");
         await prefs.setString('faculty', userData['faculty'] ?? "N/A");
-        await prefs.setString('nationalID', userData['nationalID'] ?? "N/A");
+        await prefs.setString('nID', userData['nID'] ?? "N/A");
+        await prefs.setString('photo', userData['photo'] ?? "N/A");
 
         if (collectionName == 'students') {
           await prefs.setString('year', userData['year'] ?? "N/A");

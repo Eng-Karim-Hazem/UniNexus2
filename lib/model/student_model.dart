@@ -6,6 +6,7 @@ class Student {
   final String lName;
   final String year;
   final String faculty;
+  final String nID;
   final String section;  // CORRECTED to int (was String)
   final String pNum;
   final String photo;
@@ -21,6 +22,7 @@ class Student {
     required this.lName,
     required this.year,
     required this.faculty,
+    required this.nID,
     required this.section,
     required this.pNum,
     required this.photo,
@@ -40,6 +42,7 @@ class Student {
       lName: json['lName'] ?? '',
       year: (json['year']),
       faculty: json['faculty'] ?? '',
+      nID: json['NID'] ?? '',
       section: (json['section']),
       pNum: json['pNum'] ?? '',
       photo: json['photo'] ?? '',
@@ -60,6 +63,7 @@ class Student {
       'lName': lName,
       'year': year,
       'faculty': faculty,
+      'nID': nID,
       'section': section,
       'pNum': pNum,
       'photo': photo,

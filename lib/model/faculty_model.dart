@@ -4,6 +4,7 @@ class Faculty {
   final String faculty;
   final String lName;
   final String pNum;
+  final String nID;
   final String email;
   final String pass;
   final String photo;
@@ -17,6 +18,7 @@ class Faculty {
     required this.faculty,
     required this.lName,
     required this.pNum,
+    required this.nID,
     required this.email,
     required this.pass,
     required this.photo,
@@ -53,6 +55,7 @@ class Faculty {
       faculty: json['faculty'] ?? '',
       lName: json['lName'] ?? '',
       pNum: json['pNum'] ?? '',
+      nID: json['nID'] ?? '',
       email: json['email'] ?? '',
       pass: json['pass'] ?? '',
       photo: json['photo'] ?? '',
@@ -72,6 +75,7 @@ class Faculty {
       'faculty': faculty,
       'lName': lName,
       'pNum': pNum,
+      'nID': nID,
       'email': email,
       'pass': pass,
       'photo': photo,

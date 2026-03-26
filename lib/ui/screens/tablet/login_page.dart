@@ -63,7 +63,7 @@ class _LoginPageState extends State<LoginPage>
       Map<String, dynamic>? userData;
       String userCode = "";
 
-      final List<String> collections = ['students', 'faculty', 'staff'];
+      final List<String> collections = ['staff'];
 
       for (String col in collections) {
         final query = await FirebaseFirestore.instance
@@ -107,6 +107,9 @@ class _LoginPageState extends State<LoginPage>
       await prefs.setString('email', userData['email'] ?? '');
       await prefs.setString('photo', userData['photo'] ?? '');
       await prefs.setString('pNum', userData['pNum'] ?? '');
+      await prefs.setString('nID', userData['nID'] ?? '');
+      await prefs.setString('department', userData['department'] ?? '');
+      await prefs.setString('position', userData['position'] ?? '');
 
       if (userData.containsKey('faculty')) await prefs.setString('faculty', userData['faculty']);
       if (userData.containsKey('year')) await prefs.setString('year', userData['year'].toString());
