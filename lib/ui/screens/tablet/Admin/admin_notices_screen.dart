@@ -34,18 +34,10 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
   List<String> _specializations = const [];
 
   static const List<String> _groups = [
-    'IT',
-    'Security',
-    'Admin',
-    'Students',
-    'Faculty',
+    'IT', 'Security', 'Admin', 'Students', 'Faculty',
   ];
   static const List<String> _programs = [
-    'ICT',
-    'Renewable Energy',
-    'Mechatronics',
-    'Autotronics',
-    'Artificial Limbs',
+    'ICT', 'Renewable Energy', 'Mechatronics', 'Autotronics', 'Artificial Limbs',
   ];
 
   @override
@@ -62,10 +54,10 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
     super.dispose();
   }
 
+  // Load specializations from Firestore
   Future<void> _loadSpecializations() async {
     try {
-      final List<String> loaded =
-      await _noticesService.getAvailableSpecializations();
+      final List<String> loaded = await _noticesService.getAvailableSpecializations();
       if (!mounted) return;
       setState(() {
         _specializations = loaded;
@@ -80,7 +72,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
     }
   }
 
-
+  // Load admin name from preferences
   Future<void> _loadSenderName() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String firstName = (prefs.getString('fName') ?? '').trim();
@@ -99,7 +91,12 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
     });
   }
 
+  // Build input section based on active category
   Widget _buildInputSection() {
+    if (_activeCategory == 'Specialization' && _isLoadingSpecializations) {
+      return const LoadingState(message: 'Loading specializations...');
+    }
+
     switch (_activeCategory) {
       case 'Individual':
         return _buildFormLayout(
@@ -113,9 +110,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
             _specializations,
             _selectedSpecialization,
                 (v) => setState(() => _selectedSpecialization = v),
-            hint: _isLoadingSpecializations
-                ? 'Loading specializations...'
-                : 'Choose the Specialization',
+            hint: _specializations.isEmpty ? 'No specializations available' : 'Choose the Specialization',
           ),
         );
       case 'Groups':
@@ -143,6 +138,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
     }
   }
 
+  // Form layout with label
   Widget _buildFormLayout({required String label, required Widget child}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,6 +159,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
     );
   }
 
+  // Text field widget
   Widget _buildTextField(
       TextEditingController controller,
       String hint, {
@@ -189,17 +186,40 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
     );
   }
 
+  // Dropdown widget
   Widget _buildDropdown(
       List<String> items,
       String? current,
       ValueChanged<String?> onChanged, {
         required String hint,
       }) {
+    if (items.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.7),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                hint,
+                style: AppTextStyles.body.copyWith(color: Colors.grey),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return DropdownButtonFormField<String>(
-      initialValue: current,
+      value: current,
       style: AppTextStyles.body,
       items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-      onChanged: items.isEmpty ? null : onChanged,
+      onChanged: onChanged,
       icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
       decoration: InputDecoration(
         hintText: hint,
@@ -215,15 +235,17 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
     );
   }
 
+  // Send notice to selected recipients
   Future<void> _sendNotice() async {
     final String message = _messageController.text.trim();
 
     if (message.isEmpty) {
-      _showSnack('Please enter a notice message.');
+      showErrorSnackBar(context, 'Please enter a notice message.');
       return;
     }
 
     setState(() => _isSending = true);
+    showLoadingOverlay(context, message: 'Sending notice...');
 
     try {
       late final List<String> recipientIds;
@@ -231,6 +253,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
       late final String targetValue;
       late final String title;
 
+      // Get recipients based on category
       switch (_activeCategory) {
         case 'Individual':
           final String id = _idController.text.trim();
@@ -259,8 +282,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
           if (specialization == null || specialization.isEmpty) {
             throw Exception('Please choose a specialization.');
           }
-          recipientIds =
-          await _noticesService.getFacultyIdsBySubject(specialization);
+          recipientIds = await _noticesService.getFacultyIdsBySubject(specialization);
           targetType = NoticeTargetType.specialization;
           targetValue = specialization;
           title = 'Specialization Notice: $specialization';
@@ -303,19 +325,24 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
       if (_activeCategory == 'Individual') {
         _idController.clear();
       }
+      setState(() {
+        _selectedSpecialization = null;
+        _selectedGroup = null;
+        _selectedProgram = null;
+      });
 
-      _showSnack('Notice sent successfully to ${recipientIds.length} user(s).');
+      hideLoadingOverlay(context);
+      showSuccessSnackBar(context, 'Notice sent successfully to ${recipientIds.length} user(s).');
+
     } catch (e) {
-      _showSnack(e.toString().replaceFirst('Exception: ', ''));
+      if (!mounted) return;
+      hideLoadingOverlay(context);
+      showErrorSnackBar(context, e.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) {
         setState(() => _isSending = false);
       }
     }
-  }
-
-  void _showSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -326,11 +353,12 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Notices', style: AppTextStyles.largeHeading),
+            const PageHeading('Notices'),
             const SizedBox(height: 40),
             Expanded(
               child: Row(
                 children: [
+                  // Category selection sidebar
                   SizedBox(
                     width: 180,
                     child: Column(
@@ -340,7 +368,12 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
                             imagePath: 'assets/images/avatar.png',
                             label: 'Individual',
                             isActive: _activeCategory == 'Individual',
-                            onTap: () => setState(() => _activeCategory = 'Individual'),
+                            onTap: () => setState(() {
+                              _activeCategory = 'Individual';
+                              _selectedSpecialization = null;
+                              _selectedGroup = null;
+                              _selectedProgram = null;
+                            }),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -349,8 +382,11 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
                             imagePath: 'assets/images/multi_users.png',
                             label: 'Specialization',
                             isActive: _activeCategory == 'Specialization',
-                            onTap: () =>
-                                setState(() => _activeCategory = 'Specialization'),
+                            onTap: () => setState(() {
+                              _activeCategory = 'Specialization';
+                              _selectedGroup = null;
+                              _selectedProgram = null;
+                            }),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -359,7 +395,11 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
                             imagePath: 'assets/images/multi_users.png',
                             label: 'Groups',
                             isActive: _activeCategory == 'Groups',
-                            onTap: () => setState(() => _activeCategory = 'Groups'),
+                            onTap: () => setState(() {
+                              _activeCategory = 'Groups';
+                              _selectedSpecialization = null;
+                              _selectedProgram = null;
+                            }),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -368,13 +408,18 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
                             imagePath: 'assets/images/multi_users.png',
                             label: 'Program',
                             isActive: _activeCategory == 'Program',
-                            onTap: () => setState(() => _activeCategory = 'Program'),
+                            onTap: () => setState(() {
+                              _activeCategory = 'Program';
+                              _selectedSpecialization = null;
+                              _selectedGroup = null;
+                            }),
                           ),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(width: 40),
+                  // Form panel
                   Expanded(
                     child: GlassCard(
                       padding: const EdgeInsets.all(40),
@@ -413,6 +458,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
   }
 }
 
+// Category button widget
 class _CategoryButton extends StatelessWidget {
   final String imagePath;
   final String label;

@@ -6,7 +6,6 @@ import 'package:uninexus/services/firebase/id_lookup_service.dart';
 import 'package:uninexus/theme/app_theme.dart';
 import 'package:uninexus/theme/uninexus_tab.dart';
 
-
 class SecurityIdLookupScreen extends StatefulWidget {
   final void Function(UninexusTab) onNavigate;
   const SecurityIdLookupScreen({super.key, required this.onNavigate});
@@ -22,6 +21,7 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
   Student? _selectedStudent;
   List<Student> _recentSearches = [];
   bool _isLoading = false;
+  String? _searchError;
 
   @override
   void initState() {
@@ -29,7 +29,7 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
     _loadSearchHistory();
   }
 
-  // Load history from Shared Preferences
+  // Load search history from preferences
   Future<void> _loadSearchHistory() async {
     final prefs = await SharedPreferences.getInstance();
     final String? historyData = prefs.getString('search_history');
@@ -41,15 +41,13 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
     }
   }
 
-  // Save student to history (avoids duplicates)
+  // Save search to history
   Future<void> _saveToHistory(Student student) async {
     final prefs = await SharedPreferences.getInstance();
 
-    // Remove if already exists to move it to the top
     _recentSearches.removeWhere((element) => element.id == student.id);
     _recentSearches.insert(0, student);
 
-    // Keep only last 10 searches
     if (_recentSearches.length > 10) _recentSearches.removeLast();
 
     final String encoded = jsonEncode(_recentSearches.map((e) => e.toJson()).toList());
@@ -57,22 +55,37 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
     setState(() {});
   }
 
+  // Perform search
   void _onSearchSubmit() async {
     final id = _searchController.text.trim();
-    if (id.isEmpty) return;
+    if (id.isEmpty) {
+      setState(() {
+        _searchError = 'Please enter an ID to search';
+      });
+      return;
+    }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _searchError = null;
+    });
+
     final student = await _idLookupService.searchStudentById(id);
 
     if (student != null) {
       _saveToHistory(student);
-      setState(() => _selectedStudent = student);
+      setState(() {
+        _selectedStudent = student;
+        _isLoading = false;
+      });
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No user found with this ID")),
-      );
+      setState(() {
+        _searchError = 'No user found with ID: $id';
+        _selectedStudent = null;
+        _isLoading = false;
+      });
+      showErrorSnackBar(context, "No user found with this ID");
     }
-    setState(() => _isLoading = false);
   }
 
   @override
@@ -89,7 +102,7 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  /// Left side - Search & Local History
+                  // Left panel - Search bar and history
                   Expanded(
                     flex: 5,
                     child: Column(
@@ -104,18 +117,21 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
                           child: GlassCard(
                             padding: const EdgeInsets.all(20),
                             child: _isLoading
-                                ? const Center(child: CircularProgressIndicator())
+                                ? const LoadingState()
+                                : _recentSearches.isEmpty
+                                ? const EmptyState(
+                              message: 'No recent searches',
+                              icon: Icons.history,
+                            )
                                 : ListView.builder(
                               padding: EdgeInsets.zero,
                               itemCount: _recentSearches.length,
                               itemBuilder: (context, index) {
                                 final student = _recentSearches[index];
-                                return GestureDetector(
+                                return AppEntryRow(
+                                  label: "${student.fName} ${student.lName}",
+                                  status: student.entry ? 'approved' : 'denied',
                                   onTap: () => setState(() => _selectedStudent = student),
-                                  child: _UserRow(
-                                    name: "${student.fName} ${student.lName}",
-                                    status: student.entry ? 'approved' : 'denied', //
-                                  ),
                                 );
                               },
                             ),
@@ -126,13 +142,23 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
                   ),
                   const SizedBox(width: 24),
 
-                  /// Right side - Detailed user data panel
+                  // Right panel - User details
                   Expanded(
                     flex: 4,
                     child: GlassCard(
                       padding: const EdgeInsets.all(32),
                       child: _selectedStudent == null
-                          ? const Center(child: Text("Search or select a recent user"))
+                          ? Center(
+                        child: _searchError != null
+                            ? EmptyState(
+                          message: _searchError!,
+                          icon: Icons.person_off,
+                        )
+                            : const EmptyState(
+                          message: 'Search for a user to view details',
+                          icon: Icons.person_search,
+                        ),
+                      )
                           : _UserDataPanel(student: _selectedStudent!),
                     ),
                   ),
@@ -145,54 +171,34 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
     );
   }
 
+  // Search bar widget
   Widget _buildSearchBar() {
     return Container(
       width: 350,
       decoration: AppDecorations.smallCard(),
-      child: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          hintText: "Search User By ID",
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
-          suffixIcon: IconButton(
-            icon: const Icon(Icons.send, color: AppColors.primary),
-            onPressed: _onSearchSubmit,
-          ),
-        ),
-        onSubmitted: (_) => _onSearchSubmit(),
-      ),
-    );
-  }
-}
-
-/// --- UI HELPER WIDGETS (Original UI Preserved) ---
-
-class _UserRow extends StatelessWidget {
-  final String name, status;
-  const _UserRow({required this.name, required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    final Color dotColor = status == 'approved' ? Colors.green : Colors.red;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: AppDecorations.smallCard(),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.person, color: AppColors.primary, size: 28),
-          const SizedBox(width: 14),
-          Container(width: 2, height: 28, color: AppColors.primary.withValues(alpha: .35)),
-          const SizedBox(width: 14),
-          Expanded(child: Text(name, style: const TextStyle(fontFamily: AppFonts.spaceGrotesk, fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textDark))),
-          Container(width: 10, height: 10, decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle)),
+          TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: "Search User By ID",
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.send, color: AppColors.primary),
+                onPressed: _onSearchSubmit,
+              ),
+            ),
+            onSubmitted: (_) => _onSearchSubmit(),
+          ),
         ],
       ),
     );
   }
 }
 
+// User data panel widget
 class _UserDataPanel extends StatelessWidget {
   final Student student;
   const _UserDataPanel({required this.student});
@@ -210,23 +216,87 @@ class _UserDataPanel extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 36),
-        buildDataRow("Name", "${student.fName} ${student.lName}"),
+        buildInfoRow(
+          label: "Name",
+          value: "${student.fName} ${student.lName}",
+          fontSize: 18,
+          verticalPadding: 12,
+          labelWeight: FontWeight.w800,
+          valueWeight: FontWeight.w600,
+        ),
         const SizedBox(height: 24),
         Row(
           children: [
-            Expanded(flex: 3, child: buildDataRow("User Type", "Student")),
+            Expanded(
+              flex: 3,
+              child: buildInfoRow(
+                label: "User Type",
+                value: "Student",
+                fontSize: 18,
+                verticalPadding: 12,
+                labelWeight: FontWeight.w800,
+                valueWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(width: 16),
-            Expanded(flex: 2, child: buildDataRow("Year", student.year)),
+            Expanded(
+              flex: 2,
+              child: buildInfoRow(
+                label: "Year",
+                value: student.year,
+                fontSize: 18,
+                verticalPadding: 12,
+                labelWeight: FontWeight.w800,
+                valueWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 24),
-        buildDataRow("ID", student.id),
+        buildInfoRow(
+          label: "ID",
+          value: student.id,
+          fontSize: 18,
+          verticalPadding: 12,
+          labelWeight: FontWeight.w800,
+          valueWeight: FontWeight.w600,
+        ),
         const SizedBox(height: 24),
-        buildDataRow("Faculty", student.faculty),
+        buildInfoRow(
+          label: "Faculty",
+          value: student.faculty,
+          fontSize: 18,
+          verticalPadding: 12,
+          labelWeight: FontWeight.w800,
+          valueWeight: FontWeight.w600,
+        ),
         const SizedBox(height: 24),
-        buildDataRow("Status", student.entry ? "Approved" : "Denied"), //
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(
+            children: [
+              Text(
+                'Status : ',
+                style: const TextStyle(
+                  fontFamily: AppFonts.spaceGrotesk,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textDark,
+                ),
+              ),
+              StatusBadge(status: student.entry ? 'approved' : 'denied', isDot: false),
+            ],
+          ),
+        ),
         const SizedBox(height: 24),
-        buildDataRow("Note", student.note),
+        buildInfoRow(
+          label: "Note",
+          value: student.note,
+          fontSize: 18,
+          verticalPadding: 12,
+          labelWeight: FontWeight.w800,
+          valueWeight: FontWeight.w600,
+        ),
       ],
     );
   }

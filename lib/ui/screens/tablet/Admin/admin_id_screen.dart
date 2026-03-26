@@ -29,6 +29,7 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
     _loadDataFromPrefs();
   }
 
+  // Load user ID from shared preferences
   Future<void> _loadDataFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.reload();
@@ -39,6 +40,17 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
       _userID = prefs.getString('userCode') ?? prefs.getString('ID') ?? 'N/A';
       _isLoading = false;
     });
+  }
+
+  // Handle punch in/out
+  void _handlePunch() {
+    setState(() {
+      _isPunchedIn = !_isPunchedIn;
+    });
+    showInfoSnackBar(
+      context,
+      _isPunchedIn ? 'Punched IN successfully' : 'Punched OUT successfully',
+    );
   }
 
   @override
@@ -60,7 +72,7 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('ID', style: AppTextStyles.largeHeading),
+            const PageHeading('ID'),
             const SizedBox(height: 20),
             Expanded(
               child: Center(
@@ -76,6 +88,7 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
                           decoration: AppDecorations.idCardInner,
                           child: Row(
                             children: [
+                              // Left decorative elements
                               Column(
                                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                 children: [
@@ -112,6 +125,7 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
                                 ],
                               ),
                               const SizedBox(width: 16),
+                              // ID icon
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: AppDecorations.iconBackground,
@@ -128,6 +142,7 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
                                 ),
                               ),
                               const SizedBox(width: 24),
+                              // QR Code with gradient
                               Expanded(
                                 child: AspectRatio(
                                   aspectRatio: 1,
@@ -168,8 +183,9 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
                           ),
                         ),
                         const SizedBox(height: 28),
+                        // Punch button
                         GestureDetector(
-                          onTap: () => setState(() => _isPunchedIn = !_isPunchedIn),
+                          onTap: _handlePunch,
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
                             curve: Curves.easeInOut,

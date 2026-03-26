@@ -7,7 +7,7 @@ class ITLogsScreen extends StatelessWidget {
   final void Function(UninexusTab) onNavigate;
   const ITLogsScreen({super.key, required this.onNavigate});
 
-  /// Formats time (e.g., 10:34 AM)
+  // Format time (e.g., 10:34 AM)
   String _formatTime(Timestamp? timestamp) {
     if (timestamp == null) return '';
     final DateTime date = timestamp.toDate();
@@ -19,7 +19,7 @@ class ITLogsScreen extends StatelessWidget {
     return '$hour:$minute $period';
   }
 
-  /// Formats date (e.g., Oct 11, 2026)
+  // Format date (e.g., Oct 11, 2026)
   String _formatDate(Timestamp? timestamp) {
     if (timestamp == null) return '';
     final DateTime date = timestamp.toDate();

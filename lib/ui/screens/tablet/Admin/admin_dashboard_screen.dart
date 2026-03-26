@@ -14,10 +14,12 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  // SharedPreferences keys
   static const String _requestReadKey = 'admin_read_recent_request_ids';
   static const String _noticeReadKey = 'admin_read_notice_ids';
   static const String _pendingRequestSelectionKey = 'admin_selected_request_id';
 
+  // State variables
   String _adminName = 'Admin';
   int _registrationCount = 0;
   int _passwordResetCount = 0;
@@ -33,6 +35,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     _loadDashboard();
   }
 
+  // Load dashboard data from Firestore
   Future<void> _loadDashboard() async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -57,6 +60,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       final pass = results[1];
       final notices = results[2];
 
+      // Filter pending password reset requests
       final List<Map<String, String>> resetRequests = pass.docs
           .where((doc) {
         final data = doc.data();
@@ -74,6 +78,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       })
           .toList();
 
+      // Filter pending registration requests
       final List<Map<String, String>> registrationRequests = reg.docs.where((doc) {
         final data = doc.data();
         final status = (data['status'] ?? '').toString().toLowerCase();
@@ -88,11 +93,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         };
       }).toList();
 
+      // Combine and limit to 10 recent requests
       final List<Map<String, String>> requestItems = [
         ...registrationRequests,
         ...resetRequests,
       ].take(10).toList();
 
+      // Filter notices meant for this admin
       final List<Map<String, String>> noticesList = notices.docs
           .where((doc) {
         if (_readNoticeIds.contains(doc.id)) return false;
@@ -134,25 +141,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
   }
 
+  // Get current date string
   String _today() {
     final now = DateTime.now();
     const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December'
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
     ];
     return '${months[now.month - 1]} ${now.day}, ${now.year}';
   }
 
+  // Format notice timestamp
   String _formatNoticeTime(DateTime date) {
     final hh = date.hour.toString().padLeft(2, '0');
     final mm = date.minute.toString().padLeft(2, '0');
@@ -161,6 +160,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return '$dd/$mo ${date.year} $hh:$mm';
   }
 
+  // Open request and mark as read
   Future<void> _openRecentRequest(Map<String, String> request) async {
     final id = request['id'];
     if (id == null || id.isEmpty) return;
@@ -173,6 +173,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     widget.onNavigate(AdminTab.requests);
   }
 
+  // Mark notice as read and remove from list
   Future<void> _openNotice(Map<String, String> notice) async {
     final id = notice['id'];
     if (id == null || id.isEmpty) return;
@@ -203,6 +204,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Left column - Requests summary
                   Expanded(
                     flex: 5,
                     child: GlassCard(
@@ -255,6 +257,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                   ),
                   const SizedBox(width: 20),
+                  // Right column - Quick actions and notices
                   Expanded(
                     flex: 5,
                     child: Column(
@@ -333,6 +336,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  // Quick action card widget
   Widget _buildQuickActionCard(String title, String imagePath,
       {required VoidCallback onTap}) {
     return GestureDetector(
@@ -395,6 +399,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  // Request summary row
   Widget _buildRequestSummaryRow(String iconPath, String title, IconData fallback) {
     return Row(
       children: [
@@ -414,6 +419,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  // Recent request item
   Widget _buildRecentRequestItem(
       String text,
       IconData icon, {
@@ -444,6 +450,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  // Notice item
   Widget _buildNoticeItem(
       String sender,
       String msg,

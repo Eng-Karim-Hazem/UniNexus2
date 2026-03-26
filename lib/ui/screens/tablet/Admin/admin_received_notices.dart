@@ -23,6 +23,7 @@ class _AdminReceivedNoticesScreenState extends State<AdminReceivedNoticesScreen>
     _loadAdminId();
   }
 
+  // Load admin ID from preferences
   Future<void> _loadAdminId() async {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
@@ -31,6 +32,7 @@ class _AdminReceivedNoticesScreenState extends State<AdminReceivedNoticesScreen>
     });
   }
 
+  // Check if notice is for current admin
   bool _isReceivedByCurrentAdmin(Map<String, dynamic> data) {
     final List<String> recipientIds = List<String>.from(data['recipientIds'] ?? const []);
     final String legacyRecipientId = (data['ID'] ?? '').toString().trim();
@@ -41,6 +43,7 @@ class _AdminReceivedNoticesScreenState extends State<AdminReceivedNoticesScreen>
     return sentToMe || sentToAdminGroup;
   }
 
+  // Format date for display
   String _formatDate(Timestamp? timestamp) {
     if (timestamp == null) return '';
     final date = timestamp.toDate();
@@ -59,7 +62,7 @@ class _AdminReceivedNoticesScreenState extends State<AdminReceivedNoticesScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Received Notices', style: AppTextStyles.largeHeading),
+            const PageHeading('Received Notices'),
             const SizedBox(height: 40),
             Expanded(
               child: Row(
@@ -74,19 +77,24 @@ class _AdminReceivedNoticesScreenState extends State<AdminReceivedNoticesScreen>
                             .snapshots(),
                         builder: (context, snapshot) {
                           if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(child: CircularProgressIndicator());
-                          }
-                          if (snapshot.hasError) {
-                            return const Center(child: Text('Error loading notices.'));
+                            return const LoadingState();
                           }
 
+                          if (snapshot.hasError) {
+                            return const ErrorState(
+                              message: 'Error loading notices.',
+                            );
+                          }
+
+                          // Filter notices for current admin
                           final docs = (snapshot.data?.docs ?? const [])
                               .where((doc) => _isReceivedByCurrentAdmin(doc.data()))
                               .toList();
 
                           if (docs.isEmpty) {
-                            return const Center(
-                              child: Text('No received notices yet.', style: AppTextStyles.body),
+                            return const EmptyState(
+                              message: 'No received notices yet.',
+                              icon: Icons.inbox,
                             );
                           }
 

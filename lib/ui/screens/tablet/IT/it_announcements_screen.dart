@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Added for Firebase
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
@@ -7,7 +7,7 @@ class ITAnnouncementsScreen extends StatelessWidget {
   final void Function(UninexusTab) onNavigate;
   const ITAnnouncementsScreen({super.key, required this.onNavigate});
 
-  // Helper to format the date if you want to display it later
+  // Format date for display
   String _formatDate(Timestamp? timestamp) {
     if (timestamp == null) return '';
     final DateTime date = timestamp.toDate();
@@ -36,26 +36,29 @@ class ITAnnouncementsScreen extends StatelessWidget {
                   builder: (context, snapshot) {
 
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const LoadingState();
                     }
 
                     if (snapshot.hasError) {
-                      return const Center(child: Text('Error loading announcements.', style: TextStyle(color: Colors.red)));
-                    }
-
-                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                      return const Center(
-                        child: Text('No announcements available.', style: TextStyle(color: Colors.grey, fontSize: 18)),
+                      return const ErrorState(
+                        message: 'Error loading announcements.',
                       );
                     }
 
-                    // 1. Filter for IT targeted notifications locally
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const EmptyState(
+                        message: 'No announcements available.',
+                        icon: Icons.notifications_none,
+                      );
+                    }
+
+                    // Filter for IT or All announcements
                     var docs = snapshot.data!.docs.where((doc) {
                       final data = doc.data() as Map<String, dynamic>;
                       return data['targetValue'] == 'IT' || data['targetValue'] == 'All';
                     }).toList();
 
-                    // 2. Sort by date newest first
+                    // Sort by date newest first
                     docs.sort((a, b) {
                       final timeA = (a.data() as Map<String, dynamic>)['date'] as Timestamp?;
                       final timeB = (b.data() as Map<String, dynamic>)['date'] as Timestamp?;
@@ -64,8 +67,9 @@ class ITAnnouncementsScreen extends StatelessWidget {
                     });
 
                     if (docs.isEmpty) {
-                      return const Center(
-                        child: Text('No announcements targeted for IT.', style: TextStyle(color: Colors.grey, fontSize: 18)),
+                      return const EmptyState(
+                        message: 'No announcements targeted for IT.',
+                        icon: Icons.notifications_none,
                       );
                     }
 
@@ -74,15 +78,14 @@ class ITAnnouncementsScreen extends StatelessWidget {
                       itemBuilder: (context, index) {
                         final data = docs[index].data() as Map<String, dynamic>;
 
-                        // Extracting data exactly as your Firebase structure shows
                         final sender = data['sentBy'] ?? 'Management';
                         final message = data['description'] ?? 'No details provided.';
                         final timestamp = data['date'] as Timestamp?;
 
                         return Container(
-                          margin: const EdgeInsets.only(bottom: 12), // Slightly increased spacing
+                          margin: const EdgeInsets.only(bottom: 12),
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                          decoration: AppDecorations.smallCard(), // Removed the artificial fade effect
+                          decoration: AppDecorations.smallCard(),
                           child: Row(
                             children: [
                               Image.asset(
@@ -96,7 +99,7 @@ class ITAnnouncementsScreen extends StatelessWidget {
                               const SectionDivider(),
                               const SizedBox(width: 10),
 
-                              Expanded( // Wrapped in Expanded to prevent text overflow
+                              Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -107,7 +110,6 @@ class ITAnnouncementsScreen extends StatelessWidget {
                                 ),
                               ),
 
-                              // Added a subtle date to the right side of the card!
                               if (timestamp != null)
                                 Text(_formatDate(timestamp), style: const TextStyle(fontSize: 12, color: Colors.grey)),
                             ],

@@ -17,7 +17,6 @@ class _ITIdScreenState extends State<ITIdScreen> {
   bool _isLoading = true;
   bool _isPunchedIn = false;
 
-  // Colors for the QR Shader
   final Color _primaryBlue = const Color(0xFF237ABA);
   final Color _secondaryPurple = const Color(0xFF9C2CF3);
 
@@ -27,7 +26,7 @@ class _ITIdScreenState extends State<ITIdScreen> {
     _loadDataFromPrefs();
   }
 
-  // Fetch the ID dynamically from storage
+  // Load user ID from preferences
   Future<void> _loadDataFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.reload();
@@ -40,6 +39,17 @@ class _ITIdScreenState extends State<ITIdScreen> {
     }
   }
 
+  // Handle punch in/out
+  void _handlePunch() {
+    setState(() {
+      _isPunchedIn = !_isPunchedIn;
+    });
+    showInfoSnackBar(
+      context,
+      _isPunchedIn ? 'Punched IN successfully' : 'Punched OUT successfully',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -48,10 +58,7 @@ class _ITIdScreenState extends State<ITIdScreen> {
       );
     }
 
-    // Dynamic QR Data: Appends .in or .out
     final String qrData = _isPunchedIn ? "OUT_$_userID" : "IN_$_userID";
-
-    // Dynamic QR Colors for the ShaderMask
     final List<Color> qrColors = _isPunchedIn
         ? [_secondaryPurple, _primaryBlue]
         : [_primaryBlue, _secondaryPurple];
@@ -74,13 +81,12 @@ class _ITIdScreenState extends State<ITIdScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        /// Digital ID card display
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: AppDecorations.idCardInner,
                           child: Row(
                             children: [
-                              /// Left decorative elements
+                              // Left decorative elements
                               Column(
                                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                 children: [
@@ -105,7 +111,7 @@ class _ITIdScreenState extends State<ITIdScreen> {
                               ),
                               const SizedBox(width: 16),
 
-                              /// ID card icon
+                              // ID icon
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: AppDecorations.iconBackground,
@@ -117,7 +123,7 @@ class _ITIdScreenState extends State<ITIdScreen> {
                               ),
                               const SizedBox(width: 24),
 
-                              /// QR Code (Replaced static image with dynamic generator)
+                              // QR code with gradient
                               Expanded(
                                 child: AspectRatio(
                                   aspectRatio: 1,
@@ -156,9 +162,9 @@ class _ITIdScreenState extends State<ITIdScreen> {
                         ),
                         const SizedBox(height: 28),
 
-                        /// Punch IN/OUT button (Kept your beautiful animation!)
+                        // Punch button
                         GestureDetector(
-                          onTap: () => setState(() => _isPunchedIn = !_isPunchedIn),
+                          onTap: _handlePunch,
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
                             curve: Curves.easeInOut,

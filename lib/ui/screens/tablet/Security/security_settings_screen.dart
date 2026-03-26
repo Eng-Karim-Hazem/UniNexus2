@@ -19,7 +19,6 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
   final TextEditingController _feedbackController = TextEditingController();
   int _rating = 4;
 
-  /// Settings menu items
   static const List<Map<String, String>> _items = [
     {'icon': 'assets/images/information_1.png', 'label': 'Account management'},
     {'icon': 'assets/images/notify_1.png', 'label': 'Notification settings'},
@@ -47,7 +46,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
             Expanded(
               child: Row(
                 children: [
-                  /// Settings grid panel
+                  // Settings grid
                   Expanded(
                     flex: selectedSettingTab == null ? 1 : 0,
                     child: Center(
@@ -84,7 +83,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                     ),
                   ),
 
-                  /// Right panel - detail view
+                  // Right panel - Selected setting content
                   if (selectedSettingTab != null) ...[
                     const SizedBox(width: 30),
                     Expanded(
@@ -118,7 +117,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     );
   }
 
-  /// Returns the content widget for the selected settings tab
+  // Get content for selected tab
   Widget _getContentForTab(int index) {
     switch (index) {
       case 0:
@@ -134,7 +133,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     }
   }
 
-  /// Account management form
+  // Account management form
   Widget _buildAccountManagement() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,12 +147,17 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
         const SizedBox(height: 20),
         _buildTextField("New Email", "Enter email"),
         const SizedBox(height: 40),
-        _buildPrimaryButton("Update"),
+        PillButton(
+          label: 'Update',
+          onTap: () {
+            showSuccessSnackBar(context, 'Account updated successfully!');
+          },
+        ),
       ],
     );
   }
 
-  /// Notification settings form
+  // Notification settings
   Widget _buildNotificationSettings() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,11 +172,18 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
         _buildDropdown("Announcements"),
         const SizedBox(height: 20),
         _buildDropdown("Warnings"),
+        const SizedBox(height: 40),
+        PillButton(
+          label: 'Save',
+          onTap: () {
+            showSuccessSnackBar(context, 'Notification settings saved!');
+          },
+        ),
       ],
     );
   }
 
-  /// Feedback form with star rating
+  // Feedback form with rating
   Widget _buildFeedback() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,12 +224,25 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
           ),
         ),
         const SizedBox(height: 30),
-        _buildPrimaryButton("Submit"),
+        PillButton(
+          label: 'Submit',
+          onTap: () {
+            if (_feedbackController.text.trim().isEmpty) {
+              showErrorSnackBar(context, 'Please enter your feedback');
+              return;
+            }
+            showSuccessSnackBar(context, 'Thank you for your feedback!');
+            _feedbackController.clear();
+            setState(() {
+              _rating = 4;
+            });
+          },
+        ),
       ],
     );
   }
 
-  /// App information display
+  // App info
   Widget _buildAppInfo() {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,27 +257,19 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     );
   }
 
-  /// Logs out the user and clears session
+  // Logout function
   Future<void> _logout() async {
-    final confirm = await showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Confirm Logout"),
-        content: const Text("Are you sure you want to logout?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Logout", style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: "Confirm Logout",
+      message: "Are you sure you want to logout?",
+      confirmText: "Logout",
+      cancelText: "Cancel",
+      confirmColor: Colors.red,
+      icon: Icons.logout,
     );
 
-    if (confirm != true) return;
+    if (confirmed != true) return;
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
@@ -265,7 +281,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     );
   }
 
-  /// Text input field
+  // Text field helper
   Widget _buildTextField(String label, String hint) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,7 +303,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     );
   }
 
-  /// Dropdown selector
+  // Dropdown helper
   Widget _buildDropdown(String label) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,18 +325,6 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  /// Primary outlined button
-  Widget _buildPrimaryButton(String text) {
-    return OutlinedButton(
-      onPressed: () {},
-      style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: AppColors.primary),
-        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 16),
-      ),
-      child: Text(text),
     );
   }
 }

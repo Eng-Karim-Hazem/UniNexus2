@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// --- NEW IMPORTS FOR CSV EXPORT ---
 import 'package:csv/csv.dart';
 import 'dart:typed_data';
 import 'package:file_saver/file_saver.dart';
@@ -25,9 +24,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
   int? selectedSettingTab;
   final TextEditingController _feedbackController = TextEditingController();
   int _rating = 4;
-  bool _isExporting = false; // Added to show loading state during export
 
-  /// Settings menu items
   static const List<Map<String, String>> _items = [
     {'icon': 'assets/icons/information.png', 'label': 'Account management'},
     {'icon': 'assets/icons/notify.png',      'label': 'Notification settings'},
@@ -43,31 +40,25 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     super.dispose();
   }
 
-  // --- CSV EXPORT LOGIC ---
+  // Export logs to CSV file
   Future<void> _exportLogsToCSV() async {
-    setState(() => _isExporting = true);
+    showLoadingOverlay(context, message: 'Exporting logs...');
 
     try {
-      // 1. Fetch data from Firestore
       final QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('IT_Logs')
           .orderBy('timestamp', descending: true)
           .get();
 
       if (snapshot.docs.isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("No logs available to export.")));
-        }
-        setState(() => _isExporting = false);
+        hideLoadingOverlay(context);
+        showErrorSnackBar(context, "No logs available to export.");
         return;
       }
 
-      // 2. Prepare the CSV Header Row
       List<List<dynamic>> rows = [];
       rows.add(["Date", "Time", "Action Message"]);
 
-      // 3. Loop through data and format it
       for (var doc in snapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
         final String message = data['message'] ?? 'Unknown Action';
@@ -88,15 +79,12 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
           timeStr = '$hour:$minute $period';
         }
 
-        // Add the row
         rows.add([dateStr, timeStr, message]);
       }
 
-      // 4. Convert to CSV string, then to Bytes
       String csvData = const ListToCsvConverter().convert(rows);
       Uint8List bytes = Uint8List.fromList(csvData.codeUnits);
 
-      // 5. Trigger Native Save Dialog via file_saver
       await FileSaver.instance.saveAs(
         name: 'IT_Logs_Report_${DateTime.now().millisecondsSinceEpoch}',
         bytes: bytes,
@@ -104,18 +92,12 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
         mimeType: MimeType.csv,
       );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Logs successfully exported!"), backgroundColor: Colors.green));
-      }
+      hideLoadingOverlay(context);
+      showSuccessSnackBar(context, "Logs successfully exported!");
 
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Error exporting logs: $e"), backgroundColor: Colors.red));
-      }
-    } finally {
-      if (mounted) setState(() => _isExporting = false);
+      hideLoadingOverlay(context);
+      showErrorSnackBar(context, "Error exporting logs: $e");
     }
   }
 
@@ -132,7 +114,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
             Expanded(
               child: Row(
                 children: [
-                  /// Settings grid panel
+                  // Settings grid
                   Expanded(
                     flex: selectedSettingTab == null ? 1 : 0,
                     child: Center(
@@ -169,7 +151,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
                     ),
                   ),
 
-                  /// Right panel - detail view
+                  // Right panel - Selected setting content
                   if (selectedSettingTab != null) ...[
                     const SizedBox(width: 30),
                     Expanded(
@@ -203,7 +185,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// Returns the content widget for the selected settings tab
+  // Get content for selected tab
   Widget _getContentForTab(int index) {
     switch (index) {
       case 0:
@@ -221,7 +203,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     }
   }
 
-  /// Account management form
+  // Account management form
   Widget _buildAccountManagement() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,12 +217,17 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
         const SizedBox(height: 20),
         _buildTextField("New Email", "Enter email"),
         const SizedBox(height: 40),
-        _buildPrimaryButton("Update", onPressed: () {}),
+        PillButton(
+          label: 'Update',
+          onTap: () {
+            showSuccessSnackBar(context, 'Account updated successfully!');
+          },
+        ),
       ],
     );
   }
 
-  /// Notification settings form
+  // Notification settings
   Widget _buildNotificationSettings() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,11 +242,18 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
         _buildDropdown("User Requests"),
         const SizedBox(height: 20),
         _buildDropdown("Announcements"),
+        const SizedBox(height: 40),
+        PillButton(
+          label: 'Save',
+          onTap: () {
+            showSuccessSnackBar(context, 'Notification settings saved!');
+          },
+        ),
       ],
     );
   }
 
-  /// Export logs feature
+  // Export logs UI
   Widget _buildExportLogs() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,15 +264,16 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
             'This feature is used to export the logged information so it can be used for backup or analyzing behaviour.'),
         const SizedBox(height: 60),
         Center(
-          child: _isExporting
-              ? const CircularProgressIndicator()
-              : _buildPrimaryButton('Export', onPressed: _exportLogsToCSV),
+          child: PillButton(
+            label: 'Export',
+            onTap: _exportLogsToCSV,
+          ),
         ),
       ],
     );
   }
 
-  /// Feedback form with star rating
+  // Feedback form with rating
   Widget _buildFeedback() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -319,12 +314,25 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
           ),
         ),
         const SizedBox(height: 30),
-        _buildPrimaryButton("Submit", onPressed: () {}),
+        PillButton(
+          label: 'Submit',
+          onTap: () {
+            if (_feedbackController.text.trim().isEmpty) {
+              showErrorSnackBar(context, 'Please enter your feedback');
+              return;
+            }
+            showSuccessSnackBar(context, 'Thank you for your feedback!');
+            _feedbackController.clear();
+            setState(() {
+              _rating = 4;
+            });
+          },
+        ),
       ],
     );
   }
 
-  /// App information display
+  // App info
   Widget _buildAppInfo() {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -339,27 +347,19 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// Logs out the user and clears session
+  // Logout function
   Future<void> _logout() async {
-    final confirm = await showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Confirm Logout"),
-        content: const Text("Are you sure you want to logout?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Logout", style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: "Confirm Logout",
+      message: "Are you sure you want to logout?",
+      confirmText: "Logout",
+      cancelText: "Cancel",
+      confirmColor: Colors.red,
+      icon: Icons.logout,
     );
 
-    if (confirm != true) return;
+    if (confirmed != true) return;
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
@@ -371,7 +371,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// Text input field
+  // Text field helper
   Widget _buildTextField(String label, String hint) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -393,7 +393,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  /// Dropdown selector
+  // Dropdown helper
   Widget _buildDropdown(String label) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -415,18 +415,6 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  /// Primary outlined button (Modified to accept an onPressed callback!)
-  Widget _buildPrimaryButton(String text, {required VoidCallback onPressed}) {
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: AppColors.primary),
-        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 16),
-      ),
-      child: Text(text),
     );
   }
 }

@@ -44,8 +44,9 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                     return const LoadingState();
                   }
 
-                  // Filter the documents
                   List<QueryDocumentSnapshot> docs = snapshot.data?.docs ?? [];
+
+                  // Filter by department
                   if (_selectedDepartment != 'All') {
                     docs = docs.where((doc) {
                       final data = doc.data() as Map<String, dynamic>;
@@ -54,7 +55,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                     }).toList();
                   }
 
-                  // Sort logic
+                  // Sort: pending first, then by date
                   docs.sort((a, b) {
                     final dataA = a.data() as Map<String, dynamic>;
                     final dataB = b.data() as Map<String, dynamic>;
@@ -68,7 +69,6 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
 
                   if (_selectedIndex >= docs.length) _selectedIndex = 0;
 
-                  // Determine if we show real data or placeholders
                   final bool hasData = docs.isNotEmpty;
                   final Map<String, dynamic>? selectedData = hasData
                       ? docs[_selectedIndex].data() as Map<String, dynamic>
@@ -77,7 +77,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      /// Left Panel - Error List (or Empty Placeholder)
+                      // Left panel - Error list
                       Expanded(
                         flex: 45,
                         child: GlassCard(
@@ -93,7 +93,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                       ),
                       const SizedBox(width: 16),
 
-                      /// Right Panel - Error Details (or Empty Placeholder)
+                      // Right panel - Error details
                       Expanded(
                         flex: 55,
                         child: GlassCard(
@@ -114,8 +114,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
     );
   }
 
-  // --- UI Helpers ---
-
+  // Empty placeholder widget
   Widget _buildEmptyPlaceholder(String message) {
     return Center(
       child: Opacity(
@@ -132,10 +131,12 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
     );
   }
 
+  // Error item in list
   Widget _buildErrorItem(QueryDocumentSnapshot doc, int index) {
     final data = doc.data() as Map<String, dynamic>;
     final bool isSelected = _selectedIndex == index;
-    final bool isFixed = (data['status']?.toString().toLowerCase() ?? '') == 'fixed';
+    final String status = (data['status']?.toString().toLowerCase() ?? 'pending');
+    final bool isFixed = status == 'fixed';
 
     return GestureDetector(
       onTap: () => setState(() => _selectedIndex = index),
@@ -147,10 +148,10 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
           decoration: AppDecorations.smallCard(isSelected: isSelected),
           child: Row(
             children: [
-              Icon(
-                  isFixed ? Icons.check_circle_outline : Icons.warning_amber_rounded,
-                  size: 28,
-                  color: isFixed ? Colors.green : AppColors.primary
+              StatusBadge(
+                status: isFixed ? 'fixed' : 'pending',
+                showIcon: true,
+                isCompact: true,
               ),
               const SizedBox(width: 12),
               Container(width: 1.5, height: 38, color: AppColors.primary.withValues(alpha: 0.3)),
@@ -160,6 +161,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(data['hallName'] ?? 'Unknown', style: AppTextStyles.hallListNumberStyle),
+                    const SizedBox(height: 2),
                     Text(data['errorType'] ?? 'Unknown Issue',
                         style: AppTextStyles.hallListErrorStyle,
                         overflow: TextOverflow.ellipsis),
@@ -173,22 +175,31 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
     );
   }
 
+  // Details content for selected error
   Widget _buildDetailsContent(QueryDocumentSnapshot doc, Map<String, dynamic> data) {
+    final String status = data['status']?.toString().toLowerCase() ?? 'pending';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Icon(Icons.warning_amber_rounded, size: 40, color: AppColors.primary),
             const SizedBox(width: 16),
             Container(width: 2, height: 50, color: AppColors.divider),
             const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(data['hallName'] ?? 'Unknown', style: AppTextStyles.hallDetailsNumberStyle),
-                Text(data['errorType'] ?? 'No issue', style: AppTextStyles.hallDetailsErrorStyle),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(data['hallName'] ?? 'Unknown', style: AppTextStyles.hallDetailsNumberStyle),
+                  const SizedBox(height: 4),
+                  Text(data['errorType'] ?? 'No issue', style: AppTextStyles.hallDetailsErrorStyle),
+                  const SizedBox(height: 12),
+                  StatusBadge(status: status, isDot: false),
+                ],
+              ),
             ),
           ],
         ),
@@ -197,18 +208,52 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
         const SizedBox(height: 20),
         Text(data['description'] ?? 'No description.', style: AppTextStyles.hallDetailsDescriptionStyle),
         const Spacer(),
-        if ((data['status']?.toString().toLowerCase() ?? '') != 'fixed')
+        // Action buttons for pending errors
+        if (status != 'fixed')
           Row(
             children: [
-              Expanded(child: PillButton(label: 'In Repair', onTap: () => doc.reference.update({'status': 'in repair'}))),
+              Expanded(
+                child: PillButton(
+                    label: 'In Repair',
+                    onTap: () async {
+                      try {
+                        await doc.reference.update({'status': 'in repair'});
+                        if (mounted) {
+                          showSuccessSnackBar(context, 'Status updated to: In Repair');
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          showErrorSnackBar(context, 'Error updating status: $e');
+                        }
+                      }
+                    }
+                ),
+              ),
               const SizedBox(width: 16),
-              Expanded(child: PillButton(label: 'Fixed', onTap: () => doc.reference.update({'status': 'fixed'}))),
+              Expanded(
+                child: PillButton(
+                    label: 'Fixed',
+                    onTap: () async {
+                      try {
+                        await doc.reference.update({'status': 'fixed'});
+                        if (mounted) {
+                          showSuccessSnackBar(context, 'Status updated to: Fixed');
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          showErrorSnackBar(context, 'Error updating status: $e');
+                        }
+                      }
+                    }
+                ),
+              ),
             ],
           ),
       ],
     );
   }
 
+  // Image preview from base64
   Widget _buildImagePreview(dynamic attachment) {
     final String base64 = attachment?.toString() ?? '';
     return Container(
@@ -224,6 +269,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
     );
   }
 
+  // Department filter buttons
   Widget _buildDepartmentFilter() {
     return Row(
       children: _departments.map((dept) {

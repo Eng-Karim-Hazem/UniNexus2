@@ -24,6 +24,7 @@ class _AdminSentNoticesScreenState extends State<AdminSentNoticesScreen> {
     _loadSender();
   }
 
+  // Load admin name and ID from preferences
   Future<void> _loadSender() async {
     final prefs = await SharedPreferences.getInstance();
     final String firstName = (prefs.getString('fName') ?? '').trim();
@@ -45,7 +46,7 @@ class _AdminSentNoticesScreenState extends State<AdminSentNoticesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Sent Notices', style: AppTextStyles.largeHeading),
+            const PageHeading('Sent Notices'),
             const SizedBox(height: 40),
             Expanded(
               child: Row(
@@ -60,13 +61,16 @@ class _AdminSentNoticesScreenState extends State<AdminSentNoticesScreen> {
                             .snapshots(),
                         builder: (context, snapshot) {
                           if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(child: CircularProgressIndicator());
+                            return const LoadingState();
                           }
 
                           if (snapshot.hasError) {
-                            return const Center(child: Text('Error loading notices.'));
+                            return const ErrorState(
+                              message: 'Error loading notices.',
+                            );
                           }
 
+                          // Filter notices sent by current admin
                           final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs = (snapshot.data?.docs ?? const [])
                               .where((doc) {
                             final data = doc.data();
@@ -76,8 +80,9 @@ class _AdminSentNoticesScreenState extends State<AdminSentNoticesScreen> {
                           }).toList();
 
                           if (docs.isEmpty) {
-                            return const Center(
-                              child: Text('No sent notices yet.', style: AppTextStyles.body),
+                            return const EmptyState(
+                              message: 'No sent notices yet.',
+                              icon: Icons.send,
                             );
                           }
 
@@ -86,12 +91,36 @@ class _AdminSentNoticesScreenState extends State<AdminSentNoticesScreen> {
                             separatorBuilder: (_, __) => const SizedBox(height: 16),
                             itemBuilder: (context, index) {
                               final Map<String, dynamic> data = docs[index].data();
-                              final String sender =
-                              (data['sentBy'] ?? data['sender'] ?? 'Admin').toString();
-                              final String message =
-                              (data['description'] ?? data['message'] ?? '').toString();
+                              final String sender = (data['sentBy'] ?? data['sender'] ?? 'Admin').toString();
+                              final String message = (data['description'] ?? data['message'] ?? '').toString();
 
-                              return _buildSentNoticeItem(sender, message);
+                              return Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.notifications_none_rounded,
+                                        color: AppColors.primary, size: 28),
+                                    const SizedBox(width: 20),
+                                    const Text('|', style: TextStyle(fontSize: 24, color: Colors.grey)),
+                                    const SizedBox(width: 20),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(sender, style: AppTextStyles.senderStyle),
+                                          const SizedBox(height: 4),
+                                          Text(message, style: AppTextStyles.bodySmall),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
                             },
                           );
                         },
@@ -104,36 +133,6 @@ class _AdminSentNoticesScreenState extends State<AdminSentNoticesScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildSentNoticeItem(String sender, String msg) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.notifications_none_rounded,
-              color: AppColors.primary, size: 28),
-          const SizedBox(width: 20),
-          const Text('|', style: TextStyle(fontSize: 24, color: Colors.grey)),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(sender, style: AppTextStyles.senderStyle),
-                const SizedBox(height: 4),
-                Text(msg, style: AppTextStyles.bodySmall),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

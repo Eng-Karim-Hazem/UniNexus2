@@ -25,6 +25,7 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
     _loadPendingSelection();
   }
 
+  // Load pending request ID from preferences
   Future<void> _loadPendingSelection() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_pendingRequestSelectionKey);
@@ -38,6 +39,7 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
     super.dispose();
   }
 
+  // Format timestamp
   String _formatDate(Timestamp? timestamp) {
     if (timestamp == null) return 'Unknown Date';
     final DateTime date = timestamp.toDate();
@@ -45,11 +47,13 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
         '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
+  // Capitalize string
   String _capitalize(String text) {
     if (text.isEmpty) return text;
     return text[0].toUpperCase() + text.substring(1).toLowerCase();
   }
 
+  // Fetch user details from database
   Future<Map<String, dynamic>?> _fetchUserDetails(String emailOrId, String expectedRole) async {
     if (emailOrId.isEmpty) return null;
 
@@ -82,10 +86,12 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
     return null;
   }
 
+  // Update request status
   Future<void> _updateRequestStatus(DocumentSnapshot doc, String status, {required bool isPasswordRequest}) async {
     try {
       final data = doc.data() as Map<String, dynamic>;
 
+      // For password reset, update user's password in their collection
       if (status == 'accepted' && isPasswordRequest) {
         final newPassword = data['newPassword'];
         final userRole = data['userRole'];
@@ -106,16 +112,14 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
       await ITLogService.logAction('$requestType request $actionStr for $userId');
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            status == 'accepted' ? 'Request Approved!' : 'Request Rejected',
-          ),
-        ),
-      );
+      if (status == 'accepted') {
+        showSuccessSnackBar(context, 'Request Approved!');
+      } else {
+        showSuccessSnackBar(context, 'Request Rejected');
+      }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      showErrorSnackBar(context, 'Error: $e');
     }
   }
 
@@ -127,7 +131,7 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('User Requests', style: AppTextStyles.largeHeading),
+            const PageHeading('User Requests'),
             const SizedBox(height: 45),
             Expanded(
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -149,6 +153,7 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                         return ErrorState(message: 'Error loading requests: ${regSnapshot.error}');
                       }
 
+                      // Combine both request types
                       final List<Map<String, dynamic>> requestItems = [
                         ...(passSnapshot.data?.docs ?? const []).map((doc) => {
                           'id': doc.id,
@@ -164,6 +169,7 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                         }),
                       ];
 
+                      // Sort by date
                       requestItems.sort((a, b) {
                         final dataA = a['data'] as Map<String, dynamic>;
                         final dataB = b['data'] as Map<String, dynamic>;
@@ -177,6 +183,7 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                         return const EmptyState(message: 'No requests found.');
                       }
 
+                      // Handle pending selection
                       if (_pendingRequestId != null && _pendingRequestId!.isNotEmpty) {
                         final idx = requestItems.indexWhere((item) => item['id'] == _pendingRequestId);
                         if (idx != -1) {
@@ -201,6 +208,7 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                           return Row(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
+                              // Left panel - Request list
                               Expanded(
                                 flex: 45,
                                 child: GlassCard(
@@ -233,25 +241,10 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                                             decoration: AppDecorations.smallCard(isSelected: isSelected),
                                             child: Row(
                                               children: [
-                                                isResolved
-                                                    ? Icon(
-                                                  statusStr == 'rejected'
-                                                      ? Icons.cancel_outlined
-                                                      : Icons.check_circle_outline,
-                                                  size: 28,
-                                                  color: statusStr == 'rejected' ? Colors.red : Colors.green,
-                                                )
-                                                    : Container(
-                                                  padding: const EdgeInsets.all(8),
-                                                  decoration: BoxDecoration(
-                                                    color: AppColors.primary.withValues(alpha: 0.1),
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                  child: const Icon(
-                                                    Icons.person_outline,
-                                                    size: 24,
-                                                    color: AppColors.primary,
-                                                  ),
+                                                StatusBadge(
+                                                  status: isResolved ? statusStr : 'pending',
+                                                  showIcon: true,
+                                                  isCompact: false,
                                                 ),
                                                 const SizedBox(width: 12),
                                                 Container(
@@ -288,6 +281,7 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                                 ),
                               ),
                               const SizedBox(width: 16),
+                              // Right panel - Request details
                               Expanded(
                                 flex: 55,
                                 child: GlassCard(
@@ -342,25 +336,72 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                                               return Column(
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
-                                                  buildFigmaDetailRow('Requested by', fullName.isEmpty ? 'Unknown' : fullName),
-                                                  buildFigmaDetailRow('User Type', _capitalize(foundRole)),
-                                                  buildFigmaDetailRow(
-                                                    'ID',
-                                                    userData['ID'] ?? selectedData['emailOrId'] ?? 'N/A',
+                                                  buildInfoRow(
+                                                    label: 'Requested by',
+                                                    value: fullName.isEmpty ? 'Unknown' : fullName,
+                                                    fontSize: 16,
+                                                    verticalPadding: 16,
+                                                    labelWeight: FontWeight.bold,
+                                                    valueWeight: FontWeight.w500,
                                                   ),
-                                                  buildFigmaDetailRow('Email', userData['email'] ?? 'N/A'),
-                                                  buildFigmaDetailRow(
-                                                    'New Password',
-                                                    selectedData['newPassword'] ?? 'Not provided',
+                                                  buildInfoRow(
+                                                    label: 'User Type',
+                                                    value: _capitalize(foundRole),
+                                                    fontSize: 16,
+                                                    verticalPadding: 16,
+                                                    labelWeight: FontWeight.bold,
+                                                    valueWeight: FontWeight.w500,
+                                                  ),
+                                                  buildInfoRow(
+                                                    label: 'ID',
+                                                    value: userData['ID'] ?? selectedData['emailOrId'] ?? 'N/A',
+                                                    fontSize: 16,
+                                                    verticalPadding: 16,
+                                                    labelWeight: FontWeight.bold,
+                                                    valueWeight: FontWeight.w500,
+                                                  ),
+                                                  buildInfoRow(
+                                                    label: 'Email',
+                                                    value: userData['email'] ?? 'N/A',
+                                                    fontSize: 16,
+                                                    verticalPadding: 16,
+                                                    labelWeight: FontWeight.bold,
+                                                    valueWeight: FontWeight.w500,
+                                                  ),
+                                                  buildInfoRow(
+                                                    label: 'New Password',
+                                                    value: selectedData['newPassword'] ?? 'Not provided',
+                                                    fontSize: 16,
+                                                    verticalPadding: 16,
+                                                    labelWeight: FontWeight.bold,
+                                                    valueWeight: FontWeight.w500,
                                                   ),
                                                   if (userData.containsKey('year'))
-                                                    buildFigmaDetailRow('Year', userData['year'].toString()),
+                                                    buildInfoRow(
+                                                      label: 'Year',
+                                                      value: userData['year'].toString(),
+                                                      fontSize: 16,
+                                                      verticalPadding: 16,
+                                                      labelWeight: FontWeight.bold,
+                                                      valueWeight: FontWeight.w500,
+                                                    ),
                                                   if (userData.containsKey('faculty'))
-                                                    buildFigmaDetailRow('Faculty', userData['faculty']),
+                                                    buildInfoRow(
+                                                      label: 'Faculty',
+                                                      value: userData['faculty'],
+                                                      fontSize: 16,
+                                                      verticalPadding: 16,
+                                                      labelWeight: FontWeight.bold,
+                                                      valueWeight: FontWeight.w500,
+                                                    ),
                                                   const SizedBox(height: 20),
-                                                  buildFigmaDetailRow(
-                                                    'Time of Request',
-                                                    _formatDate(selectedData['requestDate'] as Timestamp?),
+                                                  buildInfoRow(
+                                                    label: 'Time of Request',
+                                                    value: _formatDate(selectedData['requestDate'] as Timestamp?),
+                                                    fontSize: 16,
+                                                    verticalPadding: 16,
+                                                    labelWeight: FontWeight.bold,
+                                                    valueWeight: FontWeight.w500,
                                                   ),
                                                 ],
                                               );
@@ -369,21 +410,61 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                                               : Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              buildFigmaDetailRow('Requested by', (selectedData['fullName'] ?? selectedData['name'] ?? 'Unknown').toString()),
-                                              buildFigmaDetailRow('Email', (selectedData['email'] ?? 'N/A').toString()),
-                                              buildFigmaDetailRow('ID', (selectedData['ID'] ?? 'N/A').toString()),
+                                              buildInfoRow(
+                                                label: 'Requested by',
+                                                value: (selectedData['fullName'] ?? selectedData['name'] ?? 'Unknown').toString(),
+                                                fontSize: 16,
+                                                verticalPadding: 16,
+                                                labelWeight: FontWeight.bold,
+                                                valueWeight: FontWeight.w500,
+                                              ),
+                                              buildInfoRow(
+                                                label: 'Email',
+                                                value: (selectedData['email'] ?? 'N/A').toString(),
+                                                fontSize: 16,
+                                                verticalPadding: 16,
+                                                labelWeight: FontWeight.bold,
+                                                valueWeight: FontWeight.w500,
+                                              ),
+                                              buildInfoRow(
+                                                label: 'ID',
+                                                value: (selectedData['ID'] ?? 'N/A').toString(),
+                                                fontSize: 16,
+                                                verticalPadding: 16,
+                                                labelWeight: FontWeight.bold,
+                                                valueWeight: FontWeight.w500,
+                                              ),
                                               if (selectedData['faculty'] != null)
-                                                buildFigmaDetailRow('Faculty', selectedData['faculty'].toString()),
+                                                buildInfoRow(
+                                                  label: 'Faculty',
+                                                  value: selectedData['faculty'].toString(),
+                                                  fontSize: 16,
+                                                  verticalPadding: 16,
+                                                  labelWeight: FontWeight.bold,
+                                                  valueWeight: FontWeight.w500,
+                                                ),
                                               if (selectedData['year'] != null)
-                                                buildFigmaDetailRow('Year', selectedData['year'].toString()),
+                                                buildInfoRow(
+                                                  label: 'Year',
+                                                  value: selectedData['year'].toString(),
+                                                  fontSize: 16,
+                                                  verticalPadding: 16,
+                                                  labelWeight: FontWeight.bold,
+                                                  valueWeight: FontWeight.w500,
+                                                ),
                                               const SizedBox(height: 20),
-                                              buildFigmaDetailRow(
-                                                'Time of Request',
-                                                _formatDate((selectedData['requestDate'] ?? selectedData['date']) as Timestamp?),
+                                              buildInfoRow(
+                                                label: 'Time of Request',
+                                                value: _formatDate((selectedData['requestDate'] ?? selectedData['date']) as Timestamp?),
+                                                fontSize: 16,
+                                                verticalPadding: 16,
+                                                labelWeight: FontWeight.bold,
+                                                valueWeight: FontWeight.w500,
                                               ),
                                             ],
                                           ),
                                         ),
+                                        // Action buttons for pending requests
                                         if (selectedData['isProcessed'] != true)
                                           Row(
                                             children: [

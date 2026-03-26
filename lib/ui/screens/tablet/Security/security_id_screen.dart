@@ -17,7 +17,6 @@ class _SecurityIdScreenState extends State<SecurityIdScreen> {
   bool _isLoading = true;
   bool _isPunchedIn = false;
 
-  // Colors from Faculty screen for the QR Shader
   final Color _primaryBlue = const Color(0xFF237ABA);
   final Color _secondaryPurple = const Color(0xFF9C2CF3);
 
@@ -27,6 +26,7 @@ class _SecurityIdScreenState extends State<SecurityIdScreen> {
     _loadDataFromPrefs();
   }
 
+  // Load user ID from preferences
   Future<void> _loadDataFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.reload();
@@ -39,18 +39,26 @@ class _SecurityIdScreenState extends State<SecurityIdScreen> {
     }
   }
 
+  // Handle punch in/out
+  void _handlePunch() {
+    setState(() {
+      _isPunchedIn = !_isPunchedIn;
+    });
+    showInfoSnackBar(
+      context,
+      _isPunchedIn ? 'Punched IN successfully' : 'Punched OUT successfully',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const ITScreenBackground(
-        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        child: Center(child: LoadingState()),
       );
     }
 
-    // Dynamic QR Data: Appends .in or .out
     final String qrData = _isPunchedIn ? "OUT_$_userID" : "IN_$_userID";
-
-    // Dynamic QR Colors for the ShaderMask
     final List<Color> qrColors = _isPunchedIn
         ? [_secondaryPurple, _primaryBlue]
         : [_primaryBlue, _secondaryPurple];
@@ -73,34 +81,69 @@ class _SecurityIdScreenState extends State<SecurityIdScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        /// Digital ID Card (UI Preserved)
+                        // Digital ID Card
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: AppDecorations.idCardInner,
                           child: Row(
                             children: [
-                              /// Left decorations (Ellipse & Rectangle)
+                              // Left decorations
                               Column(
                                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                 children: [
-                                  Image.asset('assets/icons/Ellipse 3 (1).png', width: 28, height: 28),
+                                  Image.asset(
+                                    'assets/icons/Ellipse 3 (1).png',
+                                    width: 28,
+                                    height: 28,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (_, __, ___) => const Dot(),
+                                  ),
                                   const SizedBox(height: 8),
-                                  Image.asset('assets/icons/Rectangle 25 (1).png', width: 20, height: 80, fit: BoxFit.fill),
+                                  Image.asset(
+                                    'assets/icons/Rectangle 25 (1).png',
+                                    width: 20,
+                                    height: 80,
+                                    fit: BoxFit.fill,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      width: 4,
+                                      height: 80,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary.withValues(alpha: 0.35),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ),
+                                  ),
                                   const SizedBox(height: 8),
-                                  Image.asset('assets/icons/Ellipse 3 (1).png', width: 28, height: 28),
+                                  Image.asset(
+                                    'assets/icons/Ellipse 3 (1).png',
+                                    width: 28,
+                                    height: 28,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (_, __, ___) => const Dot(),
+                                  ),
                                 ],
                               ),
                               const SizedBox(width: 16),
 
-                              /// ID card icon
+                              // ID card icon
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: AppDecorations.iconBackground,
-                                child: Image.asset('assets/images/id_card.png', width: 40, height: 40),
+                                child: Image.asset(
+                                  'assets/images/id_card.png',
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.badge_outlined,
+                                    size: 40,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
                               ),
                               const SizedBox(width: 24),
 
-                              /// QR with ShaderMask and Dynamic Suffix (.in/.out)
+                              // QR Code with ShaderMask
                               Expanded(
                                 child: AspectRatio(
                                   aspectRatio: 1,
@@ -128,7 +171,15 @@ class _SecurityIdScreenState extends State<SecurityIdScreen> {
                                           color: Colors.white,
                                           borderRadius: BorderRadius.circular(8),
                                         ),
-                                        child: Image.asset('assets/images/LOGO.png', fit: BoxFit.contain),
+                                        child: Image.asset(
+                                          'assets/images/LOGO.png',
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (_, __, ___) => const Icon(
+                                            Icons.image,
+                                            size: 30,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -139,23 +190,34 @@ class _SecurityIdScreenState extends State<SecurityIdScreen> {
                         ),
                         const SizedBox(height: 36),
 
-                        /// Static Style Button / Toggleable Text
+                        // Animated Punch IN/OUT Button
                         GestureDetector(
-                          onTap: () {
-                            setState(() => _isPunchedIn = !_isPunchedIn);
-                          },
-                          child: Container(
+                          onTap: _handlePunch,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            // Decoration remains static (Outline style)
-                            decoration: AppDecorations.pillButtonOutline(),
+                            decoration: _isPunchedIn
+                                ? AppDecorations.pillButtonOutline()
+                                : AppDecorations.pillButton(),
                             child: Center(
-                              child: Text(
-                                _isPunchedIn ? 'Punch OUT' : 'Punch IN', // Toggles text
-                                style: const TextStyle(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 250),
+                                transitionBuilder: (child, anim) => FadeTransition(
+                                  opacity: anim,
+                                  child: SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(0, 0.3),
+                                      end: Offset.zero,
+                                    ).animate(anim),
+                                    child: child,
+                                  ),
+                                ),
+                                child: Text(
+                                  _isPunchedIn ? 'Punch OUT' : 'Punch IN',
+                                  key: ValueKey(_isPunchedIn),
+                                  style: AppTextStyles.buttonStyle,
                                 ),
                               ),
                             ),

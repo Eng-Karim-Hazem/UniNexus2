@@ -39,23 +39,31 @@ class _SecurityGateEntryScreenState extends State<SecurityGateEntryScreen> {
               child: StreamBuilder<List<GateScan>>(
                 stream: _gateService.getGateScans(),
                 builder: (context, snapshot) {
-                  if (snapshot.hasError) return Center(child: Text("Error: ${snapshot.error}"));
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: LoadingState());
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: ErrorState(
+                        message: "Error loading gate entries: ${snapshot.error}",
+                        onRetry: () => setState(() {}),
+                      ),
+                    );
+                  }
 
                   List<GateScan> scans = snapshot.data ?? [];
 
-                  // 1. Filter by date string matching your model
+                  // Filter by selected date
                   if (_selectedDate != null) {
                     final String filterString = DateFormat('yyyy-MM-dd').format(_selectedDate!);
                     scans = scans.where((scan) => scan.date == filterString).toList();
                   }
 
-                  // 2. FIXED AUTOSELECT LOGIC
+                  // Auto-select first item if needed
                   if (scans.isNotEmpty) {
-                    // Check if the current selection is still part of the visible list
                     bool currentSelectionStillValid = scans.any((s) => s.id == _selectedScan?.id);
 
-                    // Only force a selection if we haven't picked anyone yet,
-                    // or if the person we were looking at disappeared (e.g., date filter changed)
                     if (!_hasInitialSelection || !currentSelectionStillValid) {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         if (mounted) {
@@ -70,13 +78,18 @@ class _SecurityGateEntryScreenState extends State<SecurityGateEntryScreen> {
 
                   return Row(
                     children: [
-                      /// Left side - Scrollable entry list
+                      // Left panel - Gate entry list
                       Expanded(
                         flex: 5,
                         child: GlassCard(
                           padding: const EdgeInsets.all(20),
                           child: scans.isEmpty
-                              ? const Center(child: Text("No entries found", style: TextStyle(color: AppColors.textDark)))
+                              ? const Center(
+                            child: EmptyState(
+                              message: "No gate entries recorded yet.",
+                              icon: Icons.door_front_door,
+                            ),
+                          )
                               : ListView.builder(
                             padding: EdgeInsets.zero,
                             itemCount: scans.length,
@@ -84,18 +97,16 @@ class _SecurityGateEntryScreenState extends State<SecurityGateEntryScreen> {
                               final scan = scans[index];
                               final bool isSelected = _selectedScan?.id == scan.id;
 
-                              return GestureDetector(
+                              return AppEntryRow(
+                                label: scan.studentId,
+                                status: scan.status,
+                                isSelected: isSelected,
                                 onTap: () {
                                   setState(() {
                                     _selectedScan = scan;
-                                    _hasInitialSelection = true; // Mark that we have an active selection
+                                    _hasInitialSelection = true;
                                   });
                                 },
-                                child: _EntryRow(
-                                  id: scan.studentId,
-                                  status: scan.status,
-                                  isSelected: isSelected,
-                                ),
                               );
                             },
                           ),
@@ -103,7 +114,7 @@ class _SecurityGateEntryScreenState extends State<SecurityGateEntryScreen> {
                       ),
                       const SizedBox(width: 24),
 
-                      /// Right side - Detailed user data panel
+                      // Right panel - User details
                       Expanded(
                         flex: 4,
                         child: GlassCard(
@@ -111,7 +122,7 @@ class _SecurityGateEntryScreenState extends State<SecurityGateEntryScreen> {
                           child: scans.isEmpty
                               ? const Center(child: Icon(Icons.calendar_today_outlined, size: 64, color: AppColors.primary))
                               : (_selectedScan == null
-                              ? const Center(child: CircularProgressIndicator())
+                              ? const Center(child: LoadingState())
                               : _UserDataPanel(scan: _selectedScan!)),
                         ),
                       ),
@@ -126,6 +137,7 @@ class _SecurityGateEntryScreenState extends State<SecurityGateEntryScreen> {
     );
   }
 
+  // Date filter toggle
   Widget _buildFilterToggle() {
     return Row(
       children: [
@@ -133,7 +145,7 @@ class _SecurityGateEntryScreenState extends State<SecurityGateEntryScreen> {
           IconButton(
             onPressed: () => setState(() {
               _selectedDate = null;
-              _hasInitialSelection = false; // Allow autoselect to trigger for "All Time"
+              _hasInitialSelection = false;
             }),
             icon: const Icon(Icons.refresh, color: Colors.redAccent),
             tooltip: "Show All",
@@ -149,7 +161,7 @@ class _SecurityGateEntryScreenState extends State<SecurityGateEntryScreen> {
             if (picked != null) {
               setState(() {
                 _selectedDate = picked;
-                _hasInitialSelection = false; // Reset so it autoselects the first person on the new date
+                _hasInitialSelection = false;
               });
             }
           },
@@ -177,46 +189,7 @@ class _SecurityGateEntryScreenState extends State<SecurityGateEntryScreen> {
   }
 }
 
-class _EntryRow extends StatelessWidget {
-  final String id, status;
-  final bool isSelected;
-  const _EntryRow({required this.id, required this.status, this.isSelected = false});
-
-  @override
-  Widget build(BuildContext context) {
-    Color dotColor = (status.toLowerCase() == 'denied') ? Colors.red : Colors.green;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: (AppDecorations.smallCard() as BoxDecoration).copyWith(
-        color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : null,
-        border: isSelected ? Border.all(color: AppColors.primary, width: 2) : null,
-      ),
-      child: Row(
-        children: [
-          Image.asset(
-            'assets/images/avatar.png',
-            width: 28, height: 28,
-            errorBuilder: (_, __, ___) => const Icon(Icons.person, color: AppColors.primary, size: 28),
-          ),
-          const SizedBox(width: 14),
-          Container(width: 4, height: 28, color: AppColors.primary.withValues(alpha: .35)),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(id, style: const TextStyle(fontFamily: AppFonts.spaceGrotesk, fontWeight: FontWeight.w700, fontSize: 18, color: AppColors.textDark)),
-          ),
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
+// User data panel widget
 class _UserDataPanel extends StatelessWidget {
   final GateScan scan;
   const _UserDataPanel({required this.scan});
@@ -240,23 +213,75 @@ class _UserDataPanel extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 36),
-        buildDataRow("Name", scan.name),
+        buildInfoRow(
+          label: "Name",
+          value: scan.name,
+          fontSize: 18,
+          verticalPadding: 12,
+        ),
         const SizedBox(height: 24),
         Row(
           children: [
-            Expanded(flex: 3, child: buildDataRow("User Type", scan.type)),
+            Expanded(
+              flex: 3,
+              child: buildInfoRow(
+                label: "User Type",
+                value: scan.type,
+                fontSize: 18,
+                verticalPadding: 12,
+              ),
+            ),
             const SizedBox(width: 16),
-            Expanded(flex: 2, child: buildDataRow("Year", scan.year)),
+            Expanded(
+              flex: 2,
+              child: buildInfoRow(
+                label: "Year",
+                value: scan.year,
+                fontSize: 18,
+                verticalPadding: 12,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 24),
-        buildDataRow("ID", scan.studentId),
+        buildInfoRow(
+          label: "ID",
+          value: scan.studentId,
+          fontSize: 18,
+          verticalPadding: 12,
+        ),
         const SizedBox(height: 24),
-        buildDataRow("Faculty", scan.faculty),
+        buildInfoRow(
+          label: "Faculty",
+          value: scan.faculty,
+          fontSize: 18,
+          verticalPadding: 12,
+        ),
         const SizedBox(height: 24),
-        buildDataRow("Status", scan.status),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(
+            children: [
+              Text(
+                'Status : ',
+                style: const TextStyle(
+                  fontFamily: AppFonts.spaceGrotesk,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textDark,
+                ),
+              ),
+              StatusBadge(status: scan.status, isDot: false),
+            ],
+          ),
+        ),
         const SizedBox(height: 24),
-        buildDataRow("Note", scan.note),
+        buildInfoRow(
+          label: "Note",
+          value: scan.note,
+          fontSize: 18,
+          verticalPadding: 12,
+        ),
       ],
     );
   }

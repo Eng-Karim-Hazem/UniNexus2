@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../admin_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
-import 'package:uninexus/ui/screens/tablet/welcome_screen_tablet.dart'; // Adjust path if needed
+import 'package:uninexus/ui/screens/tablet/welcome_screen_tablet.dart';
 
 class AdminSettingsScreen extends StatefulWidget {
   final void Function(AdminTab) onNavigate;
@@ -42,16 +42,13 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Settings",
-              style: AppTextStyles.largeHeading,
-            ),
+            const PageHeading('Settings'),
             const SizedBox(height: 5),
             Expanded(
               child: Row(
                 children: [
 
-                  /// SETTINGS GRID
+                  // Settings grid
                   Expanded(
                     flex: selectedSettingTab == null ? 1 : 0,
                     child: Center(
@@ -70,7 +67,9 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                           itemBuilder: (context, index) {
                             final item = _items[index];
 
-                            return GestureDetector(
+                            return SettingsCard(
+                              iconPath: item['icon']!,
+                              label: item['label']!,
                               onTap: () {
                                 if (index == 4) {
                                   _logout();
@@ -80,7 +79,6 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                                   });
                                 }
                               },
-                              child: _buildSettingCard(item), // Passes the index now!
                             );
                           },
                         ),
@@ -88,7 +86,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                     ),
                   ),
 
-                  /// RIGHT PANEL
+                  // Right panel - Selected setting content
                   if (selectedSettingTab != null) ...[
                     const SizedBox(width: 30),
                     Expanded(
@@ -122,43 +120,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
     );
   }
 
-  /// SETTINGS CARD
-  Widget _buildSettingCard(Map<String, String> item) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
-          decoration: GlassDecoration.light,
-          padding: const EdgeInsets.symmetric(horizontal: 15),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                item['icon']!,
-                width: 80,
-                height: 80,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Icon(
-                  Icons.settings,
-                  size: 120,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                item['label']!,
-                textAlign: TextAlign.center,
-                style: AppTextStyles.settingsCardTitleStyle,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// TAB CONTENT SWITCH
+  // Get content for selected tab
   Widget _getContentForTab(int index) {
     switch (index) {
       case 0:
@@ -174,7 +136,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
     }
   }
 
-  /// ACCOUNT MANAGEMENT
+  // Account management form
   Widget _buildAccountManagement() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,12 +150,17 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
         const SizedBox(height: 20),
         _buildTextField("New Email", "Enter email"),
         const SizedBox(height: 40),
-        _buildPrimaryButton("Update"),
+        PillButton(
+          label: 'Update',
+          onTap: () {
+            showSuccessSnackBar(context, 'Account updated successfully!');
+          },
+        ),
       ],
     );
   }
 
-  /// NOTIFICATIONS
+  // Notification settings
   Widget _buildNotificationSettings() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,11 +175,18 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
         _buildDropdown("Announcements"),
         const SizedBox(height: 20),
         _buildDropdown("Warnings"),
+        const SizedBox(height: 40),
+        PillButton(
+          label: 'Save',
+          onTap: () {
+            showSuccessSnackBar(context, 'Notification settings saved!');
+          },
+        ),
       ],
     );
   }
 
-  /// FEEDBACK
+  // Feedback form with rating
   Widget _buildFeedback() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,12 +227,25 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
           ),
         ),
         const SizedBox(height: 30),
-        _buildPrimaryButton("Submit"),
+        PillButton(
+          label: 'Submit',
+          onTap: () {
+            if (_feedbackController.text.trim().isEmpty) {
+              showErrorSnackBar(context, 'Please enter your feedback');
+              return;
+            }
+            showSuccessSnackBar(context, 'Thank you for your feedback!');
+            _feedbackController.clear();
+            setState(() {
+              _rating = 4;
+            });
+          },
+        ),
       ],
     );
   }
 
-  /// APP INFO
+  // App info
   Widget _buildAppInfo() {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,30 +260,19 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
     );
   }
 
-  /// LOGOUT
+  // Logout function
   Future<void> _logout() async {
-    final confirm = await showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Confirm Logout"),
-        content: const Text("Are you sure you want to logout?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              "Logout",
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: "Confirm Logout",
+      message: "Are you sure you want to logout?",
+      confirmText: "Logout",
+      cancelText: "Cancel",
+      confirmColor: Colors.red,
+      icon: Icons.logout,
     );
 
-    if (confirm != true) return;
+    if (confirmed != true) return;
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
@@ -310,7 +286,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
     );
   }
 
-  /// INPUT FIELD
+  // Text field helper
   Widget _buildTextField(String label, String hint) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,7 +308,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
     );
   }
 
-  /// DROPDOWN
+  // Dropdown helper
   Widget _buildDropdown(String label) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -354,18 +330,6 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  /// BUTTON
-  Widget _buildPrimaryButton(String text) {
-    return OutlinedButton(
-      onPressed: () {},
-      style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: AppColors.primary),
-        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 16),
-      ),
-      child: Text(text),
     );
   }
 }

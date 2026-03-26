@@ -13,6 +13,7 @@ class SecurityProfileScreen extends StatefulWidget {
 }
 
 class _SecurityProfileScreenState extends State<SecurityProfileScreen> {
+  // Profile data
   String _fullName = 'Loading...';
   String _id = 'Loading...';
   String _email = 'Loading...';
@@ -29,14 +30,14 @@ class _SecurityProfileScreenState extends State<SecurityProfileScreen> {
     _loadProfileData();
   }
 
-  /// Returns a valid string or '-' if empty/null
+  // Get valid string from preferences
   String _getValidString(SharedPreferences prefs, String key) {
     final value = prefs.getString(key);
     if (value == null || value.trim().isEmpty) return '-';
     return value;
   }
 
-  /// Loads profile data from shared preferences
+  // Load profile data from shared preferences
   Future<void> _loadProfileData() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -67,13 +68,14 @@ class _SecurityProfileScreenState extends State<SecurityProfileScreen> {
             const PageHeading('Profile'),
             const SizedBox(height: 45),
 
-            /// Profile header card with photo and name
+            // Profile header card
             GlassCard(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : Row(
                 children: [
+                  // Profile photo
                   Container(
                     width: 110,
                     height: 110,
@@ -124,7 +126,7 @@ class _SecurityProfileScreenState extends State<SecurityProfileScreen> {
 
             const SizedBox(height: 16),
 
-            /// Profile details card
+            // Details card
             Expanded(
               child: GlassCard(
                 padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 0),
@@ -133,15 +135,45 @@ class _SecurityProfileScreenState extends State<SecurityProfileScreen> {
                     : Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    buildSecurityInfoRow('Department', _department),
+                    buildInfoRow(
+                      label: 'Department',
+                      value: _department,
+                      fontSize: 20,
+                      verticalPadding: 18,
+                      crossAlignment: CrossAxisAlignment.center,
+                    ),
                     AppDecorations.profileInfoDivider,
-                    buildSecurityInfoRow('Position', _position),
+                    buildInfoRow(
+                      label: 'Position',
+                      value: _position,
+                      fontSize: 20,
+                      verticalPadding: 18,
+                      crossAlignment: CrossAxisAlignment.center,
+                    ),
                     AppDecorations.profileInfoDivider,
-                    buildSecurityInfoRow('E-mail', _email),
+                    buildInfoRow(
+                      label: 'E-mail',
+                      value: _email,
+                      fontSize: 20,
+                      verticalPadding: 18,
+                      crossAlignment: CrossAxisAlignment.center,
+                    ),
                     AppDecorations.profileInfoDivider,
-                    buildSecurityInfoRow('Phone no.', _phone),
+                    buildInfoRow(
+                      label: 'Phone no.',
+                      value: _phone,
+                      fontSize: 20,
+                      verticalPadding: 18,
+                      crossAlignment: CrossAxisAlignment.center,
+                    ),
                     AppDecorations.profileInfoDivider,
-                    buildSecurityInfoRow('National ID', _nationalId),
+                    buildInfoRow(
+                      label: 'National ID',
+                      value: _nationalId,
+                      fontSize: 20,
+                      verticalPadding: 18,
+                      crossAlignment: CrossAxisAlignment.center,
+                    ),
                   ],
                 ),
               ),
@@ -152,7 +184,7 @@ class _SecurityProfileScreenState extends State<SecurityProfileScreen> {
     );
   }
 
-  /// Fallback icon when photo is not available
+  // Fallback icon for profile photo
   Widget _buildFallbackIcon() {
     return Padding(
       padding: const EdgeInsets.all(12.0),

@@ -21,7 +21,6 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
   String _currentDate = "";
   late Timer _timer;
 
-  // Notification State
   List<Map<String, String>> _recentNotices = [];
   bool _loadingNotices = true;
 
@@ -40,10 +39,9 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
     super.dispose();
   }
 
-  /// Listens to Notifications and filters for 'Security', 'All', or specific User ID
+  // Initialize notices stream listener
   void _initNoticesStream() async {
     final prefs = await SharedPreferences.getInstance();
-    // Assuming your ID 'SC20221379' is stored as 'userId'
     final String currentUserId = prefs.getString('userId') ?? '';
 
     FirebaseFirestore.instance
@@ -51,12 +49,12 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
         .snapshots()
         .listen((snapshot) {
       if (mounted) {
+        // Filter notices for security
         var filteredDocs = snapshot.docs.where((doc) {
           final data = doc.data();
           final target = data['targetValue']?.toString() ?? '';
           final List<dynamic> recipientIds = data['recipientIds'] ?? [];
 
-          // 1. Filter: Security, All, Staff, OR if User ID is the target/in recipients
           return target == 'Security' ||
               target == 'All' ||
               target == 'Staff' ||
@@ -64,7 +62,7 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
               recipientIds.contains(currentUserId);
         }).toList();
 
-        // 2. Sort by date (newest first)
+        // Sort by date newest first
         filteredDocs.sort((a, b) {
           final timeA = a.data()['date'];
           final timeB = b.data()['date'];
@@ -90,6 +88,7 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
     });
   }
 
+  // Load user data from preferences
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.reload();
@@ -102,6 +101,7 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
     }
   }
 
+  // Update date and greeting
   void _updateDateTime() {
     final now = DateTime.now();
     if (mounted) {
@@ -112,6 +112,7 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
     }
   }
 
+  // Get greeting based on time of day
   String _getGreeting(int hour) {
     if (hour < 12) return "Good morning";
     if (hour < 17) return "Good afternoon";
@@ -138,6 +139,7 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
             Expanded(
               child: Row(
                 children: [
+                  // Left column - Gate entries
                   Expanded(
                     flex: 5,
                     child: GlassCard(
@@ -149,13 +151,28 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
                           const SizedBox(height: 20),
                           Divider(color: AppColors.primary.withOpacity(0.35), thickness: 1.5),
                           const SizedBox(height: 20),
-                          const _LegendRow(),
+                          const Row(
+                            children: [
+                              StatusBadge(status: 'approved', isDot: true),
+                              SizedBox(width: 8),
+                              Text("Approved", style: AppTextStyles.legendLabelStyle),
+                              SizedBox(width: 26),
+                              StatusBadge(status: 'unknown', isDot: true),
+                              SizedBox(width: 8),
+                              Text("Unknown", style: AppTextStyles.legendLabelStyle),
+                              SizedBox(width: 26),
+                              StatusBadge(status: 'denied', isDot: true),
+                              SizedBox(width: 8),
+                              Text("Denied", style: AppTextStyles.legendLabelStyle),
+                            ],
+                          ),
                           const SizedBox(height: 20),
                           Divider(color: AppColors.primary.withOpacity(0.35), thickness: 1.5),
                           const SizedBox(height: 20),
                           const Text("Recent Entries", style: AppTextStyles.recentEntriesLabelStyle),
                           const SizedBox(height: 14),
 
+                          // Recent entries list
                           Expanded(
                             child: StreamBuilder<QuerySnapshot>(
                               stream: FirebaseFirestore.instance
@@ -165,13 +182,23 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
                                   .snapshots(),
                               builder: (context, snapshot) {
                                 if (snapshot.connectionState == ConnectionState.waiting) {
-                                  return const Center(child: CircularProgressIndicator());
+                                  return const LoadingState();
+                                }
+
+                                if (snapshot.hasError) {
+                                  return ErrorState(
+                                    message: "Error loading entries: ${snapshot.error}",
+                                    onRetry: () => setState(() {}),
+                                  );
                                 }
 
                                 List<QueryDocumentSnapshot> recentDocs = snapshot.hasData ? snapshot.data!.docs : [];
 
                                 if (recentDocs.isEmpty) {
-                                  return const Center(child: Text("No entries today", style: TextStyle(color: Colors.grey)));
+                                  return const EmptyState(
+                                    message: "No gate entries today",
+                                    icon: Icons.door_front_door,
+                                  );
                                 }
 
                                 return ListView.builder(
@@ -179,8 +206,8 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
                                   itemCount: recentDocs.length,
                                   itemBuilder: (context, index) {
                                     var data = recentDocs[index].data() as Map<String, dynamic>;
-                                    return _EntryRow(
-                                      name: data['name'] ?? "Unknown User",
+                                    return AppEntryRow(
+                                      label: data['name'] ?? "Unknown User",
                                       status: data['status'] ?? "unknown",
                                     );
                                   },
@@ -203,6 +230,7 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
                   ),
                   const SizedBox(width: 26),
 
+                  // Right column - Notices and quick actions
                   Expanded(
                     flex: 4,
                     child: Column(
@@ -211,12 +239,16 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
                           child: GlassCard(
                             padding: const EdgeInsets.all(20),
                             child: _loadingNotices
-                                ? const Center(child: CircularProgressIndicator())
+                                ? const LoadingState()
                                 : Column(
                               children: [
                                 if (_recentNotices.isEmpty)
-                                  const Expanded(child: Center(child: Text("No notices for Security.", style: TextStyle(color: Colors.grey)))),
-
+                                  const Expanded(
+                                    child: EmptyState(
+                                      message: "No notices for Security.",
+                                      icon: Icons.notifications_none,
+                                    ),
+                                  ),
                                 ..._recentNotices.map((notice) => Padding(
                                   padding: const EdgeInsets.only(bottom: 12),
                                   child: _SecurityAnnouncement(
@@ -242,6 +274,7 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
     );
   }
 
+  // Gate counter widget
   Widget _buildGateCounter(String dateStr) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('gate_sc_ans').where('date', isEqualTo: dateStr).snapshots(),
@@ -263,6 +296,7 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
     );
   }
 
+  // Quick action buttons
   Widget _buildQuickActionSection() {
     return SizedBox(
       height: 160,
@@ -289,7 +323,7 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
   }
 }
 
-// UI Components remain unchanged...
+// Security announcement card
 class _SecurityAnnouncement extends StatelessWidget {
   final String title;
   final String message;
@@ -315,75 +349,13 @@ class _SecurityAnnouncement extends StatelessWidget {
   }
 }
 
-class _EntryRow extends StatelessWidget {
-  final String name;
-  final String status;
-  const _EntryRow({required this.name, required this.status});
-  @override
-  Widget build(BuildContext context) {
-    Color dotColor;
-    switch (status.toLowerCase()) {
-      case 'allowed':
-      case 'approved':
-        dotColor = Colors.green;
-        break;
-      case 'denied':
-        dotColor = Colors.red;
-        break;
-      default:
-        dotColor = Colors.yellow;
-    }
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: AppDecorations.smallCard(),
-      child: Row(children: [
-        Image.asset('assets/images/avatar.png', width: 26, height: 26,
-            errorBuilder: (_, __, ___) => const Icon(Icons.person, color: AppColors.primary)),
-        const SizedBox(width: 12),
-        Container(width: 2, height: 26, color: AppColors.primary.withOpacity(0.35)),
-        const SizedBox(width: 12),
-        Expanded(child: Text(name, style: AppTextStyles.entryRowNameStyle)),
-        Container(width: 12, height: 12, decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle)),
-      ]),
-    );
-  }
-}
-
-class _LegendRow extends StatelessWidget {
-  const _LegendRow();
-  @override
-  Widget build(BuildContext context) {
-    return const Row(children: [
-      _LegendDot(color: Colors.green, label: "Approved"),
-      SizedBox(width: 26),
-      _LegendDot(color: Colors.yellow, label: "Unknown"),
-      SizedBox(width: 26),
-      _LegendDot(color: Colors.red, label: "Denied"),
-    ]);
-  }
-}
-
-class _LegendDot extends StatelessWidget {
-  final Color color;
-  final String label;
-  const _LegendDot({required this.color, required this.label});
-  @override
-  Widget build(BuildContext context) {
-    return Row(children: [
-      Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-      const SizedBox(width: 8),
-      Text(label, style: AppTextStyles.legendLabelStyle),
-    ]);
-  }
-}
-
+// Action card widget
 class _ActionCard extends StatelessWidget {
   final String label;
   final String imagePath;
   final VoidCallback onTap;
   const _ActionCard({required this.label, required this.imagePath, required this.onTap});
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(

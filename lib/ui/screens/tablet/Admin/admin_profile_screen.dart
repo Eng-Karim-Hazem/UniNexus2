@@ -15,6 +15,7 @@ class AdminProfileScreen extends StatefulWidget {
 }
 
 class _AdminProfileScreenState extends State<AdminProfileScreen> {
+  // Profile data
   String _fullName = 'Loading...';
   String _id = 'Loading...';
   String _email = 'Loading...';
@@ -31,12 +32,14 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
     _loadProfileData();
   }
 
+  // Get valid string from preferences
   String _getValidString(SharedPreferences prefs, String key) {
     final value = prefs.getString(key);
     if (value == null || value.trim().isEmpty) return '-';
     return value;
   }
 
+  // Load profile data from shared preferences
   Future<void> _loadProfileData() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -66,15 +69,17 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Profile', style: AppTextStyles.largeHeading),
-            const SizedBox(height: 20),
+            const PageHeading('Profile'),
+            const SizedBox(height: 47),
 
+            // Profile header card
             GlassCard(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : Row(
                 children: [
+                  // Profile photo
                   Container(
                     width: 110,
                     height: 110,
@@ -126,6 +131,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
 
             const SizedBox(height: 16),
 
+            // Details card
             Expanded(
               child: GlassCard(
                 padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 10),
@@ -137,15 +143,50 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildInfoRow('Department', _department),
+                        buildInfoRow(
+                          label: 'Department',
+                          value: _department,
+                          fontSize: 18,
+                          verticalPadding: 24,
+                          labelWeight: FontWeight.w800,
+                          valueWeight: FontWeight.w800,
+                        ),
                         _buildDivider(),
-                        _buildInfoRow('Position', _position),
+                        buildInfoRow(
+                          label: 'Position',
+                          value: _position,
+                          fontSize: 18,
+                          verticalPadding: 24,
+                          labelWeight: FontWeight.w800,
+                          valueWeight: FontWeight.w800,
+                        ),
                         _buildDivider(),
-                        _buildInfoRow('E-mail', _email),
+                        buildInfoRow(
+                          label: 'E-mail',
+                          value: _email,
+                          fontSize: 18,
+                          verticalPadding: 24,
+                          labelWeight: FontWeight.w800,
+                          valueWeight: FontWeight.w800,
+                        ),
                         _buildDivider(),
-                        _buildInfoRow('Phone no.', _phone),
+                        buildInfoRow(
+                          label: 'Phone no.',
+                          value: _phone,
+                          fontSize: 18,
+                          verticalPadding: 24,
+                          labelWeight: FontWeight.w800,
+                          valueWeight: FontWeight.w800,
+                        ),
                         _buildDivider(),
-                        _buildInfoRow('National ID', _nationalId),
+                        buildInfoRow(
+                          label: 'National ID',
+                          value: _nationalId,
+                          fontSize: 18,
+                          verticalPadding: 24,
+                          labelWeight: FontWeight.w800,
+                          valueWeight: FontWeight.w800,
+                        ),
                       ],
                     ),
                   ),
@@ -158,6 +199,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
     );
   }
 
+  // Fallback icon for profile photo
   Widget _buildFallbackIcon() {
     return Padding(
       padding: const EdgeInsets.all(12.0),
@@ -165,21 +207,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24.0),
-      child: Text(
-        '$label : $value',
-        style: const TextStyle(
-          fontFamily: AppFonts.spaceGrotesk,
-          fontSize: 18,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textDark,
-        ),
-      ),
-    );
-  }
-
+  // Divider widget
   Widget _buildDivider() {
     return Divider(
       color: Colors.black.withValues(alpha: 0.3),

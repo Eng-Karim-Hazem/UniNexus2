@@ -31,6 +31,7 @@ class AppColors {
 
   static const Color infoDivider = Color(0xFF32006C);
 
+  // Gradients
   static const LinearGradient sidebarGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
@@ -723,6 +724,7 @@ class AppInputStyles {
 
 // ==================== SHARED WIDGETS ====================
 
+// Background with decorative image
 class ITScreenBackground extends StatelessWidget {
   final Widget child;
   const ITScreenBackground({super.key, required this.child});
@@ -750,6 +752,7 @@ class ITScreenBackground extends StatelessWidget {
   }
 }
 
+// Greeting card widget
 class AppGreetingCard extends StatelessWidget {
   final String name;
   final String subtitle;
@@ -817,6 +820,7 @@ class AppGreetingCard extends StatelessWidget {
   }
 }
 
+// Profile header widget
 class ProfileHeader extends StatelessWidget {
   final String iconAsset;
   final String title;
@@ -888,6 +892,7 @@ class ProfileHeader extends StatelessWidget {
   }
 }
 
+// Basic text field
 class AppTextField extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
@@ -911,6 +916,7 @@ class AppTextField extends StatelessWidget {
   }
 }
 
+// Labeled text field
 class AppLabeledField extends StatelessWidget {
   final String label;
   final TextEditingController controller;
@@ -938,6 +944,7 @@ class AppLabeledField extends StatelessWidget {
   }
 }
 
+// Gradient button
 class AppGradientButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
@@ -968,6 +975,7 @@ class AppGradientButton extends StatelessWidget {
   }
 }
 
+// Auth button
 class AppAuthButton extends StatelessWidget {
   final String text;
   final VoidCallback onTap;
@@ -989,6 +997,7 @@ class AppAuthButton extends StatelessWidget {
   }
 }
 
+// Back button
 class AppBackButton extends StatelessWidget {
   final double width;
   const AppBackButton({super.key, this.width = 80});
@@ -1012,6 +1021,7 @@ class AppBackButton extends StatelessWidget {
   }
 }
 
+// Basic card
 class AppCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -1050,6 +1060,7 @@ class AppCard extends StatelessWidget {
   }
 }
 
+// Page heading
 class PageHeading extends StatelessWidget {
   final String title;
   const PageHeading(this.title, {super.key});
@@ -1060,6 +1071,7 @@ class PageHeading extends StatelessWidget {
   }
 }
 
+// Glass card with blur effect
 class GlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -1086,6 +1098,7 @@ class GlassCard extends StatelessWidget {
   }
 }
 
+// Pill button
 class PillButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
@@ -1119,6 +1132,7 @@ class PillButton extends StatelessWidget {
   }
 }
 
+// Section divider (vertical line)
 class SectionDivider extends StatelessWidget {
   final double height;
   const SectionDivider({super.key, this.height = 28});
@@ -1129,6 +1143,7 @@ class SectionDivider extends StatelessWidget {
   }
 }
 
+// Dot widget
 class Dot extends StatelessWidget {
   final double size;
   const Dot({super.key, this.size = 12});
@@ -1139,6 +1154,7 @@ class Dot extends StatelessWidget {
   }
 }
 
+// Detail row with label and value
 class DetailRow extends StatelessWidget {
   final String label;
   final String value;
@@ -1181,6 +1197,7 @@ class DetailRow extends StatelessWidget {
   }
 }
 
+// Circular progress stat
 class CircularStat extends StatelessWidget {
   final double value;
   final String line1;
@@ -1240,130 +1257,67 @@ class CircularStat extends StatelessWidget {
   }
 }
 
-// ==================== INFO ROW WIDGET ====================
+// ==================== FLEXIBLE INFO ROW ====================
 
-class InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final double fontSize;
-  final FontWeight labelWeight;
-  final FontWeight valueWeight;
-  final Color? labelColor;
-  final Color? valueColor;
-  final double verticalPadding;
-  final CrossAxisAlignment crossAlignment;
-
-  const InfoRow({
-    super.key,
-    required this.label,
-    required this.value,
-    this.fontSize = 18,
-    this.labelWeight = FontWeight.w800,
-    this.valueWeight = FontWeight.w600,
-    this.labelColor,
-    this.valueColor,
-    this.verticalPadding = 0,
-    this.crossAlignment = CrossAxisAlignment.start,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: verticalPadding),
-      child: Row(
-        crossAxisAlignment: crossAlignment,
-        children: [
-          Text(
-            '$label : ',
+Widget buildInfoRow({
+  required String label,
+  required String value,
+  double fontSize = 18,
+  FontWeight labelWeight = FontWeight.w700,
+  FontWeight valueWeight = FontWeight.w500,
+  Color? labelColor,
+  Color? valueColor,
+  double verticalPadding = 12,
+  double horizontalPadding = 0,
+  CrossAxisAlignment crossAlignment = CrossAxisAlignment.start,
+}) {
+  return Padding(
+    padding: EdgeInsets.symmetric(
+      vertical: verticalPadding,
+      horizontal: horizontalPadding,
+    ),
+    child: Row(
+      crossAxisAlignment: crossAlignment,
+      children: [
+        Text(
+          '$label : ',
+          style: TextStyle(
+            fontFamily: AppFonts.spaceGrotesk,
+            fontSize: fontSize,
+            fontWeight: labelWeight,
+            color: labelColor ?? AppColors.textDark,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
             style: TextStyle(
               fontFamily: AppFonts.spaceGrotesk,
               fontSize: fontSize,
-              fontWeight: labelWeight,
-              color: labelColor ?? AppColors.textDark,
+              fontWeight: valueWeight,
+              color: valueColor ?? AppColors.textMid,
             ),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontFamily: AppFonts.spaceGrotesk,
-                fontSize: fontSize,
-                fontWeight: valueWeight,
-                color: valueColor ?? AppColors.textMid,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ==================== PRE-CONFIGURED INFO ROW FUNCTIONS ====================
-
-Widget buildFigmaDetailRow(String label, String value) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 16.0),
-    child: InfoRow(
-      label: label,
-      value: value,
-      fontSize: 16,
-      labelWeight: FontWeight.bold,
-      valueWeight: FontWeight.w500,
-      labelColor: Colors.black87,
-      valueColor: Colors.black54,
-      verticalPadding: 0,
-      crossAlignment: CrossAxisAlignment.start,
+        ),
+      ],
     ),
   );
 }
 
-Widget buildInfoRow(String label, String value) {
-  return InfoRow(
-    label: label,
-    value: value,
-    fontSize: 20,
-    labelWeight: FontWeight.w700,
-    valueWeight: FontWeight.w500,
-    verticalPadding: 18,
-    crossAlignment: CrossAxisAlignment.center,
-  );
-}
-
-Widget buildDataRow(String label, String value) {
-  return InfoRow(
-    label: label,
-    value: value,
-    fontSize: 18,
-    labelWeight: FontWeight.w800,
-    valueWeight: FontWeight.w600,
-    verticalPadding: 0,
-    crossAlignment: CrossAxisAlignment.start,
-  );
-}
-
-Widget buildSecurityInfoRow(String label, String value) {
-  return InfoRow(
-    label: label,
-    value: value,
-    fontSize: 20,
-    labelWeight: FontWeight.w700,
-    valueWeight: FontWeight.w500,
-    verticalPadding: 18,
-    crossAlignment: CrossAxisAlignment.center,
-  );
-}
-
-// ==================== STATUS BADGE ====================
+// ==================== ENHANCED STATUS BADGE ====================
 
 class StatusBadge extends StatelessWidget {
   final String status;
   final bool isDot;
+  final bool showIcon;
+  final bool isCompact;
 
   const StatusBadge({
     super.key,
     required this.status,
     this.isDot = false,
+    this.showIcon = false,
+    this.isCompact = false,
   });
 
   Color _getColor() {
@@ -1371,6 +1325,7 @@ class StatusBadge extends StatelessWidget {
       case 'approved':
       case 'accepted':
       case 'fixed':
+      case 'allowed':
         return Colors.green;
       case 'denied':
       case 'rejected':
@@ -1387,14 +1342,34 @@ class StatusBadge extends StatelessWidget {
     }
   }
 
+  IconData _getIcon() {
+    switch (status.toLowerCase()) {
+      case 'approved':
+      case 'accepted':
+      case 'fixed':
+      case 'allowed':
+        return Icons.check;
+      case 'denied':
+      case 'rejected':
+        return Icons.close;
+      case 'in repair':
+        return Icons.build_outlined;
+      case 'pending':
+      case 'informed':
+        return Icons.warning_amber_rounded;
+      default:
+        return Icons.warning_amber_rounded;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final color = _getColor();
 
     if (isDot) {
       return Container(
-        width: 14,
-        height: 14,
+        width: isCompact ? 10 : 14,
+        height: isCompact ? 10 : 14,
         decoration: BoxDecoration(
           color: color,
           shape: BoxShape.circle,
@@ -1402,44 +1377,41 @@ class StatusBadge extends StatelessWidget {
       );
     }
 
+    if (showIcon) {
+      return Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.15),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          _getIcon(),
+          size: isCompact ? 20 : 28,
+          color: color,
+        ),
+      );
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 8 : 12,
+        vertical: isCompact ? 4 : 6,
+      ),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(isCompact ? 6 : 8),
+        border: Border.all(color: color.withOpacity(0.5)),
       ),
       child: Text(
         status.toUpperCase(),
         style: TextStyle(
-          fontSize: 12,
+          fontSize: isCompact ? 11 : 13,
           fontWeight: FontWeight.bold,
           letterSpacing: 0.5,
           color: color,
         ),
       ),
     );
-  }
-}
-
-Color getStatusColor(String status) {
-  switch (status.toLowerCase()) {
-    case 'approved':
-    case 'accepted':
-    case 'fixed':
-      return Colors.green;
-    case 'denied':
-    case 'rejected':
-      return Colors.red;
-    case 'in repair':
-      return Colors.orange;
-    case 'pending':
-    case 'informed':
-      return AppColors.primary;
-    case 'unknown':
-      return Colors.yellow;
-    default:
-      return Colors.grey;
   }
 }
 
@@ -1499,80 +1471,109 @@ class SettingsCard extends StatelessWidget {
 
 // ==================== STATE WIDGETS ====================
 
+// Empty state widget
 class EmptyState extends StatelessWidget {
   final String message;
   final IconData? icon;
   final double fontSize;
+  final EdgeInsetsGeometry? padding;
 
   const EmptyState({
     super.key,
     required this.message,
     this.icon,
     this.fontSize = 18,
+    this.padding,
   });
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, size: 48, color: Colors.grey),
-            const SizedBox(height: 16),
+      child: Padding(
+        padding: padding ?? const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 48, color: Colors.grey),
+              const SizedBox(height: 16),
+            ],
+            Text(
+              message,
+              style: TextStyle(
+                fontSize: fontSize,
+                color: Colors.grey,
+                fontFamily: AppFonts.spaceGrotesk,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ],
-          Text(
-            message,
-            style: TextStyle(fontSize: fontSize, color: Colors.grey),
-            textAlign: TextAlign.center,
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
+// Error state widget
 class ErrorState extends StatelessWidget {
   final String message;
   final VoidCallback? onRetry;
+  final EdgeInsetsGeometry? padding;
 
   const ErrorState({
     super.key,
     required this.message,
     this.onRetry,
+    this.padding,
   });
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
-          const SizedBox(height: 16),
-          Text(
-            message,
-            style: const TextStyle(fontSize: 16, color: Colors.red),
-            textAlign: TextAlign.center,
-          ),
-          if (onRetry != null) ...[
+      child: Padding(
+        padding: padding ?? const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
             const SizedBox(height: 16),
-            TextButton(onPressed: onRetry, child: const Text('Retry')),
+            Text(
+              message,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.red,
+                fontFamily: AppFonts.spaceGrotesk,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (onRetry != null) ...[
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: onRetry,
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                ),
+                child: const Text('Retry'),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 }
 
+// Loading state widget
 class LoadingState extends StatelessWidget {
   final String? message;
   final bool isCentered;
+  final EdgeInsetsGeometry? padding;
 
   const LoadingState({
     super.key,
     this.message,
     this.isCentered = true,
+    this.padding,
   });
 
   @override
@@ -1580,23 +1581,388 @@ class LoadingState extends StatelessWidget {
     final Widget loadingWidget = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const CircularProgressIndicator(),
+        const CircularProgressIndicator(
+          color: AppColors.primary,
+        ),
         if (message != null) ...[
           const SizedBox(height: 16),
-          Text(message!, style: AppTextStyles.caption),
+          Text(
+            message!,
+            style: AppTextStyles.caption,
+          ),
         ],
       ],
     );
 
     if (isCentered) {
-      return Center(child: loadingWidget);
+      return Center(
+        child: Padding(
+          padding: padding ?? const EdgeInsets.all(24.0),
+          child: loadingWidget,
+        ),
+      );
     }
 
     return Align(
       alignment: Alignment.topCenter,
       child: Padding(
-        padding: const EdgeInsets.only(top: 40),
+        padding: padding ?? const EdgeInsets.only(top: 40),
         child: loadingWidget,
+      ),
+    );
+  }
+}
+
+// ==================== SNACKBAR HELPERS ====================
+
+// Show success snackbar
+void showSuccessSnackBar(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Row(
+        children: [
+          const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: Colors.green,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      duration: const Duration(seconds: 2),
+    ),
+  );
+}
+
+// Show error snackbar
+void showErrorSnackBar(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Row(
+        children: [
+          const Icon(Icons.error_outline, color: Colors.white, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: Colors.red,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      duration: const Duration(seconds: 3),
+    ),
+  );
+}
+
+// Show info snackbar
+void showInfoSnackBar(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Row(
+        children: [
+          const Icon(Icons.info_outline, color: Colors.white, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: AppColors.primary,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      duration: const Duration(seconds: 2),
+    ),
+  );
+}
+
+// ==================== LOADING OVERLAY ====================
+
+class LoadingOverlay {
+  static void show(
+      BuildContext context, {
+        String? message,
+        bool barrierDismissible = false,
+      }) {
+    showDialog(
+      context: context,
+      barrierDismissible: barrierDismissible,
+      builder: (context) => Center(
+        child: GlassCard(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(color: AppColors.primary),
+              if (message != null) ...[
+                const SizedBox(height: 16),
+                Text(
+                  message,
+                  style: AppTextStyles.caption,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  static void hide(BuildContext context) {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
+  }
+}
+
+// Show loading overlay
+void showLoadingOverlay(BuildContext context, {String? message}) {
+  LoadingOverlay.show(context, message: message);
+}
+
+// Hide loading overlay
+void hideLoadingOverlay(BuildContext context) {
+  LoadingOverlay.hide(context);
+}
+
+// ==================== CONFIRMATION DIALOG ====================
+
+class ConfirmDialog {
+  static Future<bool> show(
+      BuildContext context, {
+        required String title,
+        required String message,
+        String confirmText = 'Confirm',
+        String cancelText = 'Cancel',
+        Color confirmColor = Colors.red,
+        IconData? icon,
+      }) async {
+    return await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, color: confirmColor),
+              const SizedBox(width: 12),
+            ],
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(cancelText),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              confirmText,
+              style: TextStyle(color: confirmColor),
+            ),
+          ),
+        ],
+      ),
+    ) ?? false;
+  }
+}
+
+// Show confirmation dialog
+Future<bool> showConfirmDialog(
+    BuildContext context, {
+      required String title,
+      required String message,
+      String confirmText = 'Confirm',
+      String cancelText = 'Cancel',
+      Color confirmColor = Colors.red,
+      IconData? icon,
+    }) {
+  return ConfirmDialog.show(
+    context,
+    title: title,
+    message: message,
+    confirmText: confirmText,
+    cancelText: cancelText,
+    confirmColor: confirmColor,
+    icon: icon,
+  );
+}
+
+// ==================== APP ENTRY ROW ====================
+
+class AppEntryRow extends StatelessWidget {
+  final String label;
+  final String status;
+  final bool isSelected;
+  final bool showAvatar;
+  final VoidCallback? onTap;
+  final Widget? trailing;
+
+  const AppEntryRow({
+    super.key,
+    required this.label,
+    required this.status,
+    this.isSelected = false,
+    this.showAvatar = true,
+    this.onTap,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: AppDecorations.smallCard(isSelected: isSelected),
+        child: Row(
+          children: [
+            if (showAvatar)
+              Image.asset(
+                'assets/images/avatar.png',
+                width: 28,
+                height: 28,
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.person,
+                  color: AppColors.primary,
+                  size: 28,
+                ),
+              ),
+            if (showAvatar) const SizedBox(width: 14),
+            AppDecorations.verticalDivider(height: 28),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                label,
+                style: AppTextStyles.entryRowNameStyle,
+              ),
+            ),
+            if (trailing != null) trailing!,
+            if (trailing == null)
+              StatusBadge(
+                status: status,
+                isDot: true,
+                isCompact: true,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ==================== ACTION CARD ====================
+
+class ActionCard extends StatelessWidget {
+  final String label;
+  final String imagePath;
+  final VoidCallback onTap;
+  final double iconSize;
+  final bool showIconBackground;
+  final double cardHeight;
+  final Color? iconBackgroundColor;
+
+  const ActionCard({
+    super.key,
+    required this.label,
+    required this.imagePath,
+    required this.onTap,
+    this.iconSize = 50,
+    this.showIconBackground = false,
+    this.cardHeight = 120,
+    this.iconBackgroundColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: cardHeight,
+        child: GlassCard(
+          padding: const EdgeInsets.all(18),
+          child: Stack(
+            children: [
+              Positioned(
+                top: 0,
+                right: 0,
+                child: showIconBackground
+                    ? Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: iconBackgroundColor ?? AppColors.primary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Image.asset(
+                    imagePath,
+                    width: iconSize,
+                    height: iconSize,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => Icon(
+                      Icons.image_not_supported_outlined,
+                      size: iconSize,
+                      color: Colors.white,
+                    ),
+                  ),
+                )
+                    : Image.asset(
+                  imagePath,
+                  width: iconSize,
+                  height: iconSize,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.image,
+                    size: 42,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: Text(
+                  label,
+                  style: AppTextStyles.actionCardLabelStyle,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

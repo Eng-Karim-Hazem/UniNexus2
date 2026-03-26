@@ -2,13 +2,13 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../../admin_tab.dart'; // Ensure this path is correct
+import '../../../../admin_tab.dart';
 import 'package:uninexus/model/student_model.dart';
 import 'package:uninexus/services/firebase/id_lookup_service.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
 class AdminUserSearchScreen extends StatefulWidget {
-  final void Function(AdminTab) onNavigate; // Uses AdminTab enum
+  final void Function(AdminTab) onNavigate;
 
   const AdminUserSearchScreen({super.key, required this.onNavigate});
 
@@ -22,6 +22,7 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
   Student? _selectedStudent;
   List<Student> _recentSearches = [];
   bool _isLoading = false;
+  String? _searchError;
 
   @override
   void initState() {
@@ -29,6 +30,7 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
     _loadSearchHistory();
   }
 
+  // Load search history from preferences
   Future<void> _loadSearchHistory() async {
     final prefs = await SharedPreferences.getInstance();
     final String? historyData = prefs.getString('admin_search_history');
@@ -40,6 +42,7 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
     });
   }
 
+  // Save search to history
   Future<void> _saveToHistory(Student student) async {
     final prefs = await SharedPreferences.getInstance();
     _recentSearches.removeWhere((element) => element.id == student.id);
@@ -55,18 +58,30 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
     setState(() {});
   }
 
+  // Perform search
   Future<void> _onSearchSubmit() async {
     final id = _searchController.text.trim();
-    if (id.isEmpty) return;
+    if (id.isEmpty) {
+      setState(() {
+        _searchError = 'Please enter an ID to search';
+      });
+      return;
+    }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _searchError = null;
+    });
+
     final student = await _idLookupService.searchStudentById(id);
     if (student == null) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No user found with this ID")),
-      );
-      setState(() => _isLoading = false);
+      setState(() {
+        _searchError = 'No user found with ID: $id';
+        _selectedStudent = null;
+        _isLoading = false;
+      });
+      showErrorSnackBar(context, "No user found with this ID");
       return;
     }
 
@@ -75,6 +90,7 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
     setState(() {
       _selectedStudent = student;
       _isLoading = false;
+      _searchError = null;
     });
   }
 
@@ -86,12 +102,12 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('User Search', style: AppTextStyles.largeHeading),
+            const PageHeading('User Search'),
             const SizedBox(height: 40),
             Expanded(
               child: Row(
                 children: [
-                  // Left Side: Search and Results
+                  // Left panel - Search bar and history
                   Expanded(
                     flex: 3,
                     child: Column(
@@ -103,17 +119,20 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
                           child: GlassCard(
                             padding: const EdgeInsets.all(16),
                             child: _isLoading
-                                ? const Center(child: CircularProgressIndicator())
+                                ? const LoadingState()
+                                : _recentSearches.isEmpty
+                                ? const EmptyState(
+                              message: 'No recent searches',
+                              icon: Icons.history,
+                            )
                                 : ListView.builder(
                               itemCount: _recentSearches.length,
                               itemBuilder: (context, index) {
                                 final student = _recentSearches[index];
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 10),
-                                  child: _buildUserResultTile(
-                                    student,
-                                    onTap: () => setState(() => _selectedStudent = student),
-                                  ),
+                                return AppEntryRow(
+                                  label: '${student.fName} ${student.lName}'.trim(),
+                                  status: student.entry ? 'approved' : 'denied',
+                                  onTap: () => setState(() => _selectedStudent = student),
                                 );
                               },
                             ),
@@ -123,12 +142,24 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
                     ),
                   ),
                   const SizedBox(width: 40),
-                  // Right Side: User Data Card
+                  // Right panel - User details
                   Expanded(
                     flex: 2,
                     child: GlassCard(
                       padding: const EdgeInsets.all(32),
-                      child: Column(
+                      child: _selectedStudent == null
+                          ? Center(
+                        child: _searchError != null
+                            ? EmptyState(
+                          message: _searchError!,
+                          icon: Icons.person_off,
+                        )
+                            : const EmptyState(
+                          message: 'Search for a user to view details',
+                          icon: Icons.person_search,
+                        ),
+                      )
+                          : Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildProfileHeader(),
@@ -147,6 +178,7 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
     );
   }
 
+  // Search bar widget
   Widget _buildSearchBar() {
     return Container(
       width: 400,
@@ -154,27 +186,32 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
         color: Colors.grey.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: TextField(
-        controller: _searchController,
-        style: AppTextStyles.body,
-        decoration: InputDecoration(
-          hintText: 'Search User By ID',
-          hintStyle: TextStyle(color: Colors.black.withValues(alpha: 0.3)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          border: InputBorder.none,
-          suffixIcon: GestureDetector(
-            onTap: _onSearchSubmit,
-            child: Container(
-              margin: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: _searchController,
+            style: AppTextStyles.body,
+            decoration: InputDecoration(
+              hintText: 'Search User By ID',
+              hintStyle: TextStyle(color: Colors.black.withValues(alpha: 0.3)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              border: InputBorder.none,
+              suffixIcon: GestureDetector(
+                onTap: _onSearchSubmit,
+                child: Container(
+                  margin: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                ),
               ),
-              child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
             ),
+            onSubmitted: (_) => _onSearchSubmit(),
           ),
-        ),
-        onSubmitted: (_) => _onSearchSubmit(),
+        ],
       ),
     );
   }
@@ -185,31 +222,7 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
     super.dispose();
   }
 
-  Widget _buildUserResultTile(Student student, {required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.person_rounded, color: AppColors.primary),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                '${student.fName} ${student.lName}'.trim(),
-                style: AppTextStyles.body,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
+  // Profile header
   Widget _buildProfileHeader() {
     return Row(
       children: [
@@ -222,36 +235,75 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
     );
   }
 
-  Widget _buildDataRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Row(
-        children: [
-          Text('$label : ', style: AppTextStyles.body.copyWith(fontWeight: FontWeight.bold)),
-          Text(value, style: AppTextStyles.body),
-        ],
-      ),
-    );
-  }
-
+  // Build user data rows
   List<Widget> _buildDataEntries() {
-    if (_selectedStudent == null) {
-      return const [
-        Text('Search or select a recent user', style: AppTextStyles.body),
-      ];
-    }
-
     final student = _selectedStudent!;
-    final data = <MapEntry<String, String>>[
-      MapEntry('Name', '${student.fName} ${student.lName}'.trim()),
-      const MapEntry('User Type', 'Student'),
-      MapEntry('ID', student.id),
-      MapEntry('Email', student.email),
-      MapEntry('Year', student.year),
-      MapEntry('Faculty', student.faculty),
-      MapEntry('Status', student.entry ? 'Approved' : 'Denied'),
+    return [
+      buildInfoRow(
+        label: 'Name',
+        value: '${student.fName} ${student.lName}'.trim(),
+        fontSize: 16,
+        verticalPadding: 20,
+        labelWeight: FontWeight.bold,
+        valueWeight: FontWeight.normal,
+      ),
+      buildInfoRow(
+        label: 'User Type',
+        value: 'Student',
+        fontSize: 16,
+        verticalPadding: 20,
+        labelWeight: FontWeight.bold,
+        valueWeight: FontWeight.normal,
+      ),
+      buildInfoRow(
+        label: 'ID',
+        value: student.id,
+        fontSize: 16,
+        verticalPadding: 20,
+        labelWeight: FontWeight.bold,
+        valueWeight: FontWeight.normal,
+      ),
+      buildInfoRow(
+        label: 'Email',
+        value: student.email,
+        fontSize: 16,
+        verticalPadding: 20,
+        labelWeight: FontWeight.bold,
+        valueWeight: FontWeight.normal,
+      ),
+      buildInfoRow(
+        label: 'Year',
+        value: student.year,
+        fontSize: 16,
+        verticalPadding: 20,
+        labelWeight: FontWeight.bold,
+        valueWeight: FontWeight.normal,
+      ),
+      buildInfoRow(
+        label: 'Faculty',
+        value: student.faculty,
+        fontSize: 16,
+        verticalPadding: 20,
+        labelWeight: FontWeight.bold,
+        valueWeight: FontWeight.normal,
+      ),
+      Padding(
+        padding: const EdgeInsets.only(top: 20),
+        child: Row(
+          children: [
+            Text(
+              'Status : ',
+              style: const TextStyle(
+                fontFamily: AppFonts.spaceGrotesk,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textDark,
+              ),
+            ),
+            StatusBadge(status: student.entry ? 'approved' : 'denied', isDot: false),
+          ],
+        ),
+      ),
     ];
-
-    return data.map((entry) => _buildDataRow(entry.key, entry.value)).toList();
   }
 }
