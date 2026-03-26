@@ -31,6 +31,9 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   String _storedLastName = "";
   String _storedUserID = "";
 
+  // Subjects are still loaded in the background for filtering
+  List<String> _facultySubjects = [];
+
   // Constants & Styles
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
@@ -59,6 +62,8 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         _storedFirstName = prefs.getString('fName') ?? "Faculty";
         _storedLastName = prefs.getString('lName') ?? "";
         _storedUserID = prefs.getString('ID') ?? "No ID";
+        // We still need these to filter the notifications automatically
+        _facultySubjects = prefs.getStringList('facultySubjects') ?? [];
       });
     }
   }
@@ -116,6 +121,9 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: _buildGreetingCard(),
               ),
+
+              // Subject buttons have been removed from here
+
               const SizedBox(height: 24),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -155,10 +163,10 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
+        color: Colors.white.withOpacity(0.9),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 24, offset: const Offset(0, 10)),
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 24, offset: const Offset(0, 10)),
         ],
       ),
       child: Column(
@@ -204,10 +212,10 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
       child: Container(
         height: 125,
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.9),
+          color: Colors.white.withOpacity(0.9),
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
-            BoxShadow(color: _mainPurple.withValues(alpha: 0.1), blurRadius: 15, offset: const Offset(0, 8))
+            BoxShadow(color: _mainPurple.withOpacity(0.1), blurRadius: 15, offset: const Offset(0, 8))
           ],
         ),
         child: Column(
@@ -227,11 +235,11 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(24, 0, 24, 115),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.6),
+        color: Colors.white.withOpacity(0.6),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
+        border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
         boxShadow: [
-          BoxShadow(color: _primaryBlue.withValues(alpha: 0.12), blurRadius: 25, offset: const Offset(0, 8))
+          BoxShadow(color: _primaryBlue.withOpacity(0.12), blurRadius: 25, offset: const Offset(0, 8))
         ],
       ),
       child: ClipRRect(
@@ -239,27 +247,25 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         child: StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance.collection('Notifications').snapshots(),
           builder: (context, snapshot) {
-
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(child: CircularProgressIndicator(color: _mainPurple));
             }
 
-            if (snapshot.hasError) {
-              return const Center(
-                child: Text('Error loading notifications.', style: TextStyle(color: Colors.red, fontFamily: 'SpaceGrotesk')),
-              );
-            }
+            if (snapshot.hasError) return const Center(child: Text('Error.'));
 
             if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-              return const Center(
-                child: Text('No new announcements.', style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.black54)),
-              );
+              return const Center(child: Text('No announcements.'));
             }
 
+            // The filtering happens here automatically based on user data
             var docs = snapshot.data!.docs.where((doc) {
               final data = doc.data() as Map<String, dynamic>;
-              final target = data['targetValue']?.toString() ?? '';
-              return target == 'Faculty' || target == 'faculty' || target == 'All';
+              final target = (data['targetValue']?.toString() ?? '').trim();
+
+              bool isGeneral = (target == 'Faculty' || target == 'faculty' || target == 'All');
+              bool isMySubject = _facultySubjects.any((sub) => sub.toLowerCase() == target.toLowerCase());
+
+              return isGeneral || isMySubject;
             }).toList();
 
             docs.sort((a, b) {
@@ -269,11 +275,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
               return 0;
             });
 
-            if (docs.isEmpty) {
-              return const Center(
-                child: Text('No new announcements for Faculty.', style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.black54)),
-              );
-            }
+            if (docs.isEmpty) return const Center(child: Text('No relevant notices.'));
 
             return ListView.builder(
               padding: const EdgeInsets.all(16),
@@ -282,14 +284,9 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
               itemBuilder: (context, index) {
                 final data = docs[index].data() as Map<String, dynamic>;
                 final sender = data['sentBy'] ?? 'Management';
-                final message = data['description'] ?? 'No details provided.';
+                final message = data['description'] ?? '';
                 final timestamp = data['date'] as Timestamp?;
-
-                // Format the time (e.g., "Mar 25, 3:57 PM" or just "3:57 PM")
-                String timeStr = '';
-                if (timestamp != null) {
-                  timeStr = DateFormat('MMM d, h:mm a').format(timestamp.toDate());
-                }
+                String timeStr = timestamp != null ? DateFormat('MMM d, h:mm a').format(timestamp.toDate()) : '';
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
@@ -303,12 +300,11 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     );
   }
 
-  // UPDATED: Now accepts a timestamp string and renders it on the right
   Widget _buildNotifyItem(String title, String msg, String time) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: const Color(0xFFEAF4FF).withValues(alpha: 0.9),
+          color: const Color(0xFFEAF4FF).withOpacity(0.9),
           borderRadius: BorderRadius.circular(20)
       ),
       child: Column(
@@ -321,7 +317,6 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
               Expanded(
                 child: Text(title, style: TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.bold, color: _mainPurple)),
               ),
-              // NEW: Render the time right here!
               if (time.isNotEmpty)
                 Text(time, style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 11, color: Colors.grey.shade600)),
             ],
@@ -335,79 +330,27 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
 
   Widget _buildFab() {
     return Container(
-      height: 72,
-      width: 72,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: _mainPurple.withValues(alpha: 0.6),
-            blurRadius: 25,
-            spreadRadius: 6,
-            offset: const Offset(0, 2),
-          )
-        ],
-      ),
+      height: 72, width: 72,
+      decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.6), blurRadius: 25, spreadRadius: 6, offset: const Offset(0, 2))]),
       child: FloatingActionButton(
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const FacultyIDScreen())),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        shape: const CircleBorder(),
-        child: Container(
-          decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
-          child: Padding(
-            padding: const EdgeInsets.all(18.0),
-            child: Image.asset('assets/images/qr_code.png', color: Colors.white),
-          ),
-        ),
+        elevation: 0, backgroundColor: Colors.transparent, shape: const CircleBorder(),
+        child: Container(decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient), child: Padding(padding: const EdgeInsets.all(18.0), child: Image.asset('assets/images/qr_code.png', color: Colors.white))),
       ),
     );
   }
 
   Widget _buildBottomBar() {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 20,
-            spreadRadius: 4,
-            offset: const Offset(0, -6),
-          ),
-        ],
-      ),
+      decoration: BoxDecoration(color: Colors.transparent, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 20, spreadRadius: 4, offset: const Offset(0, -6))]),
       child: BottomAppBar(
-        clipBehavior: Clip.antiAlias,
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 9.0,
-        color: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        shadowColor: Colors.transparent,
-        height: 80,
+        clipBehavior: Clip.antiAlias, shape: const CircularNotchedRectangle(), notchMargin: 9.0, color: Colors.white, height: 80,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
-                  _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1),
-                ],
-              ),
-            ),
+            Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [_buildNavBarItem('assets/images/solidarity_1.png', "Community", 0), _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1)])),
             const SizedBox(width: 72),
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
-                  _buildNavBarItem('assets/images/user.png', "Profile", 3),
-                ],
-              ),
-            ),
+            Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [_buildNavBarItem('assets/images/qa.png', "Q&A", 2), _buildNavBarItem('assets/images/user.png', "Profile", 3)])),
           ],
         ),
       ),
@@ -417,26 +360,9 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   Widget _buildNavBarItem(String iconPath, String label, int index) {
     final bool isSelected = _selectedIndex == index;
     final Color itemColor = isSelected ? _mainPurple : Colors.grey.shade500;
-
     return GestureDetector(
-      onTap: () => _onNavBarTapped(index),
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset(iconPath, width: 28, height: 28, color: itemColor),
-          const SizedBox(height: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
-              fontSize: 12,
-              color: isSelected ? _mainPurple : Colors.grey.shade600,
-              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
+      onTap: () => _onNavBarTapped(index), behavior: HitTestBehavior.opaque,
+      child: Column(mainAxisSize: MainAxisSize.min, children: [Image.asset(iconPath, width: 28, height: 28, color: itemColor), const SizedBox(height: 5), Text(label, style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 12, color: isSelected ? _mainPurple : Colors.grey.shade600, fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600))]),
     );
   }
 }
