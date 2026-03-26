@@ -1,3 +1,4 @@
+import 'dart:async'; // --- ADDED FOR STREAM SUBSCRIPTIONS ---
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -22,11 +23,32 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
   double _resolutionRate = 0.0;
   bool _isLoadingStats = true;
 
+  // --- NEW: STREAM SUBSCRIPTIONS ---
+  StreamSubscription<QuerySnapshot>? _hallErrorsSub;
+  StreamSubscription<QuerySnapshot>? _passRequestsSub;
+
+  // Variables to hold the live counts from each stream
+  int _hallTotal = 0;
+  int _hallResolved = 0;
+  int _hallActive = 0;
+
+  int _passTotal = 0;
+  int _passResolved = 0;
+  int _passActive = 0;
+
   @override
   void initState() {
     super.initState();
     _fetchUserName();
-    _fetchWeeklyStats();
+    _setupRealtimeStats(); // Changed from Future to Stream!
+  }
+
+  @override
+  void dispose() {
+    // ALWAYS cancel streams when leaving the screen to prevent memory leaks!
+    _hallErrorsSub?.cancel();
+    _passRequestsSub?.cancel();
+    super.dispose();
   }
 
   String _getFormattedDate() {
@@ -38,7 +60,6 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
     return '${months[now.month - 1]} ${now.day}, ${now.year}';
   }
 
-  // Helper to format Time (e.g., 10:34 AM) for the logs
   String _formatTime(Timestamp? timestamp) {
     if (timestamp == null) return '';
     final DateTime date = timestamp.toDate();
@@ -54,76 +75,95 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final String firstName = prefs.getString('fName') ?? 'Guest';
-      setState(() {
-        _userName = 'Eng. $firstName';
-      });
+      if(mounted) {
+        setState(() {
+          _userName = 'Eng. $firstName';
+        });
+      }
     } catch (e) {
-      setState(() {
-        _userName = 'Eng. Error';
-      });
+      if(mounted) {
+        setState(() {
+          _userName = 'Eng. Error';
+        });
+      }
     }
   }
 
-  Future<void> _fetchWeeklyStats() async {
-    try {
-      final db = FirebaseFirestore.instance;
+  // --- NEW: REAL-TIME LISTENERS ---
+  void _setupRealtimeStats() {
+    final db = FirebaseFirestore.instance;
+    final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
+    final timestampLimit = Timestamp.fromDate(sevenDaysAgo);
 
-      final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
-      final timestampLimit = Timestamp.fromDate(sevenDaysAgo);
+    // 1. Listen to Hall Errors Live
+    _hallErrorsSub = db.collection('HallErrors')
+        .where('timestamp', isGreaterThanOrEqualTo: timestampLimit)
+        .snapshots()
+        .listen((snapshot) {
+      int total = 0;
+      int resolved = 0;
+      int active = 0;
 
-      int totalWeeklyIssues = 0;
-      int resolvedWeeklyIssues = 0;
-      int activeIssuesCurrently = 0;
-
-      final hallQuery = await db.collection('HallErrors')
-          .where('timestamp', isGreaterThanOrEqualTo: timestampLimit)
-          .get();
-
-      for (var doc in hallQuery.docs) {
-        totalWeeklyIssues++;
+      for (var doc in snapshot.docs) {
+        total++;
         final status = doc.data()['status']?.toString().toLowerCase() ?? 'pending';
         if (status == 'fixed') {
-          resolvedWeeklyIssues++;
+          resolved++;
         } else {
-          activeIssuesCurrently++;
+          active++;
         }
       }
 
-      final passQuery = await db.collection('ForgotPass_request')
-          .where('requestDate', isGreaterThanOrEqualTo: timestampLimit)
-          .get();
+      _hallTotal = total;
+      _hallResolved = resolved;
+      _hallActive = active;
+      _updateCombinedStats();
+    });
 
-      for (var doc in passQuery.docs) {
-        totalWeeklyIssues++;
+    // 2. Listen to Password Requests Live
+    _passRequestsSub = db.collection('ForgotPass_request')
+        .where('requestDate', isGreaterThanOrEqualTo: timestampLimit)
+        .snapshots()
+        .listen((snapshot) {
+      int total = 0;
+      int resolved = 0;
+      int active = 0;
+
+      for (var doc in snapshot.docs) {
+        total++;
         final isProcessed = doc.data()['isProcessed'] == true;
         if (isProcessed) {
-          resolvedWeeklyIssues++;
+          resolved++;
         } else {
-          activeIssuesCurrently++;
+          active++;
         }
       }
 
-      double rate = 0.0;
-      if (totalWeeklyIssues > 0) {
-        rate = resolvedWeeklyIssues / totalWeeklyIssues;
-      }
+      _passTotal = total;
+      _passResolved = resolved;
+      _passActive = active;
+      _updateCombinedStats();
+    });
+  }
 
-      if (mounted) {
-        setState(() {
-          _activeIssuesCount = activeIssuesCurrently;
-          _resolutionRate = rate;
-          _isLoadingStats = false;
-        });
-      }
+  // Merges the data from both streams and updates the UI instantly
+  void _updateCombinedStats() {
+    if (!mounted) return;
 
-    } catch (e) {
-      print("Error fetching weekly stats: $e");
-      if (mounted) {
-        setState(() {
-          _isLoadingStats = false;
-        });
-      }
+    int combinedTotal = _hallTotal + _passTotal;
+    int combinedResolved = _hallResolved + _passResolved;
+    int combinedActive = _hallActive + _passActive;
+
+    double rate = 0.0;
+    if (combinedTotal > 0) {
+      rate = combinedResolved / combinedTotal;
     }
+
+    setState(() {
+      _activeIssuesCount = combinedActive;
+      _resolutionRate = rate;
+      _isLoadingStats = false;
+    });
   }
 
   @override
@@ -146,7 +186,6 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- RECENT LOGS SECTION ---
                   Expanded(
                     flex: 5,
                     child: GlassCard(
@@ -204,12 +243,10 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
 
                   const SizedBox(width: 20),
 
-                  // --- RIGHT COLUMN ---
                   Expanded(
                     flex: 4,
                     child: Column(
                       children: [
-                        // --- DYNAMIC NOTIFICATIONS (ANNOUNCEMENTS) ---
                         Expanded(
                           child: GlassCard(
                             padding: const EdgeInsets.all(16),
@@ -234,13 +271,11 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
                                         return const Center(child: Text('No new announcements.', style: TextStyle(color: Colors.grey)));
                                       }
 
-                                      // 1. Filter for IT targeted notifications locally to avoid Firebase Index requirements
                                       var docs = snapshot.data!.docs.where((doc) {
                                         final data = doc.data() as Map<String, dynamic>;
-                                        return data['targetValue'] == 'IT' || data['targetValue'] == 'All'; // Include 'All' if you use global broadcasts
+                                        return data['targetValue'] == 'IT' || data['targetValue'] == 'All';
                                       }).toList();
 
-                                      // 2. Sort by date newest first
                                       docs.sort((a, b) {
                                         final timeA = (a.data() as Map<String, dynamic>)['date'] as Timestamp?;
                                         final timeB = (b.data() as Map<String, dynamic>)['date'] as Timestamp?;
@@ -248,7 +283,6 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
                                         return 0;
                                       });
 
-                                      // 3. Keep only the top 2 for the dashboard preview
                                       final previewDocs = docs.take(2).toList();
 
                                       if (previewDocs.isEmpty) {
@@ -293,7 +327,6 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
 
                         const SizedBox(height: 16),
 
-                        // --- STATS ROW ---
                         SizedBox(
                           height: 250,
                           child: Row(
@@ -320,6 +353,7 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
                                   child: _isLoadingStats
                                       ? const Center(child: CircularProgressIndicator())
                                       : CircularStat(
+                                    // Make the circle dynamically fill up based on open issues (max 20 for visual scale)
                                     value: (_activeIssuesCount > 0) ? (_activeIssuesCount / 20.0).clamp(0.1, 1.0) : 0.0,
                                     line1: 'Open',
                                     line2: 'Issues',

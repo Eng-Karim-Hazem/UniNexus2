@@ -41,7 +41,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const LoadingState();
+                    return const LoadingState(); // Assuming this is defined in your theme
                   }
 
                   List<QueryDocumentSnapshot> docs = snapshot.data?.docs ?? [];
@@ -178,6 +178,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
   // Details content for selected error
   Widget _buildDetailsContent(QueryDocumentSnapshot doc, Map<String, dynamic> data) {
     final String status = data['status']?.toString().toLowerCase() ?? 'pending';
+    final String hallName = data['hallName'] ?? 'Unknown Hall';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,7 +194,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(data['hallName'] ?? 'Unknown', style: AppTextStyles.hallDetailsNumberStyle),
+                  Text(hallName, style: AppTextStyles.hallDetailsNumberStyle),
                   const SizedBox(height: 4),
                   Text(data['errorType'] ?? 'No issue', style: AppTextStyles.hallDetailsErrorStyle),
                   const SizedBox(height: 12),
@@ -217,7 +218,15 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                     label: 'In Repair',
                     onTap: () async {
                       try {
+                        // 1. Update the error status
                         await doc.reference.update({'status': 'in repair'});
+
+                        // 2. Log the action to IT_Logs
+                        await FirebaseFirestore.instance.collection('IT_Logs').add({
+                          'message': 'Marked $hallName issue as In Repair',
+                          'timestamp': FieldValue.serverTimestamp(),
+                        });
+
                         if (mounted) {
                           showSuccessSnackBar(context, 'Status updated to: In Repair');
                         }
@@ -235,7 +244,15 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                     label: 'Fixed',
                     onTap: () async {
                       try {
+                        // 1. Update the error status
                         await doc.reference.update({'status': 'fixed'});
+
+                        // 2. Log the action to IT_Logs
+                        await FirebaseFirestore.instance.collection('IT_Logs').add({
+                          'message': 'Resolved issue in $hallName',
+                          'timestamp': FieldValue.serverTimestamp(),
+                        });
+
                         if (mounted) {
                           showSuccessSnackBar(context, 'Status updated to: Fixed');
                         }

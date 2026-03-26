@@ -15,6 +15,10 @@ class ITRequestsScreen extends StatefulWidget {
 class _ITRequestsScreenState extends State<ITRequestsScreen> {
   int _selectedIndex = 0;
 
+  // --- NEW: Filter State Variables ---
+  String _selectedFilter = 'All';
+  final List<String> _filters = ['All', 'Pending', 'Completed'];
+
   // Format timestamp
   String _formatDate(Timestamp? timestamp) {
     if (timestamp == null) return 'Unknown Date';
@@ -70,7 +74,14 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const PageHeading('User Requests'),
+            // --- NEW: Header with Filter Buttons ---
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const PageHeading('User Requests'),
+                _buildStatusFilter(),
+              ],
+            ),
             const SizedBox(height: 45),
 
             Expanded(
@@ -80,18 +91,24 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const LoadingState();
+                    return const LoadingState(); // From your theme
                   }
 
                   if (snapshot.hasError) {
-                    return ErrorState(message: 'Error loading requests: ${snapshot.error}');
+                    return Center(child: Text('Error loading requests: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
                   }
 
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return const EmptyState(message: 'No reset requests found.');
-                  }
+                  List<QueryDocumentSnapshot> rawDocs = snapshot.data?.docs.toList() ?? [];
 
-                  final docs = snapshot.data!.docs.toList();
+                  // --- NEW: Apply the selected filter ---
+                  List<QueryDocumentSnapshot> docs = rawDocs.where((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final isProcessed = data['isProcessed'] == true;
+
+                    if (_selectedFilter == 'Pending') return !isProcessed;
+                    if (_selectedFilter == 'Completed') return isProcessed;
+                    return true; // 'All'
+                  }).toList();
 
                   // Sort: pending first, then by date
                   docs.sort((a, b) {
@@ -112,8 +129,9 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
 
                   if (_selectedIndex >= docs.length) _selectedIndex = 0;
 
-                  final selectedDoc = docs[_selectedIndex];
-                  final Map<String, dynamic> selectedData = selectedDoc.data() as Map<String, dynamic>;
+                  final bool hasData = docs.isNotEmpty;
+                  final selectedDoc = hasData ? docs[_selectedIndex] : null;
+                  final Map<String, dynamic>? selectedData = selectedDoc?.data() as Map<String, dynamic>?;
 
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -123,7 +141,8 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                         flex: 45,
                         child: GlassCard(
                           padding: const EdgeInsets.all(12),
-                          child: ListView.builder(
+                          child: hasData
+                              ? ListView.builder(
                             padding: EdgeInsets.zero,
                             itemCount: docs.length,
                             itemBuilder: (context, index) {
@@ -175,7 +194,8 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                                 ),
                               );
                             },
-                          ),
+                          )
+                              : _buildEmptyPlaceholder("No $_selectedFilter requests found."),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -186,7 +206,8 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                         child: GlassCard(
                           child: Padding(
                             padding: const EdgeInsets.all(18),
-                            child: Column(
+                            child: hasData && selectedData != null
+                                ? Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
@@ -223,103 +244,113 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                                       final fullName = '$fName $lName'.trim();
                                       final foundRole = userData['foundRole'] ?? 'Unknown';
 
-                                      return Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          buildInfoRow(
-                                            label: 'Requested by',
-                                            value: fullName.isEmpty ? 'Unknown' : fullName,
-                                            fontSize: 16,
-                                            verticalPadding: 16,
-                                            labelWeight: FontWeight.bold,
-                                            valueWeight: FontWeight.w500,
-                                          ),
-                                          buildInfoRow(
-                                            label: 'User Type',
-                                            value: _capitalize(foundRole),
-                                            fontSize: 16,
-                                            verticalPadding: 16,
-                                            labelWeight: FontWeight.bold,
-                                            valueWeight: FontWeight.w500,
-                                          ),
-                                          buildInfoRow(
-                                            label: 'ID',
-                                            value: userData['ID'] ?? selectedData['emailOrId'] ?? 'N/A',
-                                            fontSize: 16,
-                                            verticalPadding: 16,
-                                            labelWeight: FontWeight.bold,
-                                            valueWeight: FontWeight.w500,
-                                          ),
-                                          buildInfoRow(
-                                            label: 'Email',
-                                            value: userData['email'] ?? 'N/A',
-                                            fontSize: 16,
-                                            verticalPadding: 16,
-                                            labelWeight: FontWeight.bold,
-                                            valueWeight: FontWeight.w500,
-                                          ),
-                                          buildInfoRow(
-                                            label: 'New Password',
-                                            value: selectedData['newPassword'] ?? 'Not provided',
-                                            fontSize: 16,
-                                            verticalPadding: 16,
-                                            labelWeight: FontWeight.bold,
-                                            valueWeight: FontWeight.w500,
-                                          ),
-                                          if (userData.containsKey('year'))
+                                      // --- FIX: Wrapped the details inside a SingleChildScrollView ---
+                                      return SingleChildScrollView(
+                                        physics: const BouncingScrollPhysics(),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
                                             buildInfoRow(
-                                              label: 'Year',
-                                              value: userData['year'].toString(),
+                                              label: 'Requested by',
+                                              value: fullName.isEmpty ? 'Unknown' : fullName,
                                               fontSize: 16,
                                               verticalPadding: 16,
                                               labelWeight: FontWeight.bold,
                                               valueWeight: FontWeight.w500,
                                             ),
-                                          if (userData.containsKey('faculty'))
                                             buildInfoRow(
-                                              label: 'Faculty',
-                                              value: userData['faculty'],
+                                              label: 'User Type',
+                                              value: _capitalize(foundRole),
                                               fontSize: 16,
                                               verticalPadding: 16,
                                               labelWeight: FontWeight.bold,
                                               valueWeight: FontWeight.w500,
                                             ),
-                                          const SizedBox(height: 20),
-                                          buildInfoRow(
-                                            label: 'Time of Request',
-                                            value: _formatDate(selectedData['requestDate'] as Timestamp?),
-                                            fontSize: 16,
-                                            verticalPadding: 16,
-                                            labelWeight: FontWeight.bold,
-                                            valueWeight: FontWeight.w500,
-                                          ),
-                                        ],
+                                            buildInfoRow(
+                                              label: 'ID',
+                                              value: userData['ID'] ?? selectedData['emailOrId'] ?? 'N/A',
+                                              fontSize: 16,
+                                              verticalPadding: 16,
+                                              labelWeight: FontWeight.bold,
+                                              valueWeight: FontWeight.w500,
+                                            ),
+                                            buildInfoRow(
+                                              label: 'Email',
+                                              value: userData['email'] ?? 'N/A',
+                                              fontSize: 16,
+                                              verticalPadding: 16,
+                                              labelWeight: FontWeight.bold,
+                                              valueWeight: FontWeight.w500,
+                                            ),
+                                            buildInfoRow(
+                                              label: 'New Password',
+                                              value: selectedData['newPassword'] ?? 'Not provided',
+                                              fontSize: 16,
+                                              verticalPadding: 16,
+                                              labelWeight: FontWeight.bold,
+                                              valueWeight: FontWeight.w500,
+                                            ),
+                                            if (userData.containsKey('year'))
+                                              buildInfoRow(
+                                                label: 'Year',
+                                                value: userData['year'].toString(),
+                                                fontSize: 16,
+                                                verticalPadding: 16,
+                                                labelWeight: FontWeight.bold,
+                                                valueWeight: FontWeight.w500,
+                                              ),
+                                            if (userData.containsKey('faculty'))
+                                              buildInfoRow(
+                                                label: 'Faculty',
+                                                value: userData['faculty'],
+                                                fontSize: 16,
+                                                verticalPadding: 16,
+                                                labelWeight: FontWeight.bold,
+                                                valueWeight: FontWeight.w500,
+                                              ),
+                                            const SizedBox(height: 20),
+                                            buildInfoRow(
+                                              label: 'Time of Request',
+                                              value: _formatDate(selectedData['requestDate'] as Timestamp?),
+                                              fontSize: 16,
+                                              verticalPadding: 16,
+                                              labelWeight: FontWeight.bold,
+                                              valueWeight: FontWeight.w500,
+                                            ),
+                                            const SizedBox(height: 20), // Extra padding at the bottom
+                                          ],
+                                        ),
                                       );
                                     },
                                   ),
                                 ),
 
                                 // Action buttons for pending requests
+                                // These stay pinned to the bottom because they are OUTSIDE the scroll view!
                                 if (selectedData['isProcessed'] != true)
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: PillButton(
-                                          label: 'Reject',
-                                          onTap: () => _updateRequestStatus(selectedDoc, 'rejected'),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 16.0),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: PillButton(
+                                            label: 'Approve',
+                                            onTap: () => _updateRequestStatus(selectedDoc!, 'accepted'),
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: PillButton(
-                                          label: 'Approve',
-                                          onTap: () => _updateRequestStatus(selectedDoc, 'accepted'),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: PillButton(
+                                            label: 'Reject',
+                                            onTap: () => _updateRequestStatus(selectedDoc!, 'rejected'),
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                               ],
-                            ),
+                            )
+                                : _buildEmptyPlaceholder("Select a request to view details"),
                           ),
                         ),
                       ),
@@ -328,6 +359,50 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                 },
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- NEW: Filter Buttons Widget ---
+  Widget _buildStatusFilter() {
+    return Row(
+      children: _filters.map((filter) {
+        final isSelected = _selectedFilter == filter;
+        return Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: GestureDetector(
+            onTap: () => setState(() {
+              _selectedFilter = filter;
+              _selectedIndex = 0; // Reset selection when filter changes
+            }),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primary : Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+              ),
+              child: Text(filter, style: TextStyle(color: isSelected ? Colors.white : AppColors.primary, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // --- NEW: Reusable Empty Placeholder ---
+  Widget _buildEmptyPlaceholder(String message) {
+    return Center(
+      child: Opacity(
+        opacity: 0.5,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.check_circle_outline_rounded, size: 48, color: AppColors.primary),
+            const SizedBox(height: 12),
+            Text(message, style: AppTextStyles.hallListErrorStyle),
           ],
         ),
       ),

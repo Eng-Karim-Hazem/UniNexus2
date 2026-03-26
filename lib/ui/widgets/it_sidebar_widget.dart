@@ -6,19 +6,25 @@ class ITSidebar extends StatelessWidget {
   final UninexusTab current;
   final void Function(UninexusTab) onNavigate;
 
+  // --- NEW: ACCEPT BADGE BOOLEANS FROM THE SHELL ---
+  final bool hasActiveHallErrors;
+  final bool hasActiveRequests;
+
   const ITSidebar({
     super.key,
     required this.current,
     required this.onNavigate,
+    this.hasActiveHallErrors = false, // Default to false
+    this.hasActiveRequests = false,   // Default to false
   });
 
   // NAVIGATION ITEMS
   static const _items = [
     ('assets/images/home_tab.png',       'Dashboard',   UninexusTab.dashboard),
-    ('assets/images/qr_code.png',    'ID',          UninexusTab.id),
+    ('assets/images/qr_code.png',        'ID',          UninexusTab.id),
     ('assets/images/error_tab.png',      'Hall Errors', UninexusTab.hallErrors),
     ('assets/images/request_tab.png',    'Requests',    UninexusTab.requests),
-    ('assets/images/profile_tab.png', 'Profile',     UninexusTab.profile),
+    ('assets/images/profile_tab.png',    'Profile',     UninexusTab.profile),
     ('assets/images/settings_tab.png',   'Settings',    UninexusTab.settings),
   ];
 
@@ -29,7 +35,6 @@ class ITSidebar extends StatelessWidget {
       child: Stack(
         children: [
           // SIDEBAR BACKGROUND
-          // Gradient background with rounded corners and shadow
           Positioned(
             top: 141,
             left: 0,
@@ -49,7 +54,6 @@ class ITSidebar extends StatelessWidget {
                   ),
                 ],
               ),
-              // THE FIX: Makes the column scrollable only if it runs out of vertical space
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return SingleChildScrollView(
@@ -77,7 +81,6 @@ class ITSidebar extends StatelessWidget {
           ),
 
           // LOGO
-
           Positioned(
             top: 29,
             left: 34,
@@ -93,7 +96,6 @@ class ITSidebar extends StatelessWidget {
   }
 
   // NAVIGATION ITEM WIDGET
-
   Widget _navItem(String iconPath, String label, UninexusTab tab) {
     final isActive = current == tab;
     return GestureDetector(
@@ -111,8 +113,41 @@ class ITSidebar extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Icon
-            Image.asset(iconPath, width: 45, height: 45),
+
+            // --- NEW: ICON STACK FOR NOTIFICATION BADGES ---
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Base Icon
+                Image.asset(iconPath, width: 45, height: 45),
+
+                // The Glowing Green Dot
+                if ((tab == UninexusTab.hallErrors && hasActiveHallErrors) ||
+                    (tab == UninexusTab.requests && hasActiveRequests))
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(
+                          color: Colors.greenAccent.shade400,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.greenAccent.withValues(alpha: 0.5),
+                              blurRadius: 6,
+                              spreadRadius: 1,
+                            )
+                          ]
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            // -----------------------------------------------
+
             const SizedBox(height: 5),
             // Label
             Text(
