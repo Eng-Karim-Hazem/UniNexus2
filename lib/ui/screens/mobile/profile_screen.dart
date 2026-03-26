@@ -1,6 +1,8 @@
 import 'dart:convert'; // Required for base64Decode
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // --- ADDED FOR FIRESTORE ---
+
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/settings_screen.dart';
 
@@ -40,6 +42,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _displayYear = "N/A";
   String _displaySection = "N/A";
 
+  // --- NEW: Subjects Variable ---
+  List<String> _displaySubjects = [];
+
   // Photo Variable
   String? _base64Photo;
 
@@ -60,7 +65,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       String id = prefs.getString('ID') ?? prefs.getString('userCode') ?? widget.userID ?? "N/A";
 
       if (mounted) {
-        setState(() {
+        setState(() async {
           _displayID = id;
           _isStudent = id.toUpperCase().startsWith('ST');
           _displayFirstName = prefs.getString('fName') ?? prefs.getString('userFirstName') ?? "User";
@@ -70,16 +75,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _displayFaculty = prefs.getString('faculty') ?? "N/A";
           _displayNID = prefs.getString('nID') ?? "N/A";
 
-          // Load the photo from SharedPreferences
           _base64Photo = prefs.getString('photo');
 
           if (_isStudent) {
             _displayYear = prefs.getString('year') ?? "N/A";
             _displaySection = prefs.getString('section') ?? "N/A";
+          } else {
+            // --- INSTANT LOAD FROM LOCAL STORAGE ---
+            _displaySubjects = prefs.getStringList('facultySubjects') ?? [];
           }
-          _isLoading = false;
         });
       }
+
+      if (mounted) setState(() => _isLoading = false);
+
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -167,10 +176,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Row(
         children: [
-          // Updated Photo Logic
           Container(
-            width: 70,
-            height: 70,
+            width: 85,
+            height: 85,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: _mainPurple.withValues(alpha: 0.1),
@@ -186,7 +194,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(width: 15),
-          Container(height: 40, width: 1, color: Colors.grey.shade300),
+          Container(height: 40, width: 2, color: Colors.grey),
           const SizedBox(width: 15),
           Expanded(
             child: Column(
@@ -204,7 +212,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Fallback icon helper
   Widget _buildFallbackIcon() {
     return Center(
       child: Icon(Icons.person, color: _mainPurple, size: 40),
@@ -225,6 +232,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.all(20),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start, // Added to align everything left
             children: [
               _buildProfileField("Faculty :", _displayFaculty),
               if (_isStudent) ...[
@@ -234,6 +242,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildProfileField("E-mail :", _displayEmail),
               _buildProfileField("Phone no. :", _displayPhone),
               _buildProfileField("National ID :", _displayNID),
+
+              // --- NEW: DISPLAY SUBJECTS IF FACULTY ---
+              if (!_isStudent && _displaySubjects.isNotEmpty)
+                _buildSubjectsField(),
             ],
           ),
         ),
@@ -251,6 +263,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 4),
           Text(value, style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
           const SizedBox(height: 8),
+          Divider(color: _mainPurple.withValues(alpha: 0.1), thickness: 1),
+        ],
+      ),
+    );
+  }
+
+  // --- NEW: Custom builder for the Subjects Array ---
+  Widget _buildSubjectsField() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Assigned Subjects :", style: TextStyle(fontFamily: 'Batangas', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: _displaySubjects.map((subject) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: _mainPurple.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _mainPurple.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  subject,
+                  style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, fontWeight: FontWeight.bold, color: _mainPurple),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
           Divider(color: _mainPurple.withValues(alpha: 0.1), thickness: 1),
         ],
       ),

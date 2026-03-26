@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // --- ADDED FOR FIRESTORE ---
+
 import 'package:uninexus/ui/screens/mobile/Faculty/halls_screen.dart';
 import '../Student/stu_community.dart';
 import '../settings_screen.dart';
@@ -19,8 +21,9 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
   String? _selectedDuration;
   String? _selectedCourse;
   String? _selectedSessionType;
-  String _qrData = ""; // Started as empty for a cleaner initial state
+  String _qrData = "";
   int _selectedIndex = -1;
+  bool _isGenerating = false; // --- NEW: To handle button loading state ---
 
   // Constants & Styles
   final Color _mainPurple = const Color(0xFF7B61FF);
@@ -47,24 +50,97 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
 
   Future<void> _loadUserSubjects() async {
     final prefs = await SharedPreferences.getInstance();
-    final List<String>? savedSubjects = prefs.getStringList('facultySubjects');
-    if (mounted && savedSubjects != null && savedSubjects.isNotEmpty) {
-      setState(() {
-        _courses = savedSubjects;
-      });
+    List<String>? savedSubjects = prefs.getStringList('subjects');
+
+    // 1. Try to load from Local Storage first (Fastest)
+    if (savedSubjects != null && savedSubjects.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _courses = savedSubjects!;
+        });
+      }
+      return; // Stop here if we found them!
+    }
+
+    // 2. FALLBACK: If local storage is empty, fetch from Firebase!
+    try {
+      final String userId = prefs.getString('ID') ?? '';
+      if (userId.isEmpty) return;
+
+      final query = await FirebaseFirestore.instance
+          .collection('faculty')
+          .where('ID', isEqualTo: userId.toUpperCase())
+          .limit(1)
+          .get();
+
+      if (query.docs.isNotEmpty) {
+        final data = query.docs.first.data();
+        if (data.containsKey('subjects')) {
+          savedSubjects = List<String>.from(data['subjects']);
+
+          // Save them locally so we don't have to fetch them again next time!
+          await prefs.setStringList('subjects', savedSubjects);
+
+          if (mounted) {
+            setState(() {
+              _courses = savedSubjects!;
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching fallback subjects: $e");
     }
   }
 
-  void _handleGenerateQR() {
+  // --- UPDATED: ASYNC FIREBASE QR GENERATION ---
+  Future<void> _handleGenerateQR() async {
     if (_selectedCourse == null || _selectedSessionType == null || _selectedDuration == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select all fields first")),
+        const SnackBar(content: Text("Please select all fields first", style: TextStyle(fontFamily: 'SpaceGrotesk'))),
       );
       return;
     }
-    setState(() {
-      _qrData = "$_selectedCourse.$_selectedSessionType.$_selectedDuration";
-    });
+
+    setState(() => _isGenerating = true);
+
+    try {
+      // 1. Fetch the subject document to get the subID
+      // (Assuming your subjects collection has a field called 'name' that matches the course name)
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('subjects')
+          .where('subName', isEqualTo: _selectedCourse)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        throw Exception("Subject not found in database.");
+      }
+
+      // Grab the subID from the document (or use the document ID if that's how it's structured)
+      final subjectData = querySnapshot.docs.first.data();
+      final String subID = subjectData['subID']?.toString() ?? querySnapshot.docs.first.id;
+
+      // 2. Format the Session Type (L or S)
+      final String typeCode = _selectedSessionType == 'Lecture' ? 'L' : 'S';
+
+      // 3. Format the Duration (e.g., '5 mins' -> '5min')
+      final String durationCode = _selectedDuration!.replaceAll(' mins', 'min');
+
+      // 4. Stitch it all together
+      setState(() {
+        _qrData = "${subID}_${typeCode}_$durationCode";
+      });
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error generating QR: $e"), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isGenerating = false);
+    }
   }
 
   void _onNavBarTapped(int index) async {
@@ -262,13 +338,16 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
       width: 230,
       height: 55,
       child: OutlinedButton(
-        onPressed: _handleGenerateQR,
+        // UPDATED: Disables button and triggers async function
+        onPressed: _isGenerating ? null : _handleGenerateQR,
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: _mainPurple, width: 1.5),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           backgroundColor: Colors.white,
         ),
-        child: Text("Generate QR",
+        child: _isGenerating
+            ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: _mainPurple, strokeWidth: 2))
+            : Text("Generate QR",
             style: TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: _darkIndigo)),
       ),
     );

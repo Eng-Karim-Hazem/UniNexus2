@@ -1,3 +1,4 @@
+import 'dart:convert'; // --- ADDED FOR BASE64 DECODING ---
 import 'package:flutter/material.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/halls_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
@@ -172,10 +173,17 @@ class _WhoSentThisScreenState extends State<WhoSentThisScreen> {
               shape: BoxShape.circle,
               color: _accentPurple,
             ),
+            // --- CHANGED TO DECODE BASE64 STRINGS INSTEAD OF NETWORK URLs ---
             child: sender.photoUrl.isNotEmpty
                 ? ClipOval(
-                    child: Image.network(sender.photoUrl,
-                        fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.person, color: Colors.white, size: 50)))
+              child: Image.memory(
+                base64Decode(sender.photoUrl),
+                fit: BoxFit.cover,
+                width: 80,
+                height: 80,
+                errorBuilder: (_, __, ___) => const Icon(Icons.person, color: Colors.white, size: 50),
+              ),
+            )
                 : const Icon(Icons.person, color: Colors.white, size: 50),
           ),
           const SizedBox(height: 12),
