@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
@@ -16,8 +17,20 @@ class SecuritySettingsScreen extends StatefulWidget {
 
 class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
   int? selectedSettingTab;
+
+  // Controllers
   final TextEditingController _feedbackController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+
+  // Notification States
+  String? _selectedGate;
+  String? _selectedAnnouncements;
+  String? _selectedWarnings;
+  final List<String> _alertModes = ['Sound', 'Vibrate', 'Silent', 'Priority'];
+
   int _rating = 4;
+  bool _isBusy = false; // Loading state for buttons
 
   static const List<Map<String, String>> _items = [
     {'icon': 'assets/images/information_1.png', 'label': 'Account management'},
@@ -28,9 +41,151 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadSavedSettings();
+  }
+
+  @override
   void dispose() {
     _feedbackController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
     super.dispose();
+  }
+
+  // --- LOGIC: Load Local Preferences ---
+  Future<void> _loadSavedSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _selectedGate = prefs.getString('sec_gate_notif');
+      _selectedAnnouncements = prefs.getString('sec_ann_notif');
+      _selectedWarnings = prefs.getString('sec_warn_notif');
+    });
+  }
+
+  // --- LOGIC: Account Management Update (Staff Collection) ---
+  Future<void> _performAccountUpdate() async {
+    final newPhone = _phoneController.text.trim();
+    final newEmail = _emailController.text.trim();
+
+    if (newPhone.isEmpty && newEmail.isEmpty) {
+      showErrorSnackBar(context, "Please enter at least one field to update.");
+      return;
+    }
+
+    setState(() => _isBusy = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String userId = prefs.getString('ID') ?? prefs.getString('userCode') ?? '';
+
+      if (userId.isEmpty) throw Exception("Session not found.");
+
+      // Targeting 'staff' collection for Security personnel
+      final query = await FirebaseFirestore.instance
+          .collection('staff')
+          .where('ID', isEqualTo: userId.toUpperCase())
+          .limit(1)
+          .get();
+
+      if (query.docs.isEmpty) throw Exception("Staff profile not found.");
+
+      Map<String, dynamic> updates = {};
+      if (newPhone.isNotEmpty) updates['pNum'] = newPhone;
+      if (newEmail.isNotEmpty) updates['email'] = newEmail;
+
+      await query.docs.first.reference.update(updates);
+
+      // Sync local cache
+      if (newPhone.isNotEmpty) await prefs.setString('pNum', newPhone);
+      if (newEmail.isNotEmpty) await prefs.setString('email', newEmail);
+
+      if (mounted) {
+        showSuccessSnackBar(context, 'Security account updated successfully!');
+        _phoneController.clear();
+        _emailController.clear();
+      }
+    } catch (e) {
+      if (mounted) showErrorSnackBar(context, "Update failed: $e");
+    } finally {
+      if (mounted) setState(() => _isBusy = false);
+    }
+  }
+
+  // --- LOGIC: Notification Settings Sync ---
+  Future<void> _saveNotificationSettings() async {
+    setState(() => _isBusy = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String userId = prefs.getString('ID') ?? '';
+
+      final query = await FirebaseFirestore.instance
+          .collection('staff')
+          .where('ID', isEqualTo: userId.toUpperCase())
+          .limit(1)
+          .get();
+
+      if (query.docs.isEmpty) throw Exception("Profile not found.");
+
+      Map<String, String> settingsMap = {};
+      if (_selectedGate != null) settingsMap['gate_alerts'] = _selectedGate!;
+      if (_selectedAnnouncements != null) settingsMap['announcements'] = _selectedAnnouncements!;
+      if (_selectedWarnings != null) settingsMap['warnings'] = _selectedWarnings!;
+
+      await query.docs.first.reference.update({
+        'security_notification_prefs': settingsMap
+      });
+
+      // Save locally
+      if (_selectedGate != null) await prefs.setString('sec_gate_notif', _selectedGate!);
+      if (_selectedAnnouncements != null) await prefs.setString('sec_ann_notif', _selectedAnnouncements!);
+      if (_selectedWarnings != null) await prefs.setString('sec_warn_notif', _selectedWarnings!);
+
+      if (mounted) showSuccessSnackBar(context, 'Security alerts updated!');
+    } catch (e) {
+      if (mounted) showErrorSnackBar(context, "Error: $e");
+    } finally {
+      if (mounted) setState(() => _isBusy = false);
+    }
+  }
+
+  // --- LOGIC: Feedback Submission ---
+  Future<void> _submitFeedback() async {
+    final feedbackText = _feedbackController.text.trim();
+    if (feedbackText.isEmpty) {
+      showErrorSnackBar(context, "Please write your feedback.");
+      return;
+    }
+
+    setState(() => _isBusy = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String userId = prefs.getString('ID') ?? 'Unknown Security';
+      final String fName = prefs.getString('fName') ?? '';
+      final String lName = prefs.getString('lName') ?? '';
+
+      await FirebaseFirestore.instance.collection('Feedback').add({
+        'userId': userId,
+        'userName': '$fName $lName'.trim(),
+        'role': 'Security',
+        'rating': _rating,
+        'message': feedbackText,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      if (mounted) {
+        showSuccessSnackBar(context, 'Thank you for your feedback!');
+        _feedbackController.clear();
+        setState(() => _rating = 4);
+      }
+    } catch (e) {
+      if (mounted) showErrorSnackBar(context, "Submission failed: $e");
+    } finally {
+      if (mounted) setState(() => _isBusy = false);
+    }
   }
 
   @override
@@ -46,7 +201,6 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
             Expanded(
               child: Row(
                 children: [
-                  // Settings grid
                   Expanded(
                     flex: selectedSettingTab == null ? 1 : 0,
                     child: Center(
@@ -71,9 +225,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                                 if (index == 4) {
                                   _logout();
                                 } else {
-                                  setState(() {
-                                    selectedSettingTab = index;
-                                  });
+                                  setState(() => selectedSettingTab = index);
                                 }
                               },
                             );
@@ -83,7 +235,6 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
                     ),
                   ),
 
-                  // Right panel - Selected setting content
                   if (selectedSettingTab != null) ...[
                     const SizedBox(width: 30),
                     Expanded(
@@ -117,90 +268,62 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     );
   }
 
-  // Get content for selected tab
   Widget _getContentForTab(int index) {
     switch (index) {
-      case 0:
-        return _buildAccountManagement();
-      case 1:
-        return _buildNotificationSettings();
-      case 2:
-        return _buildFeedback();
-      case 3:
-        return _buildAppInfo();
-      default:
-        return const SizedBox();
+      case 0: return _buildAccountManagement();
+      case 1: return _buildNotificationSettings();
+      case 2: return _buildFeedback();
+      case 3: return _buildAppInfo();
+      default: return const SizedBox();
     }
   }
 
-  // Account management form
   Widget _buildAccountManagement() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Account Management",
-          style: AppTextStyles.heading,
-        ),
+        const Text("Account Management", style: AppTextStyles.heading),
         const SizedBox(height: 30),
-        _buildTextField("New Phone", "Enter phone number"),
+        _buildTextField("New Phone", "Enter phone number", _phoneController, TextInputType.phone),
         const SizedBox(height: 20),
-        _buildTextField("New Email", "Enter email"),
+        _buildTextField("New Email", "Enter email", _emailController, TextInputType.emailAddress),
         const SizedBox(height: 40),
-        PillButton(
-          label: 'Update',
-          onTap: () {
-            showSuccessSnackBar(context, 'Account updated successfully!');
-          },
-        ),
+        _isBusy
+            ? const Center(child: CircularProgressIndicator())
+            : PillButton(label: 'Update', onTap: _performAccountUpdate),
       ],
     );
   }
 
-  // Notification settings
   Widget _buildNotificationSettings() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Notification Settings",
-          style: AppTextStyles.heading,
-        ),
+        const Text("Notification Settings", style: AppTextStyles.heading),
         const SizedBox(height: 30),
-        _buildDropdown("Gate Alerts"),
+        _buildDropdown("Gate Alerts", _selectedGate, (val) => setState(() => _selectedGate = val)),
         const SizedBox(height: 20),
-        _buildDropdown("Announcements"),
+        _buildDropdown("Announcements", _selectedAnnouncements, (val) => setState(() => _selectedAnnouncements = val)),
         const SizedBox(height: 20),
-        _buildDropdown("Warnings"),
+        _buildDropdown("Warnings", _selectedWarnings, (val) => setState(() => _selectedWarnings = val)),
         const SizedBox(height: 40),
-        PillButton(
-          label: 'Save',
-          onTap: () {
-            showSuccessSnackBar(context, 'Notification settings saved!');
-          },
-        ),
+        _isBusy
+            ? const Center(child: CircularProgressIndicator())
+            : PillButton(label: 'Save', onTap: _saveNotificationSettings),
       ],
     );
   }
 
-  // Feedback form with rating
   Widget _buildFeedback() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Feedback",
-          style: AppTextStyles.heading,
-        ),
+        const Text("Feedback", style: AppTextStyles.heading),
         const SizedBox(height: 30),
         Row(
           children: List.generate(5, (index) {
             return GestureDetector(
-              onTap: () {
-                setState(() {
-                  _rating = index + 1;
-                });
-              },
+              onTap: () => setState(() => _rating = index + 1),
               child: Icon(
                 Icons.star_rounded,
                 size: 40,
@@ -213,51 +336,35 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
         TextField(
           controller: _feedbackController,
           maxLines: 4,
+          maxLength: 250,
           decoration: InputDecoration(
             hintText: "Write feedback...",
             filled: true,
             fillColor: Colors.grey[100],
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none,
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
           ),
         ),
         const SizedBox(height: 30),
-        PillButton(
-          label: 'Submit',
-          onTap: () {
-            if (_feedbackController.text.trim().isEmpty) {
-              showErrorSnackBar(context, 'Please enter your feedback');
-              return;
-            }
-            showSuccessSnackBar(context, 'Thank you for your feedback!');
-            _feedbackController.clear();
-            setState(() {
-              _rating = 4;
-            });
-          },
-        ),
+        _isBusy
+            ? const Center(child: CircularProgressIndicator())
+            : PillButton(label: 'Submit', onTap: _submitFeedback),
       ],
     );
   }
 
-  // App info
   Widget _buildAppInfo() {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          "App Information",
-          style: AppTextStyles.heading,
-        ),
+        Text("App Information", style: AppTextStyles.heading),
         SizedBox(height: 20),
         Text("App Version: UN2.0"),
+        SizedBox(height: 10),
+        Text("Role: Security Personnel"),
       ],
     );
   }
 
-  // Logout function
   Future<void> _logout() async {
     final confirmed = await showConfirmDialog(
       context,
@@ -268,60 +375,49 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
       confirmColor: Colors.red,
       icon: Icons.logout,
     );
-
     if (confirmed != true) return;
-
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const WelcomePage()),
-          (route) => false,
-    );
+    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const WelcomePage()), (route) => false);
   }
 
-  // Text field helper
-  Widget _buildTextField(String label, String hint) {
+  Widget _buildTextField(String label, String hint, TextEditingController controller, TextInputType type) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         TextField(
+          controller: controller,
+          keyboardType: type,
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
             fillColor: Colors.grey[100],
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
           ),
         ),
       ],
     );
   }
 
-  // Dropdown helper
-  Widget _buildDropdown(String label) {
+  Widget _buildDropdown(String label, String? currentValue, Function(String?) onChanged) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Choose alert mode"),
-              Icon(Icons.keyboard_arrow_down),
-            ],
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              isExpanded: true,
+              value: currentValue,
+              hint: const Text("Choose alert mode"),
+              items: _alertModes.map((mode) => DropdownMenuItem(value: mode, child: Text(mode))).toList(),
+              onChanged: onChanged,
+            ),
           ),
         ),
       ],
