@@ -14,6 +14,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     with TickerProviderStateMixin {
   late AnimationController _introController;
   late AnimationController _exitController;
+  late AnimationController _contentInController;
+
 
   late Animation<Offset> _topIntro;
   late Animation<Offset> _bottomIntro;
@@ -23,7 +25,22 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   late Animation<Offset> _contentExit;
   late Animation<double> _contentFade;
 
-  bool showGif = true;
+  bool _showGif = true;
+  Timer? _gifTimer;
+
+  void _playIntro() {
+    _introController.forward();
+
+    Future.delayed(const Duration(milliseconds: 350), () {
+      if (mounted) _contentInController.forward();
+    });
+
+    _gifTimer?.cancel();
+    _gifTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _showGif = false);
+    });
+  }
+
 
   @override
   void initState() {
@@ -80,7 +97,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
     // Timer to switch from GIF to Static Image
     Timer(const Duration(seconds: 3), () {
-      if (mounted) setState(() => showGif = false);
+      if (mounted) setState(() => _showGif = false);
     });
   }
 
@@ -125,6 +142,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   @override
   Widget build(BuildContext context) {
+
+    final size = MediaQuery.of(context).size;
+    final sw = size.width;
+    final sh = size.height;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -135,8 +157,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             ),
           ),
           Positioned(
-            top: -80,
-            right: -245,
+            top: -130,
+            right: -260,
             child: SlideTransition(
               position: _topIntro,
               child: SlideTransition(
@@ -170,26 +192,21 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       const SizedBox(height: 90),
                       // --- UPDATED ANIMATED SWITCHER ---
                       AnimatedSwitcher(
-                        // If the static image is identical to the last GIF frame,
-                        // setting duration to 0 makes the cut invisible.
-                        // If they are different, keep the 600ms fade.
-                        duration: const Duration(milliseconds: 0),
+                        duration: const Duration(milliseconds: 600),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(26),
+                          key: ValueKey(_showGif),
+                          borderRadius: BorderRadius.circular(23),
                           child: Image.asset(
-                            showGif
-                                ? "assets/images/UniNexus.gif"
-                                : "assets/images/uni.jpeg",
-                            key: ValueKey(showGif),
-                            width: 270,
-                            height: 270,
-                            fit: BoxFit.fill,
-                            // Helps prevent white flashes during rebuilds
-                            gaplessPlayback: true,
+                            _showGif
+                                ? 'assets/images/UniNexus.gif'
+                                : 'assets/images/uni.jpeg',
+                            width: sw * 0.60,
+                            height: sw * 0.60,
+                            fit: BoxFit.contain,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 90),
+                      const SizedBox(height: 110),
                       const Text(
                         "Welcome to UniNexus",
                         style: TextStyle(
@@ -203,11 +220,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         "Your unified campus experience begins here.",
                         style: TextStyle(
                           fontFamily: 'SpaceGrotesk',
-                          fontSize: 16,
+                          fontSize: 17,
                           color: Colors.black54,
+                          fontWeight: FontWeight.w200,
                         ),
                       ),
-                      const SizedBox(height: 120),
+                      const SizedBox(height: 135),
                       _mainButton("Log In", _goToLogin),
                       const SizedBox(height: 15),
                       _mainButton("Register", _goToRegister),
@@ -232,7 +250,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         gradient: const LinearGradient(
           colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)],
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
       ),
       child: ElevatedButton(
         onPressed: onTap,

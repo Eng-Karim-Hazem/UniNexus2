@@ -291,7 +291,7 @@ class _LoginScreenState extends State<LoginScreen>
                               ],
                             ),
                           ),
-                          const SizedBox(height: 180),
+                          const SizedBox(height: 220),
                           _mainButton(
                             text: "Log In",
                             enabled: _isFormValid && !_isLoading,

@@ -159,14 +159,14 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
 
           // Left decorative rectangle
           Positioned(
-            left: -sw * 0.35,
-            top: -sh * 0.10,
+            left: -sw * 0.33,
+            top: -sh * 0.13,
             child: SlideTransition(
               position: _leftIntro,
               child: SlideTransition(
                 position: _leftExit,
                 child: Image.asset(
-                  'assets/images/Rectangle.png',
+                  'assets/images/Rectangle1.png',
                   width: sw * 0.70,
                   height: sw * 0.59,
                   fit: BoxFit.contain,
@@ -177,14 +177,14 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
 
           // Right decorative rectangle
           Positioned(
-            right: -sw * 0.16,
-            bottom: -sh * 0.34,
+            right: -sw * 0.27,
+            bottom: -sh * 0.30,
             child: SlideTransition(
               position: _rightIntro,
               child: SlideTransition(
                 position: _rightExit,
                 child: Image.asset(
-                  'assets/images/rectangle3.png',
+                  'assets/images/Rectangle1.png',
                   width: sw * 0.55,
                   height: sw * 0.65,
                   fit: BoxFit.contain,
@@ -240,7 +240,8 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                           style: AppTextStyles.caption.copyWith(fontSize: 24),
                         ),
 
-                        const SizedBox(height: 120),
+                        const SizedBox(height: 100),
+
 
                         // Login button
                         AppGradientButton(

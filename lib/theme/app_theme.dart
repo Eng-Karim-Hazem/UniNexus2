@@ -955,8 +955,8 @@ class AppGradientButton extends StatelessWidget {
     super.key,
     required this.text,
     required this.onPressed,
-    this.width = 200,
-    this.height = 46,
+    this.width = 280,
+    this.height = 65,
   });
 
   @override

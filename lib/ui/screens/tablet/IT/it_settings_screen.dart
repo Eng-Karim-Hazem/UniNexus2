@@ -9,7 +9,7 @@ import 'package:file_saver/file_saver.dart';
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
-import '../welcome_screen.dart';
+import '../welcome_screen_tablet.dart';
 
 class ITSettingsScreen extends StatefulWidget {
   final void Function(UninexusTab) onNavigate;
