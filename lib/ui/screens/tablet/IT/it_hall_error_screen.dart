@@ -4,6 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
 
+// --- CRITICAL ADDITION: Import your new unified logging service! ---
+import '../../../../services/firebase/it_logs_service.dart';
+
 class ITHallErrorScreen extends StatefulWidget {
   final void Function(UninexusTab) onNavigate;
   const ITHallErrorScreen({super.key, required this.onNavigate});
@@ -221,11 +224,8 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                         // 1. Update the error status
                         await doc.reference.update({'status': 'in repair'});
 
-                        // 2. Log the action to IT_Logs
-                        await FirebaseFirestore.instance.collection('IT_Logs').add({
-                          'message': 'Marked $hallName issue as In Repair',
-                          'timestamp': FieldValue.serverTimestamp(),
-                        });
+                        // 2. THE FIX: Push the log through the unified service
+                        await ITLogService.logAction('Marked $hallName issue as In Repair');
 
                         if (mounted) {
                           showSuccessSnackBar(context, 'Status updated to: In Repair');
@@ -247,11 +247,8 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                         // 1. Update the error status
                         await doc.reference.update({'status': 'fixed'});
 
-                        // 2. Log the action to IT_Logs
-                        await FirebaseFirestore.instance.collection('IT_Logs').add({
-                          'message': 'Resolved issue in $hallName',
-                          'timestamp': FieldValue.serverTimestamp(),
-                        });
+                        // 2. THE FIX: Push the log through the unified service
+                        await ITLogService.logAction('Resolved issue in $hallName');
 
                         if (mounted) {
                           showSuccessSnackBar(context, 'Status updated to: Fixed');
