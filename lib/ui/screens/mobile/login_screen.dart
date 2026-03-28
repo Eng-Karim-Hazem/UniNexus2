@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:uninexus/ui/screens/mobile/signup_screen.dart';
 
+// --- MAKE SURE THIS IMPORT PATH IS CORRECT FOR YOUR PROJECT ---
+import '../../../../services/firebase/login_service.dart';
+
 import 'Faculty/faculty_home_screen.dart';
 import 'Student/stu_home.dart';
 import 'forget_password_screen.dart';
-
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,6 +22,9 @@ class _LoginScreenState extends State<LoginScreen>
 
   final _codeController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  // Instantiate your service here!
+  final LoginService _loginService = LoginService();
 
   bool _obscurePassword = true;
   bool _isFormValid = false;
@@ -72,6 +76,7 @@ class _LoginScreenState extends State<LoginScreen>
     _passwordController.addListener(_validate);
   }
 
+  // --- UPDATED LOGIC TO USE THE SERVICE ---
   Future<void> _handleLogin() async {
     final idInput = _codeController.text.trim();
     final passwordInput = _passwordController.text.trim();
@@ -82,69 +87,81 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _isLoading = true);
 
     try {
-      String collectionName;
-      Widget nextScreen;
+      // 1. Call your LoginService
+      final result = await _loginService.login(idInput, passwordInput);
 
-      if (idInput.toUpperCase().startsWith("ST")) {
-        collectionName = 'students';
-        nextScreen = const StuHomeScreen();
-      } else if (idInput.toUpperCase().startsWith("FA")) {
-        collectionName = 'faculty';
-        nextScreen = const FacultyHomeScreen();
-      } else {
-        throw "Invalid ID format. ID must start with 'ST' or 'FA'.";
-      }
+      // 2. Handle the different possible outcomes
+      switch (result['status']) {
 
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection(collectionName)
-          .where('ID', isEqualTo: idInput)
-          .limit(1)
-          .get();
+        case LoginResult.signUpRequired:
+          throw "Access Denied";
 
-      if (querySnapshot.docs.isEmpty) {
-        throw "User ID not found in $collectionName records.";
-      }
+        case LoginResult.userNotFound:
+          throw "User ID not found in our records.";
 
-      final userDoc = querySnapshot.docs.first;
-      final userData = userDoc.data();
-      final storedPassword = userData['pass'];
+        case LoginResult.passwordMismatch:
+          throw "Incorrect Password.";
 
-      if (storedPassword == passwordInput) {
-        final prefs = await SharedPreferences.getInstance();
+        case LoginResult.invalidPrefix:
+          throw "Invalid ID format";
 
-        await prefs.setBool('rememberMe', _rememberMe);
-        if (_rememberMe) {
-          await prefs.setString('rememberedID', idInput);
-        } else {
-          await prefs.remove('rememberedID');
-        }
+        case LoginResult.error:
+          throw "An error occurred while communicating with the server.";
 
-        await prefs.setString('ID', idInput);
-        await prefs.setString('fName', userData['fName'] ?? "User");
-        await prefs.setString('lName', userData['lName'] ?? "");
-        await prefs.setString('email', userData['email'] ?? "N/A");
-        await prefs.setString('pNum', userData['pNum'] ?? "N/A");
-        await prefs.setString('faculty', userData['faculty'] ?? "N/A");
-        await prefs.setString('nID', userData['nID'] ?? "N/A");
-        await prefs.setString('photo', userData['photo'] ?? "N/A");
+        case LoginResult.success:
+        // 3. Process successful login
+          final userData = result['userData'] as Map<String, dynamic>;
+          final userType = result['userType'] as UserType;
 
-        if (collectionName == 'students') {
-          await prefs.setString('year', userData['year'] ?? "N/A");
-          await prefs.setString('section', userData['section'] ?? "N/A");
-        } else if (collectionName == 'faculty') {
-          List<dynamic> subjectsData = userData['subjects'] ?? [];
-          List<String> subjectsList = subjectsData.map((e) => e.toString()).toList();
-          await prefs.setStringList('facultySubjects', subjectsList);
-        }
+          final prefs = await SharedPreferences.getInstance();
 
-        if (!mounted) return;
+          await prefs.setBool('rememberMe', _rememberMe);
+          if (_rememberMe) {
+            await prefs.setString('rememberedID', idInput);
+          } else {
+            await prefs.remove('rememberedID');
+          }
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => nextScreen),
-        );
-      } else {
-        throw "Incorrect Password.";
+          // Save universal data
+          await prefs.setString('ID', idInput);
+          await prefs.setString('fName', userData['fName'] ?? "User");
+          await prefs.setString('lName', userData['lName'] ?? "");
+          await prefs.setString('email', userData['email'] ?? "N/A");
+          await prefs.setString('pNum', userData['pNum'] ?? "N/A");
+          await prefs.setString('faculty', userData['faculty'] ?? "N/A");
+          await prefs.setString('nID', userData['nID'] ?? "N/A");
+          await prefs.setString('photo', userData['photo'] ?? "N/A");
+
+          Widget nextScreen;
+
+          // Save specific data and route properly
+          if (userType == UserType.student) {
+            await prefs.setString('year', userData['year']?.toString() ?? "N/A");
+            await prefs.setString('section', userData['section']?.toString() ?? "N/A");
+            nextScreen = const StuHomeScreen();
+
+          } else if (userType == UserType.faculty) {
+            List<dynamic> subjectsData = userData['subjects'] ?? [];
+            List<String> subjectsList = subjectsData.map((e) => e.toString()).toList();
+            await prefs.setStringList('subjects', subjectsList);
+            await prefs.setStringList('facultySubjects', subjectsList);
+            nextScreen = const FacultyHomeScreen();
+
+          } else {
+            // Add Staff routing here later if needed
+            throw "Staff mobile dashboard is under construction.";
+          }
+
+          if (!mounted) return;
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => nextScreen),
+          );
+          break;
+
+        default:
+          throw "Unknown login response.";
       }
 
     } catch (e) {

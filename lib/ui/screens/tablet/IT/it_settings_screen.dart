@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-import 'package:csv/csv.dart';
-import 'dart:typed_data';
-import 'package:file_saver/file_saver.dart';
+import 'package:url_launcher/url_launcher.dart'; // --- ADDED URL LAUNCHER ---
 
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
@@ -40,7 +37,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
   static const List<Map<String, String>> _items = [
     {'icon': 'assets/icons/information.png', 'label': 'Account management'},
     {'icon': 'assets/icons/notify.png',      'label': 'Notification settings'},
-    {'icon': 'assets/icons/export.png',      'label': 'Export Logs'},
+    {'icon': 'assets/icons/export.png',      'label': 'Logs'}, // Changed label
     {'icon': 'assets/icons/review.png',      'label': 'Feedback'},
     {'icon': 'assets/icons/merge.png',       'label': 'App Information'},
     {'icon': 'assets/icons/logout.png',      'label': 'Logout'},
@@ -199,55 +196,20 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     }
   }
 
-  // --- LOGIC: Export Logs to CSV ---
-  Future<void> _exportLogsToCSV() async {
-    showLoadingOverlay(context, message: 'Exporting logs...');
+  // --- LOGIC: Open Google Sheets ---
+  Future<void> _openGoogleSheetLogs() async {
+    // PASTE THE LINK TO YOUR GOOGLE SHEET HERE (Not the Webhook URL, the actual viewing URL)
+    const String sheetUrl = 'https://docs.google.com/spreadsheets/d/18JxhVOoqC9p7NG_Bzr9M3dmYRA69PL2SDpt03sDAu00/edit?usp=sharing';
+
+    final Uri url = Uri.parse(sheetUrl);
+
     try {
-      final QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection('IT_Logs')
-          .orderBy('timestamp', descending: true)
-          .get();
-
-      if (snapshot.docs.isEmpty) {
-        hideLoadingOverlay(context);
-        showErrorSnackBar(context, "No logs available to export.");
-        return;
+      // mode: LaunchMode.externalApplication forces it to open in the native browser or Google Sheets app
+      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+        if (mounted) showErrorSnackBar(context, 'Could not launch Google Sheets.');
       }
-
-      List<List<dynamic>> rows = [["Date", "Time", "Action Message"]];
-
-      for (var doc in snapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
-        final String message = data['message'] ?? 'Unknown Action';
-        final Timestamp? timestamp = data['timestamp'] as Timestamp?;
-
-        String dateStr = 'Unknown';
-        String timeStr = 'Unknown';
-
-        if (timestamp != null) {
-          final DateTime dt = timestamp.toDate();
-          dateStr = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-          int hour = dt.hour == 0 ? 12 : (dt.hour > 12 ? dt.hour - 12 : dt.hour);
-          timeStr = '$hour:${dt.minute.toString().padLeft(2, '0')} ${dt.hour >= 12 ? 'PM' : 'AM'}';
-        }
-        rows.add([dateStr, timeStr, message]);
-      }
-
-      String csvData = const ListToCsvConverter().convert(rows);
-      Uint8List bytes = Uint8List.fromList(csvData.codeUnits);
-
-      await FileSaver.instance.saveAs(
-        name: 'Staff_IT_Logs_${DateTime.now().millisecondsSinceEpoch}',
-        bytes: bytes,
-        ext: 'csv',
-        mimeType: MimeType.csv,
-      );
-
-      hideLoadingOverlay(context);
-      showSuccessSnackBar(context, "Logs exported!");
     } catch (e) {
-      hideLoadingOverlay(context);
-      showErrorSnackBar(context, "Export error: $e");
+      if (mounted) showErrorSnackBar(context, 'Error launching URL: $e');
     }
   }
 
@@ -259,7 +221,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const PageHeading('Staff Settings'),
+            const PageHeading('Settings'),
             const SizedBox(height: 10),
             Expanded(
               child: Row(
@@ -335,7 +297,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     switch (index) {
       case 0: return _buildAccountManagement();
       case 1: return _buildNotificationSettings();
-      case 2: return _buildExportLogs();
+      case 2: return _buildExportLogs(); // This now points to the new UI
       case 3: return _buildFeedback();
       case 4: return _buildAppInfo();
       default: return const SizedBox();
@@ -378,15 +340,16 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
+  // --- UPDATED UI FOR GOOGLE SHEETS ---
   Widget _buildExportLogs() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('System Logs', style: AppTextStyles.heading),
         const SizedBox(height: 40),
-        const Text('Export official CSV reports for staff analysis.'),
+        const Text('Access the real-time Google Sheet containing all staff actions and system logs. You can download the sheet by clicking the open google sheet button then pressing the 3 dots button and after that press download.'),
         const SizedBox(height: 60),
-        Center(child: PillButton(label: 'Download CSV', onTap: _exportLogsToCSV)),
+        Center(child: PillButton(label: 'Open Google Sheet', onTap: _openGoogleSheetLogs)),
       ],
     );
   }

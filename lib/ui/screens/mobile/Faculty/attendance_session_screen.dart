@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // --- ADDED FOR FIRESTORE ---
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:uninexus/ui/screens/mobile/Faculty/halls_screen.dart';
 import '../Student/stu_community.dart';
@@ -24,7 +24,7 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
   String? _selectedSessionType;
   String _qrData = "";
   int _selectedIndex = -1;
-  bool _isGenerating = false; // --- NEW: To handle button loading state ---
+  bool _isGenerating = false;
 
   // Constants & Styles
   final Color _mainPurple = const Color(0xFF7B61FF);
@@ -60,7 +60,7 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
           _courses = savedSubjects!;
         });
       }
-      return; // Stop here if we found them!
+      return;
     }
 
     // 2. FALLBACK: If local storage is empty, fetch from Firebase!
@@ -79,7 +79,6 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
         if (data.containsKey('subjects')) {
           savedSubjects = List<String>.from(data['subjects']);
 
-          // Save them locally so we don't have to fetch them again next time!
           await prefs.setStringList('subjects', savedSubjects);
 
           if (mounted) {
@@ -106,8 +105,11 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
     setState(() => _isGenerating = true);
 
     try {
+      // --- NEW: Grab the Instructor ID from local storage ---
+      final prefs = await SharedPreferences.getInstance();
+      final String instructorId = prefs.getString('ID') ?? 'UNKNOWN_FA';
+
       // 1. Fetch the subject document to get the subID
-      // (Assuming your subjects collection has a field called 'name' that matches the course name)
       final querySnapshot = await FirebaseFirestore.instance
           .collection('subjects')
           .where('subName', isEqualTo: _selectedCourse)
@@ -118,7 +120,6 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
         throw Exception("Subject not found in database.");
       }
 
-      // Grab the subID from the document (or use the document ID if that's how it's structured)
       final subjectData = querySnapshot.docs.first.data();
       final String subID = subjectData['subID']?.toString() ?? querySnapshot.docs.first.id;
 
@@ -128,9 +129,9 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
       // 3. Format the Duration (e.g., '5 mins' -> '5min')
       final String durationCode = _selectedDuration!.replaceAll(' mins', 'min');
 
-      // 4. Stitch it all together
+      // 4. Stitch it all together WITH THE INSTRUCTOR ID!
       setState(() {
-        _qrData = "${subID}_${typeCode}_$durationCode";
+        _qrData = "${subID}_${typeCode}_${durationCode}_$instructorId";
       });
 
     } catch (e) {
@@ -339,7 +340,6 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
       width: 230,
       height: 55,
       child: OutlinedButton(
-        // UPDATED: Disables button and triggers async function
         onPressed: _isGenerating ? null : _handleGenerateQR,
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: _mainPurple, width: 1.5),
