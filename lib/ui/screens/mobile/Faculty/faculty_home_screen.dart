@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -70,6 +71,49 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
 
   String _getCurrentDate() {
     return DateFormat('MMMM d, yyyy').format(DateTime.now());
+  }
+
+  bool _isNoticeForFaculty(Map<String, dynamic> data) {
+    final String userId = _storedUserID.trim();
+    final List<String> specializations = _facultySubjects.map((e) => e.trim().toLowerCase()).toList();
+
+    final List<String> recipientIds = (data['recipientIds'] as List<dynamic>? ?? const [])
+        .map((e) => e.toString().trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    if (userId.isNotEmpty && recipientIds.contains(userId)) {
+      return true;
+    }
+
+    final String targetType = (data['type'] ?? '').toString().trim().toLowerCase();
+    final String targetValue = (data['targetValue'] ?? '').toString().trim().toLowerCase();
+
+    if (targetType == 'individual' && userId.isNotEmpty && targetValue == userId.toLowerCase()) {
+      return true;
+    }
+
+    if (targetType == 'group' && (targetValue == 'faculty' || targetValue == 'all')) {
+      return true;
+    }
+
+    if (targetType == 'specialization' && specializations.contains(targetValue)) {
+      return true;
+    }
+
+    // Backward compatibility for legacy notices with only targetValue.
+    if (targetType.isEmpty) {
+      if (targetValue == 'faculty' || targetValue == 'all') {
+        return true;
+      }
+      if (specializations.contains(targetValue)) {
+        return true;
+      }
+      if (userId.isNotEmpty && targetValue == userId.toLowerCase()) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   void _onNavBarTapped(int index) async {
@@ -149,7 +193,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
           child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
         ),
         Text("Home",
-            style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
+            style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -174,11 +218,11 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         children: [
           Text(
             "Hi Dr. $_storedFirstName $_storedLastName!",
-            style: TextStyle(fontFamily: 'Batangas', fontSize: 26, fontWeight: FontWeight.w900, color: _darkText),
+            style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 26, fontWeight: FontWeight.w900, color: _darkText),
           ),
           const SizedBox(height: 8),
           Text(_getCurrentDate(),
-              style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: _dateBlue, fontWeight: FontWeight.w600)),
+              style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: _dateBlue, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -223,7 +267,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
           children: [
             Image.asset(iconPath, width: 38, height: 38, color: _textIndigo),
             const SizedBox(height: 12),
-            Text(title, style: TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold, color: _mainPurple)),
+            Text(title, style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 16, fontWeight: FontWeight.bold, color: _mainPurple)),
           ],
         ),
       ),
@@ -245,7 +289,10 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance.collection('Notifications').snapshots(),
+          stream: FirebaseFirestore.instance
+              .collection('Notifications')
+              .orderBy('date', descending: true)
+              .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(child: CircularProgressIndicator(color: _mainPurple));
@@ -257,15 +304,9 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
               return const Center(child: Text('No announcements.'));
             }
 
-            // The filtering happens here automatically based on user data
-            var docs = snapshot.data!.docs.where((doc) {
+            final List<QueryDocumentSnapshot> docs = snapshot.data!.docs.where((doc) {
               final data = doc.data() as Map<String, dynamic>;
-              final target = (data['targetValue']?.toString() ?? '').trim();
-
-              bool isGeneral = (target == 'Faculty' || target == 'faculty' || target == 'All');
-              bool isMySubject = _facultySubjects.any((sub) => sub.toLowerCase() == target.toLowerCase());
-
-              return isGeneral || isMySubject;
+              return _isNoticeForFaculty(data);
             }).toList();
 
             docs.sort((a, b) {
@@ -315,14 +356,14 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
               Icon(Icons.notifications_active_outlined, color: _mainPurple, size: 20),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(title, style: TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.bold, color: _mainPurple)),
+                child: Text(title, style: TextStyle(fontFamily: MobileAppFonts.heading, fontWeight: FontWeight.bold, color: _mainPurple)),
               ),
               if (time.isNotEmpty)
-                Text(time, style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 11, color: Colors.grey.shade600)),
+                Text(time, style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 11, color: Colors.grey.shade600)),
             ],
           ),
           const SizedBox(height: 6),
-          Text(msg, style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Colors.black87)),
+          Text(msg, style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: Colors.black87)),
         ],
       ),
     );
@@ -362,7 +403,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     final Color itemColor = isSelected ? _mainPurple : Colors.grey.shade500;
     return GestureDetector(
       onTap: () => _onNavBarTapped(index), behavior: HitTestBehavior.opaque,
-      child: Column(mainAxisSize: MainAxisSize.min, children: [Image.asset(iconPath, width: 28, height: 28, color: itemColor), const SizedBox(height: 5), Text(label, style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 12, color: isSelected ? _mainPurple : Colors.grey.shade600, fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600))]),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [Image.asset(iconPath, width: 28, height: 28, color: itemColor), const SizedBox(height: 5), Text(label, style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 12, color: isSelected ? _mainPurple : Colors.grey.shade600, fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600))]),
     );
   }
 }

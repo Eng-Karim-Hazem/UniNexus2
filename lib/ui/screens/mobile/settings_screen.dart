@@ -1,4 +1,6 @@
+
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
@@ -51,20 +53,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
         backgroundColor: Colors.white,
         title: Text(
           "Logout",
-          style: TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.bold, color: _mainPurple),
+          style: TextStyle(fontFamily: MobileAppFonts.heading, fontWeight: FontWeight.bold, color: _mainPurple),
         ),
         content: const Text(
           "Are you sure you want to logout?",
-          style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 16),
+          style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 16),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text("Cancel", style: TextStyle(color: Colors.grey.shade600, fontFamily: 'SpaceGrotesk')),
+            child: Text("Cancel", style: TextStyle(color: Colors.grey.shade600, fontFamily: MobileAppFonts.body)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text("Logout", style: TextStyle(color: Colors.redAccent, fontFamily: 'SpaceGrotesk', fontWeight: FontWeight.bold)),
+            child: const Text("Logout", style: TextStyle(color: Colors.redAccent, fontFamily: MobileAppFonts.body, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -140,7 +142,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const Text(
           "Settings",
           style: TextStyle(
-            fontFamily: 'Batangas',
+            fontFamily: MobileAppFonts.heading,
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Color(0xFF5C5C80),
@@ -212,7 +214,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Text(
                 title,
                 style: TextStyle(
-                  fontFamily: 'Batangas',
+                  fontFamily: MobileAppFonts.heading,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: isLogout ? Colors.red : Colors.black87,
@@ -323,7 +325,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 12,
               color: sel ? _mainPurple : Colors.grey.shade600,
               fontWeight: sel ? FontWeight.w900 : FontWeight.w600,

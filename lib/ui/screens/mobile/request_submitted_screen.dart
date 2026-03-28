@@ -1,4 +1,6 @@
+
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 
 import 'login_screen.dart';
 
@@ -105,7 +107,7 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
                           const Text(
                             "Request Submitted",
                             style: TextStyle(
-                              fontFamily: 'Batangas',
+                              fontFamily: MobileAppFonts.heading,
                               fontSize: 30,
                               fontWeight: FontWeight.bold,
                             ),
@@ -114,7 +116,7 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
                           const Text(
                             "Your request was sent successfully",
                             style: TextStyle(
-                              fontFamily: 'SpaceGrotesk',
+                              fontFamily: MobileAppFonts.body,
                               color: Colors.black54,
                               fontSize: 17,
                             ),
@@ -124,7 +126,7 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
                             "For further questions or if there is any delay in processing your request, please contact the university department.",
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontFamily: 'SpaceGrotesk',
+                              fontFamily: MobileAppFonts.body,
                               color: Colors.black54,
                               fontSize: 15,
                               height: 1.4,
@@ -186,7 +188,7 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
           text,
           style: const TextStyle(
             color: Colors.white,
-            fontFamily: 'Batangas',
+            fontFamily: MobileAppFonts.heading,
             fontSize: 22,
             fontWeight: FontWeight.w600,
           ),

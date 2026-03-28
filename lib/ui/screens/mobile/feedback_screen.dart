@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -62,7 +63,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Feedback Submitted! Thank you.", style: TextStyle(fontFamily: 'SpaceGrotesk')),
+            content: Text("Feedback Submitted! Thank you.", style: TextStyle(fontFamily: MobileAppFonts.body)),
             backgroundColor: Colors.green,
           ),
         );
@@ -141,7 +142,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         const Text(
           "Feedback",
           style: TextStyle(
-            fontFamily: 'Batangas',
+            fontFamily: MobileAppFonts.heading,
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Color(0xFF5C5C80),
@@ -178,7 +179,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           const Text(
             "This feature is used to express your experience with our system till this moment and maybe drop some notes to make the journey more smooth.",
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 13,
               color: Colors.black87,
               height: 1.4,
@@ -208,16 +209,16 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               controller: _feedbackController,
               maxLines: 6,
               maxLength: 250,
-              style: const TextStyle(fontFamily: 'SpaceGrotesk'),
+              style: const TextStyle(fontFamily: MobileAppFonts.body),
               decoration: InputDecoration(
                 hintText: "Submit your Question maximum 250 letters...",
                 hintStyle: TextStyle(
-                    fontFamily: 'SpaceGrotesk',
+                    fontFamily: MobileAppFonts.body,
                     color: Colors.grey.shade400,
                     fontSize: 13
                 ),
                 border: InputBorder.none,
-                counterStyle: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 10),
+                counterStyle: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 10),
               ),
             ),
           ),
@@ -230,7 +231,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     return Text(
       text,
       style: const TextStyle(
-        fontFamily: 'Batangas',
+        fontFamily: MobileAppFonts.heading,
         fontSize: 15,
         fontWeight: FontWeight.bold,
         color: Colors.black,
@@ -278,7 +279,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             : Text(
           "Submit",
           style: TextStyle(
-            fontFamily: 'Batangas',
+            fontFamily: MobileAppFonts.heading,
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: _mainPurple,
@@ -388,7 +389,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 12,
               color: sel ? _mainPurple : Colors.grey.shade600,
               fontWeight: sel ? FontWeight.w900 : FontWeight.w600,

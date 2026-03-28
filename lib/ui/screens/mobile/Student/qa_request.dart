@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/model/qna_model.dart';
 import 'package:uninexus/services/firebase/qna_service.dart';
@@ -176,7 +177,7 @@ class _QARequestScreenState extends State<QARequestScreen> {
             child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
           ),
           Text("Q&A",
-              style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
+              style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -214,9 +215,9 @@ class _QARequestScreenState extends State<QARequestScreen> {
                   child: DropdownButton<String>(
                     value: _selectedCourse,
                     hint: Text(snapshot.connectionState == ConnectionState.waiting ? "Loading..." : "Choose Course",
-                        style: const TextStyle(fontFamily: 'SpaceGrotesk')),
+                        style: const TextStyle(fontFamily: MobileAppFonts.body)),
                     isExpanded: true,
-                    style: const TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.black87),
+                    style: const TextStyle(fontFamily: MobileAppFonts.body, color: Colors.black87),
                     items: subjects.map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
                     onChanged: (val) => setState(() => _selectedCourse = val),
                   ),
@@ -239,7 +240,7 @@ class _QARequestScreenState extends State<QARequestScreen> {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8),
       child: Text(text,
-          style: const TextStyle(fontFamily: 'Batangas', fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87)),
+          style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87)),
     );
   }
 
@@ -253,10 +254,10 @@ class _QARequestScreenState extends State<QARequestScreen> {
       child: TextField(
         controller: controller,
         maxLines: maxLines,
-        style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14),
+        style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400),
+          hintStyle: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.all(16),
         ),
@@ -278,7 +279,7 @@ class _QARequestScreenState extends State<QARequestScreen> {
         child: _isSubmitting
             ? CircularProgressIndicator(color: _mainPurple)
             : Text("Submit",
-                style: TextStyle(fontFamily: 'Batangas', color: _mainPurple, fontSize: 18, fontWeight: FontWeight.bold)),
+            style: TextStyle(fontFamily: MobileAppFonts.heading, color: _mainPurple, fontSize: 18, fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -362,7 +363,7 @@ class _QARequestScreenState extends State<QARequestScreen> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 11,
               color: isSelected ? _mainPurple : Colors.grey.shade600,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,

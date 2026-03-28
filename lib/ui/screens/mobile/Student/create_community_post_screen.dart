@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/model/community_model.dart';
 import 'package:uninexus/services/firebase/community_service.dart';
@@ -126,7 +127,7 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Post Submitted Successfully!", style: TextStyle(fontFamily: 'SpaceGrotesk')))
+            const SnackBar(content: Text("Post Submitted Successfully!", style: TextStyle(fontFamily: MobileAppFonts.body)))
         );
         Navigator.pop(context); // Go back to Community Feed
       }
@@ -215,7 +216,7 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
         const Text(
             "Community",
             style: TextStyle(
-                fontFamily: 'Batangas',
+                fontFamily: MobileAppFonts.heading,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF5C5C80)
@@ -248,7 +249,7 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Title", style: TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+          const Text("Title", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
@@ -257,17 +258,17 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
             ),
             child: TextField(
               controller: _titleController,
-              style: const TextStyle(fontFamily: 'SpaceGrotesk'),
+              style: const TextStyle(fontFamily: MobileAppFonts.body),
               decoration: InputDecoration(
                 hintText: "Submit a title max one sentence..",
-                hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400, fontSize: 14),
+                hintStyle: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400, fontSize: 14),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
             ),
           ),
           const SizedBox(height: 20),
-          const Text("Question", style: TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+          const Text("Question", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
           const SizedBox(height: 8),
           Container(
             height: 250,
@@ -279,10 +280,10 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
               controller: _questionController,
               maxLines: null,
               keyboardType: TextInputType.multiline,
-              style: const TextStyle(fontFamily: 'SpaceGrotesk'),
+              style: const TextStyle(fontFamily: MobileAppFonts.body),
               decoration: InputDecoration(
                 hintText: "Submit your Question maximum 250 letters...",
-                hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400, fontSize: 14),
+                hintStyle: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400, fontSize: 14),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               ),
@@ -317,7 +318,7 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
             : Text(
           "Submit",
           style: TextStyle(
-            fontFamily: 'Batangas',
+            fontFamily: MobileAppFonts.heading,
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: _mainPurple,
@@ -463,7 +464,7 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 12,
               color: sel ? _mainPurple : Colors.grey.shade600,
               fontWeight: sel ? FontWeight.w900 : FontWeight.w600,

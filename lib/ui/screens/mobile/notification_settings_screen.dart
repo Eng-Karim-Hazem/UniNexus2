@@ -1,4 +1,6 @@
+
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -55,7 +57,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     // Make sure they actually selected something before updating
     if (_selectedGeneral == null && _selectedQA == null && _selectedAnnouncements == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please make a selection to update.", style: TextStyle(fontFamily: 'SpaceGrotesk'))),
+        const SnackBar(content: Text("Please make a selection to update.", style: TextStyle(fontFamily: MobileAppFonts.body))),
       );
       return;
     }
@@ -108,7 +110,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Notification Settings Updated!", style: TextStyle(fontFamily: 'SpaceGrotesk')),
+            content: Text("Notification Settings Updated!", style: TextStyle(fontFamily: MobileAppFonts.body)),
             backgroundColor: Colors.green,
           ),
         );
@@ -183,7 +185,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         const Text(
           "Notification",
           style: TextStyle(
-            fontFamily: 'Batangas',
+            fontFamily: MobileAppFonts.heading,
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Color(0xFF5C5C80),
@@ -220,7 +222,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           const Text(
             "This feature is used to customize your notification and alerts priority and usage.",
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 13,
               color: Colors.black87,
               height: 1.4,
@@ -265,7 +267,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     return Text(
       text,
       style: const TextStyle(
-        fontFamily: 'Batangas',
+        fontFamily: MobileAppFonts.heading,
         fontSize: 15,
         fontWeight: FontWeight.bold,
         color: Colors.black,
@@ -287,7 +289,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           hint: Text(
             hint,
             style: TextStyle(
-                fontFamily: 'SpaceGrotesk',
+                fontFamily: MobileAppFonts.body,
                 color: Colors.grey.shade400,
                 fontSize: 13
             ),
@@ -299,7 +301,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
               value: item,
               child: Text(
                   item,
-                  style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Colors.black87)
+                  style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: Colors.black87)
               ),
             );
           }).toList(),
@@ -326,7 +328,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
             : Text(
           "Update",
           style: TextStyle(
-            fontFamily: 'Batangas',
+            fontFamily: MobileAppFonts.heading,
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: _mainPurple,
@@ -436,7 +438,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 12,
               color: sel ? _mainPurple : Colors.grey.shade600,
               fontWeight: sel ? FontWeight.w900 : FontWeight.w600,

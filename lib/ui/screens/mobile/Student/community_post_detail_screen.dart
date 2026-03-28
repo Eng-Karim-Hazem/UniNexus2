@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -188,7 +189,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
           ),
         ),
         Text("Community",
-            style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
+            style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -226,7 +227,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(widget.post.title,
-                        style: TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold, color: _mainPurple)),
+                        style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 16, fontWeight: FontWeight.bold, color: _mainPurple)),
                     Text("${widget.post.userName} • ${DateFormat('MMM d').format(widget.post.timestamp)}",
                         style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
                   ],
@@ -236,7 +237,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
           ),
           const SizedBox(height: 16),
           Text(widget.post.content,
-              style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Colors.black87, height: 1.5)),
+              style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: Colors.black87, height: 1.5)),
         ],
       ),
     );
@@ -265,7 +266,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text("Replies",
-                    style: TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: _mainPurple)),
+                    style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: _mainPurple)),
                 GestureDetector(
                   onTap: () => setState(() => _isReplying = !_isReplying),
                   child: Icon(_isReplying ? Icons.close_rounded : Icons.add_rounded, color: _mainPurple, size: 28),
@@ -282,7 +283,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
                     return Center(child: CircularProgressIndicator(color: _mainPurple));
                   }
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text("No replies yet. Be the first!", style: TextStyle(fontFamily: 'SpaceGrotesk')));
+                    return const Center(child: Text("No replies yet. Be the first!", style: TextStyle(fontFamily: MobileAppFonts.body)));
                   }
                   final replies = snapshot.data!;
                   return ListView.separated(
@@ -298,13 +299,13 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(reply.userName,
-                                  style: TextStyle(fontFamily: 'Batangas', fontSize: 14, fontWeight: FontWeight.bold, color: _mainPurple)),
+                                  style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 14, fontWeight: FontWeight.bold, color: _mainPurple)),
                               Text(DateFormat('h:mm a').format(reply.timestamp),
                                   style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
                             ],
                           ),
                           const SizedBox(height: 4),
-                          Text(reply.content, style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Colors.black)),
+                          Text(reply.content, style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: Colors.black)),
                         ],
                       );
                     },
@@ -324,10 +325,10 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
       decoration: BoxDecoration(color: const Color(0xFFF2F2F2), borderRadius: BorderRadius.circular(24)),
       child: TextField(
         controller: _replyController,
-        style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14),
+        style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14),
         decoration: InputDecoration(
           hintText: "Type your reply...",
-          hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400),
+          hintStyle: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           suffixIcon: _isSending
@@ -490,7 +491,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
           const SizedBox(height: 5),
           Text(label,
               style: TextStyle(
-                fontFamily: 'SpaceGrotesk',
+                fontFamily: MobileAppFonts.body,
                 fontSize: 12,
                 color: sel ? _mainPurple : Colors.grey.shade600,
                 fontWeight: sel ? FontWeight.w900 : FontWeight.w600,

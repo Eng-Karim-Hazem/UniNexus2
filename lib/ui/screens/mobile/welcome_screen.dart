@@ -1,6 +1,9 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:uninexus/ui/screens/mobile/signup_screen.dart';
+
 import 'login_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -14,8 +17,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     with TickerProviderStateMixin {
   late AnimationController _introController;
   late AnimationController _exitController;
-  late AnimationController _contentInController;
-
 
   late Animation<Offset> _topIntro;
   late Animation<Offset> _bottomIntro;
@@ -27,20 +28,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   bool _showGif = true;
   Timer? _gifTimer;
-
-  void _playIntro() {
-    _introController.forward();
-
-    Future.delayed(const Duration(milliseconds: 350), () {
-      if (mounted) _contentInController.forward();
-    });
-
-    _gifTimer?.cancel();
-    _gifTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted) setState(() => _showGif = false);
-    });
-  }
-
 
   @override
   void initState() {
@@ -95,18 +82,15 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
     _contentFade = Tween<double>(begin: 1, end: 0).animate(_exitController);
 
-    // Timer to switch from GIF to Static Image
-    Timer(const Duration(seconds: 3), () {
+    _gifTimer = Timer(const Duration(seconds: 3), () {
       if (mounted) setState(() => _showGif = false);
     });
   }
 
-  // --- FIX: PRECACHE THE IMAGE ---
-  // This loads the static image into memory BEFORE it is needed, eliminating the loading flicker.
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    precacheImage(const AssetImage("assets/images/uni.jpeg"), context);
+    precacheImage(const AssetImage('assets/images/uni.jpeg'), context);
   }
 
   Future<void> _goToLogin() async {
@@ -129,30 +113,28 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   @override
   void dispose() {
+    _gifTimer?.cancel();
     _introController.dispose();
     _exitController.dispose();
     super.dispose();
   }
 
   Widget _rectangle() => Image.asset(
-    "assets/images/Rectangle.png",
+    'assets/images/Rectangle.png',
     width: 550,
     fit: BoxFit.contain,
   );
 
   @override
   Widget build(BuildContext context) {
-
-    final size = MediaQuery.of(context).size;
-    final sw = size.width;
-    final sh = size.height;
+    final sw = MediaQuery.of(context).size.width;
 
     return Scaffold(
       body: Stack(
         children: [
           Positioned.fill(
             child: Image.asset(
-              "assets/images/WelcomeBackground.png",
+              'assets/images/WelcomeBackground.png',
               fit: BoxFit.cover,
             ),
           ),
@@ -190,7 +172,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   child: Column(
                     children: [
                       const SizedBox(height: 90),
-                      // --- UPDATED ANIMATED SWITCHER ---
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 600),
                         child: ClipRRect(
@@ -208,27 +189,18 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       ),
                       const SizedBox(height: 110),
                       const Text(
-                        "Welcome to UniNexus",
-                        style: TextStyle(
-                          fontFamily: 'Batangas',
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        'Welcome to UniNexus',
+                        style: MobileAppTextStyles.screenTitle,
                       ),
                       const SizedBox(height: 1),
                       const Text(
-                        "Your unified campus experience begins here.",
-                        style: TextStyle(
-                          fontFamily: 'SpaceGrotesk',
-                          fontSize: 17,
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w200,
-                        ),
+                        'Your unified campus experience begins here.',
+                        style: MobileAppTextStyles.screenSubtitle,
                       ),
                       const SizedBox(height: 135),
-                      _mainButton("Log In", _goToLogin),
+                      _mainButton('Log In', _goToLogin),
                       const SizedBox(height: 15),
-                      _mainButton("Register", _goToRegister),
+                      _mainButton('Register', _goToRegister),
                     ],
                   ),
                 ),
@@ -243,31 +215,15 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   Widget _mainButton(String text, VoidCallback onTap) {
     return Container(
       width: double.infinity,
-      height: 64,
-      margin: const EdgeInsets.symmetric(horizontal: 65),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.4),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)],
-        ),
-        borderRadius: BorderRadius.circular(22),
+      height: MobileAppDimensions.wideButtonHeight,
+      margin: const EdgeInsets.symmetric(
+        horizontal: MobileAppDimensions.wideButtonHorizontalMargin,
       ),
+      decoration: MobileAppDecorations.wideButtonBox,
       child: ElevatedButton(
         onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          elevation: 0,
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontFamily: 'Batangas',
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        style: MobileAppButtonStyles.transparentElevated,
+        child: Text(text, style: MobileAppTextStyles.buttonText),
       ),
     );
   }

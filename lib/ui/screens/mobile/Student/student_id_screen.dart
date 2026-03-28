@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
@@ -57,36 +58,36 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
     }
 
     return Scaffold(
-      extendBody: true,
-      floatingActionButton: _buildHomeFab(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: _buildBottomBar(),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/background.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: SafeArea(
-          bottom: false,
-          child:Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                _buildTopHeader(),
-                const SizedBox(height: 30),
-                _buildMainCard(),
-                const SizedBox(height: 40),
-              ],
+        extendBody: true,
+        floatingActionButton: _buildHomeFab(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        bottomNavigationBar: _buildBottomBar(),
+        body: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/background.png'),
+              fit: BoxFit.cover,
             ),
           ),
-        ),
-      ),
-      )
+          child: SafeArea(
+            bottom: false,
+            child:Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    _buildTopHeader(),
+                    const SizedBox(height: 30),
+                    _buildMainCard(),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        )
     );
   }
 
@@ -108,7 +109,7 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
         const Text(
             "Home",
             style: TextStyle(
-                fontFamily: 'Batangas',
+                fontFamily: MobileAppFonts.heading,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF5C5C80)
@@ -159,9 +160,9 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
           ),
           const SizedBox(height: 30),
 
-          Text(_userName, style: const TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
+          Text(_userName, style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
           const SizedBox(height: 5),
-          Text("ID: $_userID", style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500)),
+          Text("ID: $_userID", style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500)),
 
           const SizedBox(height: 40),
 
@@ -184,7 +185,7 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
           const SizedBox(height: 30),
           const Text(
             "Scan for Identity Verification",
-            style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey, fontSize: 14),
+            style: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey, fontSize: 14),
           ),
         ],
       ),
@@ -310,7 +311,7 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 12,
               color: sel ? _mainPurple : Colors.grey.shade600,
               fontWeight: sel ? FontWeight.w900 : FontWeight.w600,

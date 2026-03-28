@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uninexus/model/hall_error_model.dart';
 import 'package:uninexus/services/firebase/hall_error_service.dart';
@@ -166,7 +167,7 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
           ),
         ),
         Text("Hall Error",
-            style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
+            style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -266,10 +267,10 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
-          hint: Text(hint, style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400, fontSize: 14)),
+          hint: Text(hint, style: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400, fontSize: 14)),
           isExpanded: true,
           icon: Icon(Icons.keyboard_arrow_down_rounded, color: _textIndigo, size: 28),
-          items: items.map((String val) => DropdownMenuItem<String>(value: val, child: Text(val, style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14)))).toList(),
+          items: items.map((String val) => DropdownMenuItem<String>(value: val, child: Text(val, style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14)))).toList(),
           onChanged: onChanged,
         ),
       ),
@@ -284,10 +285,10 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
       child: TextField(
         controller: _descriptionController,
         maxLines: 5,
-        style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14),
+        style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14),
         decoration: InputDecoration.collapsed(
           hintText: "Submit your problem details",
-          hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400, fontSize: 14),
+          hintStyle: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400, fontSize: 14),
         ),
       ),
     );
@@ -307,14 +308,14 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
         child: _isUploading
             ? CircularProgressIndicator(color: _mainPurple)
             : Text("Submit",
-                style: TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: _textIndigo)),
+            style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: _textIndigo)),
       ),
     );
   }
 
   Widget _buildLabel(String text) {
     return Text(text,
-        style: const TextStyle(fontFamily: 'Batangas', fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87));
+        style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87));
   }
 
   Widget _buildTextField({required TextEditingController controller, required String hint, IconData? icon, bool readOnly = false, VoidCallback? onIconTap}) {
@@ -324,19 +325,19 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
       child: TextField(
         controller: controller,
         readOnly: readOnly,
-        style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14),
+        style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400),
+          hintStyle: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           suffixIcon: icon != null
               ? GestureDetector(
-                  onTap: onIconTap,
-                  child: Container(
-                      margin: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(color: _mainPurple.withValues(alpha: 0.8), borderRadius: BorderRadius.circular(12)),
-                      child: Icon(icon, color: Colors.white, size: 22)))
+              onTap: onIconTap,
+              child: Container(
+                  margin: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(color: _mainPurple.withValues(alpha: 0.8), borderRadius: BorderRadius.circular(12)),
+                  child: Icon(icon, color: Colors.white, size: 22)))
               : null,
         ),
       ),
@@ -428,7 +429,7 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
           const SizedBox(height: 5),
           Text(label,
               style: TextStyle(
-                fontFamily: 'SpaceGrotesk',
+                fontFamily: MobileAppFonts.body,
                 fontSize: 12,
                 color: itemColor,
                 fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,

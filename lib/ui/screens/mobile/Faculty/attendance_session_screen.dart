@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // --- ADDED FOR FIRESTORE ---
@@ -97,7 +98,7 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
   Future<void> _handleGenerateQR() async {
     if (_selectedCourse == null || _selectedSessionType == null || _selectedDuration == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select all fields first", style: TextStyle(fontFamily: 'SpaceGrotesk'))),
+        const SnackBar(content: Text("Please select all fields first", style: TextStyle(fontFamily: MobileAppFonts.body))),
       );
       return;
     }
@@ -209,7 +210,7 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
           child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
         ),
         Text("Attendance",
-            style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: _darkIndigo)),
+            style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.bold, color: _darkIndigo)),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -232,7 +233,7 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
       ),
       child: Center(
         child: _qrData.isEmpty
-            ? const Text("Generate a session to view QR", style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey))
+            ? const Text("Generate a session to view QR", style: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey))
             : SizedBox(
           width: 200.0,
           height: 200.0,
@@ -348,13 +349,13 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
         child: _isGenerating
             ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: _mainPurple, strokeWidth: 2))
             : Text("Generate QR",
-            style: TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: _darkIndigo)),
+            style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: _darkIndigo)),
       ),
     );
   }
 
   Widget _buildLabel(String text) => Text(text,
-      style: const TextStyle(fontFamily: 'Batangas', fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87));
+      style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87));
 
   Widget _buildDropdownField({required String? value, required String hint, required List<String> items, required Function(String?) onChanged}) {
     return Container(
@@ -364,10 +365,10 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
-          hint: Text(hint, style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400, fontSize: 13), overflow: TextOverflow.ellipsis),
+          hint: Text(hint, style: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400, fontSize: 13), overflow: TextOverflow.ellipsis),
           isExpanded: true,
           icon: Icon(Icons.keyboard_arrow_down_rounded, color: _darkIndigo, size: 28),
-          items: items.map((String item) => DropdownMenuItem<String>(value: item, child: Text(item, style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14)))).toList(),
+          items: items.map((String item) => DropdownMenuItem<String>(value: item, child: Text(item, style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14)))).toList(),
           onChanged: onChanged,
         ),
       ),
@@ -437,7 +438,7 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
         children: [
           Image.asset(iconPath, width: 28, height: 28, color: itemColor, errorBuilder: (_, __, ___) => Icon(Icons.circle, size: 28, color: itemColor)),
           const SizedBox(height: 5),
-          Text(label, style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 12, color: itemColor, fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600)),
+          Text(label, style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 12, color: itemColor, fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600)),
         ],
       ),
     );

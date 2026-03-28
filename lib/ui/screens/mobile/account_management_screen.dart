@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -58,7 +59,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     // 1. Validate Input
     if (newPhone.isEmpty && newEmail.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter a new phone number or email.", style: TextStyle(fontFamily: 'SpaceGrotesk'))),
+        const SnackBar(content: Text("Please enter a new phone number or email.", style: TextStyle(fontFamily: MobileAppFonts.body))),
       );
       return;
     }
@@ -111,7 +112,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Contact info updated successfully!", style: TextStyle(fontFamily: 'SpaceGrotesk')),
+            content: Text("Contact info updated successfully!", style: TextStyle(fontFamily: MobileAppFonts.body)),
             backgroundColor: Colors.green,
           ),
         );
@@ -176,7 +177,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
         const Text(
           "Account Man.",
           style: TextStyle(
-            fontFamily: 'Batangas',
+            fontFamily: MobileAppFonts.heading,
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Color(0xFF5C5C80),
@@ -213,7 +214,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           const Text(
             "This feature is used to updating only your contact information for further updates contact the university department",
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 13,
               color: Colors.black87,
               height: 1.4,
@@ -242,7 +243,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     return Text(
       text,
       style: const TextStyle(
-        fontFamily: 'Batangas',
+        fontFamily: MobileAppFonts.heading,
         fontSize: 15,
         fontWeight: FontWeight.bold,
         color: Colors.black,
@@ -261,11 +262,11 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-        style: const TextStyle(fontFamily: 'SpaceGrotesk'),
+        style: const TextStyle(fontFamily: MobileAppFonts.body),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               color: Colors.grey.shade400,
               fontSize: 13
           ),
@@ -296,7 +297,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
             : Text(
           "Update",
           style: TextStyle(
-            fontFamily: 'Batangas',
+            fontFamily: MobileAppFonts.heading,
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: _mainPurple,
@@ -406,7 +407,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 12,
               color: sel ? _mainPurple : Colors.grey.shade600,
               fontWeight: sel ? FontWeight.w900 : FontWeight.w600,

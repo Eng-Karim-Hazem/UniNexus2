@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/model/community_model.dart';
 import 'package:uninexus/services/firebase/community_service.dart';
@@ -87,14 +88,14 @@ class _StuCommunityState extends State<StuCommunity> {
                           }
 
                           if (snapshot.hasError) {
-                            return Center(child: Text("Error loading posts", style: TextStyle(color: Colors.red, fontFamily: 'SpaceGrotesk')));
+                            return Center(child: Text("Error loading posts", style: TextStyle(color: Colors.red, fontFamily: MobileAppFonts.body)));
                           }
 
                           if (!snapshot.hasData || snapshot.data!.isEmpty) {
                             return const Center(
                                 child: Text(
                                     "No questions yet. Be the first to ask!",
-                                    style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey)
+                                    style: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey)
                                 )
                             );
                           }
@@ -164,7 +165,7 @@ class _StuCommunityState extends State<StuCommunity> {
         const Text(
             "Community",
             style: TextStyle(
-                fontFamily: 'Batangas',
+                fontFamily: MobileAppFonts.heading,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF5C5C80)
@@ -248,7 +249,7 @@ class _StuCommunityState extends State<StuCommunity> {
                         children: [
                           Text(
                               post.title,
-                              style: TextStyle(fontFamily: 'Batangas', fontSize: 15, fontWeight: FontWeight.bold, color: _primaryBlue)
+                              style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 15, fontWeight: FontWeight.bold, color: _primaryBlue)
                           ),
                           // Display Role and Name correctly
                           Text(
@@ -274,7 +275,7 @@ class _StuCommunityState extends State<StuCommunity> {
                   post.content,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 13, color: _textIndigo, height: 1.4)
+                  style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 13, color: _textIndigo, height: 1.4)
               ),
             ],
           ),
@@ -412,7 +413,7 @@ class _StuCommunityState extends State<StuCommunity> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 12,
               color: sel ? _mainPurple : Colors.grey.shade600,
               fontWeight: sel ? FontWeight.w900 : FontWeight.w600,

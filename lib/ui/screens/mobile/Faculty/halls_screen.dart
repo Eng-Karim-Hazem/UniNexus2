@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:intl/intl.dart';
 import 'package:uninexus/model/hall_model.dart';
 import 'package:uninexus/services/firebase/hall_service.dart';
@@ -111,7 +112,7 @@ class _HallsScreenState extends State<HallsScreen> {
                         if (!snapshot.hasData || snapshot.data!.isEmpty) {
                           return Center(
                             child: Text("No halls data for $todayName.",
-                                style: const TextStyle(fontFamily: 'SpaceGrotesk')),
+                                style: const TextStyle(fontFamily: MobileAppFonts.body)),
                           );
                         }
 
@@ -154,7 +155,7 @@ class _HallsScreenState extends State<HallsScreen> {
             child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
           ),
           Text("Halls",
-              style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
+              style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -178,10 +179,10 @@ class _HallsScreenState extends State<HallsScreen> {
         child: TextField(
           controller: _searchController,
           onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
-          style: const TextStyle(fontFamily: 'SpaceGrotesk'),
+          style: const TextStyle(fontFamily: MobileAppFonts.body),
           decoration: InputDecoration(
             hintText: "Search Hall By Name",
-            hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400),
+            hintStyle: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             suffixIcon: Container(
@@ -219,7 +220,7 @@ class _HallsScreenState extends State<HallsScreen> {
               const SizedBox(width: 15),
               Text(name,
                   style: TextStyle(
-                      fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: _accentIndigo)),
+                      fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: _accentIndigo)),
             ],
           ),
           Container(
@@ -341,7 +342,7 @@ class _HallsScreenState extends State<HallsScreen> {
           const SizedBox(height: 5),
           Text(label,
               style: TextStyle(
-                fontFamily: 'SpaceGrotesk',
+                fontFamily: MobileAppFonts.body,
                 fontSize: 12,
                 color: itemColor,
                 fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,

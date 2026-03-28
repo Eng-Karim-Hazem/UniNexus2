@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Added Firestore
@@ -57,6 +58,49 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
     return DateFormat('MMMM d, yyyy').format(DateTime.now());
   }
 
+  bool _isNoticeForStudent(Map<String, dynamic> data) {
+    final String userId = _studentID.trim();
+    final String userProgram = _faculty.trim().toLowerCase();
+
+    final List<String> recipientIds = (data['recipientIds'] as List<dynamic>? ?? const [])
+        .map((e) => e.toString().trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    if (userId.isNotEmpty && recipientIds.contains(userId)) {
+      return true;
+    }
+
+    final String targetType = (data['type'] ?? '').toString().trim().toLowerCase();
+    final String targetValue = (data['targetValue'] ?? '').toString().trim().toLowerCase();
+
+    if (targetType == 'individual' && userId.isNotEmpty && targetValue == userId.toLowerCase()) {
+      return true;
+    }
+
+    if (targetType == 'group' && (targetValue == 'students' || targetValue == 'student' || targetValue == 'all')) {
+      return true;
+    }
+
+    if (targetType == 'program' && userProgram.isNotEmpty && targetValue == userProgram) {
+      return true;
+    }
+
+    // Backward compatibility for legacy notices with only targetValue.
+    if (targetType.isEmpty) {
+      if (targetValue == 'all' || targetValue == 'students' || targetValue == 'student') {
+        return true;
+      }
+      if (userProgram.isNotEmpty && targetValue == userProgram) {
+        return true;
+      }
+      if (userId.isNotEmpty && targetValue == userId.toLowerCase()) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -102,7 +146,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                           child: Text(
                             'Want to check your\nschedule?',
                             style: TextStyle(
-                              fontFamily: 'Batangas',
+                              fontFamily: MobileAppFonts.heading,
                               fontSize: 20,
                               color: Colors.black.withValues(alpha: 0.8),
                               fontWeight: FontWeight.bold,
@@ -130,6 +174,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                     child: StreamBuilder<QuerySnapshot>(
                       stream: FirebaseFirestore.instance
                           .collection('Notifications')
+                          .orderBy('date', descending: true)
                           .snapshots(),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -140,17 +185,9 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                           return _buildEmptyNotices();
                         }
 
-                        // Filter for "All", "Student", Specific Faculty, or Specific Student ID
-                        var filteredDocs = snapshot.data!.docs.where((doc) {
+                        final List<QueryDocumentSnapshot> filteredDocs = snapshot.data!.docs.where((doc) {
                           final data = doc.data() as Map<String, dynamic>;
-                          final target = data['targetValue']?.toString() ?? '';
-                          final List<dynamic> recipientIds = data['recipientIds'] ?? [];
-
-                          return target == 'All' ||
-                              target == 'Student' ||
-                              target == _faculty ||
-                              target == _studentID ||
-                              recipientIds.contains(_studentID);
+                          return _isNoticeForStudent(data);
                         }).toList();
 
                         // Sort by date (Assuming there is a 'date' field of type Timestamp)
@@ -198,7 +235,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
     return const Center(
       child: Text(
         "No notifications for you yet.",
-        style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.black54),
+        style: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.black54),
       ),
     );
   }
@@ -220,12 +257,12 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
         children: [
           Text(
             "Hi $_firstName $_lastName!".trim(),
-            style: const TextStyle(fontFamily: 'Batangas', fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF1A1A1A)),
+            style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF1A1A1A)),
           ),
           const SizedBox(height: 8),
-          const Text("Good morning", style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1A1A1A))),
+          const Text("Good morning", style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1A1A1A))),
           const SizedBox(height: 8),
-          Text(_getCurrentDate(), style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Color(0xFF5BA4F5), fontWeight: FontWeight.w600)),
+          Text(_getCurrentDate(), style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: Color(0xFF5BA4F5), fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -247,12 +284,12 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
               Icon(icon, color: _mainPurple, size: 28),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(title, style: TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: _mainPurple)),
+                child: Text(title, style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: _mainPurple)),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(message, style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 15, color: Colors.black87, fontWeight: FontWeight.w500)),
+          Text(message, style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 15, color: Colors.black87, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -289,7 +326,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
         const Text(
             "Home",
             style: TextStyle(
-                fontFamily: 'Batangas',
+                fontFamily: MobileAppFonts.heading,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF5C5C80)
@@ -416,7 +453,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 12,
               color: sel ? _mainPurple : Colors.grey.shade600,
               fontWeight: sel ? FontWeight.w900 : FontWeight.w600,

@@ -1,5 +1,6 @@
 import 'dart:convert'; // --- ADDED FOR BASE64 DECODING ---
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/halls_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'qa_screen.dart';
@@ -139,7 +140,7 @@ class _WhoSentThisScreenState extends State<WhoSentThisScreen> {
           ),
         ),
         Text("Who sent this?",
-            style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
+            style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -190,7 +191,7 @@ class _WhoSentThisScreenState extends State<WhoSentThisScreen> {
           Text(
             sender.fullName.isNotEmpty ? sender.fullName : "Student Name",
             style: const TextStyle(
-              fontFamily: 'Batangas',
+              fontFamily: MobileAppFonts.heading,
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
@@ -237,11 +238,11 @@ class _WhoSentThisScreenState extends State<WhoSentThisScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label,
-              style: const TextStyle(fontFamily: 'Batangas', fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black)),
+              style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black)),
           const SizedBox(height: 4),
           Text(value,
               style: TextStyle(
-                fontFamily: 'SpaceGrotesk',
+                fontFamily: MobileAppFonts.body,
                 fontSize: 14,
                 color: Colors.grey.shade700,
                 fontWeight: FontWeight.w500,
@@ -260,7 +261,7 @@ class _WhoSentThisScreenState extends State<WhoSentThisScreen> {
         children: [
           Icon(Icons.person_off_rounded, size: 60, color: Colors.grey.withValues(alpha: 0.5)),
           const SizedBox(height: 10),
-          Text("Sender info not found", style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade600)),
+          Text("Sender info not found", style: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade600)),
           TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text("Go Back", style: TextStyle(color: _mainPurple, fontWeight: FontWeight.bold)))
@@ -354,7 +355,7 @@ class _WhoSentThisScreenState extends State<WhoSentThisScreen> {
           const SizedBox(height: 5),
           Text(label,
               style: TextStyle(
-                fontFamily: 'SpaceGrotesk',
+                fontFamily: MobileAppFonts.body,
                 fontSize: 12,
                 color: itemColor,
                 fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,

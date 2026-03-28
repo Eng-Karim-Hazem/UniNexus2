@@ -1,4 +1,6 @@
+
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_schedule.dart';
@@ -80,7 +82,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
         const Text(
           "App Info.",
           style: TextStyle(
-            fontFamily: 'Batangas',
+            fontFamily: MobileAppFonts.heading,
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Color(0xFF5C5C80),
@@ -121,7 +123,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
           Text(
             "We would like from you to acknowledge the system developers and supervisors also to check the UniNexus version.",
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 14,
               color: Colors.black87,
               height: 1.5,
@@ -137,7 +139,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
             child: Text(
               "App Version: UN2.0",
               style: TextStyle(
-                fontFamily: 'Batangas', // or SpaceGrotesk based on preference
+                fontFamily: MobileAppFonts.heading, // or SpaceGrotesk based on preference
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
@@ -154,7 +156,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
               Text(
                 "Presented to you by the family of the UniNexus team and supervised by:",
                 style: TextStyle(
-                  fontFamily: 'SpaceGrotesk',
+                  fontFamily: MobileAppFonts.body,
                   fontSize: 13,
                   color: Colors.black87,
                   height: 1.4,
@@ -165,7 +167,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
               Text(
                 "DR. Iman El-Sayed",
                 style: TextStyle(
-                  fontFamily: 'Batangas',
+                  fontFamily: MobileAppFonts.heading,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
@@ -175,7 +177,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
               Text(
                 "Eng. Hossam Medhat",
                 style: TextStyle(
-                  fontFamily: 'Batangas',
+                  fontFamily: MobileAppFonts.heading,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
@@ -288,7 +290,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 12,
               color: sel ? _mainPurple : Colors.grey.shade600,
               fontWeight: sel ? FontWeight.w900 : FontWeight.w600,

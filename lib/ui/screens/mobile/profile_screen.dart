@@ -1,5 +1,6 @@
 import 'dart:convert'; // Required for base64Decode
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // --- ADDED FOR FIRESTORE ---
 
@@ -151,7 +152,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const Text(
             "Profile",
             style: TextStyle(
-                fontFamily: 'Batangas',
+                fontFamily: MobileAppFonts.heading,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF5C5C80)
@@ -201,9 +202,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text("$_displayFirstName $_displayLastName",
-                    style: const TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold)),
                 Text(_displayID,
-                    style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Colors.black54, fontWeight: FontWeight.w600)),
+                    style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: Colors.black54, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
@@ -259,9 +260,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontFamily: 'Batangas', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54)),
+          Text(label, style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54)),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+          Text(value, style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
           const SizedBox(height: 8),
           Divider(color: _mainPurple.withValues(alpha: 0.1), thickness: 1),
         ],
@@ -276,7 +277,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Assigned Subjects :", style: TextStyle(fontFamily: 'Batangas', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54)),
+          const Text("Assigned Subjects :", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54)),
           const SizedBox(height: 12),
           Wrap(
             spacing: 10,
@@ -291,7 +292,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: Text(
                   subject,
-                  style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, fontWeight: FontWeight.bold, color: _mainPurple),
+                  style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, fontWeight: FontWeight.bold, color: _mainPurple),
                 ),
               );
             }).toList(),
@@ -452,7 +453,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 12,
               color: sel ? _mainPurple : Colors.grey.shade600,
               fontWeight: sel ? FontWeight.w900 : FontWeight.w600,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:uninexus/ui/screens/mobile/signup_screen.dart';
 
 import 'Faculty/faculty_home_screen.dart';
@@ -150,7 +151,10 @@ class _LoginScreenState extends State<LoginScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString().replaceAll("Exception:", ""), style: const TextStyle(fontFamily: 'SpaceGrotesk')),
+            content: Text(
+              e.toString().replaceAll("Exception:", ""),
+              style: MobileAppTextStyles.bodyText,
+            ),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
           ),
@@ -231,18 +235,27 @@ class _LoginScreenState extends State<LoginScreen>
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: Image.asset("assets/images/uni.jpeg", width: 90, fit: BoxFit.cover),
+                            child: Image.asset(
+                              "assets/images/uni.jpeg",
+                              width: MobileAppDimensions.heroImageWidth,
+                              fit: BoxFit.cover,
+                            ),
                           ),
+
                           const SizedBox(height: 10),
+
                           const Text(
                             "Log in to UniNexus",
-                            style: TextStyle(fontFamily: 'Batangas', fontSize: 30, fontWeight: FontWeight.bold),
+                            style: MobileAppTextStyles.screenTitle,
                           ),
+
                           const Text(
                             "Access your campus services securely",
-                            style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.black54, fontSize: 17),
+                            style: MobileAppTextStyles.screenSubtitle,
                           ),
-                          const SizedBox(height: 40),
+
+                          const SizedBox(height: 50),
+
                           _animatedItem(
                             anim: _field1Anim,
                             child: _modernField(
@@ -251,7 +264,9 @@ class _LoginScreenState extends State<LoginScreen>
                               controller: _codeController,
                             ),
                           ),
-                          const SizedBox(height: 55),
+
+                          const SizedBox(height: 40),
+
                           _animatedItem(
                             anim: _field2Anim,
                             child: _modernField(
@@ -274,11 +289,14 @@ class _LoginScreenState extends State<LoginScreen>
                                   children: [
                                     Checkbox(
                                       value: _rememberMe,
-                                      activeColor: const Color(0xFFA78BFA),
+                                      activeColor: MobileAppColors.primary,
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
                                       onChanged: (val) => setState(() => _rememberMe = val ?? false),
                                     ),
-                                    const Text("Remember Me", style: TextStyle(fontFamily: 'SpaceGrotesk', fontWeight: FontWeight.w500)),
+                                    const Text(
+                                      "Remember Me",
+                                      style: MobileAppTextStyles.bodyTextMedium,
+                                    ),
                                   ],
                                 ),
                                 TextButton(
@@ -286,12 +304,14 @@ class _LoginScreenState extends State<LoginScreen>
                                     context,
                                     MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
                                   ),
-                                  child: const Text("Forgot Password?", style: TextStyle(fontFamily: 'SpaceGrotesk')),
+                                  child: const Text("Forgot Password?", style: TextStyle(fontFamily: MobileAppFonts.body)),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 220),
+
+                          const SizedBox(height: 240),
+
                           _mainButton(
                             text: "Log In",
                             enabled: _isFormValid && !_isLoading,
@@ -301,10 +321,16 @@ class _LoginScreenState extends State<LoginScreen>
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text("Don't have an account?", style: TextStyle(fontFamily: 'SpaceGrotesk')),
+                              const Text(
+                                "Don't have an account?",
+                                style: MobileAppTextStyles.bodyText,
+                              ),
                               TextButton(
                                 onPressed: () => _slideTo(const SignUpScreen(), fromRight: true),
-                                child: const Text("Register", style: TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.bold)),
+                                child: const Text(
+                                  "Register now",
+                                  style: MobileAppTextStyles.textButtonHeading,
+                                ),
                               ),
                             ],
                           ),
@@ -343,25 +369,18 @@ class _LoginScreenState extends State<LoginScreen>
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 10, bottom: 1),
-          child: Text(label, style: const TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold)),
+          child: Text(label, style: MobileAppTextStyles.fieldLabel),
         ),
         Container(
-          height: 50,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.grey.withValues(alpha: 0.3), width: 1.4),
-          ),
+          height: MobileAppDimensions.inputHeight,
+          decoration: MobileAppDecorations.inputBox,
           child: TextField(
             controller: controller,
             obscureText: obscure,
-            style: const TextStyle(fontFamily: 'SpaceGrotesk'),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: const TextStyle(fontFamily: 'SpaceGrotesk'),
+            style: MobileAppTextStyles.fieldText,
+            decoration: MobileAppInputStyles.fieldDecoration(
+              hint: hint,
               suffixIcon: icon,
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
             ),
           ),
         ),
@@ -376,20 +395,12 @@ class _LoginScreenState extends State<LoginScreen>
     required VoidCallback onTap,
   }) {
     return Container(
-      width: 280,
-      height: 65,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
-        gradient: const LinearGradient(colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)]),
-        borderRadius: BorderRadius.circular(24),
-      ),
+      width: MobileAppDimensions.primaryButtonWidth,
+      height: MobileAppDimensions.primaryButtonHeight,
+      decoration: MobileAppDecorations.primaryButtonBox,
       child: ElevatedButton(
         onPressed: enabled ? onTap : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          elevation: 0,
-        ),
+        style: MobileAppButtonStyles.transparentElevated,
         child: isLoading
             ? const SizedBox(
           width: 24,
@@ -398,12 +409,7 @@ class _LoginScreenState extends State<LoginScreen>
         )
             : Text(
           text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontFamily: 'Batangas',
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
-          ),
+          style: MobileAppTextStyles.buttonText,
         ),
       ),
     );

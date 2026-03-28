@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/services/firebase/qna_service.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/halls_screen.dart';
@@ -18,7 +19,7 @@ class _QAScreenState extends State<QAScreen> {
   // Services & State
   final QnAService _qnaService = QnAService();
   final Map<String, TextEditingController> _controllers = {};
-  
+
   int _selectedIndex = 2;
   List<String> _mySubjects = [];
   String _facultyFullName = "Faculty";
@@ -125,7 +126,7 @@ class _QAScreenState extends State<QAScreen> {
                     if (!snapshot.hasData || snapshot.data!.isEmpty) {
                       return const Center(
                         child: Text("All questions answered!",
-                            style: TextStyle(fontFamily: 'Batangas', color: Colors.white70)),
+                            style: TextStyle(fontFamily: MobileAppFonts.heading, color: Colors.white70)),
                       );
                     }
 
@@ -167,7 +168,7 @@ class _QAScreenState extends State<QAScreen> {
             child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
           ),
           Text("Q&A",
-              style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
+              style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -203,9 +204,9 @@ class _QAScreenState extends State<QAScreen> {
             child: Image.asset('assets/images/help_1.png', width: 20, color: _textIndigo),
           ),
           title: Text(item['subject'] ?? "",
-              style: TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: _accentBlue)),
+              style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: _accentBlue)),
           subtitle: Text(item['title'] ?? "",
-              style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Colors.black87)),
+              style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: Colors.black87)),
           children: [
             const Divider(),
             Align(
@@ -214,10 +215,10 @@ class _QAScreenState extends State<QAScreen> {
                 text: TextSpan(
                   style: const TextStyle(color: Colors.black, fontSize: 15),
                   children: [
-                    const TextSpan(text: "Q : ", style: TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.w900)),
+                    const TextSpan(text: "Q : ", style: TextStyle(fontFamily: MobileAppFonts.heading, fontWeight: FontWeight.w900)),
                     TextSpan(
                         text: item['question'] ?? "",
-                        style: const TextStyle(fontFamily: 'SpaceGrotesk', fontWeight: FontWeight.w600)),
+                        style: const TextStyle(fontFamily: MobileAppFonts.body, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
@@ -227,10 +228,10 @@ class _QAScreenState extends State<QAScreen> {
               decoration: BoxDecoration(color: const Color(0xFFF2F2F2), borderRadius: BorderRadius.circular(30)),
               child: TextField(
                 controller: _controllers[docId],
-                style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14),
+                style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14),
                 decoration: InputDecoration(
                   hintText: "Submit an answer",
-                  hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400),
+                  hintStyle: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   suffixIcon: GestureDetector(
@@ -260,7 +261,7 @@ class _QAScreenState extends State<QAScreen> {
                 ),
                 child: Text("Who sent this?",
                     style: TextStyle(
-                      fontFamily: 'SpaceGrotesk',
+                      fontFamily: MobileAppFonts.body,
                       fontSize: 12,
                       color: Colors.grey.shade600,
                       decoration: TextDecoration.underline,
@@ -358,7 +359,7 @@ class _QAScreenState extends State<QAScreen> {
           const SizedBox(height: 5),
           Text(label,
               style: TextStyle(
-                fontFamily: 'SpaceGrotesk',
+                fontFamily: MobileAppFonts.body,
                 fontSize: 12,
                 color: itemColor,
                 fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/services/firebase/qna_service.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
@@ -117,7 +118,7 @@ class _StuQAScreenState extends State<StuQAScreen> {
                             return ListView(
                               children: const [
                                 SizedBox(height: 100),
-                                Center(child: Text("No questions found.", style: TextStyle(fontFamily: 'Batangas'))),
+                                Center(child: Text("No questions found.", style: TextStyle(fontFamily: MobileAppFonts.heading))),
                               ],
                             );
                           }
@@ -152,7 +153,7 @@ class _StuQAScreenState extends State<StuQAScreen> {
           child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
         ),
         Text("Q&A",
-            style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
+            style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
         ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.asset('assets/images/LOGO.png', width: 36, height: 36)),
       ],
     );
@@ -183,7 +184,7 @@ class _StuQAScreenState extends State<StuQAScreen> {
           ),
           child: const Center(
               child: Text("?",
-                  style: TextStyle(color: Colors.white, fontSize: 45, fontFamily: 'Batangas', fontWeight: FontWeight.bold))),
+                  style: TextStyle(color: Colors.white, fontSize: 45, fontFamily: MobileAppFonts.heading, fontWeight: FontWeight.bold))),
         ),
       ),
     );
@@ -275,7 +276,7 @@ class _StuQAScreenState extends State<StuQAScreen> {
           const SizedBox(height: 5),
           Text(label,
               style: TextStyle(
-                fontFamily: 'SpaceGrotesk',
+                fontFamily: MobileAppFonts.body,
                 fontSize: 12,
                 color: sel ? _mainPurple : Colors.grey.shade600,
                 fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
@@ -328,7 +329,7 @@ class _QACardItemState extends State<QACardItem> {
                     style: TextStyle(
                         color: widget.mainPurple,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'Batangas',
+                        fontFamily: MobileAppFonts.heading,
                         fontSize: 17),
                   ),
                 ),
@@ -338,13 +339,13 @@ class _QACardItemState extends State<QACardItem> {
             const SizedBox(height: 6),
             Text(
               widget.item['title'] ?? "",
-              style: const TextStyle(color: Colors.black87, fontSize: 14, fontFamily: 'Batangas'),
+              style: const TextStyle(color: Colors.black87, fontSize: 14, fontFamily: MobileAppFonts.heading),
             ),
             if (isExpanded) ...[
               const SizedBox(height: 18),
               RichText(
                 text: TextSpan(
-                  style: const TextStyle(color: Colors.black, fontFamily: 'Batangas', fontSize: 14, height: 1.5),
+                  style: const TextStyle(color: Colors.black, fontFamily: MobileAppFonts.heading, fontSize: 14, height: 1.5),
                   children: [
                     const TextSpan(text: "Q : ", style: TextStyle(fontWeight: FontWeight.bold)),
                     TextSpan(text: widget.item['question'] ?? "", style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -355,7 +356,7 @@ class _QACardItemState extends State<QACardItem> {
                 const SizedBox(height: 18),
                 RichText(
                   text: TextSpan(
-                    style: const TextStyle(color: Colors.black, fontSize: 14, fontFamily: 'Batangas', height: 1.5),
+                    style: const TextStyle(color: Colors.black, fontSize: 14, fontFamily: MobileAppFonts.heading, height: 1.5),
                     children: [
                       const TextSpan(text: "A : ", style: TextStyle(fontWeight: FontWeight.normal)),
                       TextSpan(text: widget.item['answer']),

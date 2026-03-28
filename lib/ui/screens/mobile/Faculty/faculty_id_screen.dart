@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
@@ -117,7 +118,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
         Text(
           "ID",
           style: TextStyle(
-            fontFamily: 'Batangas',
+            fontFamily: MobileAppFonts.heading,
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: _textIndigo,
@@ -170,7 +171,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
           Text(
             _userName,
             style: TextStyle(
-              fontFamily: 'Batangas',
+              fontFamily: MobileAppFonts.heading,
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: _textIndigo,
@@ -180,7 +181,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
           Text(
             "ID: $_userID",
             style: const TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 16,
               color: Colors.grey,
               fontWeight: FontWeight.w500,
@@ -222,7 +223,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
           Text(
             "Scan for Identity Verification",
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               color: Colors.grey,
               fontSize: 14,
               fontWeight:FontWeight.bold,
@@ -257,7 +258,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
           child: Text(
             _isPunchedIn ? "Punch OUT" : "Punch IN",
             style: TextStyle(
-              fontFamily: 'Batangas',
+              fontFamily: MobileAppFonts.heading,
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: activeColor,
@@ -340,7 +341,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 12,
               color: isSelected ? _mainPurple : Colors.grey.shade600,
               fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
