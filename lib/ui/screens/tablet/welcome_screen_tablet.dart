@@ -160,7 +160,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
           // Left decorative rectangle
           Positioned(
             left: -sw * 0.33,
-            top: -sh * 0.13,
+            top: -sh * 0.12,
             child: SlideTransition(
               position: _leftIntro,
               child: SlideTransition(
@@ -177,16 +177,16 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
 
           // Right decorative rectangle
           Positioned(
-            right: -sw * 0.27,
-            bottom: -sh * 0.30,
+            right: -sw * 0.35,
+            bottom: -sh * 0.20,
             child: SlideTransition(
               position: _rightIntro,
               child: SlideTransition(
                 position: _rightExit,
                 child: Image.asset(
                   'assets/images/Rectangle1.png',
-                  width: sw * 0.55,
-                  height: sw * 0.65,
+                  width: sw * 0.70,
+                  height: sw * 0.59,
                   fit: BoxFit.contain,
                 ),
               ),
@@ -207,6 +207,8 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
 
+                        const SizedBox(height: 70),
+
                         // Logo
                         AnimatedSwitcher(
                           duration: const Duration(milliseconds: 600),
@@ -224,7 +226,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                           ),
                         ),
 
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 30),
 
                         // Title
                         Text(
@@ -232,7 +234,6 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                           style: AppTextStyles.heading.copyWith(fontSize: 50),
                         ),
 
-                        const SizedBox(height: 0.1),
 
                         // Subtitle
                         Text(
