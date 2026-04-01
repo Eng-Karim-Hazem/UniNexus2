@@ -1,11 +1,9 @@
-
 import 'package:flutter/material.dart';
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_schedule.dart';
 import 'package:uninexus/ui/screens/mobile/profile_screen.dart';
-
 
 class AppInfoScreen extends StatefulWidget {
   const AppInfoScreen({super.key});
@@ -39,6 +37,10 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Grab screen dimensions for perfect proportions
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
     return Scaffold(
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
@@ -54,13 +56,24 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
         ),
         child: SafeArea(
           bottom: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 150),
+          child: Padding(
+            // Dynamic padding applied to the entire screen layout
+            padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.02),
             child: Column(
               children: [
+                // 1. HEADER IS OUTSIDE THE SCROLL VIEW (Fixed at top)
                 _buildHeader(),
-                const SizedBox(height: 30),
-                _buildInfoCard(),
+                SizedBox(height: sh * 0.03),
+
+                // 2. ONLY THE CONTENT BELOW THE HEADER IS SCROLLABLE
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    // Padding at the bottom so content doesn't get hidden behind the floating button
+                    padding: EdgeInsets.only(bottom: sh * 0.15),
+                    child: _buildInfoCard(sw, sh),
+                  ),
+                ),
               ],
             ),
           ),
@@ -97,12 +110,13 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
     );
   }
 
-  Widget _buildInfoCard() {
+  Widget _buildInfoCard(double sw, double sh) {
     return Container(
       width: double.infinity,
-      // Give it a minimum height to look like the screenshot or let content dictate
-      constraints: const BoxConstraints(minHeight: 450),
-      padding: const EdgeInsets.all(30),
+      // Replaced hardcoded minHeight: 450 with 50% of the screen height
+      constraints: BoxConstraints(minHeight: sh * 0.5),
+      // Dynamic internal padding
+      padding: EdgeInsets.all(sw * 0.06),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(24),
@@ -115,12 +129,12 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
           )
         ],
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Top Text
-          Text(
+          const Text(
             "We would like from you to acknowledge the system developers and supervisors also to check the UniNexus version.",
             style: TextStyle(
               fontFamily: MobileAppFonts.body,
@@ -132,14 +146,15 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
             textAlign: TextAlign.left,
           ),
 
-          SizedBox(height: 50),
+          // Dynamic Spacing instead of hardcoded 50
+          SizedBox(height: sh * 0.05),
 
           // Center Version
-          Center(
+          const Center(
             child: Text(
               "App Version: UN2.0",
               style: TextStyle(
-                fontFamily: MobileAppFonts.heading, // or SpaceGrotesk based on preference
+                fontFamily: MobileAppFonts.heading,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
@@ -147,10 +162,11 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
             ),
           ),
 
-          SizedBox(height: 50),
+          // Dynamic Spacing instead of hardcoded 50
+          SizedBox(height: sh * 0.05),
 
           // Bottom Credits
-          Column(
+          const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
@@ -287,13 +303,18 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
             color: sel ? _mainPurple : Colors.grey.shade500,
           ),
           const SizedBox(height: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: MobileAppFonts.body,
-              fontSize: 12,
-              color: sel ? _mainPurple : Colors.grey.shade600,
-              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+          // Added Flexible to prevent text from exploding horizontally
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: MobileAppFonts.body,
+                fontSize: 12,
+                color: sel ? _mainPurple : Colors.grey.shade600,
+                fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+              ),
             ),
           ),
         ],

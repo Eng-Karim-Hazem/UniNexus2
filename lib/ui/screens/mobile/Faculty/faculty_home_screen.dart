@@ -138,6 +138,10 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Grab screen dimensions for perfect proportions
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
     return Scaffold(
       extendBody: true,
       floatingActionButton: _buildFab(),
@@ -154,30 +158,22 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         ),
         child: SafeArea(
           bottom: false,
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                child: _buildTopHeader(),
-              ),
-              const SizedBox(height: 30),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: _buildGreetingCard(),
-              ),
-
-              // Subject buttons have been removed from here
-
-              const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: _buildActionButtons(),
-              ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: _buildNotificationsArea(),
-              ),
-            ],
+          child: SingleChildScrollView(
+            // Master padding for the entire screen!
+            padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.02),
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTopHeader(),
+                SizedBox(height: sh * 0.03),
+                _buildGreetingCard(sw, sh),
+                SizedBox(height: sh * 0.03),
+                _buildActionButtons(sw, sh),
+                SizedBox(height: sh * 0.03),
+                _buildNotificationsArea(sw, sh),
+              ],
+            ),
           ),
         ),
       ),
@@ -202,10 +198,11 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     );
   }
 
-  Widget _buildGreetingCard() {
+  Widget _buildGreetingCard(double sw, double sh) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+      // Dynamic padding
+      padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.025),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.9),
         borderRadius: BorderRadius.circular(24),
@@ -228,14 +225,15 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(double sw, double sh) {
     return Row(
       children: [
         Expanded(
           child: _buildActionCard(
               "Halls",
               'assets/images/classroom_1.png',
-                  () => Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen()))
+                  () => Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen())),
+              sh
           ),
         ),
         const SizedBox(width: 16),
@@ -243,18 +241,20 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
           child: _buildActionCard(
               "Attendance",
               'assets/images/user-check_1.png',
-                  () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AttendanceSessionScreen()))
+                  () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AttendanceSessionScreen())),
+              sh
           ),
         ),
       ],
     );
   }
 
-  Widget _buildActionCard(String title, String iconPath, VoidCallback onTap) {
+  Widget _buildActionCard(String title, String iconPath, VoidCallback onTap, double sh) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 125,
+        // Dynamic height based on screen size
+        height: sh * 0.15 > 125 ? sh * 0.15 : 125,
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.9),
           borderRadius: BorderRadius.circular(24),
@@ -274,10 +274,11 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     );
   }
 
-  Widget _buildNotificationsArea() {
+  Widget _buildNotificationsArea(double sw, double sh) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(24, 0, 24, 115),
+      // Large bottom margin to ensure content doesn't get hidden behind the floating button
+      margin: EdgeInsets.only(bottom: sh * 0.15),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.6),
         borderRadius: BorderRadius.circular(24),
@@ -295,13 +296,16 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
               .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator(color: _mainPurple));
+              return Padding(
+                padding: EdgeInsets.all(sw * 0.05),
+                child: Center(child: CircularProgressIndicator(color: _mainPurple)),
+              );
             }
 
-            if (snapshot.hasError) return const Center(child: Text('Error.'));
+            if (snapshot.hasError) return const Padding(padding: EdgeInsets.all(20), child: Center(child: Text('Error.')));
 
             if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-              return const Center(child: Text('No announcements.'));
+              return const Padding(padding: EdgeInsets.all(20), child: Center(child: Text('No announcements.')));
             }
 
             final List<QueryDocumentSnapshot> docs = snapshot.data!.docs.where((doc) {
@@ -316,11 +320,13 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
               return 0;
             });
 
-            if (docs.isEmpty) return const Center(child: Text('No relevant notices.'));
+            if (docs.isEmpty) return const Padding(padding: EdgeInsets.all(20), child: Center(child: Text('No relevant notices.')));
 
             return ListView.builder(
-              padding: const EdgeInsets.all(16),
-              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.all(sw * 0.04),
+              // --- MAGIC TRICK: ShrinkWrap allows list inside ScrollView ---
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: docs.length,
               itemBuilder: (context, index) {
                 final data = docs[index].data() as Map<String, dynamic>;
@@ -403,7 +409,22 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     final Color itemColor = isSelected ? _mainPurple : Colors.grey.shade500;
     return GestureDetector(
       onTap: () => _onNavBarTapped(index), behavior: HitTestBehavior.opaque,
-      child: Column(mainAxisSize: MainAxisSize.min, children: [Image.asset(iconPath, width: 28, height: 28, color: itemColor), const SizedBox(height: 5), Text(label, style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 12, color: isSelected ? _mainPurple : Colors.grey.shade600, fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600))]),
+      child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(iconPath, width: 28, height: 28, color: itemColor),
+            const SizedBox(height: 5),
+            // Flexible wrapper added here!
+            Flexible(
+              child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 12, color: isSelected ? _mainPurple : Colors.grey.shade600, fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600)
+              ),
+            )
+          ]
+      ),
     );
   }
 }

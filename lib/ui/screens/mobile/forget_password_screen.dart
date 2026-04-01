@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:uninexus/ui/screens/mobile/request_submitted_screen.dart';
 
-
 import '/../../services/firebase/for_pass_service.dart';
 import 'login_screen.dart';
-
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -109,6 +107,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Grab screen dimensions for perfect scaling
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -116,7 +118,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
           children: [
             Positioned.fill(child: Image.asset("assets/images/WelcomeBackground.png", fit: BoxFit.cover)),
             Positioned(
-              top: MediaQuery.of(context).size.height * 0.25,
+              top: sh * 0.25,
               right: -200,
               child: IgnorePointer(
                 child: Hero(
@@ -136,15 +138,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                   child: Align(
                     alignment: Alignment.topCenter,
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(40, 25, 40, 40),
+                      physics: const BouncingScrollPhysics(),
+                      // Dynamic padding around the whole form
+                      padding: EdgeInsets.fromLTRB(sw * 0.08, sh * 0.04, sw * 0.08, sh * 0.05),
                       child: Column(
                         children: [
                           ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.asset("assets/images/uni.jpeg", width: 90, fit: BoxFit.cover)),
-                          const SizedBox(height: 10),
+                          SizedBox(height: sh * 0.015),
+
                           const Text("Forgotten Password", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 30, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 2),
-                          const Text("Enter your details to renew your credentials", style: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.black54, fontSize: 15)),
-                          const SizedBox(height: 40),
+                          const Text("Enter your details to renew your credentials", style: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.black54, fontSize: 15), textAlign: TextAlign.center),
+
+                          SizedBox(height: sh * 0.04), // Space before fields
 
                           // Field 1 - Email / ID
                           FadeTransition(
@@ -197,16 +203,23 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                             ),
                           ),
 
-                          const SizedBox(height: 130),
+                          // --- THE FIX ---
+                          // Removed Spacer() entirely. Using a dynamic, reasonable gap instead.
+                          SizedBox(height: sh * 0.06),
+
                           _mainButton(
                             text: _isLoading ? "Submitting..." : "Submit",
                             enabled: _isFormValid && !_isLoading,
                             onTap: _submit,
+                            sw: sw, // Pass sw for responsive sizing
                           ),
+
+                          SizedBox(height: sh * 0.02), // Small gap before login text
+
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text("  Back to", style: TextStyle(fontFamily: MobileAppFonts.body)),
+                              const Text("Back to", style: TextStyle(fontFamily: MobileAppFonts.body)),
                               TextButton(
                                 onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen())),
                                 child: const Text("Login", style: TextStyle(fontFamily: MobileAppFonts.heading, fontWeight: FontWeight.bold)),
@@ -277,9 +290,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     ]);
   }
 
-  Widget _mainButton({required String text, required bool enabled, required VoidCallback onTap}) {
+  Widget _mainButton({required String text, required bool enabled, required VoidCallback onTap, required double sw}) {
     return Container(
-      width: 280, height: 65,
+      // Made button width responsive so it doesn't overflow small screens
+      width: sw * 0.75 > 280 ? 280 : sw * 0.75,
+      height: 65,
       decoration: BoxDecoration(border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5), gradient: const LinearGradient(colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)]), borderRadius: BorderRadius.circular(24)),
       child: ElevatedButton(
         onPressed: enabled ? onTap : null,

@@ -168,41 +168,70 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               position: _contentExit,
               child: FadeTransition(
                 opacity: _contentFade,
-                child: Center(
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 90),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 600),
-                        child: ClipRRect(
-                          key: ValueKey(_showGif),
-                          borderRadius: BorderRadius.circular(23),
-                          child: Image.asset(
-                            _showGif
-                                ? 'assets/images/UniNexus.gif'
-                                : 'assets/images/uni.jpeg',
-                            width: sw * 0.60,
-                            height: sw * 0.60,
-                            fit: BoxFit.contain,
+                // --- APPLIED RESPONSIVE WRAPPER HERE ---
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                        ),
+                        child: IntrinsicHeight(
+                          child: Column(
+                            children: [
+                              // Made top spacing dynamic (10% of screen height)
+                              SizedBox(height: constraints.maxHeight * 0.10),
+
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 600),
+                                child: ClipRRect(
+                                  key: ValueKey(_showGif),
+                                  borderRadius: BorderRadius.circular(23),
+                                  child: Image.asset(
+                                    _showGif
+                                        ? 'assets/images/UniNexus.gif'
+                                        : 'assets/images/uni.jpeg',
+                                    width: sw * 0.55, // Slightly scaled down logo to guarantee fit
+                                    height: sw * 0.55,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              ),
+
+                              // Dynamic spacing between logo and text
+                              SizedBox(height: constraints.maxHeight * 0.05),
+
+                              const Text(
+                                'Welcome to UniNexus',
+                                style: MobileAppTextStyles.screenTitle,
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 8),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 20),
+                                child: Text(
+                                  'Your unified campus experience begins here.',
+                                  style: MobileAppTextStyles.screenSubtitle,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+
+                              // --- THE MAGIC BULLET ---
+                              // This will dynamically stretch to push the buttons down
+                              const Spacer(),
+
+                              _mainButton('Log In', _goToLogin),
+                              const SizedBox(height: 15),
+                              _mainButton('Register', _goToRegister),
+
+                              // Bottom padding so buttons don't hug the absolute edge of the screen
+                              SizedBox(height: constraints.maxHeight * 0.05),
+                            ],
                           ),
                         ),
                       ),
-                      const SizedBox(height: 110),
-                      const Text(
-                        'Welcome to UniNexus',
-                        style: MobileAppTextStyles.screenTitle,
-                      ),
-                      const SizedBox(height: 1),
-                      const Text(
-                        'Your unified campus experience begins here.',
-                        style: MobileAppTextStyles.screenSubtitle,
-                      ),
-                      const SizedBox(height: 135),
-                      _mainButton('Log In', _goToLogin),
-                      const SizedBox(height: 15),
-                      _mainButton('Register', _goToRegister),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
             ),

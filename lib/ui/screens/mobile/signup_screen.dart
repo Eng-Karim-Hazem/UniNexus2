@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:uninexus/ui/screens/mobile/request_submitted_screen.dart';
@@ -116,6 +115,10 @@ class _SignUpScreenState extends State<SignUpScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Grab screen dimensions for perfect proportions
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -126,7 +129,7 @@ class _SignUpScreenState extends State<SignUpScreen>
             ),
           ),
           Positioned(
-            top: MediaQuery.of(context).size.height * 0.25,
+            top: sh * 0.25,
             right: -200,
             child: Hero(
               tag: 'shared-rectangle',
@@ -148,7 +151,9 @@ class _SignUpScreenState extends State<SignUpScreen>
                 child: Align(
                   alignment: Alignment.topCenter,
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(40, 25, 40, 40),
+                    physics: const BouncingScrollPhysics(),
+                    // Dynamic padding so it breathes perfectly on any screen
+                    padding: EdgeInsets.fromLTRB(sw * 0.08, sh * 0.04, sw * 0.08, sh * 0.04),
                     child: Column(
                       children: [
                         ClipRRect(
@@ -158,7 +163,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                             width: MobileAppDimensions.heroImageWidth,
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        SizedBox(height: sh * 0.015),
                         const Text(
                           "Register to UniNexus",
                           style: MobileAppTextStyles.screenTitle,
@@ -167,7 +172,10 @@ class _SignUpScreenState extends State<SignUpScreen>
                           "Start your smart campus journey",
                           style: MobileAppTextStyles.screenSubtitle,
                         ),
-                        const SizedBox(height: 40),
+
+                        // Dynamic spacing replacing the hardcoded 40
+                        SizedBox(height: sh * 0.04),
+
                         _animatedField(
                           anim: _field1Anim,
                           child: _modernField(
@@ -176,7 +184,9 @@ class _SignUpScreenState extends State<SignUpScreen>
                             controller: _nationalIdController,
                           ),
                         ),
-                        const SizedBox(height: 40),
+
+                        SizedBox(height: sh * 0.03),
+
                         _animatedField(
                           anim: _field2Anim,
                           child: _modernField(
@@ -185,7 +195,9 @@ class _SignUpScreenState extends State<SignUpScreen>
                             controller: _emailController,
                           ),
                         ),
-                        const SizedBox(height: 40),
+
+                        SizedBox(height: sh * 0.03),
+
                         _animatedField(
                           anim: _field3Anim,
                           child: _modernField(
@@ -194,15 +206,23 @@ class _SignUpScreenState extends State<SignUpScreen>
                             controller: _studentIdController,
                           ),
                         ),
-                        const SizedBox(height: 180),
+
+                        // Replaced the massive hardcoded 180 gap
+                        SizedBox(height: sh * 0.06),
+
                         _mainButton(
                           text: _isLoading ? "Processing..." : "Register",
                           enabled: _isFormValid && !_isLoading,
                           onTap: _handleSignUp,
+                          sw: sw, // Pass sw to keep the button width constrained safely
                         ),
-                        const SizedBox(height: 6),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+
+                        SizedBox(height: sh * 0.02),
+
+                        // Changed to Wrap to protect against horizontal overflow on narrow phones
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             const Text(
                               "Already have an account?",
@@ -283,9 +303,11 @@ class _SignUpScreenState extends State<SignUpScreen>
     required String text,
     required bool enabled,
     required VoidCallback onTap,
+    required double sw,
   }) {
     return Container(
-      width: MobileAppDimensions.primaryButtonWidth,
+      // Responsive button width based on screen size, falling back to dimensions if there's enough room
+      width: sw * 0.75 > MobileAppDimensions.primaryButtonWidth ? MobileAppDimensions.primaryButtonWidth : sw * 0.75,
       height: MobileAppDimensions.primaryButtonHeight,
       decoration: MobileAppDecorations.primaryButtonBox,
       child: ElevatedButton(

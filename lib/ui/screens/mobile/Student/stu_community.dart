@@ -12,7 +12,6 @@ import 'package:uninexus/ui/screens/mobile/Faculty/halls_screen.dart';
 import 'create_community_post_screen.dart';
 import 'community_post_detail_screen.dart';
 
-
 class StuCommunity extends StatefulWidget {
   const StuCommunity({super.key});
 
@@ -23,7 +22,6 @@ class StuCommunity extends StatefulWidget {
 class _StuCommunityState extends State<StuCommunity> {
   // Service
   final _communityService = CommunityService();
-
 
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
@@ -53,6 +51,10 @@ class _StuCommunityState extends State<StuCommunity> {
 
   @override
   Widget build(BuildContext context) {
+    // Grab screen dimensions for perfect proportions
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
     return Scaffold(
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
@@ -72,11 +74,12 @@ class _StuCommunityState extends State<StuCommunity> {
           child: Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+                // Dynamic padding based on screen size
+                padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.02),
                 child: Column(
                   children: [
                     _buildTopHeader(),
-                    const SizedBox(height: 30),
+                    SizedBox(height: sh * 0.03), // Dynamic spacing
 
                     // --- STREAM BUILDER FOR REAL DATA ---
                     Expanded(
@@ -88,7 +91,7 @@ class _StuCommunityState extends State<StuCommunity> {
                           }
 
                           if (snapshot.hasError) {
-                            return Center(child: Text("Error loading posts", style: TextStyle(color: Colors.red, fontFamily: MobileAppFonts.body)));
+                            return const Center(child: Text("Error loading posts", style: TextStyle(color: Colors.red, fontFamily: MobileAppFonts.body)));
                           }
 
                           if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -104,26 +107,28 @@ class _StuCommunityState extends State<StuCommunity> {
 
                           return ListView.separated(
                             physics: const BouncingScrollPhysics(),
+                            // Added padding to the bottom of the list so posts don't get hidden behind the FAB
+                            padding: EdgeInsets.only(bottom: sh * 0.15),
                             itemCount: posts.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 16),
-                            itemBuilder: (context, i) => _buildPostCard(posts[i]),
+                            separatorBuilder: (_, __) => SizedBox(height: sh * 0.02),
+                            itemBuilder: (context, i) => _buildPostCard(posts[i], sw),
                           );
                         },
                       ),
                     ),
-                    const SizedBox(height: 100),
                   ],
                 ),
               ),
 
-              // Floating "Create Post" Button
+              // Floating "Create Post" Button dynamically positioned
               Positioned(
-                bottom: 130,
-                right: 24,
+                bottom: sh * 0.14, // dynamically sits above the bottom nav
+                right: sw * 0.06,  // respects screen padding
                 child: GestureDetector(
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateCommunityPostScreen())),
                   child: Container(
-                    width: 80, height: 80,
+                    width: sw * 0.25 > 60 ? sw * 0.25 : 60, // Scales button but prevents it from getting too tiny
+                    height: sw * 0.25 > 60 ? sw * 0.25 : 60,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
@@ -132,8 +137,8 @@ class _StuCommunityState extends State<StuCommunity> {
                     child: Center(
                       child: Image.asset(
                         'assets/images/solidarity_1.png',
-                        width: 50,
-                        height: 50,
+                        width: sw * 0.15 > 30 ? sw * 0.15 : 30,
+                        height: sw * 0.15 > 30 ? sw * 0.15 : 30,
                         fit: BoxFit.contain,
                         color: _mainPurple,
                       ),
@@ -181,17 +186,16 @@ class _StuCommunityState extends State<StuCommunity> {
   }
 
   // --- UPDATED CARD WITH SWIPE TO DELETE ---
-  Widget _buildPostCard(CommunityPostModel post) {
+  Widget _buildPostCard(CommunityPostModel post, double sw) {
     return Dismissible(
       key: Key(post.id),
-      // Only allow swipe if NOT a student (i.e., Faculty)
       direction: _isStudent ? DismissDirection.none : DismissDirection.endToStart,
       background: Container(
         padding: const EdgeInsets.only(right: 25),
         alignment: Alignment.centerRight,
         decoration: BoxDecoration(
           color: Colors.redAccent.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(20), // Match the card radius
+          borderRadius: BorderRadius.circular(20),
         ),
         child: const Icon(Icons.delete_forever_rounded, color: Colors.white, size: 32),
       ),
@@ -213,7 +217,6 @@ class _StuCommunityState extends State<StuCommunity> {
         );
       },
       onDismissed: (direction) {
-        // Call the service to delete
         _communityService.deletePost(post.id);
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Post deleted"))
@@ -222,7 +225,7 @@ class _StuCommunityState extends State<StuCommunity> {
       child: GestureDetector(
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CommunityPostDetailScreen(post: post))),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: EdgeInsets.symmetric(horizontal: sw * 0.04, vertical: 16),
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(20),
@@ -249,17 +252,19 @@ class _StuCommunityState extends State<StuCommunity> {
                         children: [
                           Text(
                               post.title,
+                              maxLines: 1, // Prevent long titles from breaking layout
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 15, fontWeight: FontWeight.bold, color: _primaryBlue)
                           ),
-                          // Display Role and Name correctly
                           Text(
                             "${post.userRole} • ${post.userName}",
+                            maxLines: 1, // Prevent long names from breaking layout
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
                           ),
                         ],
                       )
                   ),
-                  // Display Reply Count if > 0
                   if (post.replyCount > 0)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -410,13 +415,17 @@ class _StuCommunityState extends State<StuCommunity> {
             color: sel ? _mainPurple : Colors.grey.shade500,
           ),
           const SizedBox(height: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: MobileAppFonts.body,
-              fontSize: 12,
-              color: sel ? _mainPurple : Colors.grey.shade600,
-              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: MobileAppFonts.body,
+                fontSize: 12,
+                color: sel ? _mainPurple : Colors.grey.shade600,
+                fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+              ),
             ),
           ),
         ],

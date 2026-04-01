@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Added Firestore
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import '../settings_screen.dart';
 import 'student_id_screen.dart' hide StuSchedule;
@@ -21,8 +21,8 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
   int _selectedIndex = -1;
   String _firstName = 'Student';
   String _lastName = '';
-  String _studentID = ''; // Added to track ID for notifications
-  String _faculty = '';   // Added to track Faculty for notifications
+  String _studentID = '';
+  String _faculty = '';
   bool _isLoading = true;
 
   final Color _mainPurple = const Color(0xFF7B61FF);
@@ -47,8 +47,8 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
       setState(() {
         _firstName = prefs.getString('fName') ?? 'Student';
         _lastName = prefs.getString('lName') ?? '';
-        _studentID = prefs.getString('ID') ?? ''; // Loading Student ID
-        _faculty = prefs.getString('faculty') ?? ''; // Loading Faculty
+        _studentID = prefs.getString('ID') ?? '';
+        _faculty = prefs.getString('faculty') ?? '';
         _isLoading = false;
       });
     }
@@ -85,7 +85,6 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
       return true;
     }
 
-    // Backward compatibility for legacy notices with only targetValue.
     if (targetType.isEmpty) {
       if (targetValue == 'all' || targetValue == 'students' || targetValue == 'student') {
         return true;
@@ -103,6 +102,10 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Grab screen dimensions for perfect proportions
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
     return Scaffold(
       extendBody: true,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -121,15 +124,19 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
           bottom: false,
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+          // --- CHANGED TO SINGLE CHILD SCROLL VIEW ---
+              : SingleChildScrollView(
+            // Dynamic horizontal padding
+            padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.02),
+            physics: const BouncingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildTopHeader(),
-                const SizedBox(height: 30),
-                _buildGreetingCard(),
-                const SizedBox(height: 20),
+                SizedBox(height: sh * 0.03), // Responsive gap
+                _buildGreetingCard(sw, sh),
+                SizedBox(height: sh * 0.02),
+
                 GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -138,6 +145,8 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                     );
                   },
                   child: _buildWhiteCard(
+                    sw: sw,
+                    sh: sh,
                     opacity: 0.4,
                     borderColor: _mainPurple.withValues(alpha: 0.5),
                     child: Row(
@@ -147,80 +156,93 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                             'Want to check your\nschedule?',
                             style: TextStyle(
                               fontFamily: MobileAppFonts.heading,
-                              fontSize: 20,
+                              // Scale text slightly based on screen width
+                              fontSize: sw * 0.045 > 20 ? 20 : sw * 0.045,
                               color: Colors.black.withValues(alpha: 0.8),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                        Image.asset('assets/images/main_calender.png', width: 80, height: 80),
+                        // Dynamically scale the image instead of fixed 80x80
+                        Image.asset(
+                            'assets/images/main_calender.png',
+                            width: sw * 0.18,
+                            height: sw * 0.18
+                        ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+
+                SizedBox(height: sh * 0.03),
 
                 // --- DYNAMIC NOTIFICATION SECTION ---
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 100),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1.5),
-                    ),
-                    child: StreamBuilder<QuerySnapshot>(
-                      stream: FirebaseFirestore.instance
-                          .collection('Notifications')
-                          .orderBy('date', descending: true)
-                          .snapshots(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
-
-                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                          return _buildEmptyNotices();
-                        }
-
-                        final List<QueryDocumentSnapshot> filteredDocs = snapshot.data!.docs.where((doc) {
-                          final data = doc.data() as Map<String, dynamic>;
-                          return _isNoticeForStudent(data);
-                        }).toList();
-
-                        // Sort by date (Assuming there is a 'date' field of type Timestamp)
-                        filteredDocs.sort((a, b) {
-                          final timeA = (a.data() as Map<String, dynamic>)['date'];
-                          final timeB = (b.data() as Map<String, dynamic>)['date'];
-                          if (timeA is Timestamp && timeB is Timestamp) {
-                            return timeB.compareTo(timeA);
-                          }
-                          return 0;
-                        });
-
-                        if (filteredDocs.isEmpty) {
-                          return _buildEmptyNotices();
-                        }
-
-                        return ListView.builder(
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: filteredDocs.length,
-                          itemBuilder: (context, index) {
-                            final data = filteredDocs[index].data() as Map<String, dynamic>;
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12.0),
-                              child: _buildStudentNotification(
-                                title: data['sentBy'] ?? "University Notice",
-                                message: data['description'] ?? "",
-                                icon: Icons.notifications_none_rounded,
-                              ),
-                            );
-                          },
+                // Removed Expanded, now it grows naturally with the scroll view
+                Container(
+                  width: double.infinity,
+                  // Large bottom margin to clear the custom nav bar
+                  margin: EdgeInsets.only(bottom: sh * 0.15),
+                  padding: EdgeInsets.all(sw * 0.04),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1.5),
+                  ),
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('Notifications')
+                        .orderBy('date', descending: true)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(20.0),
+                            child: CircularProgressIndicator(),
+                          ),
                         );
-                      },
-                    ),
+                      }
+
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return _buildEmptyNotices();
+                      }
+
+                      final List<QueryDocumentSnapshot> filteredDocs = snapshot.data!.docs.where((doc) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        return _isNoticeForStudent(data);
+                      }).toList();
+
+                      filteredDocs.sort((a, b) {
+                        final timeA = (a.data() as Map<String, dynamic>)['date'];
+                        final timeB = (b.data() as Map<String, dynamic>)['date'];
+                        if (timeA is Timestamp && timeB is Timestamp) {
+                          return timeB.compareTo(timeA);
+                        }
+                        return 0;
+                      });
+
+                      if (filteredDocs.isEmpty) {
+                        return _buildEmptyNotices();
+                      }
+
+                      return ListView.builder(
+                        // --- MAGIC TRICK: ShrinkWrap allows list inside ScrollView ---
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: filteredDocs.length,
+                        itemBuilder: (context, index) {
+                          final data = filteredDocs[index].data() as Map<String, dynamic>;
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12.0),
+                            child: _buildStudentNotification(
+                              title: data['sentBy'] ?? "University Notice",
+                              message: data['description'] ?? "",
+                              icon: Icons.notifications_none_rounded,
+                            ),
+                          );
+                        },
+                      );
+                    },
                   ),
                 ),
               ],
@@ -232,18 +254,22 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
   }
 
   Widget _buildEmptyNotices() {
-    return const Center(
-      child: Text(
-        "No notifications for you yet.",
-        style: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.black54),
+    return const Padding(
+      padding: EdgeInsets.all(20.0),
+      child: Center(
+        child: Text(
+          "No notifications for you yet.",
+          style: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.black54),
+        ),
       ),
     );
   }
 
-  Widget _buildGreetingCard() {
+  Widget _buildGreetingCard(double sw, double sh) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+      // Dynamic padding: scales perfectly down on small phones
+      padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.025),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(24),
@@ -295,10 +321,11 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
     );
   }
 
-  Widget _buildWhiteCard({required Widget child, Color? borderColor, double opacity = 0.9}) {
+  Widget _buildWhiteCard({required Widget child, required double sw, required double sh, Color? borderColor, double opacity = 0.9}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      // Dynamic padding
+      padding: EdgeInsets.all(sw * 0.05),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: opacity),
         borderRadius: BorderRadius.circular(25),

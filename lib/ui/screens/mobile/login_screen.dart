@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:uninexus/ui/screens/mobile/signup_screen.dart';
 
-// --- MAKE SURE THIS IMPORT PATH IS CORRECT FOR YOUR PROJECT ---
 import '../../../../services/firebase/login_service.dart';
 
 import 'Faculty/faculty_home_screen.dart';
@@ -23,7 +22,6 @@ class _LoginScreenState extends State<LoginScreen>
   final _codeController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  // Instantiate your service here!
   final LoginService _loginService = LoginService();
 
   bool _obscurePassword = true;
@@ -76,7 +74,6 @@ class _LoginScreenState extends State<LoginScreen>
     _passwordController.addListener(_validate);
   }
 
-  // --- UPDATED LOGIC TO USE THE SERVICE ---
   Future<void> _handleLogin() async {
     final idInput = _codeController.text.trim();
     final passwordInput = _passwordController.text.trim();
@@ -87,12 +84,9 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _isLoading = true);
 
     try {
-      // 1. Call your LoginService
       final result = await _loginService.login(idInput, passwordInput);
 
-      // 2. Handle the different possible outcomes
       switch (result['status']) {
-
         case LoginResult.signUpRequired:
           throw "Access Denied";
 
@@ -109,7 +103,6 @@ class _LoginScreenState extends State<LoginScreen>
           throw "An error occurred while communicating with the server.";
 
         case LoginResult.success:
-        // 3. Process successful login
           final userData = result['userData'] as Map<String, dynamic>;
           final userType = result['userType'] as UserType;
 
@@ -122,7 +115,6 @@ class _LoginScreenState extends State<LoginScreen>
             await prefs.remove('rememberedID');
           }
 
-          // Save universal data
           await prefs.setString('ID', idInput);
           await prefs.setString('fName', userData['fName'] ?? "User");
           await prefs.setString('lName', userData['lName'] ?? "");
@@ -134,7 +126,6 @@ class _LoginScreenState extends State<LoginScreen>
 
           Widget nextScreen;
 
-          // Save specific data and route properly
           if (userType == UserType.student) {
             await prefs.setString('year', userData['year']?.toString() ?? "N/A");
             await prefs.setString('section', userData['section']?.toString() ?? "N/A");
@@ -148,7 +139,6 @@ class _LoginScreenState extends State<LoginScreen>
             nextScreen = const FacultyHomeScreen();
 
           } else {
-            // Add Staff routing here later if needed
             throw "Staff mobile dashboard is under construction.";
           }
 
@@ -216,6 +206,9 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Grab screen width to make horizontal padding dynamic
+    final sw = MediaQuery.of(context).size.width;
+
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -240,122 +233,153 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ),
             SafeArea(
-              child: SlideTransition(
-                position: _contentIntro,
-                child: FadeTransition(
-                  opacity: _contentController,
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(40, 25, 40, 40),
-                      child: Column(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(
-                              "assets/images/uni.jpeg",
-                              width: MobileAppDimensions.heroImageWidth,
-                              fit: BoxFit.cover,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SlideTransition(
+                    position: _contentIntro,
+                    child: FadeTransition(
+                      opacity: _contentController,
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: SingleChildScrollView(
+                          // Using dynamic width padding (8% of screen) instead of hardcoded 40
+                          padding: EdgeInsets.fromLTRB(sw * 0.08, 25, sw * 0.08, 40),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight - 65,
                             ),
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          const Text(
-                            "Log in to UniNexus",
-                            style: MobileAppTextStyles.screenTitle,
-                          ),
-
-                          const Text(
-                            "Access your campus services securely",
-                            style: MobileAppTextStyles.screenSubtitle,
-                          ),
-
-                          const SizedBox(height: 50),
-
-                          _animatedItem(
-                            anim: _field1Anim,
-                            child: _modernField(
-                              label: "Email / ID",
-                              hint: "Enter Your Email/ID",
-                              controller: _codeController,
-                            ),
-                          ),
-
-                          const SizedBox(height: 40),
-
-                          _animatedItem(
-                            anim: _field2Anim,
-                            child: _modernField(
-                              label: "Password",
-                              hint: "Enter Your Password",
-                              controller: _passwordController,
-                              obscure: _obscurePassword,
-                              icon: IconButton(
-                                icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                              ),
-                            ),
-                          ),
-                          _animatedItem(
-                            anim: _checkAnim,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Checkbox(
-                                      value: _rememberMe,
-                                      activeColor: MobileAppColors.primary,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                                      onChanged: (val) => setState(() => _rememberMe = val ?? false),
+                            child: IntrinsicHeight(
+                              child: Column(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.asset(
+                                      "assets/images/uni.jpeg",
+                                      width: MobileAppDimensions.heroImageWidth,
+                                      height: constraints.maxHeight * 0.15,
+                                      fit: BoxFit.cover,
                                     ),
-                                    const Text(
-                                      "Remember Me",
-                                      style: MobileAppTextStyles.bodyTextMedium,
-                                    ),
-                                  ],
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
                                   ),
-                                  child: const Text("Forgot Password?", style: TextStyle(fontFamily: MobileAppFonts.body)),
-                                ),
-                              ],
+
+                                  const SizedBox(height: 10),
+
+                                  const Text(
+                                    "Log in to UniNexus",
+                                    style: MobileAppTextStyles.screenTitle,
+                                  ),
+
+                                  const Text(
+                                    "Access your campus services securely",
+                                    style: MobileAppTextStyles.screenSubtitle,
+                                  ),
+
+                                  SizedBox(height: constraints.maxHeight * 0.05),
+
+                                  _animatedItem(
+                                    anim: _field1Anim,
+                                    child: _modernField(
+                                      label: "Email / ID",
+                                      hint: "Enter Your Email/ID",
+                                      controller: _codeController,
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 30),
+
+                                  _animatedItem(
+                                    anim: _field2Anim,
+                                    child: _modernField(
+                                      label: "Password",
+                                      hint: "Enter Your Password",
+                                      controller: _passwordController,
+                                      obscure: _obscurePassword,
+                                      icon: IconButton(
+                                        icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                      ),
+                                    ),
+                                  ),
+
+                                  _animatedItem(
+                                    anim: _checkAnim,
+                                    // Wrapped the row items in Flexible to prevent horizontal overflow
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Flexible(
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Checkbox(
+                                                value: _rememberMe,
+                                                activeColor: MobileAppColors.primary,
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                                                onChanged: (val) => setState(() => _rememberMe = val ?? false),
+                                              ),
+                                              const Flexible(
+                                                child: Text(
+                                                  "Remember Me",
+                                                  style: MobileAppTextStyles.bodyTextMedium,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: TextButton(
+                                            onPressed: () => Navigator.pushReplacement(
+                                              context,
+                                              MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                                            ),
+                                            child: const Text(
+                                              "Forgot Password?",
+                                              style: TextStyle(fontFamily: MobileAppFonts.body),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  const Spacer(),
+                                  const SizedBox(height: 20),
+
+                                  _mainButton(
+                                    text: "Log In",
+                                    enabled: _isFormValid && !_isLoading,
+                                    isLoading: _isLoading,
+                                    onTap: _handleLogin,
+                                  ),
+
+                                  // Switched from Row to Wrap to prevent horizontal overflow here as well
+                                  Wrap(
+                                    alignment: WrapAlignment.center,
+                                    crossAxisAlignment: WrapCrossAlignment.center,
+                                    children: [
+                                      const Text(
+                                        "Don't have an account?",
+                                        style: MobileAppTextStyles.bodyText,
+                                      ),
+                                      TextButton(
+                                        onPressed: () => _slideTo(const SignUpScreen(), fromRight: true),
+                                        child: const Text(
+                                          "Register now",
+                                          style: MobileAppTextStyles.textButtonHeading,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-
-                          const SizedBox(height: 240),
-
-                          _mainButton(
-                            text: "Log In",
-                            enabled: _isFormValid && !_isLoading,
-                            isLoading: _isLoading,
-                            onTap: _handleLogin,
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text(
-                                "Don't have an account?",
-                                style: MobileAppTextStyles.bodyText,
-                              ),
-                              TextButton(
-                                onPressed: () => _slideTo(const SignUpScreen(), fromRight: true),
-                                child: const Text(
-                                  "Register now",
-                                  style: MobileAppTextStyles.textButtonHeading,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
             ),
           ],

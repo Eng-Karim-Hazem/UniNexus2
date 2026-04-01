@@ -3,6 +3,7 @@ import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart'; // --- ADDED URL LAUNCHER ---
 
 import 'package:uninexus/ui/screens/mobile/Faculty/halls_screen.dart';
 import '../Student/stu_community.dart';
@@ -24,7 +25,9 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
   String? _selectedSessionType;
   String _qrData = "";
   int _selectedIndex = -1;
+
   bool _isGenerating = false;
+  bool _isOpeningSheet = false; // --- NEW LOADING STATE FOR SHEET BUTTON ---
 
   // Constants & Styles
   final Color _mainPurple = const Color(0xFF7B61FF);
@@ -53,7 +56,6 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
     final prefs = await SharedPreferences.getInstance();
     List<String>? savedSubjects = prefs.getStringList('subjects');
 
-    // 1. Try to load from Local Storage first (Fastest)
     if (savedSubjects != null && savedSubjects.isNotEmpty) {
       if (mounted) {
         setState(() {
@@ -63,7 +65,6 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
       return;
     }
 
-    // 2. FALLBACK: If local storage is empty, fetch from Firebase!
     try {
       final String userId = prefs.getString('ID') ?? '';
       if (userId.isEmpty) return;
@@ -93,7 +94,6 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
     }
   }
 
-  // --- UPDATED: ASYNC FIREBASE QR GENERATION ---
   Future<void> _handleGenerateQR() async {
     if (_selectedCourse == null || _selectedSessionType == null || _selectedDuration == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -105,11 +105,9 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
     setState(() => _isGenerating = true);
 
     try {
-      // --- NEW: Grab the Instructor ID from local storage ---
       final prefs = await SharedPreferences.getInstance();
       final String instructorId = prefs.getString('ID') ?? 'UNKNOWN_FA';
 
-      // 1. Fetch the subject document to get the subID
       final querySnapshot = await FirebaseFirestore.instance
           .collection('subjects')
           .where('subName', isEqualTo: _selectedCourse)
@@ -123,13 +121,9 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
       final subjectData = querySnapshot.docs.first.data();
       final String subID = subjectData['subID']?.toString() ?? querySnapshot.docs.first.id;
 
-      // 2. Format the Session Type (L or S)
       final String typeCode = _selectedSessionType == 'Lecture' ? 'L' : 'S';
-
-      // 3. Format the Duration (e.g., '5 mins' -> '5min')
       final String durationCode = _selectedDuration!.replaceAll(' mins', 'min');
 
-      // 4. Stitch it all together WITH THE INSTRUCTOR ID!
       setState(() {
         _qrData = "${subID}_${typeCode}_${durationCode}_$instructorId";
       });
@@ -142,6 +136,53 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
       }
     } finally {
       if (mounted) setState(() => _isGenerating = false);
+    }
+  }
+
+  // --- NEW: FETCH AND OPEN GOOGLE SHEET LOGIC ---
+  Future<void> _openGoogleSheet() async {
+    // 1. Ensure they picked a course first
+    if (_selectedCourse == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select a Course to view its attendance sheet.", style: TextStyle(fontFamily: MobileAppFonts.body))),
+      );
+      return;
+    }
+
+    setState(() => _isOpeningSheet = true);
+
+    try {
+      // 2. Query Firebase for this specific subject
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('subjects')
+          .where('subName', isEqualTo: _selectedCourse)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) throw "Subject not found in database.";
+
+      // 3. Extract the 'sheetUrl' field
+      final subjectData = querySnapshot.docs.first.data();
+      final String? sheetUrl = subjectData['sheetUrl']; // Ensure this field exists in Firebase!
+
+      if (sheetUrl == null || sheetUrl.isEmpty) {
+        throw "No Google Sheet linked to this subject yet.";
+      }
+
+      // 4. Launch the URL on the phone
+      final Uri url = Uri.parse(sheetUrl);
+      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+        throw "Could not open the link.";
+      }
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isOpeningSheet = false);
     }
   }
 
@@ -167,6 +208,9 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
     return Scaffold(
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
@@ -183,17 +227,27 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
         ),
         child: SafeArea(
           bottom: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 150),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.02),
             child: Column(
               children: [
                 _buildHeader(),
-                const SizedBox(height: 30),
-                _buildQRContainer(),
-                const SizedBox(height: 24),
-                _buildFormContainer(),
-                const SizedBox(height: 30),
-                _buildSubmitButton(),
+                SizedBox(height: sh * 0.03),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.only(bottom: sh * 0.15),
+                    child: Column(
+                      children: [
+                        _buildQRContainer(sw),
+                        SizedBox(height: sh * 0.03),
+                        _buildFormContainer(sw),
+                        SizedBox(height: sh * 0.04),
+                        _buildActionButtons(sw),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -220,10 +274,10 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
     );
   }
 
-  Widget _buildQRContainer() {
+  Widget _buildQRContainer(double sw) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(30),
+      padding: EdgeInsets.all(sw * 0.06),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.75),
         borderRadius: BorderRadius.circular(30),
@@ -270,9 +324,9 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
     );
   }
 
-  Widget _buildFormContainer() {
+  Widget _buildFormContainer(double sw) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(sw * 0.06),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.75),
         borderRadius: BorderRadius.circular(24),
@@ -335,21 +389,50 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
     );
   }
 
-  Widget _buildSubmitButton() {
+  Widget _buildActionButtons(double sw) {
     return SizedBox(
-      width: 230,
-      height: 55,
-      child: OutlinedButton(
-        onPressed: _isGenerating ? null : _handleGenerateQR,
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: _mainPurple, width: 1.5),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          backgroundColor: Colors.white,
-        ),
-        child: _isGenerating
-            ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: _mainPurple, strokeWidth: 2))
-            : Text("Generate QR",
-            style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: _darkIndigo)),
+      width: sw * 0.85 > 320 ? 320 : sw * 0.85,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 55,
+              child: OutlinedButton(
+                onPressed: _isGenerating ? null : _handleGenerateQR,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: _mainPurple, width: 1.5),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  backgroundColor: Colors.white,
+                ),
+                child: _isGenerating
+                    ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: _mainPurple, strokeWidth: 2))
+                    : Text("Generate QR",
+                    style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: _darkIndigo)),
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 16),
+
+          // --- UPDATED GOOGLE SHEETS BUTTON ---
+          SizedBox(
+            height: 55,
+            width: 65,
+            child: OutlinedButton(
+              onPressed: _isOpeningSheet ? null : _openGoogleSheet,
+              style: OutlinedButton.styleFrom(
+                padding: EdgeInsets.zero,
+                side: BorderSide(color: _mainPurple, width: 1.5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                backgroundColor: Colors.white,
+              ),
+              child: _isOpeningSheet
+                  ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: _mainPurple, strokeWidth: 2))
+                  : Icon(Icons.how_to_reg_rounded, color: _mainPurple, size: 30),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -438,7 +521,14 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
         children: [
           Image.asset(iconPath, width: 28, height: 28, color: itemColor, errorBuilder: (_, __, ___) => Icon(Icons.circle, size: 28, color: itemColor)),
           const SizedBox(height: 5),
-          Text(label, style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 12, color: itemColor, fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600)),
+          Flexible(
+            child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 12, color: itemColor, fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600)
+            ),
+          ),
         ],
       ),
     );

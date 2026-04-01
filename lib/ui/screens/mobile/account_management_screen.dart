@@ -8,7 +8,6 @@ import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_schedule.dart';
 import 'package:uninexus/ui/screens/mobile/profile_screen.dart';
 
-
 class AccountManagementScreen extends StatefulWidget {
   const AccountManagementScreen({super.key});
 
@@ -20,9 +19,8 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
 
-  bool _isLoading = false; // Added to manage loading state
+  bool _isLoading = false;
 
-  // No specific index highlighted
   final int _selectedIndex = -1;
 
   final Color _mainPurple = const Color(0xFF7B61FF);
@@ -51,12 +49,10 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     }
   }
 
-  // --- THE FIREBASE UPDATE LOGIC ---
   Future<void> _updateContactInfo() async {
     final newPhone = _phoneController.text.trim();
     final newEmail = _emailController.text.trim();
 
-    // 1. Validate Input
     if (newPhone.isEmpty && newEmail.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please enter a new phone number or email.", style: TextStyle(fontFamily: MobileAppFonts.body))),
@@ -67,14 +63,12 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // 2. Fetch the current User ID
       final prefs = await SharedPreferences.getInstance();
       final String userId = prefs.getString('ID') ?? '';
 
       if (userId.isEmpty) throw Exception("User ID not found.");
 
-      // 3. The Prefix Trick: Determine which collection this user lives in!
-      String targetCollection = 'students'; // default fallback
+      String targetCollection = 'students';
       final prefix = userId.toUpperCase();
 
       if (prefix.startsWith('FA')) {
@@ -83,7 +77,6 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
         targetCollection = 'students';
       }
 
-      // 4. Find their specific document
       final query = await FirebaseFirestore.instance
           .collection(targetCollection)
           .where('ID', isEqualTo: prefix)
@@ -96,19 +89,15 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
 
       final docRef = query.docs.first.reference;
 
-      // 5. Build the update package
       Map<String, dynamic> updates = {};
       if (newPhone.isNotEmpty) updates['pNum'] = newPhone;
       if (newEmail.isNotEmpty) updates['email'] = newEmail;
 
-      // 6. Push to Firebase
       await docRef.update(updates);
 
-      // 7. Update SharedPreferences so the app remembers the new info locally
       if (newPhone.isNotEmpty) await prefs.setString('pNum', newPhone);
       if (newEmail.isNotEmpty) await prefs.setString('email', newEmail);
 
-      // 8. Success Feedback
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -133,6 +122,10 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Grab screen dimensions for perfect proportions
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
     return Scaffold(
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
@@ -148,15 +141,30 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
         ),
         child: SafeArea(
           bottom: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 150),
+          child: Padding(
+            // Dynamic padding applied to the entire screen layout
+            padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.02),
             child: Column(
               children: [
+                // 1. HEADER IS OUTSIDE THE SCROLL VIEW (Fixed at top)
                 _buildHeader(),
-                const SizedBox(height: 30),
-                _buildFormCard(),
-                const SizedBox(height: 40),
-                _buildUpdateButton(),
+                SizedBox(height: sh * 0.03),
+
+                // 2. ONLY THE CONTENT BELOW THE HEADER IS SCROLLABLE
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    // Padding at the bottom so content doesn't get hidden behind the floating button
+                    padding: EdgeInsets.only(bottom: sh * 0.15),
+                    child: Column(
+                      children: [
+                        _buildFormCard(sw),
+                        SizedBox(height: sh * 0.04),
+                        _buildUpdateButton(sw),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -192,10 +200,11 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     );
   }
 
-  Widget _buildFormCard() {
+  Widget _buildFormCard(double sw) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      // Dynamic internal padding
+      padding: EdgeInsets.all(sw * 0.06),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(24),
@@ -277,9 +286,10 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     );
   }
 
-  Widget _buildUpdateButton() {
+  Widget _buildUpdateButton(double sw) {
     return SizedBox(
-      width: 200,
+      // Responsive button width so it doesn't overflow small screens
+      width: sw * 0.5 > 200 ? 200 : sw * 0.5,
       height: 50,
       child: OutlinedButton(
         onPressed: _isLoading ? null : _updateContactInfo,
@@ -307,7 +317,6 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     );
   }
 
-  // --- GLOWING HOME FAB ---
   Widget _buildHomeFab() {
     return Container(
       height: 72,
@@ -339,7 +348,6 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     );
   }
 
-  // --- BOTTOM NAVIGATION BAR ---
   Widget _buildBottomBar() {
     return Container(
       decoration: BoxDecoration(
@@ -404,13 +412,18 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
             color: sel ? _mainPurple : Colors.grey.shade500,
           ),
           const SizedBox(height: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: MobileAppFonts.body,
-              fontSize: 12,
-              color: sel ? _mainPurple : Colors.grey.shade600,
-              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+          // Added Flexible to protect nav labels from overflowing
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: MobileAppFonts.body,
+                fontSize: 12,
+                color: sel ? _mainPurple : Colors.grey.shade600,
+                fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+              ),
             ),
           ),
         ],

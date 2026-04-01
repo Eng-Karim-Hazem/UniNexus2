@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -22,7 +21,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
   String? _selectedQA;
   String? _selectedAnnouncements;
 
-  bool _isLoading = false; // To show a loading spinner on the button
+  bool _isLoading = false;
 
   final List<String> _alertModes = ['Sound', 'Vibrate', 'Silent', 'Priority'];
 
@@ -39,12 +38,10 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     _loadSavedSettings();
   }
 
-  // --- 1. LOAD SAVED SETTINGS WHEN SCREEN OPENS ---
   Future<void> _loadSavedSettings() async {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
       setState(() {
-        // Fetch saved settings, or leave null if they haven't set them yet
         _selectedGeneral = prefs.getString('notif_general');
         _selectedQA = prefs.getString('notif_qa');
         _selectedAnnouncements = prefs.getString('notif_announcements');
@@ -52,9 +49,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     }
   }
 
-  // --- 2. SAVE SETTINGS TO FIREBASE AND LOCAL STORAGE ---
   Future<void> _saveSettings() async {
-    // Make sure they actually selected something before updating
     if (_selectedGeneral == null && _selectedQA == null && _selectedAnnouncements == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please make a selection to update.", style: TextStyle(fontFamily: MobileAppFonts.body))),
@@ -70,7 +65,6 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
       if (userId.isEmpty) throw Exception("User ID not found.");
 
-      // Find which collection this user belongs to
       String targetCollection = 'students';
       final prefix = userId.toUpperCase();
 
@@ -80,7 +74,6 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         targetCollection = 'students';
       }
 
-      // Query their exact document
       final query = await FirebaseFirestore.instance
           .collection(targetCollection)
           .where('ID', isEqualTo: prefix)
@@ -91,18 +84,15 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
       final docRef = query.docs.first.reference;
 
-      // Group the settings neatly into a Map for Firebase
       Map<String, dynamic> notifSettings = {};
       if (_selectedGeneral != null) notifSettings['general'] = _selectedGeneral;
       if (_selectedQA != null) notifSettings['qa'] = _selectedQA;
       if (_selectedAnnouncements != null) notifSettings['announcements'] = _selectedAnnouncements;
 
-      // Push to Firebase (Saving it cleanly inside a 'notification_settings' object)
       await docRef.update({
         'notification_settings': notifSettings
       });
 
-      // Save locally so the app remembers instantly
       if (_selectedGeneral != null) await prefs.setString('notif_general', _selectedGeneral!);
       if (_selectedQA != null) await prefs.setString('notif_qa', _selectedQA!);
       if (_selectedAnnouncements != null) await prefs.setString('notif_announcements', _selectedAnnouncements!);
@@ -141,6 +131,10 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Grab screen dimensions for perfect proportions
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
     return Scaffold(
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
@@ -156,15 +150,30 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         ),
         child: SafeArea(
           bottom: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 150),
+          child: Padding(
+            // Dynamic padding applied to the entire screen layout
+            padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.02),
             child: Column(
               children: [
+                // 1. HEADER IS OUTSIDE THE SCROLL VIEW (Fixed at top)
                 _buildHeader(),
-                const SizedBox(height: 30),
-                _buildFormCard(),
-                const SizedBox(height: 40),
-                _buildUpdateButton(),
+                SizedBox(height: sh * 0.03),
+
+                // 2. ONLY THE CONTENT BELOW THE HEADER IS SCROLLABLE
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    // Padding at the bottom so content doesn't get hidden behind the floating button
+                    padding: EdgeInsets.only(bottom: sh * 0.15),
+                    child: Column(
+                      children: [
+                        _buildFormCard(sw),
+                        SizedBox(height: sh * 0.04),
+                        _buildUpdateButton(sw),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -200,10 +209,11 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     );
   }
 
-  Widget _buildFormCard() {
+  Widget _buildFormCard(double sw) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      // Dynamic internal padding
+      padding: EdgeInsets.all(sw * 0.06),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(24),
@@ -311,12 +321,12 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     );
   }
 
-  Widget _buildUpdateButton() {
+  Widget _buildUpdateButton(double sw) {
     return SizedBox(
-      width: 200,
+      // Responsive button width so it doesn't overflow small screens
+      width: sw * 0.5 > 200 ? 200 : sw * 0.5,
       height: 50,
       child: OutlinedButton(
-        // Hook up the button to our new Firebase function!
         onPressed: _isLoading ? null : _saveSettings,
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: _mainPurple, width: 1.5),
@@ -338,7 +348,6 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     );
   }
 
-  // --- GLOWING HOME FAB ---
   Widget _buildHomeFab() {
     return Container(
       height: 72,
@@ -370,7 +379,6 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     );
   }
 
-  // --- BOTTOM NAVIGATION BAR ---
   Widget _buildBottomBar() {
     return Container(
       decoration: BoxDecoration(
@@ -435,13 +443,18 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
             color: sel ? _mainPurple : Colors.grey.shade500,
           ),
           const SizedBox(height: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: MobileAppFonts.body,
-              fontSize: 12,
-              color: sel ? _mainPurple : Colors.grey.shade600,
-              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+          // Flexible added here to prevent horizontal layout explosions!
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: MobileAppFonts.body,
+                fontSize: 12,
+                color: sel ? _mainPurple : Colors.grey.shade600,
+                fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+              ),
             ),
           ),
         ],

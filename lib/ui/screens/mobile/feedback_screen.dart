@@ -20,7 +20,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   int _rating = 4; // Default rating
   bool _isLoading = false; // To manage the loading state
 
-  // No specific index highlighted
   final int _selectedIndex = -1;
 
   final Color _mainPurple = const Color(0xFF7B61FF);
@@ -43,23 +42,20 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // 1. Fetch user data to attach to the feedback
       final prefs = await SharedPreferences.getInstance();
       final String userId = prefs.getString('ID') ?? 'Unknown ID';
       final String fName = prefs.getString('fName') ?? '';
       final String lName = prefs.getString('lName') ?? '';
       final String fullName = '$fName $lName'.trim();
 
-      // 2. Send the data to the (newly auto-created) 'Feedback' collection
       await FirebaseFirestore.instance.collection('Feedback').add({
         'userId': userId,
         'userName': fullName.isEmpty ? 'Unknown User' : fullName,
         'rating': _rating,
         'message': feedbackText,
-        'timestamp': FieldValue.serverTimestamp(), // Records the exact time!
+        'timestamp': FieldValue.serverTimestamp(),
       });
 
-      // 3. Show success message and clear the form
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -69,7 +65,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         );
         _feedbackController.clear();
         setState(() {
-          _rating = 4; // Reset stars to default
+          _rating = 4;
         });
       }
     } catch (e) {
@@ -97,6 +93,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Grab screen dimensions for perfect proportions
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
     return Scaffold(
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
@@ -112,15 +112,30 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         ),
         child: SafeArea(
           bottom: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 150),
+          child: Padding(
+            // Dynamic padding applied to the entire screen layout
+            padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.02),
             child: Column(
               children: [
+                // 1. HEADER IS OUTSIDE THE SCROLL VIEW (Fixed at top)
                 _buildHeader(),
-                const SizedBox(height: 30),
-                _buildFormCard(),
-                const SizedBox(height: 40),
-                _buildSubmitButton(),
+                SizedBox(height: sh * 0.03),
+
+                // 2. ONLY THE CONTENT BELOW THE HEADER IS SCROLLABLE
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    // Padding at the bottom so content doesn't get hidden behind the floating button
+                    padding: EdgeInsets.only(bottom: sh * 0.15),
+                    child: Column(
+                      children: [
+                        _buildFormCard(sw),
+                        SizedBox(height: sh * 0.04),
+                        _buildSubmitButton(sw),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -133,7 +148,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Back Button
         GestureDetector(
           onTap: () => Navigator.pop(context),
           child: Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: _mainPurple),
@@ -157,10 +171,11 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     );
   }
 
-  Widget _buildFormCard() {
+  Widget _buildFormCard(double sw) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      // Dynamic internal padding
+      padding: EdgeInsets.all(sw * 0.06),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(24),
@@ -262,12 +277,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     );
   }
 
-  Widget _buildSubmitButton() {
+  Widget _buildSubmitButton(double sw) {
     return SizedBox(
-      width: 200,
+      // Responsive button width so it doesn't overflow small screens
+      width: sw * 0.5 > 200 ? 200 : sw * 0.5,
       height: 50,
       child: OutlinedButton(
-        // Hooked up the button to the new Firebase function!
         onPressed: _isLoading ? null : _submitFeedback,
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: _mainPurple, width: 1.5),
@@ -289,7 +304,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     );
   }
 
-  // --- GLOWING HOME FAB ---
   Widget _buildHomeFab() {
     return Container(
       height: 72,
@@ -321,7 +335,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     );
   }
 
-  // --- BOTTOM NAVIGATION BAR ---
   Widget _buildBottomBar() {
     return Container(
       decoration: BoxDecoration(
@@ -386,13 +399,18 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             color: sel ? _mainPurple : Colors.grey.shade500,
           ),
           const SizedBox(height: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: MobileAppFonts.body,
-              fontSize: 12,
-              color: sel ? _mainPurple : Colors.grey.shade600,
-              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+          // Flexible added here to protect nav labels from overflowing
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: MobileAppFonts.body,
+                fontSize: 12,
+                color: sel ? _mainPurple : Colors.grey.shade600,
+                fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+              ),
             ),
           ),
         ],
