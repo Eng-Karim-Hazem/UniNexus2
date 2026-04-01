@@ -16,7 +16,7 @@ class ITHallErrorScreen extends StatefulWidget {
 }
 
 class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
-  int _selectedIndex = 0;
+  String? _selectedDocId;
   String _selectedDepartment = 'All';
   final List<String> _departments = ['All', 'IT', 'Storage', 'Maintenance'];
 
@@ -38,81 +38,92 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
             const SizedBox(height: 45),
 
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('HallErrors')
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const LoadingState(); // Assuming this is defined in your theme
-                  }
-
-                  List<QueryDocumentSnapshot> docs = snapshot.data?.docs ?? [];
-
-                  // Filter by department
-                  if (_selectedDepartment != 'All') {
-                    docs = docs.where((doc) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      return (data['department']?.toString().toLowerCase() ?? '') ==
-                          _selectedDepartment.toLowerCase();
-                    }).toList();
-                  }
-
-                  // Sort: pending first, then by date
-                  docs.sort((a, b) {
-                    final dataA = a.data() as Map<String, dynamic>;
-                    final dataB = b.data() as Map<String, dynamic>;
-                    final bool isFixedA = (dataA['status']?.toString().toLowerCase() ?? 'pending') == 'fixed';
-                    final bool isFixedB = (dataB['status']?.toString().toLowerCase() ?? 'pending') == 'fixed';
-                    if (isFixedA != isFixedB) return isFixedA ? 1 : -1;
-                    final Timestamp? timeA = dataA['timestamp'] as Timestamp?;
-                    final Timestamp? timeB = dataB['timestamp'] as Timestamp?;
-                    return (timeB ?? Timestamp.now()).compareTo(timeA ?? Timestamp.now());
-                  });
-
-                  if (_selectedIndex >= docs.length) _selectedIndex = 0;
-
-                  final bool hasData = docs.isNotEmpty;
-                  final Map<String, dynamic>? selectedData = hasData
-                      ? docs[_selectedIndex].data() as Map<String, dynamic>
-                      : null;
-
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Left panel - Error list
-                      Expanded(
-                        flex: 45,
-                        child: GlassCard(
-                          padding: const EdgeInsets.all(12),
-                          child: hasData
-                              ? ListView.builder(
-                            padding: EdgeInsets.zero,
-                            itemCount: docs.length,
-                            itemBuilder: (context, index) => _buildErrorItem(docs[index], index),
-                          )
-                              : _buildEmptyPlaceholder("No issues reported"),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-
-                      // Right panel - Error details
-                      Expanded(
-                        flex: 55,
-                        child: GlassCard(
-                          padding: const EdgeInsets.all(24),
-                          child: hasData && selectedData != null
-                              ? _buildDetailsContent(docs[_selectedIndex], selectedData)
-                              : _buildEmptyPlaceholder("Select an error to view details"),
-                        ),
-                      ),
-                    ],
-                  );
-                },
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Left panel - Error list (independent stream)
+                  Expanded(
+                    flex: 45,
+                    child: _buildErrorsListPanel(),
+                  ),
+                  const SizedBox(width: 16),
+                  // Right panel - Error details (independent stream)
+                  Expanded(
+                    flex: 55,
+                    child: GlassCard(
+                      padding: const EdgeInsets.all(24),
+                      child: _selectedDocId != null
+                          ? _buildDetailsPanel(_selectedDocId!)
+                          : _buildEmptyPlaceholder("Select an error to view details"),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildErrorsListPanel() {
+    return GlassCard(
+      padding: const EdgeInsets.all(12),
+      child: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('HallErrors').snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const LoadingState();
+          }
+
+          List<QueryDocumentSnapshot> docs = snapshot.data?.docs ?? [];
+
+          if (_selectedDepartment != 'All') {
+            docs = docs.where((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              return (data['department']?.toString().toLowerCase() ?? '') ==
+                  _selectedDepartment.toLowerCase();
+            }).toList();
+          }
+
+          docs.sort((a, b) {
+            final dataA = a.data() as Map<String, dynamic>;
+            final dataB = b.data() as Map<String, dynamic>;
+            final bool isFixedA =
+                (dataA['status']?.toString().toLowerCase() ?? 'pending') ==
+                    'fixed';
+            final bool isFixedB =
+                (dataB['status']?.toString().toLowerCase() ?? 'pending') ==
+                    'fixed';
+            if (isFixedA != isFixedB) return isFixedA ? 1 : -1;
+            final Timestamp? timeA = dataA['timestamp'] as Timestamp?;
+            final Timestamp? timeB = dataB['timestamp'] as Timestamp?;
+            return (timeB ?? Timestamp.now()).compareTo(timeA ?? Timestamp.now());
+          });
+
+          if (docs.isEmpty) {
+            if (_selectedDocId != null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) setState(() => _selectedDocId = null);
+              });
+            }
+            return _buildEmptyPlaceholder("No issues reported");
+          }
+
+          final hasSelected = _selectedDocId != null &&
+              docs.any((d) => d.id == _selectedDocId);
+          if (!hasSelected) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() => _selectedDocId = docs.first.id);
+            });
+          }
+
+          return ListView.builder(
+            padding: EdgeInsets.zero,
+            itemCount: docs.length,
+            itemBuilder: (context, index) => _buildErrorItem(docs[index]),
+          );
+        },
       ),
     );
   }
@@ -135,14 +146,14 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
   }
 
   // Error item in list
-  Widget _buildErrorItem(QueryDocumentSnapshot doc, int index) {
+  Widget _buildErrorItem(QueryDocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    final bool isSelected = _selectedIndex == index;
+    final bool isSelected = _selectedDocId == doc.id;
     final String status = (data['status']?.toString().toLowerCase() ?? 'pending');
     final bool isFixed = status == 'fixed';
 
     return GestureDetector(
-      onTap: () => setState(() => _selectedIndex = index),
+      onTap: () => setState(() => _selectedDocId = doc.id),
       child: Opacity(
         opacity: isFixed ? 0.6 : 1.0,
         child: Container(
@@ -178,8 +189,33 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
     );
   }
 
+  Widget _buildDetailsPanel(String docId) {
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('HallErrors')
+          .doc(docId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return _buildEmptyPlaceholder("Select an error to view details");
+        }
+
+        final data = snapshot.data!.data()!;
+        final docRef = snapshot.data!.reference;
+        return _buildDetailsContent(docRef, data);
+      },
+    );
+  }
+
   // Details content for selected error
-  Widget _buildDetailsContent(QueryDocumentSnapshot doc, Map<String, dynamic> data) {
+  Widget _buildDetailsContent(
+      DocumentReference<Map<String, dynamic>> docRef,
+      Map<String, dynamic> data,
+      ) {
     final String status = data['status']?.toString().toLowerCase() ?? 'pending';
     final String hallName = data['hallName'] ?? 'Unknown Hall';
 
@@ -222,7 +258,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                     onTap: () async {
                       try {
                         // 1. Update the error status
-                        await doc.reference.update({'status': 'in repair'});
+                        await docRef.update({'status': 'in repair'});
 
                         // 2. THE FIX: Push the log through the unified service
                         await ITLogService.logAction('Marked $hallName issue as In Repair');
@@ -245,7 +281,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                     onTap: () async {
                       try {
                         // 1. Update the error status
-                        await doc.reference.update({'status': 'fixed'});
+                        await docRef.update({'status': 'fixed'});
 
                         // 2. THE FIX: Push the log through the unified service
                         await ITLogService.logAction('Resolved issue in $hallName');
@@ -293,7 +329,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
           child: GestureDetector(
             onTap: () => setState(() {
               _selectedDepartment = dept;
-              _selectedIndex = 0;
+              _selectedDocId = null;
             }),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

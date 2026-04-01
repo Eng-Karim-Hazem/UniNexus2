@@ -21,8 +21,8 @@ class ITSidebar extends StatelessWidget {
   // NAVIGATION ITEMS
   static const _items = [
     ('assets/images/home_tab.png',       'Dashboard',   UninexusTab.dashboard),
-    ('assets/images/QR_Icon.png',        'ID',          UninexusTab.id),
-    ('assets/icons/Hall_Error',      'Hall Errors', UninexusTab.hallErrors),
+    ('assets/icons/QR_Icon.png',         'ID',          UninexusTab.id),
+    ('assets/icons/Hall_Error.png',      'Hall Errors', UninexusTab.hallErrors),
     ('assets/images/request_tab.png',    'Requests',    UninexusTab.requests),
     ('assets/images/profile_tab.png',    'Profile',     UninexusTab.profile),
     ('assets/images/settings_tab.png',   'Settings',    UninexusTab.settings),
@@ -119,7 +119,13 @@ class ITSidebar extends StatelessWidget {
               clipBehavior: Clip.none,
               children: [
                 // Base Icon
-                Image.asset(iconPath, width: 45, height: 45),
+                Image.asset(
+                  iconPath,
+                  width: 45,
+                  height: 45,
+                  errorBuilder: (_, __, ___) =>
+                  const Icon(Icons.circle, size: 40, color: Colors.white),
+                ),
 
                 // The Glowing Green Dot
                 if ((tab == UninexusTab.hallErrors && hasActiveHallErrors) ||

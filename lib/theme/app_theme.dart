@@ -1855,7 +1855,7 @@ class AppEntryRow extends StatelessWidget {
           children: [
             if (showAvatar)
               Image.asset(
-                'assets/images/Individual.png',
+                'assets/icons/Individual.png',
                 width: 28,
                 height: 28,
                 errorBuilder: (_, __, ___) => const Icon(

@@ -79,12 +79,17 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final mediaQuery = MediaQuery.of(context);
+    final size = mediaQuery.size;
     final sw = size.width;
     final sh = size.height;
+    final keyboardInset = mediaQuery.viewInsets.bottom;
+    final formWidth = (sw * 0.34).clamp(320.0, 520.0);
+    final logoSize = (sw * 0.11).clamp(84.0, 130.0);
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: false,
       body: Stack(
         clipBehavior: Clip.hardEdge,
         children: [
@@ -118,39 +123,39 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
 
                 /// FORM CONTENT
                 Positioned(
-                  left: sw * 0.10, width: sw * 0.30, top: sh * 0.08, bottom: 0,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        ClipRRect(borderRadius: BorderRadius.circular(16), child: Image.asset('assets/images/uni.jpeg', width: sw * 0.11, height: sw * 0.11, fit: BoxFit.cover)),
-                        const SizedBox(height: 20),
-                        Text('Forgotten Password', style: AppTextStyles.heading.copyWith(fontSize: 26)),
-                        const Text('Enter your details to renew your credentials', style: AppTextStyles.caption),
-                        const SizedBox(height: 35),
-
-                        animatedField(anim: field1Anim, child: AppLabeledField(label: 'Email / ID', controller: _emailController, hint: 'Enter Your Email/ID')),
-                        const SizedBox(height: 12),
-                        animatedField(anim: field2Anim, child: AppLabeledField(label: 'National ID', controller: _nationalIdController, hint: 'Enter Your National ID')),
-                        const SizedBox(height: 12),
-
-                        // New Password Field
-                        animatedField(anim: field3Anim, child: AppLabeledField(label: 'New Password', controller: _newPasswordController, hint: 'Enter Your New Password', obscure: true)),
-                        const SizedBox(height: 12),
-
-                        // Confirm Password Field (Reusing field3Anim so they fade in together)
-                        animatedField(anim: field3Anim, child: AppLabeledField(label: 'Confirm Password', controller: _confirmPasswordController, hint: 'Confirm Your New Password', obscure: true)),
-
-                        const SizedBox(height: 40),
-
-                        animatedField(
-                          anim: checkAnim,
-                          child: _isLoading
-                              ? const CircularProgressIndicator()
-                              : AppAuthButton(text: 'Submit', onTap: _handleSubmit),
+                  left: sw * 0.08, width: formWidth, top: sh * 0.08, bottom: sh * 0.06,
+                  child: Column(
+                    children: [
+                      ClipRRect(borderRadius: BorderRadius.circular(16), child: Image.asset('assets/images/uni.jpeg', width: logoSize, height: logoSize, fit: BoxFit.cover)),
+                      const SizedBox(height: 20),
+                      Text('Forgotten Password', style: AppTextStyles.heading.copyWith(fontSize: 26)),
+                      const Text('Enter your details to renew your credentials', style: AppTextStyles.caption),
+                      const SizedBox(height: 24),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: EdgeInsets.only(bottom: keyboardInset > 0 ? 16 : 0),
+                          child: Column(
+                            children: [
+                              animatedField(anim: field1Anim, child: AppLabeledField(label: 'Email / ID', controller: _emailController, hint: 'Enter Your Email/ID')),
+                              const SizedBox(height: 12),
+                              animatedField(anim: field2Anim, child: AppLabeledField(label: 'National ID', controller: _nationalIdController, hint: 'Enter Your National ID')),
+                              const SizedBox(height: 12),
+                              animatedField(anim: field3Anim, child: AppLabeledField(label: 'New Password', controller: _newPasswordController, hint: 'Enter Your New Password', obscure: true)),
+                              const SizedBox(height: 12),
+                              animatedField(anim: field3Anim, child: AppLabeledField(label: 'Confirm Password', controller: _confirmPasswordController, hint: 'Confirm Your New Password', obscure: true)),
+                              const SizedBox(height: 32),
+                              animatedField(
+                                anim: checkAnim,
+                                child: _isLoading
+                                    ? const CircularProgressIndicator()
+                                    : SizedBox(width: double.infinity, child: AppAuthButton(text: 'Submit', onTap: _handleSubmit)),
+                              ),
+                              const SizedBox(height: 24),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 40),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ],

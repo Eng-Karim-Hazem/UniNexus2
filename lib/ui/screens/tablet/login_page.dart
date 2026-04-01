@@ -118,11 +118,20 @@ class _LoginPageState extends State<LoginPage>
 
       // --- ROUTING LOGIC ---
       if (userCode.startsWith('MN')) {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ITShell()));
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const ITShell()),
+              (route) => false,
+        );
       } else if (userCode.startsWith('SC')) {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SecurityShell()));
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const SecurityShell()),
+              (route) => false,
+        );
       } else if (userCode.startsWith('AD')) {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AdminShell()));
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const AdminShell()),
+              (route) => false,
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -143,12 +152,17 @@ class _LoginPageState extends State<LoginPage>
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final mediaQuery = MediaQuery.of(context);
+    final size = mediaQuery.size;
     final sw = size.width;
     final sh = size.height;
+    final keyboardInset = mediaQuery.viewInsets.bottom;
+    final formWidth = (sw * 0.34).clamp(320.0, 520.0);
+    final logoSize = (sw * 0.12).clamp(88.0, 140.0);
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           /// TOP RIGHT SHAPE
@@ -191,108 +205,108 @@ class _LoginPageState extends State<LoginPage>
 
                 /// CENTERED FORM
                 Positioned(
-                  left: sw * 0.10,
-                  width: sw * 0.30,
+                  left: sw * 0.08,
+                  width: formWidth,
                   top: sh * 0.08,
-                  bottom: 0,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: Image.asset('assets/images/uni.jpeg', width: sw * 0.12, height: sw * 0.12, fit: BoxFit.cover),
-                        ),
-                        SizedBox(height: sh * 0.03),
-                        Text('Log in to UniNexus', style: AppTextStyles.heading.copyWith(fontSize: 26), textAlign: TextAlign.center),
-                        const SizedBox(height: 6),
-                        Text('Access your campus services securely', style: AppTextStyles.caption, textAlign: TextAlign.center),
-                        SizedBox(height: sh * 0.05),
-
-                        /// EMAIL FIELD
-                        animatedField(
-                          anim: field1Anim,
-                          child: AppLabeledField(
-                            label: 'Email / ID',
-                            controller: _emailController,
-                            hint: 'Enter Your Email/ID',
-                          ),
-                        ),
-                        SizedBox(height: sh * 0.03),
-
-                        /// PASSWORD FIELD
-                        animatedField(
-                          anim: field2Anim,
-                          child: AppLabeledField(
-                            label: 'Password',
-                            controller: _passwordController,
-                            hint: 'Enter Your Password',
-                            obscure: true,
-                          ),
-                        ),
-
-                        /// REMEMBER ME (Animated & Unchecked)
-                        animatedField(
-                          anim: field2Anim,
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 12),
-                            child: Row(
-                              children: [
-                                SizedBox(
-                                  height: 24, width: 24,
-                                  child: Checkbox(
-                                    value: _rememberMe,
-                                    activeColor: AppColors.primary,
-                                    side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5), width: 1.5),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                                    onChanged: (val) => setState(() => _rememberMe = val ?? false),
+                  bottom: sh * 0.06,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.asset('assets/images/uni.jpeg', width: logoSize, height: logoSize, fit: BoxFit.cover),
+                      ),
+                      SizedBox(height: sh * 0.025),
+                      Text('Log in to UniNexus', style: AppTextStyles.heading.copyWith(fontSize: 26), textAlign: TextAlign.center),
+                      const SizedBox(height: 6),
+                      Text('Access your campus services securely', style: AppTextStyles.caption, textAlign: TextAlign.center),
+                      SizedBox(height: sh * 0.03),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: EdgeInsets.only(bottom: keyboardInset > 0 ? 16 : 0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              animatedField(
+                                anim: field1Anim,
+                                child: AppLabeledField(
+                                  label: 'Email / ID',
+                                  controller: _emailController,
+                                  hint: 'Enter Your Email/ID',
+                                ),
+                              ),
+                              SizedBox(height: sh * 0.025),
+                              animatedField(
+                                anim: field2Anim,
+                                child: AppLabeledField(
+                                  label: 'Password',
+                                  controller: _passwordController,
+                                  hint: 'Enter Your Password',
+                                  obscure: true,
+                                ),
+                              ),
+                              animatedField(
+                                anim: field2Anim,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 12),
+                                  child: Row(
+                                    children: [
+                                      SizedBox(
+                                        height: 24, width: 24,
+                                        child: Checkbox(
+                                          value: _rememberMe,
+                                          activeColor: AppColors.primary,
+                                          side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5), width: 1.5),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                          onChanged: (val) => setState(() => _rememberMe = val ?? false),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      GestureDetector(
+                                        onTap: () => setState(() => _rememberMe = !_rememberMe),
+                                        child: Text(
+                                            'Remember Me',
+                                            style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w500)
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                GestureDetector(
-                                  onTap: () => setState(() => _rememberMe = !_rememberMe),
-                                  child: Text(
-                                      'Remember Me',
-                                      style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w500)
-                                  ),
+                              ),
+                              SizedBox(height: sh * 0.04),
+                              animatedField(
+                                anim: checkAnim,
+                                child: _isLoading
+                                    ? const Center(child: CircularProgressIndicator())
+                                    : SizedBox(
+                                  width: double.infinity,
+                                  child: AppAuthButton(text: 'Log In', onTap: _handleLogin),
                                 ),
-                              ],
-                            ),
+                              ),
+                              SizedBox(height: sh * 0.03),
+                              Center(
+                                child: GestureDetector(
+                                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordPage())),
+                                  child: Text('Forgot Password?', style: AppTextStyles.caption),
+                                ),
+                              ),
+                              SizedBox(height: sh * 0.015),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text("Don't have an account? ", style: AppTextStyles.caption),
+                                  GestureDetector(
+                                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterPage())),
+                                    child: Text('Register', style: AppTextStyles.caption.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: sh * 0.03),
+                            ],
                           ),
                         ),
-
-                        SizedBox(height: sh * 0.05),
-
-                        /// LOGIN BUTTON
-                        animatedField(
-                          anim: checkAnim,
-                          child: _isLoading
-                              ? const Center(child: CircularProgressIndicator())
-                              : SizedBox(
-                            width: 300,
-                            child: AppAuthButton(text: 'Log In', onTap: _handleLogin),
-                          ),
-                        ),
-
-                        SizedBox(height: sh * 0.04),
-                        GestureDetector(
-                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordPage())),
-                          child: Text('Forgot Password?', style: AppTextStyles.caption),
-                        ),
-                        SizedBox(height: sh * 0.02),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text("Don't have an account? ", style: AppTextStyles.caption),
-                            GestureDetector(
-                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterPage())),
-                              child: Text('Register', style: AppTextStyles.caption.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: sh * 0.05),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ],

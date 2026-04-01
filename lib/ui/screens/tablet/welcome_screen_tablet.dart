@@ -159,7 +159,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
 
           // Left decorative rectangle
           Positioned(
-            left: -sw * 0.33,
+            left: -sw * 0.34,
             top: -sh * 0.12,
             child: SlideTransition(
               position: _leftIntro,
@@ -217,7 +217,7 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                             borderRadius: BorderRadius.circular(22),
                             child: Image.asset(
                               _showGif
-                                  ? 'assets/images/UniNexus.gif'
+                                  ? 'assets/icons/UniNexus.gif'
                                   : 'assets/images/uni.jpeg',
                               width: sw * 0.20,
                               height: sw * 0.20,

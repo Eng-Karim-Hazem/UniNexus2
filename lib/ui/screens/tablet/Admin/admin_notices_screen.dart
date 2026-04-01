@@ -365,7 +365,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
                       children: [
                         Expanded(
                           child: _CategoryButton(
-                            imagePath: 'assets/images/Individual.png',
+                            imagePath: 'assets/icons/Individual.png',
                             label: 'Individual',
                             isActive: _activeCategory == 'Individual',
                             onTap: () => setState(() {

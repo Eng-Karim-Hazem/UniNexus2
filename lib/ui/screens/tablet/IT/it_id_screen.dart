@@ -115,7 +115,7 @@ class _ITIdScreenState extends State<ITIdScreen> {
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: AppDecorations.iconBackground,
-                                child: Image.asset('assets/images/id_card.png',
+                                child: Image.asset('assets/icons/ID_Card.png',
                                     width: 40, height: 40, fit: BoxFit.contain,
                                     errorBuilder: (_, __, ___) => const Icon(
                                         Icons.badge_outlined, size: 40,

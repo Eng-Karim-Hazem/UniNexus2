@@ -130,7 +130,7 @@ class _SecurityIdScreenState extends State<SecurityIdScreen> {
                                 padding: const EdgeInsets.all(14),
                                 decoration: AppDecorations.iconBackground,
                                 child: Image.asset(
-                                  'assets/images/id_card.png',
+                                  'assets/icons/ID_Card.png',
                                   width: 40,
                                   height: 40,
                                   fit: BoxFit.contain,

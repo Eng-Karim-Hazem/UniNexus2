@@ -189,7 +189,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                   borderRadius: BorderRadius.circular(23),
                                   child: Image.asset(
                                     _showGif
-                                        ? 'assets/images/UniNexus.gif'
+                                        ? 'assets/icons/UniNexus.gif'
                                         : 'assets/images/uni.jpeg',
                                     width: sw * 0.55, // Slightly scaled down logo to guarantee fit
                                     height: sw * 0.55,
