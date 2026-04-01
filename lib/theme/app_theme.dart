@@ -740,7 +740,7 @@ class ITScreenBackground extends StatelessWidget {
             right: 0,
             child: IgnorePointer(
               child: Image.asset(
-                'assets/images/background_tab.png',
+                'assets/images/Tablet_Background.png',
                 fit: BoxFit.contain,
               ),
             ),
@@ -1855,7 +1855,7 @@ class AppEntryRow extends StatelessWidget {
           children: [
             if (showAvatar)
               Image.asset(
-                'assets/images/avatar.png',
+                'assets/images/Individual.png',
                 width: 28,
                 height: 28,
                 errorBuilder: (_, __, ___) => const Icon(

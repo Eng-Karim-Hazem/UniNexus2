@@ -90,11 +90,11 @@ class _ITIdScreenState extends State<ITIdScreen> {
                               Column(
                                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                 children: [
-                                  Image.asset('assets/icons/Ellipse 3 (1).png',
+                                  Image.asset('assets/icons/Circle.png',
                                       width: 28, height: 28, fit: BoxFit.contain,
                                       errorBuilder: (_, __, ___) => const Dot()),
                                   const SizedBox(height: 8),
-                                  Image.asset('assets/icons/Rectangle 25 (1).png',
+                                  Image.asset('assets/icons/Rectangle_Small.png',
                                       width: 20, height: 80, fit: BoxFit.fill,
                                       errorBuilder: (_, __, ___) => Container(
                                         width: 4, height: 80,
@@ -104,7 +104,7 @@ class _ITIdScreenState extends State<ITIdScreen> {
                                         ),
                                       )),
                                   const SizedBox(height: 8),
-                                  Image.asset('assets/icons/Ellipse 3 (1).png',
+                                  Image.asset('assets/icons/Circle.png',
                                       width: 28, height: 28, fit: BoxFit.contain,
                                       errorBuilder: (_, __, ___) => const Dot()),
                                 ],

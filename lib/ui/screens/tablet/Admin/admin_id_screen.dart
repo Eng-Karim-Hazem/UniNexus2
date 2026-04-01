@@ -93,7 +93,7 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
                                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                 children: [
                                   Image.asset(
-                                    'assets/icons/Ellipse 3 (1).png',
+                                    'assets/icons/Circle.png',
                                     width: 28,
                                     height: 28,
                                     fit: BoxFit.contain,
@@ -101,7 +101,7 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   Image.asset(
-                                    'assets/icons/Rectangle 25 (1).png',
+                                    'assets/icons/Rectangle_Small.png',
                                     width: 20,
                                     height: 80,
                                     fit: BoxFit.fill,
@@ -116,7 +116,7 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   Image.asset(
-                                    'assets/icons/Ellipse 3 (1).png',
+                                    'assets/icons/Circle.png',
                                     width: 28,
                                     height: 28,
                                     fit: BoxFit.contain,

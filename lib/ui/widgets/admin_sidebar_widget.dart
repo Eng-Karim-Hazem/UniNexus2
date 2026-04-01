@@ -13,12 +13,12 @@ class AdminSidebar extends StatelessWidget {
 
   // NAVIGATION ITEMS
   static const _items = [
-    ('assets/icons/home.png',       'Dashboard',   AdminTab.dashboard),
-    ('assets/icons/qr_code.png',    'ID',          AdminTab.id),
-    ('assets/icons/alert1.png',      'Notices',    AdminTab.notices),
-    ('assets/icons/request.png',    'Requests',    AdminTab.requests),
-    ('assets/icons/user_white.png', 'Profile',     AdminTab.profile),
-    ('assets/icons/settings.png',   'Settings',    AdminTab.settings),
+    ('assets/icons/Home.png',       'Dashboard',   AdminTab.dashboard),
+    ('assets/icons/QR_Icon.png',    'ID',          AdminTab.id),
+    ('assets/icons/Notices.png',      'Notices',    AdminTab.notices),
+    ('assets/icons/Request.png',    'Requests',    AdminTab.requests),
+    ('assets/icons/Profile_White.png', 'Profile',     AdminTab.profile),
+    ('assets/icons/Settings.png',   'Settings',    AdminTab.settings),
   ];
 
   @override

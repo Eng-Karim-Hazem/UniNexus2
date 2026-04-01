@@ -189,7 +189,7 @@ class _SecurityProfileScreenState extends State<SecurityProfileScreen> {
     return Padding(
       padding: const EdgeInsets.all(12.0),
       child: Image.asset(
-        'assets/icons/user_purple.png',
+        'assets/icons/Profile_Purple.png',
         fit: BoxFit.contain,
       ),
     );

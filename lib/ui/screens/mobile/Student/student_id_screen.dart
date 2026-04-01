@@ -67,7 +67,7 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
           height: double.infinity,
           decoration: const BoxDecoration(
             image: DecorationImage(
-              image: AssetImage('assets/images/background.png'),
+              image: AssetImage('assets/images/Phone_Background.png'),
               fit: BoxFit.cover,
             ),
           ),

@@ -15,7 +15,7 @@ class SecuritySidebar extends StatelessWidget {
   /// SECURITY NAVIGATION ITEMS
   static const _items = [
     ('assets/images/home_tab.png',     'Dashboard',  UninexusTab.dashboard),
-    ('assets/images/qr_code.png',      'ID',         UninexusTab.id),
+    ('assets/images/QR_Icon.png',      'ID',         UninexusTab.id),
     ('assets/images/gate_entry.png',   'Gate Entry', UninexusTab.requests),
     ('assets/images/lookup.png',    'ID Look Up', UninexusTab.logs),
     ('assets/images/profile_tab.png',  'Profile',    UninexusTab.profile),

@@ -51,7 +51,7 @@ class _RequestSubmittedPageState extends State<RequestSubmittedPage>
               child: SlideTransition(
                 position: Tween<Offset>(begin: const Offset(-0.3, -0.3), end: Offset.zero)
                     .animate(CurvedAnimation(parent: pageAnimController, curve: Curves.easeOutCubic)),
-                child: Image.asset('assets/images_tab/rectangle_left.png',
+                child: Image.asset('assets/images/Rectangle.png',
                     width: sw * 0.50, height: sw * 0.60, fit: BoxFit.contain),
               ),
             ),
@@ -65,7 +65,7 @@ class _RequestSubmittedPageState extends State<RequestSubmittedPage>
               child: SlideTransition(
                 position: Tween<Offset>(begin: const Offset(0.3, 0.3), end: Offset.zero)
                     .animate(CurvedAnimation(parent: pageAnimController, curve: Curves.easeOutCubic)),
-                child: Image.asset('assets/images_tab/rectangle_right.png',
+                child: Image.asset('assets/images/Rectangle.png',
                     width: sw * 0.55, height: sw * 0.65, fit: BoxFit.contain),
               ),
             ),

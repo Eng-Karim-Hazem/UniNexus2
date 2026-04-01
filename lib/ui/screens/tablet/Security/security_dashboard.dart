@@ -288,7 +288,7 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
           decoration: AppDecorations.smallCard(),
           child: Row(
             children: [
-              Image.asset('assets/images/avatar.png', width: 46, height: 46,
+              Image.asset('assets/images/Individual.png', width: 46, height: 46,
                   errorBuilder: (_, __, ___) => const Icon(Icons.person, size: 46, color: AppColors.primary)),
               const SizedBox(width: 70),
               Text("$count Gate entries today", style: AppTextStyles.gateEntriesCountStyle),

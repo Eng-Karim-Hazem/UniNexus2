@@ -203,7 +203,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
   Widget _buildFallbackIcon() {
     return Padding(
       padding: const EdgeInsets.all(12.0),
-      child: Image.asset('assets/icons/user_purple.png', fit: BoxFit.contain),
+      child: Image.asset('assets/icons/Profile_Purple.png', fit: BoxFit.contain),
     );
   }
 

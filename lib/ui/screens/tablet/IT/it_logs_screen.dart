@@ -75,7 +75,7 @@ class ITLogsScreen extends StatelessWidget {
                           child: Row(
                             children: [
                               Image.asset(
-                                'assets/icons/restore.png',
+                                'assets/icons/History.png',
                                 width: 24, height: 24,
                                 color: AppColors.primary.withValues(alpha: 0.7),
                                 errorBuilder: (_, __, ___) => const Icon(

@@ -116,7 +116,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
         height: double.infinity,
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/background.png'),
+            image: AssetImage('assets/images/Phone_Background.png'),
             fit: BoxFit.cover,
           ),
         ),
@@ -393,7 +393,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
         shape: const CircleBorder(),
         child: Container(
           decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
-          child: Center(child: Image.asset('assets/images/qr_code.png', width: 38, height: 38, color: Colors.white)),
+          child: Center(child: Image.asset('assets/images/QR_Icon.png', width: 38, height: 38, color: Colors.white)),
         ),
       ),
     );

@@ -392,7 +392,7 @@ class _LogRow extends StatelessWidget {
       decoration: AppDecorations.smallCard(),
       child: Row(
         children: [
-          Image.asset('assets/icons/restore.png', width: 26, height: 26,
+          Image.asset('assets/icons/History.png', width: 26, height: 26,
               errorBuilder: (_, __, ___) =>
               const Icon(Icons.history, size: 26, color: AppColors.primary)),
           const SizedBox(width: 12),
@@ -422,7 +422,7 @@ class _AnnouncementCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Image.asset('assets/icons/bell_outline.png', width: 26, height: 26,
+          Image.asset('assets/icons/Alarm.png', width: 26, height: 26,
               errorBuilder: (_, __, ___) =>
               const Icon(Icons.notifications_outlined, size: 26, color: AppColors.primary)),
           const SizedBox(width: 12),

@@ -35,12 +35,12 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
   bool _isBusy = false;
 
   static const List<Map<String, String>> _items = [
-    {'icon': 'assets/icons/information.png', 'label': 'Account management'},
-    {'icon': 'assets/icons/notify.png',      'label': 'Notification settings'},
-    {'icon': 'assets/icons/export.png',      'label': 'Logs'}, // Changed label
-    {'icon': 'assets/icons/review.png',      'label': 'Feedback'},
-    {'icon': 'assets/icons/merge.png',       'label': 'App Information'},
-    {'icon': 'assets/icons/logout.png',      'label': 'Logout'},
+    {'icon': 'assets/icons/Information.png', 'label': 'Account management'},
+    {'icon': 'assets/icons/Alarm_1.png',      'label': 'Notification settings'},
+    {'icon': 'assets/icons/Export.png',      'label': 'Logs'}, // Changed label
+    {'icon': 'assets/icons/Review.png',      'label': 'Feedback'},
+    {'icon': 'assets/icons/About.png',       'label': 'App Information'},
+    {'icon': 'assets/icons/Logout.png',      'label': 'Logout'},
   ];
 
   @override

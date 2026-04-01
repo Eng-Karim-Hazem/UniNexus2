@@ -21,8 +21,8 @@ class ITSidebar extends StatelessWidget {
   // NAVIGATION ITEMS
   static const _items = [
     ('assets/images/home_tab.png',       'Dashboard',   UninexusTab.dashboard),
-    ('assets/images/qr_code.png',        'ID',          UninexusTab.id),
-    ('assets/images/error_tab.png',      'Hall Errors', UninexusTab.hallErrors),
+    ('assets/images/QR_Icon.png',        'ID',          UninexusTab.id),
+    ('assets/icons/Hall_Error',      'Hall Errors', UninexusTab.hallErrors),
     ('assets/images/request_tab.png',    'Requests',    UninexusTab.requests),
     ('assets/images/profile_tab.png',    'Profile',     UninexusTab.profile),
     ('assets/images/settings_tab.png',   'Settings',    UninexusTab.settings),

@@ -152,7 +152,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         height: double.infinity,
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/background.png'),
+            image: AssetImage('assets/images/Phone_Background.png'),
             fit: BoxFit.cover,
           ),
         ),
@@ -382,7 +382,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
       child: FloatingActionButton(
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const FacultyIDScreen())),
         elevation: 0, backgroundColor: Colors.transparent, shape: const CircleBorder(),
-        child: Container(decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient), child: Padding(padding: const EdgeInsets.all(18.0), child: Image.asset('assets/images/qr_code.png', color: Colors.white))),
+        child: Container(decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient), child: Padding(padding: const EdgeInsets.all(18.0), child: Image.asset('assets/images/QR_Icon.png', color: Colors.white))),
       ),
     );
   }

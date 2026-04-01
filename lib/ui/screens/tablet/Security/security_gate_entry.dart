@@ -202,7 +202,7 @@ class _UserDataPanel extends StatelessWidget {
         Row(
           children: [
             Image.asset(
-              'assets/images/avatar.png',
+              'assets/images/Individual.png',
               width: 40, height: 40,
               errorBuilder: (_, __, ___) => const Icon(Icons.person, color: AppColors.primary, size: 40),
             ),

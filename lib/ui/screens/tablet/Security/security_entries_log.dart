@@ -75,7 +75,7 @@ class GateLogScreen extends StatelessWidget {
                           child: Row(
                             children: [
                               Image.asset(
-                                'assets/images/avatar.png',
+                                'assets/images/Individual.png',
                                 width: 32, height: 32,
                                 errorBuilder: (_, __, ___) => const Icon(Icons.person, color: AppColors.primary, size: 32),
                               ),
