@@ -393,7 +393,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
         shape: const CircleBorder(),
         child: Container(
           decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
-          child: Center(child: Image.asset('assets/images/QR_Icon.png', width: 38, height: 38, color: Colors.white)),
+          child: Center(child: Image.asset('assets/icons/QR_Icon.png', width: 38, height: 38, color: Colors.white)),
         ),
       ),
     );

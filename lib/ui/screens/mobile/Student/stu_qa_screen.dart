@@ -78,6 +78,10 @@ class _StuQAScreenState extends State<StuQAScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    // Grab screen dimensions for responsive scaling
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
     return Scaffold(
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
@@ -99,7 +103,8 @@ class _StuQAScreenState extends State<StuQAScreen> {
                 child: Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+                      // Dynamic padding
+                      padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.02),
                       child: _buildTopHeader(),
                     ),
                     Expanded(
@@ -125,7 +130,8 @@ class _StuQAScreenState extends State<StuQAScreen> {
 
                           final qnaList = snapshot.data!;
                           return ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(24, 20, 24, 180),
+                            // Dynamic padding to prevent posts hiding behind bottom bars
+                            padding: EdgeInsets.fromLTRB(sw * 0.06, sh * 0.02, sw * 0.06, sh * 0.18),
                             physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                             itemCount: qnaList.length,
                             itemBuilder: (context, index) => QACardItem(item: qnaList[index], mainPurple: _mainPurple),
@@ -136,7 +142,7 @@ class _StuQAScreenState extends State<StuQAScreen> {
                   ],
                 ),
               ),
-              _buildAddQuestionFab(),
+              _buildAddQuestionFab(sw, sh),
             ],
           ),
         ),
@@ -159,21 +165,26 @@ class _StuQAScreenState extends State<StuQAScreen> {
     );
   }
 
-  Widget _buildAddQuestionFab() {
+  // --- THE FIXED FAB WITH CLAMPING ---
+  Widget _buildAddQuestionFab(double sw, double sh) {
     return Positioned(
-      right: 24,
-      bottom: 130,
+      // Scales vertically, but never dips below 110px (protecting it from the nav bar)
+      bottom: (sh * 0.12).clamp(110.0, 140.0),
+      // Scales horizontally, maintaining edge padding
+      right: (sw * 0.06).clamp(20.0, 35.0),
       child: GestureDetector(
         onTap: () async {
           await Navigator.push(context, MaterialPageRoute(builder: (context) => const QARequestScreen()));
           _loadYearData();
         },
         child: Container(
-          width: 80,
-          height: 80,
+          // Aims for 16% of screen width, but freezes between 55px and 70px to match Figma
+          width: (sw * 0.20).clamp(70.0, 85.0),
+          height: (sw * 0.20).clamp(70.0, 85.0),
           decoration: BoxDecoration(
             color: _mainPurple,
-            borderRadius: BorderRadius.circular(22),
+            // Dynamically curves the edges while maintaining shape
+            borderRadius: BorderRadius.circular((sw * 0.05).clamp(16.0, 24.0)),
             boxShadow: [
               BoxShadow(
                 color: _mainPurple.withValues(alpha: 0.4),
@@ -182,9 +193,17 @@ class _StuQAScreenState extends State<StuQAScreen> {
               )
             ],
           ),
-          child: const Center(
+          child: Center(
               child: Text("?",
-                  style: TextStyle(color: Colors.white, fontSize: 45, fontFamily: MobileAppFonts.heading, fontWeight: FontWeight.bold))),
+                  style: TextStyle(
+                      color: Colors.white,
+                      // Text scales with the button but stays within bounds
+                      fontSize: (sw * 0.12).clamp(35.0, 50.0),
+                      fontFamily: MobileAppFonts.heading,
+                      fontWeight: FontWeight.bold
+                  )
+              )
+          ),
         ),
       ),
     );
@@ -274,13 +293,20 @@ class _StuQAScreenState extends State<StuQAScreen> {
         children: [
           Image.asset(path, width: 28, height: 28, color: sel ? _mainPurple : Colors.grey.shade500),
           const SizedBox(height: 5),
-          Text(label,
-              style: TextStyle(
-                fontFamily: MobileAppFonts.body,
-                fontSize: 12,
-                color: sel ? _mainPurple : Colors.grey.shade600,
-                fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
-              )),
+          // Flexible wrapper added here!
+          Flexible(
+            child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: MobileAppFonts.body,
+                  fontSize: 12,
+                  color: sel ? _mainPurple : Colors.grey.shade600,
+                  fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+                )
+            ),
+          ),
         ],
       ),
     );

@@ -79,7 +79,7 @@ class _StuCommunityState extends State<StuCommunity> {
                 child: Column(
                   children: [
                     _buildTopHeader(),
-                    SizedBox(height: sh * 0.03), // Dynamic spacing
+                    SizedBox(height: sh * 0.03),
 
                     // --- STREAM BUILDER FOR REAL DATA ---
                     Expanded(
@@ -107,8 +107,8 @@ class _StuCommunityState extends State<StuCommunity> {
 
                           return ListView.separated(
                             physics: const BouncingScrollPhysics(),
-                            // Added padding to the bottom of the list so posts don't get hidden behind the FAB
-                            padding: EdgeInsets.only(bottom: sh * 0.15),
+                            // Ensure the bottom post isn't hidden behind the floating button
+                            padding: const EdgeInsets.only(bottom: 180),
                             itemCount: posts.length,
                             separatorBuilder: (_, __) => SizedBox(height: sh * 0.02),
                             itemBuilder: (context, i) => _buildPostCard(posts[i], sw),
@@ -120,25 +120,36 @@ class _StuCommunityState extends State<StuCommunity> {
                 ),
               ),
 
-              // Floating "Create Post" Button dynamically positioned
+              // --- CLAMPED DYNAMIC FAB ---
               Positioned(
-                bottom: sh * 0.14, // dynamically sits above the bottom nav
-                right: sw * 0.06,  // respects screen padding
+                // Scales vertically, but never dips below 110px (protecting it from the nav bar)
+                bottom: (sh * 0.12).clamp(110.0, 140.0),
+                // Scales horizontally, maintaining edge padding
+                right: (sw * 0.06).clamp(20.0, 35.0),
                 child: GestureDetector(
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateCommunityPostScreen())),
                   child: Container(
-                    width: sw * 0.25 > 60 ? sw * 0.25 : 60, // Scales button but prevents it from getting too tiny
-                    height: sw * 0.25 > 60 ? sw * 0.25 : 60,
+                    // Aims for 16% of screen width, but freezes between 55px and 70px
+                    width: (sw * 0.20).clamp(70.0, 85.0),
+                    height: (sw * 0.20).clamp(70.0, 85.0),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [BoxShadow(color: _mainPurple.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8))],
+                      // Dynamically curves the edges while maintaining shape
+                      borderRadius: BorderRadius.circular((sw * 0.05).clamp(16.0, 24.0)),
+                      boxShadow: [
+                        BoxShadow(
+                            color: _mainPurple.withValues(alpha: 0.25),
+                            blurRadius: 15,
+                            offset: const Offset(0, 6)
+                        )
+                      ],
                     ),
                     child: Center(
                       child: Image.asset(
-                        'assets/images/solidarity_1.png',
-                        width: sw * 0.15 > 30 ? sw * 0.15 : 30,
-                        height: sw * 0.15 > 30 ? sw * 0.15 : 30,
+                        'assets/icons/solidarity.png',
+                        // Scales icon perfectly alongside the button bounds
+                        width: (sw * 0.20).clamp(30.0, 50.0),
+                        height: (sw * 0.20).clamp(30.0, 50.0),
                         fit: BoxFit.contain,
                         color: _mainPurple,
                       ),
@@ -185,7 +196,6 @@ class _StuCommunityState extends State<StuCommunity> {
     );
   }
 
-  // --- UPDATED CARD WITH SWIPE TO DELETE ---
   Widget _buildPostCard(CommunityPostModel post, double sw) {
     return Dismissible(
       key: Key(post.id),
@@ -252,13 +262,13 @@ class _StuCommunityState extends State<StuCommunity> {
                         children: [
                           Text(
                               post.title,
-                              maxLines: 1, // Prevent long titles from breaking layout
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 15, fontWeight: FontWeight.bold, color: _primaryBlue)
                           ),
                           Text(
                             "${post.userRole} • ${post.userName}",
-                            maxLines: 1, // Prevent long names from breaking layout
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
                           ),

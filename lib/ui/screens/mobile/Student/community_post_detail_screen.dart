@@ -135,6 +135,10 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Grab screen dimensions for perfect proportions
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
     return Scaffold(
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
@@ -153,19 +157,20 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
           child: Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+                // Dynamic padding applied here
+                padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.02),
                 child: Column(
                   children: [
                     _buildTopHeader(),
-                    const SizedBox(height: 20),
+                    SizedBox(height: sh * 0.02),
                     _buildPostCard(),
-                    const SizedBox(height: 16),
+                    SizedBox(height: sh * 0.02),
                     _buildRepliesSection(),
-                    const SizedBox(height: 100),
+                    SizedBox(height: sh * 0.12), // Dynamic spacing at bottom
                   ],
                 ),
               ),
-              _buildCreatePostFab(),
+              _buildCreatePostFab(sw, sh),
             ],
           ),
         ),
@@ -339,22 +344,41 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
     );
   }
 
-  Widget _buildCreatePostFab() {
+  // --- CLAMPED DYNAMIC FAB ---
+  Widget _buildCreatePostFab(double sw, double sh) {
     return Positioned(
-      bottom: 130,
-      right: 24,
+      // Scales vertically, but never dips below 110px (protecting it from the nav bar)
+      bottom: (sh * 0.12).clamp(110.0, 140.0),
+      // Scales horizontally, maintaining edge padding
+      right: (sw * 0.06).clamp(20.0, 35.0),
       child: GestureDetector(
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateCommunityPostScreen())),
         child: Container(
-          width: 80,
-          height: 80,
+          // Aims for 20% of screen width, but freezes between 70px and 85px to match perfectly
+          width: (sw * 0.20).clamp(70.0, 85.0),
+          height: (sw * 0.20).clamp(70.0, 85.0),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: _mainPurple.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8))],
+            // Dynamically curves the edges while maintaining shape
+            borderRadius: BorderRadius.circular((sw * 0.05).clamp(16.0, 24.0)),
+            boxShadow: [
+              BoxShadow(
+                  color: _mainPurple.withValues(alpha: 0.25),
+                  blurRadius: 15,
+                  offset: const Offset(0, 6)
+              )
+            ],
           ),
           child: Center(
-              child: Image.asset('assets/images/solidarity_1.png', width: 50, height: 50, fit: BoxFit.contain, color: _mainPurple)),
+            child: Image.asset(
+              'assets/images/solidarity_1.png', // Maintained your original icon
+              // Scales icon perfectly alongside the button bounds
+              width: (sw * 0.20).clamp(30.0, 50.0),
+              height: (sw * 0.20).clamp(30.0, 50.0),
+              fit: BoxFit.contain,
+              color: _mainPurple,
+            ),
+          ),
         ),
       ),
     );
@@ -489,13 +513,20 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
         children: [
           Image.asset(path, width: 28, height: 28, color: sel ? _mainPurple : Colors.grey.shade500),
           const SizedBox(height: 5),
-          Text(label,
+          // Flexible applied here to prevent text overflow!
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontFamily: MobileAppFonts.body,
                 fontSize: 12,
                 color: sel ? _mainPurple : Colors.grey.shade600,
                 fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
-              )),
+              ),
+            ),
+          ),
         ],
       ),
     );

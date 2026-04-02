@@ -82,6 +82,10 @@ class _HallsScreenState extends State<HallsScreen> {
     String currentSlotKey = _getCurrentTimeSlot();
     String todayName = DateFormat('EEEE').format(DateTime.now());
 
+    // Grab screen dimensions for perfect proportions
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
     return Scaffold(
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
@@ -99,9 +103,9 @@ class _HallsScreenState extends State<HallsScreen> {
             children: [
               Column(
                 children: [
-                  _buildHeader(),
-                  _buildSearchField(),
-                  const SizedBox(height: 20),
+                  _buildHeader(sw),
+                  _buildSearchField(sw),
+                  SizedBox(height: sh * 0.02),
                   Expanded(
                     child: StreamBuilder<List<HallModel>>(
                       stream: _hallService.streamHallsByToday(),
@@ -123,7 +127,8 @@ class _HallsScreenState extends State<HallsScreen> {
                         if (filteredHalls.isEmpty) return const Center(child: Text("No matches found."));
 
                         return ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(24, 0, 24, 150),
+                          // Dynamic padding to ensure items don't get hidden behind the FAB
+                          padding: EdgeInsets.fromLTRB(sw * 0.06, 0, sw * 0.06, 180),
                           physics: const BouncingScrollPhysics(),
                           itemCount: filteredHalls.length,
                           itemBuilder: (context, index) {
@@ -136,7 +141,7 @@ class _HallsScreenState extends State<HallsScreen> {
                   ),
                 ],
               ),
-              _buildErrorFab(),
+              _buildErrorFab(sw, sh),
             ],
           ),
         ),
@@ -144,9 +149,10 @@ class _HallsScreenState extends State<HallsScreen> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(double sw) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+      // Dynamic padding applied here
+      padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -165,9 +171,10 @@ class _HallsScreenState extends State<HallsScreen> {
     );
   }
 
-  Widget _buildSearchField() {
+  Widget _buildSearchField(double sw) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      // Dynamic padding applied here
+      padding: EdgeInsets.symmetric(horizontal: sw * 0.06),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.9),
@@ -237,23 +244,39 @@ class _HallsScreenState extends State<HallsScreen> {
     );
   }
 
-  Widget _buildErrorFab() {
+  // --- CLAMPED DYNAMIC FAB ---
+  Widget _buildErrorFab(double sw, double sh) {
     return Positioned(
-      bottom: 130,
-      right: 24,
+      // Scales vertically, but never dips below 110px (protecting it from the nav bar)
+      bottom: (sh * 0.12).clamp(110.0, 140.0),
+      // Scales horizontally, maintaining edge padding
+      right: (sw * 0.06).clamp(20.0, 35.0),
       child: GestureDetector(
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const HallErrorScreen())),
         child: Container(
-          width: 80,
-          height: 80,
+          // Aims for 20% of screen width, but freezes between 70px and 85px to match perfectly
+          width: (sw * 0.20).clamp(70.0, 85.0),
+          height: (sw * 0.20).clamp(70.0, 85.0),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            // Dynamically curves the edges while maintaining shape
+            borderRadius: BorderRadius.circular((sw * 0.05).clamp(16.0, 24.0)),
             boxShadow: [
-              BoxShadow(color: _mainPurple.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8))
+              BoxShadow(
+                  color: _mainPurple.withValues(alpha: 0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8)
+              )
             ],
           ),
-          child: Center(child: Icon(Icons.warning_amber_rounded, color: _mainPurple, size: 40)),
+          child: Center(
+              child: Icon(
+                  Icons.warning_amber_rounded,
+                  color: _mainPurple,
+                  // Scales icon perfectly alongside the button bounds
+                  size: (sw * 0.20).clamp(30.0, 50.0)
+              )
+          ),
         ),
       ),
     );
@@ -340,13 +363,20 @@ class _HallsScreenState extends State<HallsScreen> {
         children: [
           Image.asset(iconPath, width: 28, height: 28, color: itemColor),
           const SizedBox(height: 5),
-          Text(label,
-              style: TextStyle(
-                fontFamily: MobileAppFonts.body,
-                fontSize: 12,
-                color: itemColor,
-                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-              )),
+          // Flexible applied here to prevent text overflow!
+          Flexible(
+            child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: MobileAppFonts.body,
+                  fontSize: 12,
+                  color: itemColor,
+                  fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                )
+            ),
+          ),
         ],
       ),
     );
