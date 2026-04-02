@@ -206,7 +206,6 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Grab screen width to make horizontal padding dynamic
     final sw = MediaQuery.of(context).size.width;
 
     return PopScope(
@@ -242,7 +241,6 @@ class _LoginScreenState extends State<LoginScreen>
                       child: Align(
                         alignment: Alignment.topCenter,
                         child: SingleChildScrollView(
-                          // Using dynamic width padding (8% of screen) instead of hardcoded 40
                           padding: EdgeInsets.fromLTRB(sw * 0.08, 25, sw * 0.08, 40),
                           child: ConstrainedBox(
                             constraints: BoxConstraints(
@@ -251,13 +249,14 @@ class _LoginScreenState extends State<LoginScreen>
                             child: IntrinsicHeight(
                               child: Column(
                                 children: [
+                                  // --- UPDATED IMAGE CLIPPING ---
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
                                     child: Image.asset(
                                       "assets/images/uni.jpeg",
                                       width: MobileAppDimensions.heroImageWidth,
-                                      height: constraints.maxHeight * 0.15,
-                                      fit: BoxFit.cover,
+                                      // Removed hardcoded height and switched to BoxFit.contain
+                                      fit: BoxFit.contain,
                                     ),
                                   ),
 
@@ -302,7 +301,6 @@ class _LoginScreenState extends State<LoginScreen>
 
                                   _animatedItem(
                                     anim: _checkAnim,
-                                    // Wrapped the row items in Flexible to prevent horizontal overflow
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
@@ -353,7 +351,6 @@ class _LoginScreenState extends State<LoginScreen>
                                     onTap: _handleLogin,
                                   ),
 
-                                  // Switched from Row to Wrap to prevent horizontal overflow here as well
                                   Wrap(
                                     alignment: WrapAlignment.center,
                                     crossAxisAlignment: WrapCrossAlignment.center,
