@@ -25,7 +25,6 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
     _loadPendingSelection();
   }
 
-  // Load pending request ID from preferences
   Future<void> _loadPendingSelection() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_pendingRequestSelectionKey);
@@ -39,7 +38,6 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
     super.dispose();
   }
 
-  // Format timestamp
   String _formatDate(Timestamp? timestamp) {
     if (timestamp == null) return 'Unknown Date';
     final DateTime date = timestamp.toDate();
@@ -47,16 +45,13 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
         '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
-  // Capitalize string
   String _capitalize(String text) {
     if (text.isEmpty) return text;
     return text[0].toUpperCase() + text.substring(1).toLowerCase();
   }
 
-  // Fetch user details from database
   Future<Map<String, dynamic>?> _fetchUserDetails(String emailOrId, String expectedRole) async {
     if (emailOrId.isEmpty) return null;
-
     final isEmail = emailOrId.contains('@');
     final queryField = isEmail ? 'email' : 'ID';
     final searchValue = isEmail ? emailOrId.toLowerCase() : emailOrId.toUpperCase();
@@ -82,16 +77,12 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
         continue;
       }
     }
-
     return null;
   }
 
-  // Update request status
   Future<void> _updateRequestStatus(DocumentSnapshot doc, String status, {required bool isPasswordRequest}) async {
     try {
       final data = doc.data() as Map<String, dynamic>;
-
-      // For password reset, update user's password in their collection
       if (status == 'accepted' && isPasswordRequest) {
         final newPassword = data['newPassword'];
         final userRole = data['userRole'];
@@ -105,7 +96,6 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
       }
 
       await doc.reference.update({'isProcessed': true, 'status': status});
-
       final userId = data['emailOrId'] ?? data['fullName'] ?? data['name'] ?? 'Unknown User';
       final actionStr = status == 'accepted' ? 'approved' : 'rejected';
       final requestType = isPasswordRequest ? 'Password reset' : 'Registration';
@@ -137,69 +127,37 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: FirebaseFirestore.instance.collection('ForgotPass_request').snapshots(),
                 builder: (context, passSnapshot) {
-                  if (passSnapshot.connectionState == ConnectionState.waiting) {
-                    return const LoadingState();
-                  }
-                  if (passSnapshot.hasError) {
-                    return ErrorState(message: 'Error loading requests: ${passSnapshot.error}');
-                  }
+                  if (passSnapshot.connectionState == ConnectionState.waiting) return const LoadingState();
                   return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                     stream: FirebaseFirestore.instance.collection('registration_requests').snapshots(),
                     builder: (context, regSnapshot) {
-                      if (regSnapshot.connectionState == ConnectionState.waiting) {
-                        return const LoadingState();
-                      }
-                      if (regSnapshot.hasError) {
-                        return ErrorState(message: 'Error loading requests: ${regSnapshot.error}');
-                      }
+                      if (regSnapshot.connectionState == ConnectionState.waiting) return const LoadingState();
 
-                      // Combine both request types
                       final List<Map<String, dynamic>> requestItems = [
-                        ...(passSnapshot.data?.docs ?? const []).map((doc) => {
-                          'id': doc.id,
-                          'doc': doc,
-                          'data': doc.data(),
-                          'kind': 'password',
-                        }),
-                        ...(regSnapshot.data?.docs ?? const []).map((doc) => {
-                          'id': doc.id,
-                          'doc': doc,
-                          'data': doc.data(),
-                          'kind': 'registration',
-                        }),
+                        ...(passSnapshot.data?.docs ?? const []).map((doc) => {'id': doc.id, 'doc': doc, 'data': doc.data(), 'kind': 'password'}),
+                        ...(regSnapshot.data?.docs ?? const []).map((doc) => {'id': doc.id, 'doc': doc, 'data': doc.data(), 'kind': 'registration'}),
                       ];
 
-                      // Sort by date
                       requestItems.sort((a, b) {
-                        final dataA = a['data'] as Map<String, dynamic>;
-                        final dataB = b['data'] as Map<String, dynamic>;
-                        final tsA = (dataA['requestDate'] ?? dataA['date']) as Timestamp?;
-                        final tsB = (dataB['requestDate'] ?? dataB['date']) as Timestamp?;
+                        final tsA = ((a['data'] as Map)['requestDate'] ?? (a['data'] as Map)['date']) as Timestamp?;
+                        final tsB = ((b['data'] as Map)['requestDate'] ?? (b['data'] as Map)['date']) as Timestamp?;
                         if (tsA != null && tsB != null) return tsB.compareTo(tsA);
                         return 0;
                       });
 
-                      if (requestItems.isEmpty) {
-                        return const EmptyState(message: 'No requests found.');
-                      }
+                      if (requestItems.isEmpty) return const EmptyState(message: 'No requests found.');
 
-                      // Handle pending selection
                       if (_pendingRequestId != null && _pendingRequestId!.isNotEmpty) {
                         final idx = requestItems.indexWhere((item) => item['id'] == _pendingRequestId);
-                        if (idx != -1) {
-                          _selectedIndexNotifier.value = idx;
-                        }
+                        if (idx != -1) _selectedIndexNotifier.value = idx;
                         SharedPreferences.getInstance().then((prefs) => prefs.remove(_pendingRequestSelectionKey));
                         _pendingRequestId = null;
-                      }
-
-                      if (_selectedIndexNotifier.value >= requestItems.length) {
-                        _selectedIndexNotifier.value = 0;
                       }
 
                       return ValueListenableBuilder<int>(
                         valueListenable: _selectedIndexNotifier,
                         builder: (context, selectedIndex, _) {
+                          if (selectedIndex >= requestItems.length) return const SizedBox();
                           final selectedItem = requestItems[selectedIndex];
                           final selectedDoc = selectedItem['doc'] as DocumentSnapshot;
                           final selectedData = selectedItem['data'] as Map<String, dynamic>;
@@ -220,16 +178,10 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                                       final item = requestItems[index];
                                       final docData = item['data'] as Map<String, dynamic>;
                                       final isPassword = item['kind'] == 'password';
-                                      final emailOrId = isPassword
-                                          ? (docData['emailOrId'] ?? 'Unknown User')
-                                          : (docData['fullName'] ?? docData['name'] ?? 'Unknown User');
+                                      final emailOrId = isPassword ? (docData['emailOrId'] ?? 'Unknown User') : (docData['fullName'] ?? docData['name'] ?? 'Unknown User');
                                       final reqDate = _formatDate((docData['requestDate'] ?? docData['date']) as Timestamp?);
-
-                                      final statusStr = docData['status']?.toString().toLowerCase() ??
-                                          (docData['isProcessed'] == true ? 'processed' : 'pending');
-                                      final isResolved =
-                                          statusStr == 'accepted' || statusStr == 'rejected' || statusStr == 'processed';
-                                      final isSelected = selectedIndex == index;
+                                      final statusStr = docData['status']?.toString().toLowerCase() ?? (docData['isProcessed'] == true ? 'processed' : 'pending');
+                                      final isResolved = statusStr == 'accepted' || statusStr == 'rejected' || statusStr == 'processed';
 
                                       return GestureDetector(
                                         onTap: () => _selectedIndexNotifier.value = index,
@@ -238,41 +190,18 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                                           child: Container(
                                             margin: const EdgeInsets.only(bottom: 10),
                                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-                                            decoration: AppDecorations.smallCard(isSelected: isSelected),
-                                            child: Row(
-                                              children: [
-                                                StatusBadge(
-                                                  status: isResolved ? statusStr : 'pending',
-                                                  showIcon: true,
-                                                  isCompact: false,
-                                                ),
-                                                const SizedBox(width: 12),
-                                                Container(
-                                                  width: 1.5,
-                                                  height: 38,
-                                                  color: isResolved
-                                                      ? Colors.grey.withValues(alpha: 0.3)
-                                                      : AppColors.primary.withValues(alpha: 0.3),
-                                                ),
-                                                const SizedBox(width: 12),
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Text(
-                                                        isPassword ? emailOrId : '$emailOrId (Registration)',
-                                                        style: AppTextStyles.hallListNumberStyle.copyWith(
-                                                          decoration: isResolved ? TextDecoration.lineThrough : null,
-                                                          color: isResolved ? Colors.grey : null,
-                                                        ),
-                                                      ),
-                                                      const SizedBox(height: 4),
-                                                      Text(reqDate, style: AppTextStyles.caption),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
+                                            decoration: AppDecorations.smallCard(isSelected: selectedIndex == index),
+                                            child: Row(children: [
+                                              StatusBadge(status: isResolved ? statusStr : 'pending', showIcon: true, isCompact: false),
+                                              const SizedBox(width: 12),
+                                              Container(width: 1.5, height: 38, color: isResolved ? Colors.grey.withOpacity(0.3) : AppColors.primary.withOpacity(0.3)),
+                                              const SizedBox(width: 12),
+                                              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                                Text(isPassword ? emailOrId : '$emailOrId (Registration)', style: AppTextStyles.hallListNumberStyle.copyWith(decoration: isResolved ? TextDecoration.lineThrough : null, color: isResolved ? Colors.grey : null)),
+                                                const SizedBox(height: 4),
+                                                Text(reqDate, style: AppTextStyles.caption),
+                                              ])),
+                                            ]),
                                           ),
                                         ),
                                       );
@@ -281,7 +210,7 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                                 ),
                               ),
                               const SizedBox(width: 16),
-                              // Right panel - Request details
+                              // Right panel - Request details (Scrollable)
                               Expanded(
                                 flex: 55,
                                 child: GlassCard(
@@ -290,206 +219,56 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              isPasswordRequest ? Icons.lock_reset_rounded : Icons.how_to_reg_rounded,
-                                              size: 36,
-                                              color: AppColors.primary,
-                                            ),
-                                            const SizedBox(width: 16),
-                                            Text(
-                                              isPasswordRequest ? 'Password Reset' : 'Registration Request',
-                                              style: AppTextStyles.heading.copyWith(
-                                                color: AppColors.primary,
-                                                fontSize: 24,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+                                        Row(children: [
+                                          Icon(isPasswordRequest ? Icons.lock_reset_rounded : Icons.how_to_reg_rounded, size: 36, color: AppColors.primary),
+                                          const SizedBox(width: 16),
+                                          Text(isPasswordRequest ? 'Password Reset' : 'Registration Request', style: AppTextStyles.heading.copyWith(color: AppColors.primary, fontSize: 24)),
+                                        ]),
                                         const SizedBox(height: 30),
+                                        // THE SCROLLABLE SECTION
                                         Expanded(
-                                          child: isPasswordRequest
-                                              ? FutureBuilder<Map<String, dynamic>?>(
-                                            future: _fetchUserDetails(
-                                              selectedData['emailOrId']?.toString() ?? '',
-                                              selectedData['userRole']?.toString() ?? '',
-                                            ),
-                                            builder: (context, userSnap) {
-                                              if (userSnap.connectionState == ConnectionState.waiting) {
-                                                return const LoadingState(isCentered: false);
-                                              }
+                                          child: SingleChildScrollView(
+                                            physics: const BouncingScrollPhysics(),
+                                            child: isPasswordRequest
+                                                ? FutureBuilder<Map<String, dynamic>?>(
+                                              future: _fetchUserDetails(selectedData['emailOrId']?.toString() ?? '', selectedData['userRole']?.toString() ?? ''),
+                                              builder: (context, userSnap) {
+                                                if (userSnap.connectionState == ConnectionState.waiting) return const LoadingState(isCentered: false);
+                                                if (!userSnap.hasData || userSnap.data == null) return Text("User not found.", style: const TextStyle(color: Colors.red));
 
-                                              if (!userSnap.hasData || userSnap.data == null) {
-                                                return Text(
-                                                  "Warning: User '${selectedData['emailOrId']}' could not be found in any database collection.",
-                                                  style: const TextStyle(color: Colors.red),
-                                                );
-                                              }
-
-                                              final userData = userSnap.data!;
-                                              final fName = userData['fName'] ?? '';
-                                              final lName = userData['lName'] ?? '';
-                                              final fullName = '$fName $lName'.trim();
-                                              final foundRole = userData['foundRole'] ?? 'Unknown';
-
-                                              return Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  buildInfoRow(
-                                                    label: 'Requested by',
-                                                    value: fullName.isEmpty ? 'Unknown' : fullName,
-                                                    fontSize: 16,
-                                                    verticalPadding: 16,
-                                                    labelWeight: FontWeight.bold,
-                                                    valueWeight: FontWeight.w500,
-                                                  ),
-                                                  buildInfoRow(
-                                                    label: 'User Type',
-                                                    value: _capitalize(foundRole),
-                                                    fontSize: 16,
-                                                    verticalPadding: 16,
-                                                    labelWeight: FontWeight.bold,
-                                                    valueWeight: FontWeight.w500,
-                                                  ),
-                                                  buildInfoRow(
-                                                    label: 'ID',
-                                                    value: userData['ID'] ?? selectedData['emailOrId'] ?? 'N/A',
-                                                    fontSize: 16,
-                                                    verticalPadding: 16,
-                                                    labelWeight: FontWeight.bold,
-                                                    valueWeight: FontWeight.w500,
-                                                  ),
-                                                  buildInfoRow(
-                                                    label: 'Email',
-                                                    value: userData['email'] ?? 'N/A',
-                                                    fontSize: 16,
-                                                    verticalPadding: 16,
-                                                    labelWeight: FontWeight.bold,
-                                                    valueWeight: FontWeight.w500,
-                                                  ),
-                                                  buildInfoRow(
-                                                    label: 'New Password',
-                                                    value: selectedData['newPassword'] ?? 'Not provided',
-                                                    fontSize: 16,
-                                                    verticalPadding: 16,
-                                                    labelWeight: FontWeight.bold,
-                                                    valueWeight: FontWeight.w500,
-                                                  ),
-                                                  if (userData.containsKey('year'))
-                                                    buildInfoRow(
-                                                      label: 'Year',
-                                                      value: userData['year'].toString(),
-                                                      fontSize: 16,
-                                                      verticalPadding: 16,
-                                                      labelWeight: FontWeight.bold,
-                                                      valueWeight: FontWeight.w500,
-                                                    ),
-                                                  if (userData.containsKey('faculty'))
-                                                    buildInfoRow(
-                                                      label: 'Faculty',
-                                                      value: userData['faculty'],
-                                                      fontSize: 16,
-                                                      verticalPadding: 16,
-                                                      labelWeight: FontWeight.bold,
-                                                      valueWeight: FontWeight.w500,
-                                                    ),
-                                                  const SizedBox(height: 20),
-                                                  buildInfoRow(
-                                                    label: 'Time of Request',
-                                                    value: _formatDate(selectedData['requestDate'] as Timestamp?),
-                                                    fontSize: 16,
-                                                    verticalPadding: 16,
-                                                    labelWeight: FontWeight.bold,
-                                                    valueWeight: FontWeight.w500,
-                                                  ),
-                                                ],
-                                              );
-                                            },
-                                          )
-                                              : Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              buildInfoRow(
-                                                label: 'Requested by',
-                                                value: (selectedData['fullName'] ?? selectedData['name'] ?? 'Unknown').toString(),
-                                                fontSize: 16,
-                                                verticalPadding: 16,
-                                                labelWeight: FontWeight.bold,
-                                                valueWeight: FontWeight.w500,
-                                              ),
-                                              buildInfoRow(
-                                                label: 'Email',
-                                                value: (selectedData['email'] ?? 'N/A').toString(),
-                                                fontSize: 16,
-                                                verticalPadding: 16,
-                                                labelWeight: FontWeight.bold,
-                                                valueWeight: FontWeight.w500,
-                                              ),
-                                              buildInfoRow(
-                                                label: 'ID',
-                                                value: (selectedData['ID'] ?? 'N/A').toString(),
-                                                fontSize: 16,
-                                                verticalPadding: 16,
-                                                labelWeight: FontWeight.bold,
-                                                valueWeight: FontWeight.w500,
-                                              ),
-                                              if (selectedData['faculty'] != null)
-                                                buildInfoRow(
-                                                  label: 'Faculty',
-                                                  value: selectedData['faculty'].toString(),
-                                                  fontSize: 16,
-                                                  verticalPadding: 16,
-                                                  labelWeight: FontWeight.bold,
-                                                  valueWeight: FontWeight.w500,
-                                                ),
-                                              if (selectedData['year'] != null)
-                                                buildInfoRow(
-                                                  label: 'Year',
-                                                  value: selectedData['year'].toString(),
-                                                  fontSize: 16,
-                                                  verticalPadding: 16,
-                                                  labelWeight: FontWeight.bold,
-                                                  valueWeight: FontWeight.w500,
-                                                ),
-                                              const SizedBox(height: 20),
-                                              buildInfoRow(
-                                                label: 'Time of Request',
-                                                value: _formatDate((selectedData['requestDate'] ?? selectedData['date']) as Timestamp?),
-                                                fontSize: 16,
-                                                verticalPadding: 16,
-                                                labelWeight: FontWeight.bold,
-                                                valueWeight: FontWeight.w500,
-                                              ),
-                                            ],
+                                                final userData = userSnap.data!;
+                                                final fullName = '${userData['fName'] ?? ''} ${userData['lName'] ?? ''}'.trim();
+                                                return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                                  buildInfoRow(label: 'Requested by', value: fullName.isEmpty ? 'Unknown' : fullName, fontSize: 16, verticalPadding: 16, labelWeight: FontWeight.bold, valueWeight: FontWeight.w500),
+                                                  buildInfoRow(label: 'User Type', value: _capitalize(userData['foundRole'] ?? 'Unknown'), fontSize: 16, verticalPadding: 16, labelWeight: FontWeight.bold, valueWeight: FontWeight.w500),
+                                                  buildInfoRow(label: 'ID', value: userData['ID'] ?? selectedData['emailOrId'] ?? 'N/A', fontSize: 16, verticalPadding: 16, labelWeight: FontWeight.bold, valueWeight: FontWeight.w500),
+                                                  buildInfoRow(label: 'Email', value: userData['email'] ?? 'N/A', fontSize: 16, verticalPadding: 16, labelWeight: FontWeight.bold, valueWeight: FontWeight.w500),
+                                                  buildInfoRow(label: 'New Password', value: selectedData['newPassword'] ?? 'Not provided', fontSize: 16, verticalPadding: 16, labelWeight: FontWeight.bold, valueWeight: FontWeight.w500),
+                                                  if (userData.containsKey('year')) buildInfoRow(label: 'Year', value: userData['year'].toString(), fontSize: 16, verticalPadding: 16, labelWeight: FontWeight.bold, valueWeight: FontWeight.w500),
+                                                  if (userData.containsKey('faculty')) buildInfoRow(label: 'Faculty', value: userData['faculty'], fontSize: 16, verticalPadding: 16, labelWeight: FontWeight.bold, valueWeight: FontWeight.w500),
+                                                  buildInfoRow(label: 'Time of Request', value: _formatDate(selectedData['requestDate'] as Timestamp?), fontSize: 16, verticalPadding: 16, labelWeight: FontWeight.bold, valueWeight: FontWeight.w500),
+                                                ]);
+                                              },
+                                            )
+                                                : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                              buildInfoRow(label: 'Requested by', value: (selectedData['fullName'] ?? selectedData['name'] ?? 'Unknown').toString(), fontSize: 16, verticalPadding: 16, labelWeight: FontWeight.bold, valueWeight: FontWeight.w500),
+                                              buildInfoRow(label: 'Email', value: (selectedData['email'] ?? 'N/A').toString(), fontSize: 16, verticalPadding: 16, labelWeight: FontWeight.bold, valueWeight: FontWeight.w500),
+                                              buildInfoRow(label: 'ID', value: (selectedData['ID'] ?? 'N/A').toString(), fontSize: 16, verticalPadding: 16, labelWeight: FontWeight.bold, valueWeight: FontWeight.w500),
+                                              if (selectedData['faculty'] != null) buildInfoRow(label: 'Faculty', value: selectedData['faculty'].toString(), fontSize: 16, verticalPadding: 16, labelWeight: FontWeight.bold, valueWeight: FontWeight.w500),
+                                              if (selectedData['year'] != null) buildInfoRow(label: 'Year', value: selectedData['year'].toString(), fontSize: 16, verticalPadding: 16, labelWeight: FontWeight.bold, valueWeight: FontWeight.w500),
+                                              buildInfoRow(label: 'Time of Request', value: _formatDate((selectedData['requestDate'] ?? selectedData['date']) as Timestamp?), fontSize: 16, verticalPadding: 16, labelWeight: FontWeight.bold, valueWeight: FontWeight.w500),
+                                            ]),
                                           ),
                                         ),
-                                        // Action buttons for pending requests
+                                        // Action buttons stay at bottom
                                         if (selectedData['isProcessed'] != true)
-                                          Row(
-                                            children: [
-                                              Expanded(
-                                                child: PillButton(
-                                                  label: 'Reject',
-                                                  onTap: () => _updateRequestStatus(
-                                                    selectedDoc,
-                                                    'rejected',
-                                                    isPasswordRequest: isPasswordRequest,
-                                                  ),
-                                                ),
-                                              ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 16),
+                                            child: Row(children: [
+                                              Expanded(child: PillButton(label: 'Reject', onTap: () => _updateRequestStatus(selectedDoc, 'rejected', isPasswordRequest: isPasswordRequest))),
                                               const SizedBox(width: 16),
-                                              Expanded(
-                                                child: PillButton(
-                                                  label: 'Approve',
-                                                  onTap: () => _updateRequestStatus(
-                                                    selectedDoc,
-                                                    'accepted',
-                                                    isPasswordRequest: isPasswordRequest,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
+                                              Expanded(child: PillButton(label: 'Approve', onTap: () => _updateRequestStatus(selectedDoc, 'accepted', isPasswordRequest: isPasswordRequest))),
+                                            ]),
                                           ),
                                       ],
                                     ),

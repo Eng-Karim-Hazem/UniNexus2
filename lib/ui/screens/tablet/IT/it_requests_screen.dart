@@ -308,7 +308,6 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                                                 labelWeight: FontWeight.bold,
                                                 valueWeight: FontWeight.w500,
                                               ),
-                                            const SizedBox(height: 20),
                                             buildInfoRow(
                                               label: 'Time of Request',
                                               value: _formatDate(selectedData['requestDate'] as Timestamp?),

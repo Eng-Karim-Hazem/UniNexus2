@@ -8,15 +8,32 @@ class GateLogScreen extends StatelessWidget {
   final void Function(UninexusTab) onNavigate;
   const GateLogScreen({super.key, required this.onNavigate});
 
-  // Format time from DB format to display format
-  String _formatTime(String dbTime) {
-    if (dbTime.isEmpty) return "N/A";
-    try {
-      final DateTime parsed = DateFormat("HH:mm:ss").parse(dbTime);
-      return DateFormat("h:mm a").format(parsed);
-    } catch (e) {
-      return dbTime;
+  // Helper to format Date and Time for display
+  String _formatDateTime(String? dbDate, String? dbTime) {
+    String displayDate = "N/A";
+    String displayTime = "N/A";
+
+    // Format the Date (Expected: yyyy-MM-dd)
+    if (dbDate != null && dbDate.isNotEmpty) {
+      try {
+        final DateTime parsedDate = DateFormat("yyyy-MM-dd").parse(dbDate);
+        displayDate = DateFormat("MMM dd").format(parsedDate);
+      } catch (e) {
+        displayDate = dbDate;
+      }
     }
+
+    // Format the Time (Expected: HH:mm:ss)
+    if (dbTime != null && dbTime.isNotEmpty) {
+      try {
+        final DateTime parsedTime = DateFormat("HH:mm:ss").parse(dbTime);
+        displayTime = DateFormat("h:mm a").format(parsedTime);
+      } catch (e) {
+        displayTime = dbTime;
+      }
+    }
+
+    return "$displayDate, $displayTime";
   }
 
   @override
@@ -36,6 +53,8 @@ class GateLogScreen extends StatelessWidget {
                 child: StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
                       .collection('gate_scans')
+                  // Ordering by date first, then time to ensure chronological order
+                      .orderBy('date', descending: true)
                       .orderBy('time', descending: true)
                       .snapshots(),
                   builder: (context, snapshot) {
@@ -94,12 +113,13 @@ class GateLogScreen extends StatelessWidget {
                                 isCompact: true,
                               ),
                               const SizedBox(width: 14),
+                              // Displaying combined Date and Time
                               Text(
-                                _formatTime(data['time'] ?? ''),
+                                _formatDateTime(data['date'], data['time']),
                                 style: const TextStyle(
                                   color: Colors.grey,
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 14,
+                                  fontSize: 13, // Slightly smaller to fit both
                                 ),
                               ),
                             ],
