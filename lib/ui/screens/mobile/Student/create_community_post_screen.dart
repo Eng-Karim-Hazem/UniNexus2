@@ -147,7 +147,6 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
     final double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
     return Scaffold(
-      // FIXED: Locks FAB and BottomBar in place
       resizeToAvoidBottomInset: false,
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
@@ -164,19 +163,29 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
         ),
         child: SafeArea(
           bottom: false,
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            // FIXED: Maintains original padding but adds keyboard offset when typing
-            padding: EdgeInsets.fromLTRB(24, 20, 24, keyboardHeight > 0 ? keyboardHeight + 20 : 150),
-            child: Column(
-              children: [
-                _buildTopHeader(),
-                const SizedBox(height: 70), // Preserved spacing
-                _buildFormContainer(),
-                const SizedBox(height: 40), // Preserved spacing
-                _buildSubmitButton(),
-              ],
-            ),
+          child: Column(
+            children: [
+              // FIXED: Placed outside the scroll view so it stays at the top
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                child: _buildTopHeader(),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  // Padding adjusted since header is now separate
+                  padding: EdgeInsets.fromLTRB(24, 10, 24, keyboardHeight > 0 ? keyboardHeight + 20 : 150),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 50),
+                      _buildFormContainer(),
+                      const SizedBox(height: 40),
+                      _buildSubmitButton(),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -217,7 +226,7 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
 
   Widget _buildFormContainer() {
     return Container(
-      padding: const EdgeInsets.all(24), // Original padding
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.6),
         borderRadius: BorderRadius.circular(24),
@@ -255,7 +264,7 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
           const Text("Question", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
           const SizedBox(height: 8),
           Container(
-            height: 250, // Original height
+            height: 250,
             decoration: BoxDecoration(
               color: const Color(0xFFF2F2F2),
               borderRadius: BorderRadius.circular(16),
@@ -280,8 +289,8 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
 
   Widget _buildSubmitButton() {
     return SizedBox(
-      width: 220, // Original width
-      height: 55, // Original height
+      width: 220,
+      height: 55,
       child: OutlinedButton(
         onPressed: _isLoading ? null : _submitPost,
         style: OutlinedButton.styleFrom(

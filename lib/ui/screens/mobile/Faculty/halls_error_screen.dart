@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Added for potential input formatting
+import 'package:flutter/services.dart';
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uninexus/model/hall_error_model.dart';
@@ -111,7 +111,6 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
     final sw = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      // FIXED: Prevents FAB from moving up with keyboard
       resizeToAvoidBottomInset: false,
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
@@ -125,14 +124,12 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
         ),
         child: SafeArea(
           bottom: false,
-          child: Column( // Use Column to separate Static Header from Scrolling Body
+          child: Column(
             children: [
-              // STATIC TOP BAR
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                 child: _buildHeader(),
               ),
-              // SCROLLABLE CONTENT
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 150),
@@ -219,7 +216,12 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
                   children: [
                     _buildLabel("Hall Name"),
                     const SizedBox(height: 8),
-                    _buildTextField(controller: _hallNameController, hint: "Hall No."),
+                    // Applied 3-digit numeric restriction here
+                    _buildTextField(
+                      controller: _hallNameController,
+                      hint: "123",
+                      isNumberOnly: true,
+                    ),
                   ],
                 ),
               ),
@@ -309,7 +311,7 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
           backgroundColor: Colors.white,
         ),
         child: _isUploading
-            ? CircularProgressIndicator(color: _mainPurple)
+            ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: _mainPurple, strokeWidth: 2.5))
             : Text("Submit",
             style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: _textIndigo)),
       ),
@@ -321,18 +323,32 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
         style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87));
   }
 
-  Widget _buildTextField({required TextEditingController controller, required String hint, IconData? icon, bool readOnly = false, VoidCallback? onIconTap}) {
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    IconData? icon,
+    bool readOnly = false,
+    VoidCallback? onIconTap,
+    bool isNumberOnly = false, // Parameter for numeric restriction
+  }) {
     return Container(
       height: 55,
       decoration: BoxDecoration(color: const Color(0xFFF2F2F2), borderRadius: BorderRadius.circular(16)),
       child: TextField(
         controller: controller,
         readOnly: readOnly,
+        // Restricts keyboard and input length
+        keyboardType: isNumberOnly ? TextInputType.number : TextInputType.text,
+        inputFormatters: isNumberOnly ? [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(3),
+        ] : null,
         style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400),
           border: InputBorder.none,
+          counterText: "", // Hides the counter shown by LengthLimitingTextInputFormatter
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           suffixIcon: icon != null
               ? GestureDetector(

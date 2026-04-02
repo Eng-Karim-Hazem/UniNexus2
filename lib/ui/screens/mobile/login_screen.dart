@@ -89,19 +89,14 @@ class _LoginScreenState extends State<LoginScreen>
       switch (result['status']) {
         case LoginResult.signUpRequired:
           throw "Access Denied";
-
         case LoginResult.userNotFound:
           throw "User ID not found in our records.";
-
         case LoginResult.passwordMismatch:
           throw "Incorrect Password.";
-
         case LoginResult.invalidPrefix:
           throw "Invalid ID format";
-
         case LoginResult.error:
           throw "An error occurred while communicating with the server.";
-
         case LoginResult.success:
           final userData = result['userData'] as Map<String, dynamic>;
           final userType = result['userType'] as UserType;
@@ -125,43 +120,31 @@ class _LoginScreenState extends State<LoginScreen>
           await prefs.setString('photo', userData['photo'] ?? "N/A");
 
           Widget nextScreen;
-
           if (userType == UserType.student) {
             await prefs.setString('year', userData['year']?.toString() ?? "N/A");
             await prefs.setString('section', userData['section']?.toString() ?? "N/A");
             nextScreen = const StuHomeScreen();
-
           } else if (userType == UserType.faculty) {
             List<dynamic> subjectsData = userData['subjects'] ?? [];
             List<String> subjectsList = subjectsData.map((e) => e.toString()).toList();
             await prefs.setStringList('subjects', subjectsList);
             await prefs.setStringList('facultySubjects', subjectsList);
             nextScreen = const FacultyHomeScreen();
-
           } else {
             throw "Staff mobile dashboard is under construction.";
           }
 
           if (!mounted) return;
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => nextScreen),
-          );
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => nextScreen));
           break;
-
         default:
           throw "Unknown login response.";
       }
-
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              e.toString().replaceAll("Exception:", ""),
-              style: MobileAppTextStyles.bodyText,
-            ),
+            content: Text(e.toString().replaceAll("Exception:", ""), style: MobileAppTextStyles.bodyText),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
           ),
@@ -207,17 +190,19 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
 
     return PopScope(
       canPop: false,
       child: Scaffold(
+        resizeToAvoidBottomInset: false, // Prevents keyboard from pushing content up and causing overflow
         body: Stack(
           children: [
             Positioned.fill(
               child: Image.asset("assets/images/WelcomeBackground.png", fit: BoxFit.cover),
             ),
             Positioned(
-              top: MediaQuery.of(context).size.height * 0.25,
+              top: sh * 0.25,
               right: -200,
               child: RepaintBoundary(
                 child: IgnorePointer(
@@ -232,151 +217,107 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ),
             SafeArea(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return SlideTransition(
-                    position: _contentIntro,
-                    child: FadeTransition(
-                      opacity: _contentController,
-                      child: Align(
-                        alignment: Alignment.topCenter,
-                        child: SingleChildScrollView(
-                          padding: EdgeInsets.fromLTRB(sw * 0.08, 25, sw * 0.08, 40),
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              minHeight: constraints.maxHeight - 65,
-                            ),
-                            child: IntrinsicHeight(
-                              child: Column(
-                                children: [
-                                  // --- UPDATED IMAGE CLIPPING ---
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Image.asset(
-                                      "assets/images/uni.jpeg",
-                                      width: MobileAppDimensions.heroImageWidth,
-                                      // Removed hardcoded height and switched to BoxFit.contain
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
+              child: SlideTransition(
+                position: _contentIntro,
+                child: FadeTransition(
+                  opacity: _contentController,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(sw * 0.08, 25, sw * 0.08, 20),
+                    child: Column(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.asset(
+                            "assets/images/uni.jpeg",
+                            width: MobileAppDimensions.heroImageWidth,
+                            height: sh * 0.15, // Fixed height but with BoxFit.contain
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        const Text("Log in to UniNexus", style: MobileAppTextStyles.screenTitle),
+                        const Text("Access your campus services securely", style: MobileAppTextStyles.screenSubtitle),
 
-                                  const SizedBox(height: 10),
+                        const Spacer(flex: 1),
 
-                                  const Text(
-                                    "Log in to UniNexus",
-                                    style: MobileAppTextStyles.screenTitle,
-                                  ),
-
-                                  const Text(
-                                    "Access your campus services securely",
-                                    style: MobileAppTextStyles.screenSubtitle,
-                                  ),
-
-                                  SizedBox(height: constraints.maxHeight * 0.05),
-
-                                  _animatedItem(
-                                    anim: _field1Anim,
-                                    child: _modernField(
-                                      label: "Email / ID",
-                                      hint: "Enter Your Email/ID",
-                                      controller: _codeController,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 30),
-
-                                  _animatedItem(
-                                    anim: _field2Anim,
-                                    child: _modernField(
-                                      label: "Password",
-                                      hint: "Enter Your Password",
-                                      controller: _passwordController,
-                                      obscure: _obscurePassword,
-                                      icon: IconButton(
-                                        icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                                      ),
-                                    ),
-                                  ),
-
-                                  _animatedItem(
-                                    anim: _checkAnim,
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Flexible(
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Checkbox(
-                                                value: _rememberMe,
-                                                activeColor: MobileAppColors.primary,
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                                                onChanged: (val) => setState(() => _rememberMe = val ?? false),
-                                              ),
-                                              const Flexible(
-                                                child: Text(
-                                                  "Remember Me",
-                                                  style: MobileAppTextStyles.bodyTextMedium,
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Flexible(
-                                          child: TextButton(
-                                            onPressed: () => Navigator.pushReplacement(
-                                              context,
-                                              MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
-                                            ),
-                                            child: const Text(
-                                              "Forgot Password?",
-                                              style: TextStyle(fontFamily: MobileAppFonts.body),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-
-                                  const Spacer(),
-                                  const SizedBox(height: 20),
-
-                                  _mainButton(
-                                    text: "Log In",
-                                    enabled: _isFormValid && !_isLoading,
-                                    isLoading: _isLoading,
-                                    onTap: _handleLogin,
-                                  ),
-
-                                  Wrap(
-                                    alignment: WrapAlignment.center,
-                                    crossAxisAlignment: WrapCrossAlignment.center,
-                                    children: [
-                                      const Text(
-                                        "Don't have an account?",
-                                        style: MobileAppTextStyles.bodyText,
-                                      ),
-                                      TextButton(
-                                        onPressed: () => _slideTo(const SignUpScreen(), fromRight: true),
-                                        child: const Text(
-                                          "Register now",
-                                          style: MobileAppTextStyles.textButtonHeading,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
+                        _animatedItem(
+                          anim: _field1Anim,
+                          child: _modernField(
+                            label: "Email / ID",
+                            hint: "Enter Your Email/ID",
+                            controller: _codeController,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        _animatedItem(
+                          anim: _field2Anim,
+                          child: _modernField(
+                            label: "Password",
+                            hint: "Enter Your Password",
+                            controller: _passwordController,
+                            obscure: _obscurePassword,
+                            icon: IconButton(
+                              icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                             ),
                           ),
                         ),
-                      ),
+
+                        _animatedItem(
+                          anim: _checkAnim,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Flexible(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Checkbox(
+                                      value: _rememberMe,
+                                      activeColor: MobileAppColors.primary,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                                      onChanged: (val) => setState(() => _rememberMe = val ?? false),
+                                    ),
+                                    const Flexible(child: Text("Remember Me", style: MobileAppTextStyles.bodyTextMedium, overflow: TextOverflow.ellipsis)),
+                                  ],
+                                ),
+                              ),
+                              Flexible(
+                                child: TextButton(
+                                  onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
+                                  child: const Text("Forgot Password?", style: TextStyle(fontFamily: MobileAppFonts.body), overflow: TextOverflow.ellipsis),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const Spacer(flex: 2),
+
+                        _mainButton(
+                          text: "Log In",
+                          enabled: _isFormValid && !_isLoading,
+                          isLoading: _isLoading,
+                          onTap: _handleLogin,
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            const Text("Don't have an account?", style: MobileAppTextStyles.bodyText),
+                            TextButton(
+                              onPressed: () => _slideTo(const SignUpScreen(), fromRight: true),
+                              child: const Text("Register now", style: MobileAppTextStyles.textButtonHeading),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
             ),
           ],
@@ -388,27 +329,15 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _animatedItem({required Animation<double> anim, required Widget child}) {
     return FadeTransition(
       opacity: anim,
-      child: SlideTransition(
-        position: Tween<Offset>(begin: const Offset(-0.3, 0), end: Offset.zero).animate(anim),
-        child: child,
-      ),
+      child: SlideTransition(position: Tween<Offset>(begin: const Offset(-0.3, 0), end: Offset.zero).animate(anim), child: child),
     );
   }
 
-  Widget _modernField({
-    required String label,
-    required String hint,
-    required TextEditingController controller,
-    bool obscure = false,
-    Widget? icon,
-  }) {
+  Widget _modernField({required String label, required String hint, required TextEditingController controller, bool obscure = false, Widget? icon}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 10, bottom: 1),
-          child: Text(label, style: MobileAppTextStyles.fieldLabel),
-        ),
+        Padding(padding: const EdgeInsets.only(left: 10, bottom: 1), child: Text(label, style: MobileAppTextStyles.fieldLabel)),
         Container(
           height: MobileAppDimensions.inputHeight,
           decoration: MobileAppDecorations.inputBox,
@@ -416,22 +345,14 @@ class _LoginScreenState extends State<LoginScreen>
             controller: controller,
             obscureText: obscure,
             style: MobileAppTextStyles.fieldText,
-            decoration: MobileAppInputStyles.fieldDecoration(
-              hint: hint,
-              suffixIcon: icon,
-            ),
+            decoration: MobileAppInputStyles.fieldDecoration(hint: hint, suffixIcon: icon),
           ),
         ),
       ],
     );
   }
 
-  Widget _mainButton({
-    required String text,
-    required bool enabled,
-    required bool isLoading,
-    required VoidCallback onTap,
-  }) {
+  Widget _mainButton({required String text, required bool enabled, required bool isLoading, required VoidCallback onTap}) {
     return Container(
       width: MobileAppDimensions.primaryButtonWidth,
       height: MobileAppDimensions.primaryButtonHeight,
@@ -440,15 +361,8 @@ class _LoginScreenState extends State<LoginScreen>
         onPressed: enabled ? onTap : null,
         style: MobileAppButtonStyles.transparentElevated,
         child: isLoading
-            ? const SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-        )
-            : Text(
-          text,
-          style: MobileAppTextStyles.buttonText,
-        ),
+            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+            : Text(text, style: MobileAppTextStyles.buttonText),
       ),
     );
   }
