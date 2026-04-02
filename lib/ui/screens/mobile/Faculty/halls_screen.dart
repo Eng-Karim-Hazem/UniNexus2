@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:intl/intl.dart';
 import 'package:uninexus/model/hall_model.dart';
@@ -18,15 +19,15 @@ class HallsScreen extends StatefulWidget {
 }
 
 class _HallsScreenState extends State<HallsScreen> {
-  // Controllers & Services
   final HallService _hallService = HallService();
   final TextEditingController _searchController = TextEditingController();
 
-  // State Variables
+  // 1. Create a variable to hold the stream
+  late Stream<List<HallModel>> _hallsStream;
+
   String _searchQuery = "";
   int _selectedIndex = 1;
 
-  // Constants & Styles
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _textIndigo = const Color(0xFF5C5C80);
   final Color _primaryBlue = const Color(0xFF237ABA);
@@ -38,7 +39,12 @@ class _HallsScreenState extends State<HallsScreen> {
     end: Alignment.bottomRight,
   );
 
-  // --- Logic Methods ---
+  @override
+  void initState() {
+    super.initState();
+    // 2. Initialize the stream once so it doesn't reset on rebuilds
+    _hallsStream = _hallService.streamHallsByToday();
+  }
 
   String _getCurrentTimeSlot() {
     final now = DateTime.now();
@@ -71,22 +77,19 @@ class _HallsScreenState extends State<HallsScreen> {
     if (routes.containsKey(index)) {
       await Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => routes[index]!));
     }
-
     if (mounted) setState(() => _selectedIndex = 1);
   }
-
-  // --- UI Builders ---
 
   @override
   Widget build(BuildContext context) {
     String currentSlotKey = _getCurrentTimeSlot();
     String todayName = DateFormat('EEEE').format(DateTime.now());
 
-    // Grab screen dimensions for perfect proportions
     final sw = MediaQuery.of(context).size.width;
     final sh = MediaQuery.of(context).size.height;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -108,9 +111,10 @@ class _HallsScreenState extends State<HallsScreen> {
                   SizedBox(height: sh * 0.02),
                   Expanded(
                     child: StreamBuilder<List<HallModel>>(
-                      stream: _hallService.streamHallsByToday(),
+                      stream: _hallsStream, // 3. Use the persistent stream variable
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                        // Only show loading if we have NO data yet
+                        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                           return const Center(child: CircularProgressIndicator());
                         }
                         if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -120,14 +124,19 @@ class _HallsScreenState extends State<HallsScreen> {
                           );
                         }
 
+                        final normalizedQuery = _searchQuery.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), "");
+
                         final filteredHalls = snapshot.data!.where((hall) {
-                          return hall.displayName.toLowerCase().contains(_searchQuery);
+                          if (normalizedQuery.isEmpty) return true;
+                          final normalizedHallName = hall.displayName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), "");
+                          return normalizedHallName.contains(normalizedQuery);
                         }).toList();
 
-                        if (filteredHalls.isEmpty) return const Center(child: Text("No matches found."));
+                        if (filteredHalls.isEmpty) {
+                          return const Center(child: Text("No matches found."));
+                        }
 
                         return ListView.builder(
-                          // Dynamic padding to ensure items don't get hidden behind the FAB
                           padding: EdgeInsets.fromLTRB(sw * 0.06, 0, sw * 0.06, 180),
                           physics: const BouncingScrollPhysics(),
                           itemCount: filteredHalls.length,
@@ -151,7 +160,6 @@ class _HallsScreenState extends State<HallsScreen> {
 
   Widget _buildHeader(double sw) {
     return Padding(
-      // Dynamic padding applied here
       padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -173,30 +181,44 @@ class _HallsScreenState extends State<HallsScreen> {
 
   Widget _buildSearchField(double sw) {
     return Padding(
-      // Dynamic padding applied here
       padding: EdgeInsets.symmetric(horizontal: sw * 0.06),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.9),
+          color: Colors.white.withOpacity(0.9),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(color: Colors.grey.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4))
+            BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))
           ],
         ),
         child: TextField(
           controller: _searchController,
-          onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
+          maxLength: 4,
+          inputFormatters: [
+            TextInputFormatter.withFunction((oldValue, newValue) {
+              final text = newValue.text;
+              if (text.isEmpty) return newValue;
+              if (text.length == 1) {
+                return RegExp(r'^[a-zA-Z]$').hasMatch(text) ? newValue : oldValue;
+              }
+              if (text.length > 1) {
+                return RegExp(r'^[a-zA-Z][0-9]{0,3}$').hasMatch(text) ? newValue : oldValue;
+              }
+              return oldValue;
+            }),
+          ],
+          onChanged: (value) => setState(() => _searchQuery = value),
           style: const TextStyle(fontFamily: MobileAppFonts.body),
           decoration: InputDecoration(
-            hintText: "Search Hall By Name",
+            counterText: "",
+            hintText: "Search Hall (e.g. A101)",
             hintStyle: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             suffixIcon: Container(
               margin: const EdgeInsets.all(5),
               decoration: BoxDecoration(
-                  color: _mainPurple.withValues(alpha: 0.8), borderRadius: BorderRadius.circular(12)),
-              child: const Icon(Icons.send_rounded, color: Colors.white, size: 24),
+                  color: _mainPurple.withOpacity(0.8), borderRadius: BorderRadius.circular(12)),
+              child: const Icon(Icons.search_rounded, color: Colors.white, size: 24),
             ),
           ),
         ),
@@ -210,11 +232,11 @@ class _HallsScreenState extends State<HallsScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.6),
+          color: Colors.white.withOpacity(0.6),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _mainPurple.withValues(alpha: 0.7)),
+          border: Border.all(color: _mainPurple.withOpacity(0.7)),
           boxShadow: [
-            BoxShadow(color: _primaryBlue.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, 5))
+            BoxShadow(color: _primaryBlue.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, 5))
           ]),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -223,7 +245,7 @@ class _HallsScreenState extends State<HallsScreen> {
             children: [
               Image.asset('assets/images/classroom_1.png', width: 28, height: 28, color: _mainPurple),
               const SizedBox(width: 15),
-              Container(height: 35, width: 2.5, color: _mainPurple.withValues(alpha: 0.3)),
+              Container(height: 35, width: 2.5, color: _mainPurple.withOpacity(0.3)),
               const SizedBox(width: 15),
               Text(name,
                   style: TextStyle(
@@ -236,7 +258,7 @@ class _HallsScreenState extends State<HallsScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: statusColor,
-              boxShadow: [BoxShadow(color: statusColor.withValues(alpha: 0.4), blurRadius: 6, spreadRadius: 2)],
+              boxShadow: [BoxShadow(color: statusColor.withOpacity(0.4), blurRadius: 6, spreadRadius: 2)],
             ),
           ),
         ],
@@ -244,26 +266,21 @@ class _HallsScreenState extends State<HallsScreen> {
     );
   }
 
-  // --- CLAMPED DYNAMIC FAB ---
   Widget _buildErrorFab(double sw, double sh) {
     return Positioned(
-      // Scales vertically, but never dips below 110px (protecting it from the nav bar)
       bottom: (sh * 0.12).clamp(110.0, 140.0),
-      // Scales horizontally, maintaining edge padding
       right: (sw * 0.06).clamp(20.0, 35.0),
       child: GestureDetector(
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const HallErrorScreen())),
         child: Container(
-          // Aims for 20% of screen width, but freezes between 70px and 85px to match perfectly
           width: (sw * 0.20).clamp(70.0, 85.0),
           height: (sw * 0.20).clamp(70.0, 85.0),
           decoration: BoxDecoration(
             color: Colors.white,
-            // Dynamically curves the edges while maintaining shape
             borderRadius: BorderRadius.circular((sw * 0.05).clamp(16.0, 24.0)),
             boxShadow: [
               BoxShadow(
-                  color: _mainPurple.withValues(alpha: 0.3),
+                  color: _mainPurple.withOpacity(0.3),
                   blurRadius: 15,
                   offset: const Offset(0, 8)
               )
@@ -273,7 +290,6 @@ class _HallsScreenState extends State<HallsScreen> {
               child: Icon(
                   Icons.warning_amber_rounded,
                   color: _mainPurple,
-                  // Scales icon perfectly alongside the button bounds
                   size: (sw * 0.20).clamp(30.0, 50.0)
               )
           ),
@@ -290,7 +306,7 @@ class _HallsScreenState extends State<HallsScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withValues(alpha: 0.6),
+            color: _mainPurple.withOpacity(0.6),
             blurRadius: 25,
             spreadRadius: 6,
             offset: const Offset(0, 2),
@@ -316,7 +332,7 @@ class _HallsScreenState extends State<HallsScreen> {
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
+            color: Colors.black.withOpacity(0.18),
             blurRadius: 20,
             spreadRadius: 4,
             offset: const Offset(0, -6),
@@ -363,7 +379,6 @@ class _HallsScreenState extends State<HallsScreen> {
         children: [
           Image.asset(iconPath, width: 28, height: 28, color: itemColor),
           const SizedBox(height: 5),
-          // Flexible applied here to prevent text overflow!
           Flexible(
             child: Text(
                 label,

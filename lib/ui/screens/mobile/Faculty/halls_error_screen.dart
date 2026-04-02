@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Added for potential input formatting
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uninexus/model/hall_error_model.dart';
@@ -8,7 +9,6 @@ import 'package:uninexus/services/firebase/hall_error_service.dart';
 import '../Student/stu_community.dart';
 import 'qa_screen.dart';
 import '../profile_screen.dart';
-
 
 class HallErrorScreen extends StatefulWidget {
   const HallErrorScreen({super.key});
@@ -18,13 +18,11 @@ class HallErrorScreen extends StatefulWidget {
 }
 
 class _HallErrorScreenState extends State<HallErrorScreen> {
-  // Controllers & Services
   final TextEditingController _hallNameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final HallErrorService _service = HallErrorService();
   final ImagePicker _picker = ImagePicker();
 
-  // State Variables
   String? _selectedBuilding;
   String? _selectedDepartment;
   String? _selectedErrorType;
@@ -33,7 +31,6 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
   bool _isUploading = false;
   int _selectedIndex = 1;
 
-  // Constants & Styles
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _textIndigo = const Color(0xFF5C5C80);
   final Color _primaryBlue = const Color(0xFF237ABA);
@@ -47,8 +44,6 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
   final List<String> _buildings = ['A', 'B', 'C'];
   final List<String> _departments = ['IT', 'Storage', 'Maintenance'];
   final List<String> _errorTypes = ['Projector Issue', 'Air Conditioner', 'Lighting', 'Furniture/Desk', 'Other'];
-
-  // --- Logic Methods ---
 
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
@@ -75,7 +70,6 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
 
     try {
       final String fullHallLocation = "Building $_selectedBuilding - ${_hallNameController.text}";
-
       final report = HallErrorModel(
         hallName: fullHallLocation,
         department: _selectedDepartment!,
@@ -84,9 +78,7 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
         attachment: _base64Image,
         timestamp: DateTime.now(),
       );
-
       await _service.submitError(report);
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error Report Submitted!")));
         Navigator.pop(context);
@@ -101,27 +93,26 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
   void _onNavBarTapped(int index) async {
     if (index == _selectedIndex) return;
     setState(() => _selectedIndex = index);
-
     final Map<int, Widget> routes = {
       0: const StuCommunity(),
       2: const QAScreen(),
       3: const ProfileScreen(),
     };
-
     if (index == 1) {
       Navigator.pop(context);
     } else if (routes.containsKey(index)) {
       await Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => routes[index]!));
     }
-
     if (mounted) setState(() => _selectedIndex = 1);
   }
 
-  // --- UI Builders ---
-
   @override
   Widget build(BuildContext context) {
+    final sw = MediaQuery.of(context).size.width;
+
     return Scaffold(
+      // FIXED: Prevents FAB from moving up with keyboard
+      resizeToAvoidBottomInset: false,
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -134,17 +125,29 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
         ),
         child: SafeArea(
           bottom: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 150),
-            child: Column(
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 30),
-                _buildFormContainer(),
-                const SizedBox(height: 30),
-                _buildSubmitButton(),
-              ],
-            ),
+          child: Column( // Use Column to separate Static Header from Scrolling Body
+            children: [
+              // STATIC TOP BAR
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                child: _buildHeader(),
+              ),
+              // SCROLLABLE CONTENT
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 150),
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 10),
+                      _buildFormContainer(),
+                      const SizedBox(height: 30),
+                      _buildSubmitButton(),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -160,7 +163,7 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
           child: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.5),
+              color: Colors.white.withOpacity(0.5),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: _mainPurple),
@@ -180,11 +183,11 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.6),
+          color: Colors.white.withOpacity(0.6),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: _mainPurple.withValues(alpha: 0.2), width: 1.5),
+          border: Border.all(color: _mainPurple.withOpacity(0.2), width: 1.5),
           boxShadow: [
-            BoxShadow(color: _primaryBlue.withValues(alpha: 0.12), blurRadius: 25, offset: const Offset(0, 8))
+            BoxShadow(color: _primaryBlue.withOpacity(0.12), blurRadius: 25, offset: const Offset(0, 8))
           ]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -336,7 +339,7 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
               onTap: onIconTap,
               child: Container(
                   margin: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(color: _mainPurple.withValues(alpha: 0.8), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(color: _mainPurple.withOpacity(0.8), borderRadius: BorderRadius.circular(12)),
                   child: Icon(icon, color: Colors.white, size: 22)))
               : null,
         ),
@@ -352,7 +355,7 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withValues(alpha: 0.6),
+            color: _mainPurple.withOpacity(0.6),
             blurRadius: 25,
             spreadRadius: 6,
             offset: const Offset(0, 2),
@@ -378,7 +381,7 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
+            color: Colors.black.withOpacity(0.18),
             blurRadius: 20,
             spreadRadius: 4,
             offset: const Offset(0, -6),
@@ -390,9 +393,7 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
         shape: const CircularNotchedRectangle(),
         notchMargin: 9.0,
         color: Colors.white,
-        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        shadowColor: Colors.transparent,
         height: 80,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,

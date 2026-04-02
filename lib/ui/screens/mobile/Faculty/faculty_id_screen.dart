@@ -21,7 +21,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
   String _userName = "";
   bool _isLoading = true;
   int _selectedIndex = -1;
-  bool _isPunchedIn = false; // Toggle state matched to Security ID screen
+  bool _isPunchedIn = false;
 
   // Colors preserved from your design
   final Color _mainPurple = const Color(0xFF7B61FF);
@@ -62,10 +62,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // Functionality change: Dynamic QR Data suffix (.in or .out)
     final String qrData = _isPunchedIn ? "OUT_$_userID" : "IN_$_userID";
-
-    // Functionality change: Dynamic QR Colors matching Security ID logic
     final List<Color> qrColors = _isPunchedIn
         ? [_secondaryPurple, _primaryBlue]
         : [_primaryBlue, _secondaryPurple];
@@ -75,31 +72,48 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildBottomBar(),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/Phone_Background.png'),
-            fit: BoxFit.cover,
+      body: Stack(
+        children: [
+          // 1. Fixed Background Image - Stays static in the back
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/Phone_Background.png',
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+
+          // 2. Main Content Structure
+          SafeArea(
+            bottom: false,
             child: Column(
               children: [
-                _buildTopHeader(),
-                const SizedBox(height: 30),
-                _buildMainCard(qrData, qrColors),
-                const SizedBox(height: 30),
-                _buildWidePunchButton(),
-                const SizedBox(height: 20),
+                // --- FIXED TOP BAR (Outside ScrollView) ---
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
+                  child: _buildTopHeader(),
+                ),
+
+                // --- SCROLLABLE CONTENT (Inside Expanded) ---
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        _buildMainCard(qrData, qrColors),
+                        const SizedBox(height: 30),
+                        _buildWidePunchButton(),
+                        // Extra padding to ensure you can scroll past the FAB/BottomBar
+                        const SizedBox(height: 160),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -134,19 +148,19 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
 
   Widget _buildMainCard(String qrData, List<Color> qrColors) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 30),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
+        color: Colors.white.withOpacity(0.85),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: _primaryBlue.withValues(alpha: 0.1),
+            color: _primaryBlue.withOpacity(0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           )
         ],
-        border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 2),
+        border: Border.all(color: Colors.white.withOpacity(0.6), width: 2),
       ),
       child: Column(
         children: [
@@ -170,6 +184,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
           const SizedBox(height: 30),
           Text(
             _userName,
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: MobileAppFonts.heading,
               fontSize: 22,
@@ -199,7 +214,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
                 ).createShader(bounds),
                 blendMode: BlendMode.srcIn,
                 child: QrImageView(
-                  data: qrData, // Uses the dynamic .in/.out data
+                  data: qrData,
                   version: QrVersions.auto,
                   size: 240.0,
                   errorCorrectionLevel: QrErrorCorrectLevel.H,
@@ -220,13 +235,13 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
             ],
           ),
           const SizedBox(height: 30),
-          Text(
+          const Text(
             "Scan for Identity Verification",
             style: TextStyle(
               fontFamily: MobileAppFonts.body,
               color: Colors.grey,
               fontSize: 14,
-              fontWeight:FontWeight.bold,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
@@ -236,7 +251,6 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
 
   Widget _buildWidePunchButton() {
     final Color activeColor = _isPunchedIn ? _primaryBlue : _mainPurple;
-
     return GestureDetector(
       onTap: () => setState(() => _isPunchedIn = !_isPunchedIn),
       child: Container(
@@ -248,7 +262,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
           border: Border.all(color: activeColor, width: 2),
           boxShadow: [
             BoxShadow(
-              color: activeColor.withValues(alpha: 0.2),
+              color: activeColor.withOpacity(0.2),
               blurRadius: 15,
               offset: const Offset(0, 5),
             )
@@ -271,36 +285,22 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
   }
 
   Widget _buildDot() => Container(
-    width: 12,
-    height: 12,
+    width: 12, height: 12,
     decoration: const BoxDecoration(color: Color(0xFFE0E0FF), shape: BoxShape.circle),
   );
 
   Widget _buildHomeFab() {
     return Container(
-      height: 72,
-      width: 72,
+      height: 72, width: 72,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: _mainPurple.withValues(alpha: 0.6),
-            blurRadius: 25,
-            spreadRadius: 6,
-            offset: const Offset(0, 2),
-          )
-        ],
+        boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.6), blurRadius: 25, spreadRadius: 6, offset: const Offset(0, 2))],
       ),
       child: FloatingActionButton(
         onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        shape: const CircleBorder(),
+        backgroundColor: Colors.transparent, elevation: 0, shape: const CircleBorder(),
         child: Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: _fabGradient,
-          ),
+          decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
           child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
         ),
       ),
@@ -308,21 +308,23 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
   }
 
   Widget _buildBottomBar() {
-    return BottomAppBar(
-      clipBehavior: Clip.antiAlias,
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 9.0,
-      color: Colors.white,
-      height: 80,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _navItem('assets/images/solidarity_1.png', 'Community', 0),
-          _navItem('assets/images/classroom_1.png', 'Halls', 1),
-          const SizedBox(width: 72),
-          _navItem('assets/images/qa.png', 'Q&A', 2),
-          _navItem('assets/images/user.png', 'Profile', 3),
-        ],
+    return Container(
+      decoration: BoxDecoration(
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, -5))],
+      ),
+      child: BottomAppBar(
+        clipBehavior: Clip.antiAlias, shape: const CircularNotchedRectangle(),
+        notchMargin: 9.0, color: Colors.white, height: 80,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _navItem('assets/images/solidarity_1.png', 'Community', 0),
+            _navItem('assets/images/classroom_1.png', 'Halls', 1),
+            const SizedBox(width: 72),
+            _navItem('assets/images/qa.png', 'Q&A', 2),
+            _navItem('assets/images/user.png', 'Profile', 3),
+          ],
+        ),
       ),
     );
   }
@@ -330,7 +332,6 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
   Widget _navItem(String iconPath, String label, int index) {
     final bool isSelected = _selectedIndex == index;
     final Color itemColor = isSelected ? _mainPurple : Colors.grey.shade500;
-
     return GestureDetector(
       onTap: () => _onNavBarTapped(index),
       child: Column(
@@ -341,8 +342,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: MobileAppFonts.body,
-              fontSize: 12,
+              fontFamily: MobileAppFonts.body, fontSize: 12,
               color: isSelected ? _mainPurple : Colors.grey.shade600,
               fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
             ),
@@ -355,19 +355,14 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
   void _onNavBarTapped(int index) async {
     if (index == _selectedIndex) return;
     setState(() => _selectedIndex = index);
-
     final Map<int, Widget> routes = {
       0: const StuCommunity(),
       1: const HallsScreen(),
       2: const QAScreen(),
       3: const ProfileScreen(),
     };
-
     if (routes.containsKey(index)) {
-      await Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => routes[index]!),
-      );
+      await Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => routes[index]!));
     }
     if (mounted) setState(() => _selectedIndex = -1);
   }

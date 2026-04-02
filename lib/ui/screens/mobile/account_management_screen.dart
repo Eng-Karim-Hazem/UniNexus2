@@ -20,9 +20,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
   final TextEditingController _emailController = TextEditingController();
 
   bool _isLoading = false;
-
   final int _selectedIndex = -1;
-
   final Color _mainPurple = const Color(0xFF7B61FF);
 
   final Gradient _fabGradient = const LinearGradient(
@@ -122,11 +120,14 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Grab screen dimensions for perfect proportions
     final sw = MediaQuery.of(context).size.width;
     final sh = MediaQuery.of(context).size.height;
+    // Detect keyboard height
+    final double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
     return Scaffold(
+      // FIXED: Prevents FAB and Bottom Bar from jumping up when keyboard opens
+      resizeToAvoidBottomInset: false,
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -142,20 +143,16 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
         child: SafeArea(
           bottom: false,
           child: Padding(
-            // Dynamic padding applied to the entire screen layout
             padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.02),
             child: Column(
               children: [
-                // 1. HEADER IS OUTSIDE THE SCROLL VIEW (Fixed at top)
                 _buildHeader(),
                 SizedBox(height: sh * 0.03),
-
-                // 2. ONLY THE CONTENT BELOW THE HEADER IS SCROLLABLE
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    // Padding at the bottom so content doesn't get hidden behind the floating button
-                    padding: EdgeInsets.only(bottom: sh * 0.15),
+                    // FIXED: Adds internal padding only when keyboard is up so user can scroll to the bottom
+                    padding: EdgeInsets.only(bottom: keyboardHeight > 0 ? keyboardHeight + 20 : sh * 0.15),
                     child: Column(
                       children: [
                         _buildFormCard(sw),
@@ -181,7 +178,6 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           onTap: () => Navigator.pop(context),
           child: Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: _mainPurple),
         ),
-
         const Text(
           "Account Man.",
           style: TextStyle(
@@ -191,7 +187,6 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
             color: Color(0xFF5C5C80),
           ),
         ),
-
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -203,15 +198,14 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
   Widget _buildFormCard(double sw) {
     return Container(
       width: double.infinity,
-      // Dynamic internal padding
       padding: EdgeInsets.all(sw * 0.06),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.6),
+        color: Colors.white.withOpacity(0.6),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _mainPurple.withValues(alpha: 0.6), width: 1.5),
+        border: Border.all(color: _mainPurple.withOpacity(0.6), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF237ABA).withValues(alpha: 0.1),
+            color: const Color(0xFF237ABA).withOpacity(0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           )
@@ -231,15 +225,10 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
             textAlign: TextAlign.left,
           ),
           const SizedBox(height: 20),
-
-          // Phone Input
           _buildLabel("New Phone No."),
           const SizedBox(height: 8),
           _buildTextField(_phoneController, "Enter the new Phone no.", TextInputType.phone),
-
           const SizedBox(height: 16),
-
-          // Email Input
           _buildLabel("New E-mail"),
           const SizedBox(height: 8),
           _buildTextField(_emailController, "Enter the new Email", TextInputType.emailAddress),
@@ -265,7 +254,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F2F2), // Light grey background
+        color: const Color(0xFFF2F2F2),
         borderRadius: BorderRadius.circular(16),
       ),
       child: TextField(
@@ -280,7 +269,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
               fontSize: 13
           ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.only(bottom: 5), // Adjust text alignment
+          contentPadding: const EdgeInsets.only(bottom: 5),
         ),
       ),
     );
@@ -288,7 +277,6 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
 
   Widget _buildUpdateButton(double sw) {
     return SizedBox(
-      // Responsive button width so it doesn't overflow small screens
       width: sw * 0.5 > 200 ? 200 : sw * 0.5,
       height: 50,
       child: OutlinedButton(
@@ -325,7 +313,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withValues(alpha: 0.6),
+            color: _mainPurple.withOpacity(0.6),
             blurRadius: 25,
             spreadRadius: 6,
             offset: const Offset(0, 2),
@@ -354,7 +342,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
+            color: Colors.black.withOpacity(0.18),
             blurRadius: 20,
             spreadRadius: 4,
             offset: const Offset(0, -6),
@@ -412,7 +400,6 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
             color: sel ? _mainPurple : Colors.grey.shade500,
           ),
           const SizedBox(height: 5),
-          // Added Flexible to protect nav labels from overflowing
           Flexible(
             child: Text(
               label,

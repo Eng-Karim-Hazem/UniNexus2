@@ -16,19 +16,16 @@ class QARequestScreen extends StatefulWidget {
 }
 
 class _QARequestScreenState extends State<QARequestScreen> {
-  // Services & Controllers
   final QnAService _qnaService = QnAService();
   final _subjectController = TextEditingController();
   final _questionController = TextEditingController();
 
-  // State Variables
   String? _selectedCourse;
   int _studentYear = 1;
   bool _isInit = false;
   bool _isSubmitting = false;
-  final int _selectedIndex = 2; // Fixed index for Q&A screen
+  final int _selectedIndex = 2;
 
-  // Constants & Styles
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _textIndigo = const Color(0xFF5C5C80);
   final Gradient _fabGradient = const LinearGradient(
@@ -50,8 +47,6 @@ class _QARequestScreenState extends State<QARequestScreen> {
     super.dispose();
   }
 
-  // --- Logic Methods ---
-
   Future<void> _loadStudentData() async {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
@@ -65,13 +60,11 @@ class _QARequestScreenState extends State<QARequestScreen> {
 
   void _onNavBarTapped(int index) {
     if (index == _selectedIndex) return;
-
     final Map<int, Widget> routes = {
       0: const StuCommunity(),
       1: const StuSchedule(),
       3: const ProfileScreen(),
     };
-
     if (routes.containsKey(index)) {
       Navigator.pushReplacement(
         context,
@@ -82,17 +75,12 @@ class _QARequestScreenState extends State<QARequestScreen> {
 
   Future<void> _handleSubmit() async {
     if (_selectedCourse == null || _subjectController.text.trim().isEmpty || _questionController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please complete all fields")),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please complete all fields")));
       return;
     }
-
     setState(() => _isSubmitting = true);
-
     try {
       final prefs = await SharedPreferences.getInstance();
-
       String firstName = prefs.getString('fName') ?? "";
       String lastName = prefs.getString('lName') ?? "";
       String fullName = "$firstName $lastName".trim();
@@ -107,29 +95,25 @@ class _QARequestScreenState extends State<QARequestScreen> {
       );
 
       await _qnaService.submitQuestion(qna);
-
       if (!mounted) return;
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to submit question. Please try again.")),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to submit question.")));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
-  // --- UI Builders ---
-
   @override
   Widget build(BuildContext context) {
-    if (!_isInit) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+    if (!_isInit) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+
+    final double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
     return Scaffold(
       extendBody: true,
+      // FIXED: Keeps FAB and BottomBar stationary
       resizeToAvoidBottomInset: false,
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -147,14 +131,14 @@ class _QARequestScreenState extends State<QARequestScreen> {
               _buildTopHeader(),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  physics: const BouncingScrollPhysics(),
+                  // FIXED: Dynamic bottom padding allows scrolling past the fixed UI elements
+                  padding: EdgeInsets.fromLTRB(24, 40, 24, keyboardHeight > 0 ? keyboardHeight + 20 : 150),
                   child: Column(
                     children: [
-                      const SizedBox(height: 40),
                       _buildFormCard(),
                       const SizedBox(height: 30),
                       _buildSubmitButton(),
-                      const SizedBox(height: 150),
                     ],
                   ),
                 ),
@@ -191,9 +175,9 @@ class _QARequestScreenState extends State<QARequestScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.4),
+        color: Colors.white.withOpacity(0.4),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: _mainPurple.withValues(alpha: 0.5), width: 1.5),
+        border: Border.all(color: _mainPurple.withOpacity(0.5), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,7 +193,7 @@ class _QARequestScreenState extends State<QARequestScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                  border: Border.all(color: Colors.grey.withOpacity(0.2)),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
@@ -217,7 +201,6 @@ class _QARequestScreenState extends State<QARequestScreen> {
                     hint: Text(snapshot.connectionState == ConnectionState.waiting ? "Loading..." : "Choose Course",
                         style: const TextStyle(fontFamily: MobileAppFonts.body)),
                     isExpanded: true,
-                    style: const TextStyle(fontFamily: MobileAppFonts.body, color: Colors.black87),
                     items: subjects.map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
                     onChanged: (val) => setState(() => _selectedCourse = val),
                   ),
@@ -239,8 +222,7 @@ class _QARequestScreenState extends State<QARequestScreen> {
   Widget _buildLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8),
-      child: Text(text,
-          style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87)),
+      child: Text(text, style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 15, fontWeight: FontWeight.bold)),
     );
   }
 
@@ -249,7 +231,7 @@ class _QARequestScreenState extends State<QARequestScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+        border: Border.all(color: Colors.grey.withOpacity(0.2)),
       ),
       child: TextField(
         controller: controller,
@@ -257,7 +239,6 @@ class _QARequestScreenState extends State<QARequestScreen> {
         style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.all(16),
         ),
@@ -278,32 +259,21 @@ class _QARequestScreenState extends State<QARequestScreen> {
         ),
         child: _isSubmitting
             ? CircularProgressIndicator(color: _mainPurple)
-            : Text("Submit",
-            style: TextStyle(fontFamily: MobileAppFonts.heading, color: _mainPurple, fontSize: 18, fontWeight: FontWeight.bold)),
+            : Text("Submit", style: TextStyle(fontFamily: MobileAppFonts.heading, color: _mainPurple, fontSize: 18, fontWeight: FontWeight.bold)),
       ),
     );
   }
 
   Widget _buildHomeFab() {
     return Container(
-      height: 72,
-      width: 72,
+      height: 72, width: 72,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: _mainPurple.withValues(alpha: 0.4),
-            blurRadius: 20,
-            spreadRadius: 2,
-            offset: const Offset(0, 2),
-          )
-        ],
+        boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.4), blurRadius: 20, spreadRadius: 2, offset: const Offset(0, 2))],
       ),
       child: FloatingActionButton(
         onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        shape: const CircleBorder(),
+        backgroundColor: Colors.transparent, elevation: 0, shape: const CircleBorder(),
         child: Container(
           decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
           child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
@@ -314,15 +284,10 @@ class _QARequestScreenState extends State<QARequestScreen> {
 
   Widget _buildBottomBar() {
     return Container(
-      decoration: BoxDecoration(
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, -5))],
-      ),
+      decoration: BoxDecoration(boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, -5))]),
       child: BottomAppBar(
-        clipBehavior: Clip.antiAlias,
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8.0,
-        color: Colors.white,
-        height: 80,
+        clipBehavior: Clip.antiAlias, shape: const CircularNotchedRectangle(),
+        notchMargin: 8.0, color: Colors.white, height: 80,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -360,15 +325,7 @@ class _QARequestScreenState extends State<QARequestScreen> {
         children: [
           Image.asset(path, width: 26, height: 26, color: isSelected ? _mainPurple : Colors.grey.shade400),
           const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: MobileAppFonts.body,
-              fontSize: 11,
-              color: isSelected ? _mainPurple : Colors.grey.shade600,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
+          Text(label, style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 11, color: isSelected ? _mainPurple : Colors.grey.shade600)),
         ],
       ),
     );

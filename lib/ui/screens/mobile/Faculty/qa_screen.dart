@@ -16,7 +16,6 @@ class QAScreen extends StatefulWidget {
 }
 
 class _QAScreenState extends State<QAScreen> {
-  // Services & State
   final QnAService _qnaService = QnAService();
   final Map<String, TextEditingController> _controllers = {};
 
@@ -25,7 +24,6 @@ class _QAScreenState extends State<QAScreen> {
   String _facultyFullName = "Faculty";
   bool _isInit = false;
 
-  // Constants & Styles
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _textIndigo = const Color(0xFF5C5C80);
   final Color _primaryBlue = const Color(0xFF237ABA);
@@ -51,9 +49,10 @@ class _QAScreenState extends State<QAScreen> {
     super.dispose();
   }
 
-  // --- Logic Methods ---
-
   Future<void> _loadFacultyData() async {
+    // If already initialized, don't do it again to prevent flickers
+    if (_isInit) return;
+
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
       setState(() {
@@ -90,17 +89,18 @@ class _QAScreenState extends State<QAScreen> {
         );
       }
     }
-
     if (mounted) setState(() => _selectedIndex = 2);
   }
 
-  // --- UI Builders ---
-
   @override
   Widget build(BuildContext context) {
+    // This check now only happens once
     if (!_isInit) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
+    final double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+
     return Scaffold(
+      resizeToAvoidBottomInset: false, // Keeps FAB and BottomBar stationary
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -120,7 +120,7 @@ class _QAScreenState extends State<QAScreen> {
                 child: StreamBuilder<List<Map<String, dynamic>>>(
                   stream: _qnaService.streamUnansweredQnA(_mySubjects),
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
+                    if (snapshot.connectionState == ConnectionState.waiting && !_isInit) {
                       return const Center(child: CircularProgressIndicator());
                     }
                     if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -132,7 +132,8 @@ class _QAScreenState extends State<QAScreen> {
 
                     final qnaList = snapshot.data!;
                     return ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 150),
+                      // Only padding changes, not the whole UI state
+                      padding: EdgeInsets.fromLTRB(20, 0, 20, keyboardHeight > 0 ? keyboardHeight + 20 : 150),
                       physics: const BouncingScrollPhysics(),
                       itemCount: qnaList.length,
                       itemBuilder: (context, index) {
@@ -167,12 +168,8 @@ class _QAScreenState extends State<QAScreen> {
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen())),
             child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
           ),
-          Text("Q&A",
-              style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
-          ),
+          Text("Q&A", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
+          ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.asset('assets/images/LOGO.png', width: 36, height: 36)),
         ],
       ),
     );
@@ -180,15 +177,12 @@ class _QAScreenState extends State<QAScreen> {
 
   Widget _buildQuestionCard(Map<String, dynamic> item, String docId) {
     String studentId = item['ID'] ?? "";
-
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.75),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: _mainPurple.withValues(alpha: 0.6), width: 1.5),
-        boxShadow: [
-          BoxShadow(color: _primaryBlue.withValues(alpha: 0.08), blurRadius: 15, offset: const Offset(0, 5))
-        ],
+        boxShadow: [BoxShadow(color: _primaryBlue.withValues(alpha: 0.08), blurRadius: 15, offset: const Offset(0, 5))],
       ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -197,16 +191,11 @@ class _QAScreenState extends State<QAScreen> {
           childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           leading: Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: _textIndigo.withValues(alpha: 0.3)),
-            ),
+            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: _textIndigo.withValues(alpha: 0.3))),
             child: Image.asset('assets/images/help_1.png', width: 20, color: _textIndigo),
           ),
-          title: Text(item['subject'] ?? "",
-              style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: _accentBlue)),
-          subtitle: Text(item['title'] ?? "",
-              style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: Colors.black87)),
+          title: Text(item['subject'] ?? "", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: _accentBlue)),
+          subtitle: Text(item['title'] ?? "", style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: Colors.black87)),
           children: [
             const Divider(),
             Align(
@@ -216,9 +205,7 @@ class _QAScreenState extends State<QAScreen> {
                   style: const TextStyle(color: Colors.black, fontSize: 15),
                   children: [
                     const TextSpan(text: "Q : ", style: TextStyle(fontFamily: MobileAppFonts.heading, fontWeight: FontWeight.w900)),
-                    TextSpan(
-                        text: item['question'] ?? "",
-                        style: const TextStyle(fontFamily: MobileAppFonts.body, fontWeight: FontWeight.w600)),
+                    TextSpan(text: item['question'] ?? "", style: const TextStyle(fontFamily: MobileAppFonts.body, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
@@ -255,17 +242,8 @@ class _QAScreenState extends State<QAScreen> {
             Align(
               alignment: Alignment.centerRight,
               child: GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => WhoSentThisScreen(senderId: studentId)),
-                ),
-                child: Text("Who sent this?",
-                    style: TextStyle(
-                      fontFamily: MobileAppFonts.body,
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                      decoration: TextDecoration.underline,
-                    )),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => WhoSentThisScreen(senderId: studentId))),
+                child: Text("Who sent this?", style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 12, color: Colors.grey.shade600, decoration: TextDecoration.underline)),
               ),
             ),
           ],
@@ -276,24 +254,11 @@ class _QAScreenState extends State<QAScreen> {
 
   Widget _buildHomeFab() {
     return Container(
-      height: 72,
-      width: 72,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: _mainPurple.withValues(alpha: 0.6),
-            blurRadius: 25,
-            spreadRadius: 6,
-            offset: const Offset(0, 2),
-          )
-        ],
-      ),
+      height: 72, width: 72,
+      decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: _mainPurple.withValues(alpha: 0.6), blurRadius: 25, spreadRadius: 6, offset: const Offset(0, 2))]),
       child: FloatingActionButton(
         onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        shape: const CircleBorder(),
+        backgroundColor: Colors.transparent, elevation: 0, shape: const CircleBorder(),
         child: Container(
           decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
           child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
@@ -304,46 +269,23 @@ class _QAScreenState extends State<QAScreen> {
 
   Widget _buildBottomBar() {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 20,
-            spreadRadius: 4,
-            offset: const Offset(0, -6),
-          ),
-        ],
-      ),
+      decoration: BoxDecoration(color: Colors.transparent, boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 20, spreadRadius: 4, offset: const Offset(0, -6))]),
       child: BottomAppBar(
-        clipBehavior: Clip.antiAlias,
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 9.0,
-        color: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        shadowColor: Colors.transparent,
-        height: 80,
+        clipBehavior: Clip.antiAlias, shape: const CircularNotchedRectangle(), notchMargin: 9.0, color: Colors.white,
+        surfaceTintColor: Colors.transparent, elevation: 0, shadowColor: Colors.transparent, height: 80,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNavSection([
-              _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
-              _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1),
-            ]),
+            _buildNavSection([_buildNavBarItem('assets/images/solidarity_1.png', "Community", 0), _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1)]),
             const SizedBox(width: 72),
-            _buildNavSection([
-              _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
-              _buildNavBarItem('assets/images/user.png', "Profile", 3),
-            ]),
+            _buildNavSection([_buildNavBarItem('assets/images/qa.png', "Q&A", 2), _buildNavBarItem('assets/images/user.png', "Profile", 3)]),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNavSection(List<Widget> items) =>
-      Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: items));
+  Widget _buildNavSection(List<Widget> items) => Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: items));
 
   Widget _buildNavBarItem(String iconPath, String label, int index) {
     final bool isSelected = _selectedIndex == index;
@@ -357,13 +299,7 @@ class _QAScreenState extends State<QAScreen> {
         children: [
           Image.asset(iconPath, width: 28, height: 28, color: itemColor),
           const SizedBox(height: 5),
-          Text(label,
-              style: TextStyle(
-                fontFamily: MobileAppFonts.body,
-                fontSize: 12,
-                color: itemColor,
-                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-              )),
+          Text(label, style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 12, color: itemColor, fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600)),
         ],
       ),
     );

@@ -23,7 +23,6 @@ class CommunityPostDetailScreen extends StatefulWidget {
 }
 
 class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
-  // Services & State
   final _communityService = CommunityService();
   final TextEditingController _replyController = TextEditingController();
 
@@ -32,7 +31,6 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
   bool _isStudent = true;
   bool _isLoading = true;
 
-  // Constants & Styles
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _textIndigo = const Color(0xFF5C5C80);
   final Color _primaryBlue = const Color(0xFF237ABA);
@@ -55,13 +53,14 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
     super.dispose();
   }
 
-  // --- Logic Methods ---
-
   Future<void> _checkUserType() async {
+    // Prevent re-triggering loading state if already loaded
+    if (!_isLoading) return;
+
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.reload();
       String id = prefs.getString('ID') ?? prefs.getString('userCode') ?? "N/A";
+
       if (mounted) {
         setState(() {
           _isStudent = !id.toUpperCase().startsWith('FA');
@@ -75,29 +74,13 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
 
   Future<void> _submitReply() async {
     if (_replyController.text.trim().isEmpty) return;
-
     setState(() => _isSending = true);
-
     try {
       final prefs = await SharedPreferences.getInstance();
       String userId = prefs.getString('userCode') ?? prefs.getString('ID') ?? '';
       bool isFaculty = userId.toUpperCase().startsWith('FA');
-
       String fName = prefs.getString('fName') ?? prefs.getString('userFirstName') ?? '';
       String lName = prefs.getString('lName') ?? prefs.getString('userLastName') ?? '';
-
-      if (fName.isEmpty && userId.isNotEmpty) {
-        try {
-          final collection = isFaculty ? 'faculty' : 'students';
-          var doc = await FirebaseFirestore.instance.collection(collection).doc(userId).get();
-          if (doc.exists) {
-            fName = doc.data()?['fName'] ?? '';
-            lName = doc.data()?['lName'] ?? '';
-          }
-        } catch (e) {
-          debugPrint("Error fetching user name: $e");
-        }
-      }
 
       String displayName = "$fName $lName".trim();
       if (displayName.isEmpty) {
@@ -114,38 +97,28 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
       );
 
       await _communityService.addReply(widget.post.id, reply);
-
-      if (!mounted) return;
-
       _replyController.clear();
       setState(() => _isReplying = false);
       FocusScope.of(context).unfocus();
-
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to send reply: $e")),
-      );
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
     } finally {
       if (mounted) setState(() => _isSending = false);
     }
   }
 
-  // --- UI Builders ---
-
   @override
   Widget build(BuildContext context) {
-    // Grab screen dimensions for perfect proportions
     final sw = MediaQuery.of(context).size.width;
     final sh = MediaQuery.of(context).size.height;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: _isLoading
-          ? const SizedBox(height: 80)
-          : (_isStudent ? _buildStudentBottomBar() : _buildFacultyBottomBar()),
+      bottomNavigationBar: _buildPermanentBottomBar(),
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -157,16 +130,24 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
           child: Stack(
             children: [
               Padding(
-                // Dynamic padding applied here
                 padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.02),
                 child: Column(
                   children: [
                     _buildTopHeader(),
                     SizedBox(height: sh * 0.02),
-                    _buildPostCard(),
-                    SizedBox(height: sh * 0.02),
-                    _buildRepliesSection(),
-                    SizedBox(height: sh * 0.12), // Dynamic spacing at bottom
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: EdgeInsets.only(bottom: keyboardHeight > 0 ? keyboardHeight + 30 : sh * 0.15),
+                        child: Column(
+                          children: [
+                            _buildPostCard(),
+                            SizedBox(height: sh * 0.02),
+                            _buildRepliesSection(),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -178,6 +159,11 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
     );
   }
 
+  Widget _buildPermanentBottomBar() {
+    if (_isLoading) return _bottomNavWrapper(child: const SizedBox.shrink());
+    return _isStudent ? _buildStudentBottomBar() : _buildFacultyBottomBar();
+  }
+
   Widget _buildTopHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -186,19 +172,12 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
           onTap: () => Navigator.pop(context),
           child: Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(12),
-            ),
+            decoration: BoxDecoration(color: Colors.white.withOpacity(0.5), borderRadius: BorderRadius.circular(12)),
             child: Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: _mainPurple),
           ),
         ),
-        Text("Community",
-            style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
-        ),
+        Text("Community", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
+        ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.asset('assets/images/LOGO.png', width: 36, height: 36)),
       ],
     );
   }
@@ -208,17 +187,10 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.6),
+        color: Colors.white.withOpacity(0.6),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _mainPurple.withValues(alpha: 0.2), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: _primaryBlue.withValues(alpha: 0.12),
-            blurRadius: 25,
-            spreadRadius: 2,
-            offset: const Offset(0, 8),
-          )
-        ],
+        border: Border.all(color: _mainPurple.withOpacity(0.2), width: 1.5),
+        boxShadow: [BoxShadow(color: _primaryBlue.withOpacity(0.12), blurRadius: 25, offset: const Offset(0, 8))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,95 +203,81 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(widget.post.title,
-                        style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 16, fontWeight: FontWeight.bold, color: _mainPurple)),
-                    Text("${widget.post.userName} • ${DateFormat('MMM d').format(widget.post.timestamp)}",
-                        style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+                    Text(widget.post.title, style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 16, fontWeight: FontWeight.bold, color: _mainPurple)),
+                    Text("${widget.post.userName} • ${DateFormat('MMM d').format(widget.post.timestamp)}", style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
                   ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Text(widget.post.content,
-              style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: Colors.black87, height: 1.5)),
+          Text(widget.post.content, style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: Colors.black87, height: 1.5)),
         ],
       ),
     );
   }
 
   Widget _buildRepliesSection() {
-    return Expanded(
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: _mainPurple.withValues(alpha: 0.2), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: _primaryBlue.withValues(alpha: 0.12),
-              blurRadius: 25,
-              offset: const Offset(0, 8),
-            )
-          ],
-        ),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Replies",
-                    style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: _mainPurple)),
-                GestureDetector(
-                  onTap: () => setState(() => _isReplying = !_isReplying),
-                  child: Icon(_isReplying ? Icons.close_rounded : Icons.add_rounded, color: _mainPurple, size: 28),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (_isReplying) _buildReplyInput(),
-            Expanded(
-              child: StreamBuilder<List<CommunityReplyModel>>(
-                stream: _communityService.getRepliesStream(widget.post.id),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator(color: _mainPurple));
-                  }
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text("No replies yet. Be the first!", style: TextStyle(fontFamily: MobileAppFonts.body)));
-                  }
-                  final replies = snapshot.data!;
-                  return ListView.separated(
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: replies.length,
-                    separatorBuilder: (_, __) => const Divider(height: 24),
-                    itemBuilder: (context, index) {
-                      final reply = replies[index];
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(minHeight: 200),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: _mainPurple.withOpacity(0.2), width: 1.5),
+        boxShadow: [BoxShadow(color: _primaryBlue.withOpacity(0.12), blurRadius: 25, offset: const Offset(0, 8))],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Replies", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: _mainPurple)),
+              GestureDetector(
+                onTap: () => setState(() => _isReplying = !_isReplying),
+                child: Icon(_isReplying ? Icons.close_rounded : Icons.add_rounded, color: _mainPurple, size: 28),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (_isReplying) _buildReplyInput(),
+          StreamBuilder<List<CommunityReplyModel>>(
+            stream: _communityService.getRepliesStream(widget.post.id),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) return Center(child: CircularProgressIndicator(color: _mainPurple));
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: Text("No replies yet.", style: TextStyle(fontFamily: MobileAppFonts.body)));
+              }
+              final replies = snapshot.data!;
+              return ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: replies.length,
+                separatorBuilder: (_, __) => const Divider(height: 24),
+                itemBuilder: (context, index) {
+                  final reply = replies[index];
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(reply.userName,
-                                  style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 14, fontWeight: FontWeight.bold, color: _mainPurple)),
-                              Text(DateFormat('h:mm a').format(reply.timestamp),
-                                  style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(reply.content, style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: Colors.black)),
+                          Text(reply.userName, style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 14, fontWeight: FontWeight.bold, color: _mainPurple)),
+                          // UPDATED: Displays both Date and Time
+                          Text(DateFormat('MMM d, h:mm a').format(reply.timestamp), style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
                         ],
-                      );
-                    },
+                      ),
+                      const SizedBox(height: 4),
+                      Text(reply.content, style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: Colors.black)),
+                    ],
                   );
                 },
-              ),
-            ),
-          ],
-        ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -330,6 +288,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
       decoration: BoxDecoration(color: const Color(0xFFF2F2F2), borderRadius: BorderRadius.circular(24)),
       child: TextField(
         controller: _replyController,
+        autofocus: true,
         style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14),
         decoration: InputDecoration(
           hintText: "Type your reply...",
@@ -344,41 +303,29 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
     );
   }
 
-  // --- CLAMPED DYNAMIC FAB ---
   Widget _buildCreatePostFab(double sw, double sh) {
     return Positioned(
-      // Scales vertically, but never dips below 110px (protecting it from the nav bar)
-      bottom: (sh * 0.12).clamp(110.0, 140.0),
-      // Scales horizontally, maintaining edge padding
-      right: (sw * 0.06).clamp(20.0, 35.0),
+      bottom: sh * 0.12,
+      right: sw * 0.06,
       child: GestureDetector(
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateCommunityPostScreen())),
         child: Container(
-          // Aims for 20% of screen width, but freezes between 70px and 85px to match perfectly
-          width: (sw * 0.20).clamp(70.0, 85.0),
-          height: (sw * 0.20).clamp(70.0, 85.0),
+          width: 75, height: 75,
           decoration: BoxDecoration(
             color: Colors.white,
-            // Dynamically curves the edges while maintaining shape
-            borderRadius: BorderRadius.circular((sw * 0.05).clamp(16.0, 24.0)),
-            boxShadow: [
-              BoxShadow(
-                  color: _mainPurple.withValues(alpha: 0.25),
-                  blurRadius: 15,
-                  offset: const Offset(0, 6)
-              )
-            ],
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.25), blurRadius: 15, offset: const Offset(0, 6))],
           ),
-          child: Center(
-            child: Image.asset(
-              'assets/images/solidarity_1.png', // Maintained your original icon
-              // Scales icon perfectly alongside the button bounds
-              width: (sw * 0.20).clamp(30.0, 50.0),
-              height: (sw * 0.20).clamp(30.0, 50.0),
-              fit: BoxFit.contain,
-              color: _mainPurple,
-            ),
-          ),
+            child: Center(
+              child: Image.asset(
+                'assets/icons/solidarity.png',
+                // Scales icon perfectly alongside the button bounds
+                width: (sw * 0.20).clamp(30.0, 50.0),
+                height: (sw * 0.20).clamp(30.0, 50.0),
+                fit: BoxFit.contain,
+                color: _mainPurple,
+              ),
+            )
         ),
       ),
     );
@@ -386,24 +333,11 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
 
   Widget _buildHomeFab() {
     return Container(
-      height: 72,
-      width: 72,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: _mainPurple.withValues(alpha: 0.6),
-            blurRadius: 25,
-            spreadRadius: 6,
-            offset: const Offset(0, 2),
-          )
-        ],
-      ),
+      height: 72, width: 72,
+      decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.6), blurRadius: 25, spreadRadius: 6, offset: const Offset(0, 2))]),
       child: FloatingActionButton(
         onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        shape: const CircleBorder(),
+        backgroundColor: Colors.transparent, elevation: 0, shape: const CircleBorder(),
         child: Container(
           decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
           child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
@@ -417,28 +351,15 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _navItem('assets/images/solidarity_1.png', 'Community', true),
-                _navItem('assets/images/calendar.png', 'Schedule', false,
-                    onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuSchedule()))),
-              ],
-            ),
-          ),
+          Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+            _navItem('assets/images/solidarity_1.png', 'Community', true),
+            _navItem('assets/images/calendar.png', 'Schedule', false, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuSchedule()))),
+          ])),
           const SizedBox(width: 72),
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _navItem('assets/images/qa.png', 'Q&A', false,
-                    onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuQAScreen()))),
-                _navItem('assets/images/user.png', 'Profile', false,
-                    onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen()))),
-              ],
-            ),
-          ),
+          Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+            _navItem('assets/images/qa.png', 'Q&A', false, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuQAScreen()))),
+            _navItem('assets/images/user.png', 'Profile', false, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen()))),
+          ])),
         ],
       ),
     );
@@ -449,28 +370,15 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _navItem('assets/images/solidarity_1.png', 'Community', true),
-                _navItem('assets/images/classroom_1.png', 'Halls', false,
-                    onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HallsScreen()))),
-              ],
-            ),
-          ),
+          Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+            _navItem('assets/images/solidarity_1.png', 'Community', true),
+            _navItem('assets/images/classroom_1.png', 'Halls', false, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HallsScreen()))),
+          ])),
           const SizedBox(width: 72),
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _navItem('assets/images/qa.png', 'Q&A', false,
-                    onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const QAScreen()))),
-                _navItem('assets/images/user.png', 'Profile', false,
-                    onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen()))),
-              ],
-            ),
-          ),
+          Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+            _navItem('assets/images/qa.png', 'Q&A', false, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const QAScreen()))),
+            _navItem('assets/images/user.png', 'Profile', false, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen()))),
+          ])),
         ],
       ),
     );
@@ -478,28 +386,8 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
 
   Widget _bottomNavWrapper({required Widget child}) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 20,
-            spreadRadius: 4,
-            offset: const Offset(0, -6),
-          ),
-        ],
-      ),
-      child: BottomAppBar(
-        clipBehavior: Clip.antiAlias,
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 9.0,
-        color: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        shadowColor: Colors.transparent,
-        height: 80,
-        child: child,
-      ),
+      decoration: BoxDecoration(color: Colors.transparent, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 20, offset: const Offset(0, -6))]),
+      child: BottomAppBar(clipBehavior: Clip.antiAlias, shape: const CircularNotchedRectangle(), notchMargin: 9.0, color: Colors.white, height: 80, child: child),
     );
   }
 
@@ -513,20 +401,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
         children: [
           Image.asset(path, width: 28, height: 28, color: sel ? _mainPurple : Colors.grey.shade500),
           const SizedBox(height: 5),
-          // Flexible applied here to prevent text overflow!
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: MobileAppFonts.body,
-                fontSize: 12,
-                color: sel ? _mainPurple : Colors.grey.shade600,
-                fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
-              ),
-            ),
-          ),
+          Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 12, color: sel ? _mainPurple : Colors.grey.shade600, fontWeight: sel ? FontWeight.w900 : FontWeight.w600))),
         ],
       ),
     );

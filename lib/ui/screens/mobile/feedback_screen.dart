@@ -17,11 +17,10 @@ class FeedbackScreen extends StatefulWidget {
 
 class _FeedbackScreenState extends State<FeedbackScreen> {
   final TextEditingController _feedbackController = TextEditingController();
-  int _rating = 4; // Default rating
-  bool _isLoading = false; // To manage the loading state
+  int _rating = 4;
+  bool _isLoading = false;
 
   final int _selectedIndex = -1;
-
   final Color _mainPurple = const Color(0xFF7B61FF);
 
   final Gradient _fabGradient = const LinearGradient(
@@ -35,9 +34,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     super.dispose();
   }
 
-  // --- THE FIREBASE SUBMIT LOGIC ---
   Future<void> _submitFeedback() async {
     final feedbackText = _feedbackController.text.trim();
+    if (feedbackText.isEmpty) return;
 
     setState(() => _isLoading = true);
 
@@ -64,9 +63,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           ),
         );
         _feedbackController.clear();
-        setState(() {
-          _rating = 4;
-        });
+        setState(() => _rating = 4);
+        FocusScope.of(context).unfocus();
       }
     } catch (e) {
       if (mounted) {
@@ -93,11 +91,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Grab screen dimensions for perfect proportions
     final sw = MediaQuery.of(context).size.width;
     final sh = MediaQuery.of(context).size.height;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
     return Scaffold(
+      // FIXED: Prevents FAB and Bottom Bar from moving with the keyboard
+      resizeToAvoidBottomInset: false,
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -113,20 +113,16 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         child: SafeArea(
           bottom: false,
           child: Padding(
-            // Dynamic padding applied to the entire screen layout
             padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.02),
             child: Column(
               children: [
-                // 1. HEADER IS OUTSIDE THE SCROLL VIEW (Fixed at top)
                 _buildHeader(),
                 SizedBox(height: sh * 0.03),
-
-                // 2. ONLY THE CONTENT BELOW THE HEADER IS SCROLLABLE
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    // Padding at the bottom so content doesn't get hidden behind the floating button
-                    padding: EdgeInsets.only(bottom: sh * 0.15),
+                    // FIXED: Dynamic padding allows scrolling over the keyboard area
+                    padding: EdgeInsets.only(bottom: keyboardHeight > 0 ? keyboardHeight + 20 : sh * 0.15),
                     child: Column(
                       children: [
                         _buildFormCard(sw),
@@ -152,7 +148,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           onTap: () => Navigator.pop(context),
           child: Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: _mainPurple),
         ),
-
         const Text(
           "Feedback",
           style: TextStyle(
@@ -162,7 +157,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             color: Color(0xFF5C5C80),
           ),
         ),
-
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -174,15 +168,14 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   Widget _buildFormCard(double sw) {
     return Container(
       width: double.infinity,
-      // Dynamic internal padding
       padding: EdgeInsets.all(sw * 0.06),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.6),
+        color: Colors.white.withOpacity(0.6),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _mainPurple.withValues(alpha: 0.6), width: 1.5),
+        border: Border.all(color: _mainPurple.withOpacity(0.6), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF237ABA).withValues(alpha: 0.1),
+            color: const Color(0xFF237ABA).withOpacity(0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           )
@@ -202,15 +195,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             textAlign: TextAlign.left,
           ),
           const SizedBox(height: 20),
-
-          // Rating Section
           _buildLabel("Rate our app"),
           const SizedBox(height: 8),
           _buildStarRating(),
-
           const SizedBox(height: 20),
-
-          // Question/Feedback Input
           _buildLabel("Question"),
           const SizedBox(height: 8),
           Container(
@@ -259,11 +247,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       mainAxisAlignment: MainAxisAlignment.start,
       children: List.generate(5, (index) {
         return GestureDetector(
-          onTap: () {
-            setState(() {
-              _rating = index + 1;
-            });
-          },
+          onTap: () => setState(() => _rating = index + 1),
           child: Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: Icon(
@@ -279,7 +263,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   Widget _buildSubmitButton(double sw) {
     return SizedBox(
-      // Responsive button width so it doesn't overflow small screens
       width: sw * 0.5 > 200 ? 200 : sw * 0.5,
       height: 50,
       child: OutlinedButton(
@@ -306,29 +289,18 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   Widget _buildHomeFab() {
     return Container(
-      height: 72,
-      width: 72,
+      height: 72, width: 72,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         boxShadow: [
-          BoxShadow(
-            color: _mainPurple.withValues(alpha: 0.6),
-            blurRadius: 25,
-            spreadRadius: 6,
-            offset: const Offset(0, 2),
-          )
+          BoxShadow(color: _mainPurple.withOpacity(0.6), blurRadius: 25, spreadRadius: 6, offset: const Offset(0, 2))
         ],
       ),
       child: FloatingActionButton(
         onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        shape: const CircleBorder(),
+        backgroundColor: Colors.transparent, elevation: 0, shape: const CircleBorder(),
         child: Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: _fabGradient,
-          ),
+          decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
           child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
         ),
       ),
@@ -340,23 +312,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       decoration: BoxDecoration(
         color: Colors.transparent,
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 20,
-            spreadRadius: 4,
-            offset: const Offset(0, -6),
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 20, spreadRadius: 4, offset: const Offset(0, -6))
         ],
       ),
       child: BottomAppBar(
-        clipBehavior: Clip.antiAlias,
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 9.0,
-        color: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        shadowColor: Colors.transparent,
-        height: 80,
+        clipBehavior: Clip.antiAlias, shape: const CircularNotchedRectangle(),
+        notchMargin: 9.0, color: Colors.white, height: 80,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -392,22 +353,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(
-            path,
-            width: 28,
-            height: 28,
-            color: sel ? _mainPurple : Colors.grey.shade500,
-          ),
+          Image.asset(path, width: 28, height: 28, color: sel ? _mainPurple : Colors.grey.shade500),
           const SizedBox(height: 5),
-          // Flexible added here to protect nav labels from overflowing
           Flexible(
             child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              label, maxLines: 1, overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontFamily: MobileAppFonts.body,
-                fontSize: 12,
+                fontFamily: MobileAppFonts.body, fontSize: 12,
                 color: sel ? _mainPurple : Colors.grey.shade600,
                 fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
               ),

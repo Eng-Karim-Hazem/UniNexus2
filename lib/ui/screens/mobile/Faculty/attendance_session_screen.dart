@@ -277,6 +277,7 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
   Widget _buildQRContainer(double sw) {
     return Container(
       width: double.infinity,
+      height: 270.0,
       padding: EdgeInsets.all(sw * 0.06),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.75),
