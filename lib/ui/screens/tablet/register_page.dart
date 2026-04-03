@@ -130,7 +130,7 @@ class _RegisterPageState extends State<RegisterPage>
                       const SizedBox(height: 24),
                       Expanded(
                         child: SingleChildScrollView(
-                          padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom > 0 ? 16 : 0),
+                          padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom + 40),
                           child: Column(
                             children: [
                               animatedField(anim: field1Anim, child: AppLabeledField(label: 'National ID', controller: _nationalIdController, hint: 'Enter Your National ID')),
@@ -143,7 +143,15 @@ class _RegisterPageState extends State<RegisterPage>
                                 anim: checkAnim,
                                 child: _isLoading
                                     ? const CircularProgressIndicator()
-                                    : SizedBox(width: double.infinity, child: AppAuthButton(text: 'Register', onTap: _handleRegister)),
+                                    : Row( // Using a Row guarantees it centers perfectly
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: (sw * 0.25).clamp(200.0, 350.0),
+                                      child: AppAuthButton(text: 'Register', onTap: _handleRegister),
+                                    ),
+                                  ],
+                                ),
                               ),
                               const SizedBox(height: 24),
                             ],

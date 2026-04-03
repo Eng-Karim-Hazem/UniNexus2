@@ -133,7 +133,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                       const SizedBox(height: 24),
                       Expanded(
                         child: SingleChildScrollView(
-                          padding: EdgeInsets.only(bottom: keyboardInset > 0 ? 16 : 0),
+                          padding: EdgeInsets.only(bottom: keyboardInset ),
                           child: Column(
                             children: [
                               animatedField(anim: field1Anim, child: AppLabeledField(label: 'Email / ID', controller: _emailController, hint: 'Enter Your Email/ID')),
@@ -148,7 +148,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                                 anim: checkAnim,
                                 child: _isLoading
                                     ? const CircularProgressIndicator()
-                                    : SizedBox(width: double.infinity, child: AppAuthButton(text: 'Submit', onTap: _handleSubmit)),
+                                    : Row( // Using a Row guarantees it centers perfectly
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: (sw * 0.25).clamp(200.0, 350.0),
+                                      child: AppAuthButton(text: 'Submit', onTap: _handleSubmit),
+                                    ),
+                                  ],
+                                ),
                               ),
                               const SizedBox(height: 24),
                             ],

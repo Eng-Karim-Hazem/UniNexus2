@@ -119,49 +119,53 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     final sw = MediaQuery.of(context).size.width;
     final sh = MediaQuery.of(context).size.height;
 
-    return Scaffold(
-      extendBody: true,
-      floatingActionButton: _buildFab(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: _buildBottomBar(),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/Phone_Background.png'),
-            fit: BoxFit.cover,
+    // WRAP THE SCAFFOLD IN POPSCOPE TO DISABLE THE BACK BUTTON
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        extendBody: true,
+        floatingActionButton: _buildFab(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        bottomNavigationBar: _buildBottomBar(),
+        body: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/Phone_Background.png'),
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: Column(
-            children: [
-              // --- FIXED TOP HEADER (OUTSIDE SCROLLVIEW) ---
-              Padding(
-                padding: EdgeInsets.fromLTRB(sw * 0.06, sh * 0.02, sw * 0.06, 10),
-                child: _buildTopHeader(),
-              ),
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                // --- FIXED TOP HEADER (OUTSIDE SCROLLVIEW) ---
+                Padding(
+                  padding: EdgeInsets.fromLTRB(sw * 0.06, sh * 0.02, sw * 0.06, 10),
+                  child: _buildTopHeader(),
+                ),
 
-              // --- SCROLLABLE AREA ---
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(horizontal: sw * 0.06),
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(height: sh * 0.02),
-                      _buildGreetingCard(sw, sh),
-                      SizedBox(height: sh * 0.03),
-                      _buildActionButtons(sw, sh),
-                      const SizedBox(height: 12),
-                      _buildNotificationsArea(sw, sh),
-                    ],
+                // --- SCROLLABLE AREA ---
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(horizontal: sw * 0.06),
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: sh * 0.02),
+                        _buildGreetingCard(sw, sh),
+                        SizedBox(height: sh * 0.03),
+                        _buildActionButtons(sw, sh),
+                        const SizedBox(height: 12),
+                        _buildNotificationsArea(sw, sh),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

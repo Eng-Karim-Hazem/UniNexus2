@@ -117,11 +117,19 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
                           child: GlassCard(
                             padding: const EdgeInsets.all(20),
                             child: _isLoading
-                                ? const LoadingState()
+                                ? const SingleChildScrollView(child: Center(child: LoadingState()))
                                 : _recentSearches.isEmpty
-                                ? const EmptyState(
-                              message: 'No recent searches',
-                              icon: Icons.history,
+                                ? const SingleChildScrollView(
+                              physics: BouncingScrollPhysics(),
+                              child: Center(
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 40),
+                                  child: EmptyState(
+                                    message: 'No recent searches',
+                                    icon: Icons.history,
+                                  ),
+                                ),
+                              ),
                             )
                                 : ListView.builder(
                               padding: EdgeInsets.zero,
@@ -148,15 +156,21 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
                     child: GlassCard(
                       padding: const EdgeInsets.all(32),
                       child: _selectedStudent == null
-                          ? Center(
-                        child: _searchError != null
-                            ? EmptyState(
-                          message: _searchError!,
-                          icon: Icons.person_off,
-                        )
-                            : const EmptyState(
-                          message: 'Search for a user to view details',
-                          icon: Icons.person_search,
+                          ? SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 80),
+                            child: _searchError != null
+                                ? EmptyState(
+                              message: _searchError!,
+                              icon: Icons.person_off,
+                            )
+                                : const EmptyState(
+                              message: 'Search for a user to view details',
+                              icon: Icons.person_search,
+                            ),
+                          ),
                         ),
                       )
                           : _UserDataPanel(student: _selectedStudent!),
@@ -170,6 +184,7 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
       ),
     );
   }
+
 
   // Search bar widget
   Widget _buildSearchBar() {
@@ -205,99 +220,103 @@ class _UserDataPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Icon(Icons.person, color: AppColors.primary, size: 40),
-            const SizedBox(width: 16),
-            const Text("User Data", style: TextStyle(fontFamily: AppFonts.batangas, fontWeight: FontWeight.w800, fontSize: 26, color: AppColors.primary)),
-          ],
-        ),
-        const SizedBox(height: 36),
-        buildInfoRow(
-          label: "Name",
-          value: "${student.fName} ${student.lName}",
-          fontSize: 18,
-          verticalPadding: 12,
-          labelWeight: FontWeight.w800,
-          valueWeight: FontWeight.w600,
-        ),
-        const SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(
-              flex: 3,
-              child: buildInfoRow(
-                label: "User Type",
-                value: "Student",
-                fontSize: 18,
-                verticalPadding: 12,
-                labelWeight: FontWeight.w800,
-                valueWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              flex: 2,
-              child: buildInfoRow(
-                label: "Year",
-                value: student.year,
-                fontSize: 18,
-                verticalPadding: 12,
-                labelWeight: FontWeight.w800,
-                valueWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        buildInfoRow(
-          label: "ID",
-          value: student.id,
-          fontSize: 18,
-          verticalPadding: 12,
-          labelWeight: FontWeight.w800,
-          valueWeight: FontWeight.w600,
-        ),
-        const SizedBox(height: 24),
-        buildInfoRow(
-          label: "Faculty",
-          value: student.faculty,
-          fontSize: 18,
-          verticalPadding: 12,
-          labelWeight: FontWeight.w800,
-          valueWeight: FontWeight.w600,
-        ),
-        const SizedBox(height: 24),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Row(
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Text(
-                'Status : ',
-                style: const TextStyle(
-                  fontFamily: AppFonts.spaceGrotesk,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textDark,
-                ),
-              ),
-              StatusBadge(status: student.entry ? 'approved' : 'denied', isDot: false),
+              const Icon(Icons.person, color: AppColors.primary, size: 40),
+              const SizedBox(width: 16),
+              const Text("User Data", style: TextStyle(fontFamily: AppFonts.batangas, fontWeight: FontWeight.w800, fontSize: 26, color: AppColors.primary)),
             ],
           ),
-        ),
-        const SizedBox(height: 24),
-        buildInfoRow(
-          label: "Note",
-          value: student.note,
-          fontSize: 18,
-          verticalPadding: 12,
-          labelWeight: FontWeight.w800,
-          valueWeight: FontWeight.w600,
-        ),
-      ],
+          const SizedBox(height: 36),
+          buildInfoRow(
+            label: "Name",
+            value: "${student.fName} ${student.lName}",
+            fontSize: 18,
+            verticalPadding: 12,
+            labelWeight: FontWeight.w800,
+            valueWeight: FontWeight.w600,
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: buildInfoRow(
+                  label: "User Type",
+                  value: "Student",
+                  fontSize: 18,
+                  verticalPadding: 12,
+                  labelWeight: FontWeight.w800,
+                  valueWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 2,
+                child: buildInfoRow(
+                  label: "Year",
+                  value: student.year,
+                  fontSize: 18,
+                  verticalPadding: 12,
+                  labelWeight: FontWeight.w800,
+                  valueWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          buildInfoRow(
+            label: "ID",
+            value: student.id,
+            fontSize: 18,
+            verticalPadding: 12,
+            labelWeight: FontWeight.w800,
+            valueWeight: FontWeight.w600,
+          ),
+          const SizedBox(height: 24),
+          buildInfoRow(
+            label: "Faculty",
+            value: student.faculty,
+            fontSize: 18,
+            verticalPadding: 12,
+            labelWeight: FontWeight.w800,
+            valueWeight: FontWeight.w600,
+          ),
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              children: [
+                const Text(
+                  'Status : ',
+                  style: TextStyle(
+                    fontFamily: AppFonts.spaceGrotesk,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                StatusBadge(status: student.entry ? 'approved' : 'denied', isDot: false),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          buildInfoRow(
+            label: "Note",
+            value: student.note,
+            fontSize: 18,
+            verticalPadding: 12,
+            labelWeight: FontWeight.w800,
+            valueWeight: FontWeight.w600,
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
     );
   }
 }

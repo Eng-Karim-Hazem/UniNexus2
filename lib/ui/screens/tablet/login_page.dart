@@ -223,7 +223,7 @@ class _LoginPageState extends State<LoginPage>
                       SizedBox(height: sh * 0.03),
                       Expanded(
                         child: SingleChildScrollView(
-                          padding: EdgeInsets.only(bottom: keyboardInset > 0 ? 16 : 0),
+                          padding: EdgeInsets.only(bottom: keyboardInset + 40),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -278,9 +278,14 @@ class _LoginPageState extends State<LoginPage>
                                 anim: checkAnim,
                                 child: _isLoading
                                     ? const Center(child: CircularProgressIndicator())
-                                    : SizedBox(
-                                  width: double.infinity,
-                                  child: AppAuthButton(text: 'Log In', onTap: _handleLogin),
+                                    : Row( // Using a Row guarantees it centers perfectly
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: (sw * 0.25).clamp(200.0, 350.0),
+                                      child: AppAuthButton(text: 'Log In', onTap: _handleLogin),
+                                    ),
+                                  ],
                                 ),
                               ),
                               SizedBox(height: sh * 0.03),

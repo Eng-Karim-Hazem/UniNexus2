@@ -195,9 +195,10 @@ class _LoginScreenState extends State<LoginScreen>
     return PopScope(
       canPop: false,
       child: Scaffold(
-        resizeToAvoidBottomInset: false, // Prevents keyboard from pushing content up and causing overflow
+        // 1. REMOVED: resizeToAvoidBottomInset: false. We want the scaffold to react to the keyboard now!
         body: Stack(
           children: [
+            // Background stays fixed
             Positioned.fill(
               child: Image.asset("assets/images/WelcomeBackground.png", fit: BoxFit.cover),
             ),
@@ -221,101 +222,111 @@ class _LoginScreenState extends State<LoginScreen>
                 position: _contentIntro,
                 child: FadeTransition(
                   opacity: _contentController,
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(sw * 0.08, 25, sw * 0.08, 20),
-                    child: Column(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.asset(
-                            "assets/images/uni.jpeg",
-                            width: MobileAppDimensions.heroImageWidth,
-                            height: sh * 0.15, // Fixed height but with BoxFit.contain
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        const Text("Log in to UniNexus", style: MobileAppTextStyles.screenTitle),
-                        const Text("Access your campus services securely", style: MobileAppTextStyles.screenSubtitle),
-
-                        const Spacer(flex: 1),
-
-                        _animatedItem(
-                          anim: _field1Anim,
-                          child: _modernField(
-                            label: "Email / ID",
-                            hint: "Enter Your Email/ID",
-                            controller: _codeController,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        _animatedItem(
-                          anim: _field2Anim,
-                          child: _modernField(
-                            label: "Password",
-                            hint: "Enter Your Password",
-                            controller: _passwordController,
-                            obscure: _obscurePassword,
-                            icon: IconButton(
-                              icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                            ),
-                          ),
-                        ),
-
-                        _animatedItem(
-                          anim: _checkAnim,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  // 2. ADDED: CustomScrollView & SliverFillRemaining
+                  // This keeps Spacers working when the keyboard is closed,
+                  // but allows scrolling when the keyboard opens!
+                  child: CustomScrollView(
+                    slivers: [
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Padding(
+                          padding: EdgeInsets.fromLTRB(sw * 0.08, 25, sw * 0.08, 20),
+                          child: Column(
                             children: [
-                              Flexible(
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.asset(
+                                  "assets/images/uni.jpeg",
+                                  width: MobileAppDimensions.heroImageWidth,
+                                  height: sh * 0.15,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              const Text("Log in to UniNexus", style: MobileAppTextStyles.screenTitle),
+                              const Text("Access your campus services securely", style: MobileAppTextStyles.screenSubtitle),
+
+                              const Spacer(flex: 1),
+
+                              _animatedItem(
+                                anim: _field1Anim,
+                                child: _modernField(
+                                  label: "Email / ID",
+                                  hint: "Enter Your Email/ID",
+                                  controller: _codeController,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              _animatedItem(
+                                anim: _field2Anim,
+                                child: _modernField(
+                                  label: "Password",
+                                  hint: "Enter Your Password",
+                                  controller: _passwordController,
+                                  obscure: _obscurePassword,
+                                  icon: IconButton(
+                                    icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                  ),
+                                ),
+                              ),
+
+                              _animatedItem(
+                                anim: _checkAnim,
                                 child: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Checkbox(
-                                      value: _rememberMe,
-                                      activeColor: MobileAppColors.primary,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                                      onChanged: (val) => setState(() => _rememberMe = val ?? false),
+                                    Flexible(
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Checkbox(
+                                            value: _rememberMe,
+                                            activeColor: MobileAppColors.primary,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                                            onChanged: (val) => setState(() => _rememberMe = val ?? false),
+                                          ),
+                                          const Flexible(child: Text("Remember Me", style: MobileAppTextStyles.bodyTextMedium, overflow: TextOverflow.ellipsis)),
+                                        ],
+                                      ),
                                     ),
-                                    const Flexible(child: Text("Remember Me", style: MobileAppTextStyles.bodyTextMedium, overflow: TextOverflow.ellipsis)),
+                                    Flexible(
+                                      child: TextButton(
+                                        onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
+                                        child: const Text("Forgot Password?", style: TextStyle(fontFamily: MobileAppFonts.body), overflow: TextOverflow.ellipsis),
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
-                              Flexible(
-                                child: TextButton(
-                                  onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
-                                  child: const Text("Forgot Password?", style: TextStyle(fontFamily: MobileAppFonts.body), overflow: TextOverflow.ellipsis),
-                                ),
+
+                              const Spacer(flex: 2),
+
+                              _mainButton(
+                                text: "Log In",
+                                enabled: _isFormValid && !_isLoading,
+                                isLoading: _isLoading,
+                                onTap: _handleLogin,
+                              ),
+
+                              const SizedBox(height: 10),
+
+                              Wrap(
+                                alignment: WrapAlignment.center,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  const Text("Don't have an account?", style: MobileAppTextStyles.bodyText),
+                                  TextButton(
+                                    onPressed: () => _slideTo(const SignUpScreen(), fromRight: true),
+                                    child: const Text("Register now", style: MobileAppTextStyles.textButtonHeading),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                         ),
-
-                        const Spacer(flex: 2),
-
-                        _mainButton(
-                          text: "Log In",
-                          enabled: _isFormValid && !_isLoading,
-                          isLoading: _isLoading,
-                          onTap: _handleLogin,
-                        ),
-
-                        const SizedBox(height: 10),
-
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            const Text("Don't have an account?", style: MobileAppTextStyles.bodyText),
-                            TextButton(
-                              onPressed: () => _slideTo(const SignUpScreen(), fromRight: true),
-                              child: const Text("Register now", style: MobileAppTextStyles.textButtonHeading),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),

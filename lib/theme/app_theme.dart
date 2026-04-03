@@ -950,6 +950,7 @@ class AppGradientButton extends StatelessWidget {
   final VoidCallback onPressed;
   final double width;
   final double height;
+  final TextStyle? textStyle; // Added optional text style
 
   const AppGradientButton({
     super.key,
@@ -957,6 +958,7 @@ class AppGradientButton extends StatelessWidget {
     required this.onPressed,
     this.width = 280,
     this.height = 65,
+    this.textStyle, // Included in constructor
   });
 
   @override
@@ -968,7 +970,11 @@ class AppGradientButton extends StatelessWidget {
         height: height,
         decoration: AppDecorations.gradientButton,
         child: Center(
-          child: Text(text, style: AppTextStyles.gradientButtonLabel),
+          child: Text(
+            text,
+            // Uses the custom style if provided, otherwise falls back to default
+            style: textStyle ?? AppTextStyles.gradientButtonLabel,
+          ),
         ),
       ),
     );

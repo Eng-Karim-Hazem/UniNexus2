@@ -48,7 +48,7 @@ class _SecurityShellState extends State<SecurityShell> {
         return SecurityGateEntryScreen(onNavigate: _navigate);
 
       case UninexusTab.hallErrors:
-         return GateLogScreen(onNavigate: _navigate);
+        return GateLogScreen(onNavigate: _navigate);
 
       case UninexusTab.logs:
         return SecurityIdLookupScreen(onNavigate: _navigate);
@@ -67,19 +67,34 @@ class _SecurityShellState extends State<SecurityShell> {
   @override
   Widget build(BuildContext context) {
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    // ADDED: PopScope to intercept the Android Hardware Back Button
+    return PopScope(
+      canPop: false, // Prevents the app from exiting automatically
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        if (didPop) return;
 
-      body: Row(
-        children: [
+        // If the user presses back and they are NOT on the dashboard...
+        if (_currentTab != UninexusTab.dashboard) {
+          // Send them back to the dashboard!
+          _navigate(UninexusTab.dashboard);
+        }
+        // If they are already on the dashboard, it does nothing.
+        // (They must use your actual logout button to leave the app).
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
 
-          SecuritySidebar(
-            current: _currentTab,
-            onNavigate: _navigate,
-          ),
+        body: Row(
+          children: [
 
-          Expanded(child: _buildScreen()),
-        ],
+            SecuritySidebar(
+              current: _currentTab,
+              onNavigate: _navigate,
+            ),
+
+            Expanded(child: _buildScreen()),
+          ],
+        ),
       ),
     );
   }

@@ -90,115 +90,119 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
     final sw = MediaQuery.of(context).size.width;
     final sh = MediaQuery.of(context).size.height;
 
-    return Scaffold(
-      extendBody: true,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: _buildFab(),
-      bottomNavigationBar: _buildBottomBar(),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/Phone_Background.png'),
-            fit: BoxFit.cover,
+    // WRAP THE SCAFFOLD IN POPSCOPE TO DISABLE THE BACK BUTTON
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        extendBody: true,
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButton: _buildFab(),
+        bottomNavigationBar: _buildBottomBar(),
+        body: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/Phone_Background.png'),
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
-            children: [
-              // --- FIXED TOP HEADER (NOT SCROLLABLE) ---
-              Padding(
-                padding: EdgeInsets.fromLTRB(sw * 0.06, 20, sw * 0.06, 10),
-                child: _buildTopHeader(),
-              ),
+          child: SafeArea(
+            bottom: false,
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+              children: [
+                // --- FIXED TOP HEADER (NOT SCROLLABLE) ---
+                Padding(
+                  padding: EdgeInsets.fromLTRB(sw * 0.06, 20, sw * 0.06, 10),
+                  child: _buildTopHeader(),
+                ),
 
-              // --- SCROLLABLE CONTENT AREA ---
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.symmetric(horizontal: sw * 0.06),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 20),
-                      _buildGreetingCard(sw, sh),
-                      const SizedBox(height: 20),
-                      GestureDetector(
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const StuSchedule())),
-                        child: _buildWhiteCard(
-                          sw: sw,
-                          sh: sh,
-                          opacity: 0.4,
-                          borderColor: _mainPurple.withOpacity(0.5),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  'Want to check your\nschedule?',
-                                  style: TextStyle(
-                                    fontFamily: MobileAppFonts.heading,
-                                    fontSize: sw * 0.045 > 20 ? 20 : sw * 0.045,
-                                    color: Colors.black.withOpacity(0.8),
-                                    fontWeight: FontWeight.bold,
+                // --- SCROLLABLE CONTENT AREA ---
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.symmetric(horizontal: sw * 0.06),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 20),
+                        _buildGreetingCard(sw, sh),
+                        const SizedBox(height: 20),
+                        GestureDetector(
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const StuSchedule())),
+                          child: _buildWhiteCard(
+                            sw: sw,
+                            sh: sh,
+                            opacity: 0.4,
+                            borderColor: _mainPurple.withOpacity(0.5),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'Want to check your\nschedule?',
+                                    style: TextStyle(
+                                      fontFamily: MobileAppFonts.heading,
+                                      fontSize: sw * 0.045 > 20 ? 20 : sw * 0.045,
+                                      color: Colors.black.withOpacity(0.8),
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              Image.asset('assets/images/main_calender.png', width: sw * 0.18, height: sw * 0.18),
-                            ],
+                                Image.asset('assets/images/main_calender.png', width: sw * 0.18, height: sw * 0.18),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 30),
+                        const SizedBox(height: 30),
 
-                      // Notifications Section
-                      Container(
-                        width: double.infinity,
-                        margin: EdgeInsets.only(bottom: sh * 0.15),
-                        padding: EdgeInsets.all(sw * 0.04),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.4),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+                        // Notifications Section
+                        Container(
+                          width: double.infinity,
+                          margin: EdgeInsets.only(bottom: sh * 0.15),
+                          padding: EdgeInsets.all(sw * 0.04),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.4),
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+                          ),
+                          child: StreamBuilder<QuerySnapshot>(
+                            stream: FirebaseFirestore.instance.collection('Notifications').orderBy('date', descending: true).snapshots(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return const Center(child: Padding(padding: EdgeInsets.all(20.0), child: CircularProgressIndicator()));
+                              }
+                              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return _buildEmptyNotices();
+
+                              final filteredDocs = snapshot.data!.docs.where((doc) => _isNoticeForStudent(doc.data() as Map<String, dynamic>)).toList();
+                              if (filteredDocs.isEmpty) return _buildEmptyNotices();
+
+                              return ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: filteredDocs.length,
+                                itemBuilder: (context, index) {
+                                  final data = filteredDocs[index].data() as Map<String, dynamic>;
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 12.0),
+                                    child: _buildStudentNotification(
+                                      title: data['sentBy'] ?? "University Notice",
+                                      message: data['description'] ?? "",
+                                      icon: Icons.notifications_none_rounded,
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
                         ),
-                        child: StreamBuilder<QuerySnapshot>(
-                          stream: FirebaseFirestore.instance.collection('Notifications').orderBy('date', descending: true).snapshots(),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return const Center(child: Padding(padding: EdgeInsets.all(20.0), child: CircularProgressIndicator()));
-                            }
-                            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return _buildEmptyNotices();
-
-                            final filteredDocs = snapshot.data!.docs.where((doc) => _isNoticeForStudent(doc.data() as Map<String, dynamic>)).toList();
-                            if (filteredDocs.isEmpty) return _buildEmptyNotices();
-
-                            return ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: filteredDocs.length,
-                              itemBuilder: (context, index) {
-                                final data = filteredDocs[index].data() as Map<String, dynamic>;
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 12.0),
-                                  child: _buildStudentNotification(
-                                    title: data['sentBy'] ?? "University Notice",
-                                    message: data['description'] ?? "",
-                                    icon: Icons.notifications_none_rounded,
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

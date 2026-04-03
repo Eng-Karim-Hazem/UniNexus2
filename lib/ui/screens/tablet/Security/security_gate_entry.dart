@@ -196,93 +196,125 @@ class _UserDataPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Image.asset(
-              'assets/icons/Individual.png',
-              width: 40, height: 40,
-              errorBuilder: (_, __, ___) => const Icon(Icons.person, color: AppColors.primary, size: 40),
-            ),
-            const SizedBox(width: 16),
-            Container(width: 3, height: 40, color: AppColors.primary.withValues(alpha: 0.4)),
-            const SizedBox(width: 16),
-            const Text("User Data", style: TextStyle(fontFamily: AppFonts.batangas, fontWeight: FontWeight.w800, fontSize: 26, color: AppColors.primary)),
-          ],
-        ),
-        const SizedBox(height: 36),
-        buildInfoRow(
-          label: "Name",
-          value: scan.name,
-          fontSize: 18,
-          verticalPadding: 12,
-        ),
-        const SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(
-              flex: 3,
-              child: buildInfoRow(
-                label: "User Type",
-                value: scan.type,
-                fontSize: 18,
-                verticalPadding: 12,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              flex: 2,
-              child: buildInfoRow(
-                label: "Year",
-                value: scan.year,
-                fontSize: 18,
-                verticalPadding: 12,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        buildInfoRow(
-          label: "ID",
-          value: scan.studentId,
-          fontSize: 18,
-          verticalPadding: 12,
-        ),
-        const SizedBox(height: 24),
-        buildInfoRow(
-          label: "Faculty",
-          value: scan.faculty,
-          fontSize: 18,
-          verticalPadding: 12,
-        ),
-        const SizedBox(height: 24),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Row(
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Text(
-                'Status : ',
-                style: const TextStyle(
-                  fontFamily: AppFonts.spaceGrotesk,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textDark,
-                ),
+              Image.asset(
+                'assets/icons/Individual.png',
+                width: 40, height: 40,
+                errorBuilder: (_, __, ___) => const Icon(Icons.person, color: AppColors.primary, size: 40),
               ),
-              StatusBadge(status: scan.status, isDot: false),
+              const SizedBox(width: 16),
+              Container(width: 3, height: 40, color: AppColors.primary.withValues(alpha: 0.4)),
+              const SizedBox(width: 16),
+              const Text("User Data", style: TextStyle(fontFamily: AppFonts.batangas, fontWeight: FontWeight.w800, fontSize: 26, color: AppColors.primary)),
             ],
           ),
-        ),
-        const SizedBox(height: 24),
-        buildInfoRow(
-          label: "Note",
-          value: scan.note,
-          fontSize: 18,
-          verticalPadding: 12,
-        ),
-      ],
+          const SizedBox(height: 36),
+          buildInfoRow(
+            label: "Name",
+            value: scan.name,
+            fontSize: 18,
+            verticalPadding: 12,
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: buildInfoRow(
+                  label: "User Type",
+                  value: scan.type,
+                  fontSize: 18,
+                  verticalPadding: 12,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 2,
+                child: buildInfoRow(
+                  label: "Year",
+                  value: scan.year,
+                  fontSize: 18,
+                  verticalPadding: 12,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          buildInfoRow(
+            label: "ID",
+            value: scan.studentId,
+            fontSize: 18,
+            verticalPadding: 12,
+          ),
+          const SizedBox(height: 24),
+          buildInfoRow(
+            label: "Faculty",
+            value: scan.faculty,
+            fontSize: 18,
+            verticalPadding: 12,
+          ),
+          const SizedBox(height: 24),
+
+          // --- UPDATED: DATE & TIME ROW ---
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: buildInfoRow(
+                  label: "Date",
+                  value: scan.date,
+                  fontSize: 18,
+                  verticalPadding: 12,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 2,
+                child: buildInfoRow(
+                  label: "Time",
+                  value: scan.time, // Ensure 'time' is mapped in your GateScan model
+                  fontSize: 18,
+                  verticalPadding: 12,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          // --------------------------------
+
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              children: [
+                const Text(
+                  'Status : ',
+                  style: TextStyle(
+                    fontFamily: AppFonts.spaceGrotesk,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                StatusBadge(status: scan.status, isDot: false),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          buildInfoRow(
+            label: "Note",
+            value: scan.note,
+            fontSize: 18,
+            verticalPadding: 12,
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
     );
   }
 }

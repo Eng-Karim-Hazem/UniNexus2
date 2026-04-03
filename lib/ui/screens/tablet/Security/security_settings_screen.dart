@@ -278,11 +278,33 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     }
   }
 
+  // --- HELPER: Reusable Header Layout ---
+  Widget _buildSectionHeader(String title, String iconPath, IconData fallbackIcon) {
+    return Row(
+      children: [
+        Image.asset(
+          iconPath,
+          width: 36,
+          height: 36,
+          color: AppColors.primary,
+          errorBuilder: (_, __, ___) => Icon(fallbackIcon, color: AppColors.primary, size: 36),
+        ),
+        const SizedBox(width: 16),
+        Container(width: 2, height: 36, color: Colors.grey.withOpacity(0.5)),
+        const SizedBox(width: 16),
+        Text(title, style: AppTextStyles.heading),
+      ],
+    );
+  }
+
   Widget _buildAccountManagement() {
+    // Widened: 20% of screen, clamped between 200 and 280 pixels
+    final buttonWidth = (MediaQuery.of(context).size.width * 0.20).clamp(200.0, 280.0);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Account Management", style: AppTextStyles.heading),
+        _buildSectionHeader("Account Management", 'assets/images/information_1.png', Icons.person),
         const SizedBox(height: 30),
         _buildTextField("New Phone", "Enter phone number", _phoneController, TextInputType.phone),
         const SizedBox(height: 20),
@@ -290,16 +312,24 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
         const SizedBox(height: 40),
         _isBusy
             ? const Center(child: CircularProgressIndicator())
-            : PillButton(label: 'Update', onTap: _performAccountUpdate),
+            : Center( // <-- WRAPPED IN CENTER
+          child: SizedBox(
+              width: buttonWidth,
+              child: PillButton(label: 'Update', onTap: _performAccountUpdate)
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildNotificationSettings() {
+    // Widened: 20% of screen, clamped between 200 and 280 pixels
+    final buttonWidth = (MediaQuery.of(context).size.width * 0.20).clamp(200.0, 280.0);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Notification Settings", style: AppTextStyles.heading),
+        _buildSectionHeader("Notification Settings", 'assets/images/notify_1.png', Icons.notifications),
         const SizedBox(height: 30),
         _buildDropdown("Gate Alerts", _selectedGate, (val) => setState(() => _selectedGate = val)),
         const SizedBox(height: 20),
@@ -309,16 +339,24 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
         const SizedBox(height: 40),
         _isBusy
             ? const Center(child: CircularProgressIndicator())
-            : PillButton(label: 'Save', onTap: _saveNotificationSettings),
+            : Center( // <-- WRAPPED IN CENTER
+          child: SizedBox(
+              width: buttonWidth,
+              child: PillButton(label: 'Save', onTap: _saveNotificationSettings)
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildFeedback() {
+    // Widened: 20% of screen, clamped between 200 and 280 pixels
+    final buttonWidth = (MediaQuery.of(context).size.width * 0.20).clamp(200.0, 280.0);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Feedback", style: AppTextStyles.heading),
+        _buildSectionHeader("Feedback", 'assets/images/review_1.png', Icons.rate_review),
         const SizedBox(height: 30),
         Row(
           children: List.generate(5, (index) {
@@ -347,20 +385,43 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
         const SizedBox(height: 30),
         _isBusy
             ? const Center(child: CircularProgressIndicator())
-            : PillButton(label: 'Submit', onTap: _submitFeedback),
+            : Center( // <-- WRAPPED IN CENTER
+          child: SizedBox(
+              width: buttonWidth,
+              child: PillButton(label: 'Submit', onTap: _submitFeedback)
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildAppInfo() {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("App Information", style: AppTextStyles.heading),
-        SizedBox(height: 20),
-        Text("App Version: UN2.0"),
-        SizedBox(height: 10),
-        Text("Role: Security Personnel"),
+        _buildSectionHeader("App Information", 'assets/images/merge_1.png', Icons.account_tree),
+        const SizedBox(height: 24),
+        const Text(
+          "This feature is used to acknowledge the system developers and supervisors also to check the UniNexus version.",
+          style: TextStyle(fontSize: 16, height: 1.5, color: Colors.black87),
+        ),
+        const SizedBox(height: 80),
+        const Center(
+          child: Text(
+            "App Version: UN2.0",
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.black87),
+          ),
+        ),
+        const SizedBox(height: 80),
+        const Text(
+          "Presented to you by the family of the UniNexus team and supervised by:",
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black87),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          "DR. Iman El-Sayed\nEng. Hossam Medhat",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black87, height: 1.4),
+        ),
       ],
     );
   }

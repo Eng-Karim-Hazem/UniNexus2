@@ -247,6 +247,11 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                         // Login button
                         AppGradientButton(
                           text: 'Log In',
+                          textStyle: const TextStyle(
+                            fontFamily: 'Batangas',
+                            color: Colors.white,
+                            fontSize: 22,
+                          ),
                           onPressed: () => _navigateTo(const LoginPage()),
                         ),
 
@@ -255,6 +260,11 @@ class _WelcomePageState extends State<WelcomePage> with TickerProviderStateMixin
                         // Register button
                         AppGradientButton(
                           text: 'Register',
+                          textStyle: const TextStyle(
+                            fontFamily: 'Batangas',
+                            color: Colors.white,
+                            fontSize: 22,
+                          ),
                           onPressed: () => _navigateTo(const RegisterPage()),
                         ),
                       ],
