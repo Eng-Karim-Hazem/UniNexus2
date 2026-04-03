@@ -17,7 +17,7 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
 
   // --- NEW: Filter State Variables ---
   String _selectedFilter = 'All';
-  final List<String> _filters = ['All', 'Pending', 'Completed'];
+  final List<String> _filters = ['All', 'Pending', 'Completed', 'Rejected'];
 
   // Format timestamp
   String _formatDate(Timestamp? timestamp) {
@@ -104,9 +104,20 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
                   List<QueryDocumentSnapshot> docs = rawDocs.where((doc) {
                     final data = doc.data() as Map<String, dynamic>;
                     final isProcessed = data['isProcessed'] == true;
+                    final status = data['status']?.toString().toLowerCase();
 
-                    if (_selectedFilter == 'Pending') return !isProcessed;
-                    if (_selectedFilter == 'Completed') return isProcessed;
+                    if (_selectedFilter == 'Pending') {
+                      return !isProcessed;
+                    }
+                    if (_selectedFilter == 'Completed') {
+                      // Show processed items that are NOT rejected (e.g., 'accepted' or old 'processed' ones)
+                      return isProcessed && status != 'rejected';
+                    }
+                    if (_selectedFilter == 'Rejected') {
+                      // Only show processed items specifically marked as rejected
+                      return isProcessed && status == 'rejected';
+                    }
+
                     return true; // 'All'
                   }).toList();
 

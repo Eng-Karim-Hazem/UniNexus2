@@ -36,6 +36,7 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
     final String? historyData = prefs.getString('admin_search_history');
     if (historyData == null) return;
     final List<dynamic> decoded = jsonDecode(historyData);
+    if (!mounted) return;
     setState(() {
       _recentSearches = decoded.map((item) => Student.fromJson(item)).toList();
       if (_recentSearches.isNotEmpty) _selectedStudent = _recentSearches.first;
@@ -55,6 +56,7 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
       'admin_search_history',
       jsonEncode(_recentSearches.map((e) => e.toJson()).toList()),
     );
+    if (!mounted) return;
     setState(() {});
   }
 
@@ -121,9 +123,13 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
                             child: _isLoading
                                 ? const LoadingState()
                                 : _recentSearches.isEmpty
-                                ? const EmptyState(
-                              message: 'No recent searches',
-                              icon: Icons.history,
+                                ? const Center(
+                              child: SingleChildScrollView(
+                                child: EmptyState(
+                                  message: 'No recent searches',
+                                  icon: Icons.history,
+                                ),
+                              ),
                             )
                                 : ListView.builder(
                               itemCount: _recentSearches.length,
@@ -149,23 +155,28 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
                       padding: const EdgeInsets.all(32),
                       child: _selectedStudent == null
                           ? Center(
-                        child: _searchError != null
-                            ? EmptyState(
-                          message: _searchError!,
-                          icon: Icons.person_off,
-                        )
-                            : const EmptyState(
-                          message: 'Search for a user to view details',
-                          icon: Icons.person_search,
+                        child: SingleChildScrollView(
+                          child: _searchError != null
+                              ? EmptyState(
+                            message: _searchError!,
+                            icon: Icons.person_off,
+                          )
+                              : const EmptyState(
+                            message: 'Search for a user to view details',
+                            icon: Icons.person_search,
+                          ),
                         ),
                       )
-                          : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildProfileHeader(),
-                          const SizedBox(height: 32),
-                          ..._buildDataEntries(),
-                        ],
+                          : SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildProfileHeader(),
+                            const SizedBox(height: 32),
+                            ..._buildDataEntries(),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -186,32 +197,27 @@ class _AdminUserSearchScreenState extends State<AdminUserSearchScreen> {
         color: Colors.grey.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: _searchController,
-            style: AppTextStyles.body,
-            decoration: InputDecoration(
-              hintText: 'Search User By ID',
-              hintStyle: TextStyle(color: Colors.black.withValues(alpha: 0.3)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              border: InputBorder.none,
-              suffixIcon: GestureDetector(
-                onTap: _onSearchSubmit,
-                child: Container(
-                  margin: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-                ),
+      child: TextField(
+        controller: _searchController,
+        style: AppTextStyles.body,
+        decoration: InputDecoration(
+          hintText: 'Search User By ID',
+          hintStyle: TextStyle(color: Colors.black.withValues(alpha: 0.3)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          border: InputBorder.none,
+          suffixIcon: GestureDetector(
+            onTap: _onSearchSubmit,
+            child: Container(
+              margin: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(10),
               ),
+              child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
             ),
-            onSubmitted: (_) => _onSearchSubmit(),
           ),
-        ],
+        ),
+        onSubmitted: (_) => _onSearchSubmit(),
       ),
     );
   }

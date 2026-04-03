@@ -19,6 +19,10 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
   final ValueNotifier<int> _selectedIndexNotifier = ValueNotifier<int>(0);
   String? _pendingRequestId;
 
+  // Updated filter state
+  String _selectedFilter = 'All';
+  final List<String> _filterOptions = ['All', 'Pending', 'Accepted', 'Rejected'];
+
   @override
   void initState() {
     super.initState();
@@ -113,6 +117,26 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
     }
   }
 
+  Widget buildInfoRow({
+    required String label,
+    required String value,
+    double fontSize = 16,
+    double verticalPadding = 8,
+    FontWeight labelWeight = FontWeight.bold,
+    FontWeight valueWeight = FontWeight.w500,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: verticalPadding),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(flex: 2, child: Text(label, style: TextStyle(fontSize: fontSize, fontWeight: labelWeight, color: Colors.grey[700]))),
+          Expanded(flex: 3, child: Text(value, style: TextStyle(fontSize: fontSize, fontWeight: valueWeight))),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ITScreenBackground(
@@ -122,7 +146,40 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const PageHeading('User Requests'),
-            const SizedBox(height: 45),
+            const SizedBox(height: 20),
+
+            // --- FILTER UI ---
+            Row(
+              children: _filterOptions.map((filter) {
+                final isSelected = _selectedFilter == filter;
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedFilter = filter;
+                      _selectedIndexNotifier.value = 0; // Reset selection on filter change
+                    });
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.primary : Colors.transparent,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.primary),
+                    ),
+                    child: Text(
+                      filter,
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 25),
+
             Expanded(
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: FirebaseFirestore.instance.collection('ForgotPass_request').snapshots(),
@@ -133,19 +190,46 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                     builder: (context, regSnapshot) {
                       if (regSnapshot.connectionState == ConnectionState.waiting) return const LoadingState();
 
-                      final List<Map<String, dynamic>> requestItems = [
+                      List<Map<String, dynamic>> requestItems = [
                         ...(passSnapshot.data?.docs ?? const []).map((doc) => {'id': doc.id, 'doc': doc, 'data': doc.data(), 'kind': 'password'}),
                         ...(regSnapshot.data?.docs ?? const []).map((doc) => {'id': doc.id, 'doc': doc, 'data': doc.data(), 'kind': 'registration'}),
                       ];
 
+                      // --- FILTER LOGIC ---
+                      requestItems = requestItems.where((item) {
+                        final docData = item['data'] as Map<String, dynamic>;
+                        final statusStr = docData['status']?.toString().toLowerCase() ?? (docData['isProcessed'] == true ? 'processed' : 'pending');
+                        final isResolved = statusStr == 'accepted' || statusStr == 'rejected' || statusStr == 'processed';
+
+                        if (_selectedFilter == 'Pending') return !isResolved;
+                        if (_selectedFilter == 'Accepted') return statusStr == 'accepted';
+                        if (_selectedFilter == 'Rejected') return statusStr == 'rejected';
+                        return true; // 'All'
+                      }).toList();
+
+                      // --- SORTING LOGIC ---
                       requestItems.sort((a, b) {
-                        final tsA = ((a['data'] as Map)['requestDate'] ?? (a['data'] as Map)['date']) as Timestamp?;
-                        final tsB = ((b['data'] as Map)['requestDate'] ?? (b['data'] as Map)['date']) as Timestamp?;
+                        final dataA = a['data'] as Map<String, dynamic>;
+                        final dataB = b['data'] as Map<String, dynamic>;
+
+                        final statusA = dataA['status']?.toString().toLowerCase() ?? (dataA['isProcessed'] == true ? 'processed' : 'pending');
+                        final statusB = dataB['status']?.toString().toLowerCase() ?? (dataB['isProcessed'] == true ? 'processed' : 'pending');
+
+                        final isPendingA = statusA == 'pending';
+                        final isPendingB = statusB == 'pending';
+
+                        // 1. Pending goes to the top
+                        if (isPendingA && !isPendingB) return -1;
+                        if (!isPendingA && isPendingB) return 1;
+
+                        // 2. Then sort by date descending (newest first)
+                        final tsA = (dataA['requestDate'] ?? dataA['date']) as Timestamp?;
+                        final tsB = (dataB['requestDate'] ?? dataB['date']) as Timestamp?;
                         if (tsA != null && tsB != null) return tsB.compareTo(tsA);
                         return 0;
                       });
 
-                      if (requestItems.isEmpty) return const EmptyState(message: 'No requests found.');
+                      if (requestItems.isEmpty) return const EmptyState(message: 'No requests found for this filter.');
 
                       if (_pendingRequestId != null && _pendingRequestId!.isNotEmpty) {
                         final idx = requestItems.indexWhere((item) => item['id'] == _pendingRequestId);
