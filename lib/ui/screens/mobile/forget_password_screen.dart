@@ -32,16 +32,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
   late Animation<double> _field2Anim;
   late Animation<double> _field3Anim;
   late Animation<double> _field4Anim;
+  late Animation<Offset> _sideRectangleAnim;
 
   @override
   void initState() {
     super.initState();
-    _contentController = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _contentController = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
     _contentIntro = Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero).animate(CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic));
     _field1Anim = CurvedAnimation(parent: _contentController, curve: const Interval(0.25, 0.6, curve: Curves.easeOut));
     _field2Anim = CurvedAnimation(parent: _contentController, curve: const Interval(0.45, 0.8, curve: Curves.easeOut));
     _field3Anim = CurvedAnimation(parent: _contentController, curve: const Interval(0.55, 0.85, curve: Curves.easeOut));
     _field4Anim = CurvedAnimation(parent: _contentController, curve: const Interval(0.65, 0.95, curve: Curves.easeOut));
+    _sideRectangleAnim = Tween<Offset>(
+      begin: const Offset(1.2, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _contentController, curve: const Interval(0.0, 0.45, curve: Curves.easeOutCubic)));
 
     Future.delayed(const Duration(milliseconds: 250), () {
       if (mounted) _contentController.forward();
@@ -68,7 +73,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
     if (_newPasswordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Passwords do not match.", style: TextStyle(fontFamily: MobileAppFonts.body))),
+        const SnackBar(content: Text("Passwords do not match.", style: TextStyle(fontFamily: MobileAppFonts.body)), behavior: SnackBarBehavior.floating, margin: EdgeInsets.fromLTRB(16, 0, 16, 120)),
       );
       return;
     }
@@ -90,7 +95,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
       );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error sending renewal request.", style: TextStyle(fontFamily: MobileAppFonts.body))),
+        const SnackBar(content: Text("Error sending renewal request.", style: TextStyle(fontFamily: MobileAppFonts.body)), behavior: SnackBarBehavior.floating, margin: EdgeInsets.fromLTRB(16, 0, 16, 120)),
       );
     }
   }
@@ -120,8 +125,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
               top: sh * 0.25,
               right: -200,
               child: IgnorePointer(
-                child: Hero(
-                  tag: 'shared-rectangle',
+                child: SlideTransition(
+                  position: _sideRectangleAnim,
                   child: Opacity(
                     opacity: 0.9,
                     child: Image.asset("assets/images/Rectangle.png", width: 550, fit: BoxFit.contain),

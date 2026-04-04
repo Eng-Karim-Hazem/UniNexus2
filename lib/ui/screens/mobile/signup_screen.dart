@@ -26,6 +26,7 @@ class _SignUpScreenState extends State<SignUpScreen>
   late Animation<double> _field1Anim;
   late Animation<double> _field2Anim;
   late Animation<double> _field3Anim;
+  late Animation<Offset> _sideRectangleAnim;
 
   @override
   void initState() {
@@ -33,7 +34,7 @@ class _SignUpScreenState extends State<SignUpScreen>
 
     _contentController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 650),
+      duration: const Duration(milliseconds: 900),
     );
 
     _contentIntro = Tween<Offset>(
@@ -58,6 +59,14 @@ class _SignUpScreenState extends State<SignUpScreen>
       parent: _contentController,
       curve: const Interval(0.6, 0.9, curve: Curves.easeOut),
     );
+
+    _sideRectangleAnim = Tween<Offset>(
+      begin: const Offset(1.2, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _contentController,
+      curve: const Interval(0.0, 0.45, curve: Curves.easeOutCubic),
+    ));
 
     Future.delayed(const Duration(milliseconds: 250), () {
       if (mounted) _contentController.forward();
@@ -99,6 +108,8 @@ class _SignUpScreenState extends State<SignUpScreen>
             "Registration failed. Please try again.",
             style: MobileAppTextStyles.bodyText,
           ),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.fromLTRB(16, 0, 16, 120),
         ),
       );
     }
@@ -131,8 +142,8 @@ class _SignUpScreenState extends State<SignUpScreen>
           Positioned(
             top: sh * 0.25,
             right: -200,
-            child: Hero(
-              tag: 'shared-rectangle',
+            child: SlideTransition(
+              position: _sideRectangleAnim,
               child: Opacity(
                 opacity: 0.9,
                 child: Image.asset(
@@ -148,102 +159,78 @@ class _SignUpScreenState extends State<SignUpScreen>
               position: _contentIntro,
               child: FadeTransition(
                 opacity: _contentController,
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    // Dynamic padding so it breathes perfectly on any screen
-                    padding: EdgeInsets.fromLTRB(sw * 0.08, sh * 0.04, sw * 0.08, sh * 0.04),
-                    child: Column(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.asset(
-                            "assets/images/uni.jpeg",
-                            width: MobileAppDimensions.heroImageWidth,
-                          ),
-                        ),
-                        SizedBox(height: sh * 0.015),
-                        const Text(
-                          "Register to UniNexus",
-                          style: MobileAppTextStyles.screenTitle,
-                        ),
-                        const Text(
-                          "Start your smart campus journey",
-                          style: MobileAppTextStyles.screenSubtitle,
-                        ),
-
-                        // Dynamic spacing replacing the hardcoded 40
-                        SizedBox(height: sh * 0.04),
-
-                        _animatedField(
-                          anim: _field1Anim,
-                          child: _modernField(
-                            label: "National ID",
-                            hint: "Enter Your National ID",
-                            controller: _nationalIdController,
-                          ),
-                        ),
-
-                        SizedBox(height: sh * 0.03),
-
-                        _animatedField(
-                          anim: _field2Anim,
-                          child: _modernField(
-                            label: "University Email",
-                            hint: "Enter Your Email",
-                            controller: _emailController,
-                          ),
-                        ),
-
-                        SizedBox(height: sh * 0.03),
-
-                        _animatedField(
-                          anim: _field3Anim,
-                          child: _modernField(
-                            label: "University ID",
-                            hint: "Enter Your ID",
-                            controller: _studentIdController,
-                          ),
-                        ),
-
-                        // Replaced the massive hardcoded 180 gap
-                        SizedBox(height: sh * 0.06),
-
-                        _mainButton(
-                          text: _isLoading ? "Processing..." : "Register",
-                          enabled: _isFormValid && !_isLoading,
-                          onTap: _handleSignUp,
-                          sw: sw, // Pass sw to keep the button width constrained safely
-                        ),
-
-                        SizedBox(height: sh * 0.02),
-
-                        // Changed to Wrap to protect against horizontal overflow on narrow phones
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          crossAxisAlignment: WrapCrossAlignment.center,
+                child: CustomScrollView(
+                  slivers: [
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(sw * 0.08, 25, sw * 0.08, 20),
+                        child: Column(
                           children: [
-                            const Text(
-                              "Already have an account?",
-                              style: MobileAppTextStyles.bodyText,
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.asset(
+                                "assets/images/uni.jpeg",
+                                width: MobileAppDimensions.heroImageWidth,
+                                height: sh * 0.15,
+                                fit: BoxFit.contain,
+                              ),
                             ),
-                            TextButton(
-                              onPressed: () => Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const LoginScreen()),
+                            const Text("Register to UniNexus", style: MobileAppTextStyles.screenTitle),
+                            const Text("Start your smart campus journey", style: MobileAppTextStyles.screenSubtitle),
+                            const Spacer(flex: 1),
+                            _animatedField(
+                              anim: _field1Anim,
+                              child: _modernField(
+                                label: "National ID",
+                                hint: "Enter Your National ID",
+                                controller: _nationalIdController,
                               ),
-                              child: const Text(
-                                "Login now",
-                                style: MobileAppTextStyles.textButtonHeading,
+                            ),
+                            const SizedBox(height: 40),
+                            _animatedField(
+                              anim: _field2Anim,
+                              child: _modernField(
+                                label: "University Email",
+                                hint: "Enter Your Email",
+                                controller: _emailController,
                               ),
+                            ),
+                            const SizedBox(height: 40),
+                            _animatedField(
+                              anim: _field3Anim,
+                              child: _modernField(
+                                label: "University ID",
+                                hint: "Enter Your ID",
+                                controller: _studentIdController,
+                              ),
+                            ),
+                            const Spacer(flex: 5),
+                            _mainButton(
+                              text: _isLoading ? "Processing..." : "Register",
+                              enabled: _isFormValid && !_isLoading,
+                              onTap: _handleSignUp,
+                              sw: sw,
+                            ),
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                const Text("Already have an account?", style: MobileAppTextStyles.bodyText),
+                                TextButton(
+                                  onPressed: () => Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                                  ),
+                                  child: const Text("Login now", style: MobileAppTextStyles.textButtonHeading),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),

@@ -11,7 +11,10 @@ import '../settings_screen.dart';
 
 
 class StuSchedule extends StatefulWidget {
-  const StuSchedule({super.key});
+  final bool embedded;
+  final ValueChanged<int>? onTabSelected;
+
+  const StuSchedule({super.key, this.embedded = false, this.onTabSelected});
 
   @override
   State<StuSchedule> createState() => _StuScheduleState();
@@ -43,9 +46,9 @@ class _StuScheduleState extends State<StuSchedule> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      floatingActionButton: _buildHomeFab(),
+      floatingActionButton: widget.embedded ? null : _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: _buildBottomBar(),
+      bottomNavigationBar: widget.embedded ? null : _buildBottomBar(),
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -124,6 +127,7 @@ class _StuScheduleState extends State<StuSchedule> {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(24),
+        border: MobileCardStyles.highlightedBorder(width: 3),
         boxShadow: [
           // INCREASED OPACITY TO 0.1
           BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 24, offset: const Offset(0, -12)),
@@ -214,7 +218,7 @@ class _StuScheduleState extends State<StuSchedule> {
         ],
       ),
       child: FloatingActionButton(
-        onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+        onPressed: () => widget.embedded && widget.onTabSelected != null ? widget.onTabSelected!(0) : Navigator.of(context).popUntil((route) => route.isFirst),
         backgroundColor: Colors.transparent,
         elevation: 0,
         shape: const CircleBorder(),
@@ -289,11 +293,11 @@ class _StuScheduleState extends State<StuSchedule> {
         setState(() => _selectedIndex = index);
 
         if (index == 0) {
-          await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
+          await Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
         } else if (index == 2) {
-          await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuQAScreen()));
+          await Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const StuQAScreen()));
         } else if (index == 3) {
-          await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+          await Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
         }
 
         // Reset to highlight Schedule when returned here

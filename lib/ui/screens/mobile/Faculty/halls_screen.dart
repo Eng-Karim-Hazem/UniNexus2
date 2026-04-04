@@ -12,7 +12,10 @@ import '../profile_screen.dart';
 import 'halls_error_screen.dart';
 
 class HallsScreen extends StatefulWidget {
-  const HallsScreen({super.key});
+  final bool embedded;
+  final ValueChanged<int>? onTabSelected;
+
+  const HallsScreen({super.key, this.embedded = false, this.onTabSelected});
 
   @override
   State<HallsScreen> createState() => _HallsScreenState();
@@ -66,6 +69,11 @@ class _HallsScreenState extends State<HallsScreen> {
 
   void _onNavBarTapped(int index) async {
     if (index == _selectedIndex) return;
+    if (widget.embedded && widget.onTabSelected != null) {
+      final shellIndex = index == 0 ? 1 : index == 2 ? 3 : 4;
+      widget.onTabSelected!(shellIndex);
+      return;
+    }
     setState(() => _selectedIndex = index);
 
     final Map<int, Widget> routes = {
@@ -91,9 +99,9 @@ class _HallsScreenState extends State<HallsScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       extendBody: true,
-      floatingActionButton: _buildHomeFab(),
+      floatingActionButton: widget.embedded ? null : _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: _buildBottomBar(),
+      bottomNavigationBar: widget.embedded ? null : _buildBottomBar(),
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -314,7 +322,7 @@ class _HallsScreenState extends State<HallsScreen> {
         ],
       ),
       child: FloatingActionButton(
-        onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+        onPressed: () => widget.embedded && widget.onTabSelected != null ? widget.onTabSelected!(0) : Navigator.of(context).popUntil((route) => route.isFirst),
         backgroundColor: Colors.transparent,
         elevation: 0,
         shape: const CircleBorder(),

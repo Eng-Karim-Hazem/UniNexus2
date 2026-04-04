@@ -80,6 +80,14 @@ class MobileAppDimensions {
   static const double wideButtonBorderWidth = 1.4;
 }
 
+class MobileCardStyles {
+  static const Color figmaBorderColor = Color(0xFF6D6FD9);
+
+  static Border highlightedBorder({double width = 1}) {
+    return Border.all(color: figmaBorderColor, width: width);
+  }
+}
+
 class MobileAppDecorations {
   static const LinearGradient primaryGradient = LinearGradient(
     colors: [MobileAppColors.primary, MobileAppColors.secondary],
