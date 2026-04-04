@@ -13,10 +13,7 @@ import 'create_community_post_screen.dart';
 import 'community_post_detail_screen.dart';
 
 class StuCommunity extends StatefulWidget {
-  final bool embedded;
-  final ValueChanged<int>? onTabSelected;
-
-  const StuCommunity({super.key, this.embedded = false, this.onTabSelected});
+  const StuCommunity({super.key});
 
   @override
   State<StuCommunity> createState() => _StuCommunityState();
@@ -60,9 +57,9 @@ class _StuCommunityState extends State<StuCommunity> {
 
     return Scaffold(
       extendBody: true,
-      floatingActionButton: widget.embedded ? null : _buildHomeFab(),
+      floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: widget.embedded ? null : (_isStudent ? _buildStudentBottomBar() : _buildFacultyBottomBar()),
+      bottomNavigationBar: _isStudent ? _buildStudentBottomBar() : _buildFacultyBottomBar(),
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -242,7 +239,7 @@ class _StuCommunityState extends State<StuCommunity> {
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(20),
-            border: MobileCardStyles.highlightedBorder(),
+            border: Border.all(color: _mainPurple.withValues(alpha: 0.15), width: 1.5),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.12),
@@ -318,7 +315,7 @@ class _StuCommunityState extends State<StuCommunity> {
         ],
       ),
       child: FloatingActionButton(
-        onPressed: () => widget.embedded && widget.onTabSelected != null ? widget.onTabSelected!(0) : Navigator.of(context).popUntil((route) => route.isFirst),
+        onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
         backgroundColor: Colors.transparent,
         elevation: 0,
         shape: const CircleBorder(),

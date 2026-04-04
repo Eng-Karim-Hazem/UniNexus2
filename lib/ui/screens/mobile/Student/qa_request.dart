@@ -177,7 +177,7 @@ class _QARequestScreenState extends State<QARequestScreen> {
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.4),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: _mainPurple.withOpacity(2), width: 1.5),
+        border: Border.all(color: _mainPurple.withOpacity(0.5), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

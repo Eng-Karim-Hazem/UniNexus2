@@ -222,7 +222,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const PageHeading('Settings'),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Expanded(
               child: Row(
                 children: [
@@ -305,13 +305,10 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
   }
 
   Widget _buildAccountManagement() {
-    // Dynamic width: 20% of screen, clamped between 200 and 280 pixels
-    final buttonWidth = (MediaQuery.of(context).size.width * 0.25).clamp(240.0, 300.0);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader("Account Management", 'assets/images/information_1.png', Icons.person),
+        const Text("Staff Account Management", style: AppTextStyles.heading),
         const SizedBox(height: 30),
         _buildTextField("New Phone", "Enter phone number", _phoneController, TextInputType.phone),
         const SizedBox(height: 20),
@@ -319,24 +316,16 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
         const SizedBox(height: 40),
         _isBusy
             ? const Center(child: CircularProgressIndicator())
-            : Center(
-          child: SizedBox(
-            width: buttonWidth,
-            child: PillButton(label: 'Update Info', onTap: _performAccountUpdate),
-          ),
-        ),
+            : PillButton(label: 'Update Info', onTap: _performAccountUpdate),
       ],
     );
   }
 
   Widget _buildNotificationSettings() {
-    // Dynamic width: 20% of screen, clamped between 200 and 280 pixels
-    final buttonWidth = (MediaQuery.of(context).size.width * 0.25).clamp(220.0, 300.0);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader("Notification Settings", 'assets/images/notify_1.png', Icons.notifications),
+        const Text("Staff Notification Settings", style: AppTextStyles.heading),
         const SizedBox(height: 30),
         _buildDropdown("System Alerts", _selectedGeneral, (val) => setState(() => _selectedGeneral = val)),
         const SizedBox(height: 20),
@@ -346,46 +335,30 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
         const SizedBox(height: 40),
         _isBusy
             ? const Center(child: CircularProgressIndicator())
-            : Center(
-          child: SizedBox(
-            width: buttonWidth,
-            child: PillButton(label: 'Save Preferences', onTap: _saveNotificationSettings),
-          ),
-        ),
+            : PillButton(label: 'Save Preferences', onTap: _saveNotificationSettings),
       ],
     );
   }
 
   // --- UPDATED UI FOR GOOGLE SHEETS ---
   Widget _buildExportLogs() {
-    // Dynamic width: 20% of screen, clamped between 200 and 280 pixels
-    final buttonWidth = (MediaQuery.of(context).size.width * 0.25).clamp(220.0, 300.0);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader("System Logs", 'assets/icons/Export.png', Icons.notifications),
+        const Text('System Logs', style: AppTextStyles.heading),
         const SizedBox(height: 40),
         const Text('Access the real-time Google Sheet containing all staff actions and system logs. You can download the sheet by clicking the open google sheet button then pressing the 3 dots button and after that press download.'),
         const SizedBox(height: 60),
-        Center(
-          child: SizedBox(
-            width: buttonWidth,
-            child: PillButton(label: 'Open Google Sheet', onTap: _openGoogleSheetLogs),
-          ),
-        ),
+        Center(child: PillButton(label: 'Open Google Sheet', onTap: _openGoogleSheetLogs)),
       ],
     );
   }
 
   Widget _buildFeedback() {
-    // Dynamic width: 20% of screen, clamped between 200 and 280 pixels
-    final buttonWidth = (MediaQuery.of(context).size.width * 0.25).clamp(220.0, 300.0);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader("Feedback", 'assets/images/review_1.png', Icons.rate_review),
+        const Text("Feedback", style: AppTextStyles.heading),
         const SizedBox(height: 30),
         Row(
           children: List.generate(5, (index) {
@@ -414,43 +387,18 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
         const SizedBox(height: 30),
         _isBusy
             ? const Center(child: CircularProgressIndicator())
-            : Center(
-          child: SizedBox(
-            width: buttonWidth,
-            child: PillButton(label: 'Submit Feedback', onTap: _submitFeedback),
-          ),
-        ),
+            : PillButton(label: 'Submit Feedback', onTap: _submitFeedback),
       ],
     );
   }
 
   Widget _buildAppInfo() {
-    return Column(
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader("App Information", 'assets/images/merge_1.png', Icons.account_tree),
-        const SizedBox(height: 24),
-        const Text(
-          "This feature is used to acknowledge the system developers and supervisors also to check the UniNexus version.",
-          style: TextStyle(fontSize: 16, height: 1.5, color: Colors.black87),
-        ),
-        const SizedBox(height: 80),
-        const Center(
-          child: Text(
-            "App Version: UN2.0",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.black87),
-          ),
-        ),
-        const SizedBox(height: 80),
-        const Text(
-          "Presented to you by the family of the UniNexus team and supervised by:",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black87),
-        ),
-        const SizedBox(height: 6),
-        const Text(
-          "DR. Iman El-Sayed\nEng. Hossam Medhat",
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black87, height: 1.4),
-        ),
+        Text("Staff Portal Information", style: AppTextStyles.heading),
+        SizedBox(height: 20),
+        Text("Version: IT-Nexus 2.0 (Staff Edition)"),
       ],
     );
   }
@@ -515,21 +463,4 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
       ],
     );
   }
-}
-Widget _buildSectionHeader(String title, String iconPath, IconData fallbackIcon) {
-  return Row(
-    children: [
-      Image.asset(
-        iconPath,
-        width: 36,
-        height: 36,
-        color: AppColors.primary,
-        errorBuilder: (_, __, ___) => Icon(fallbackIcon, color: AppColors.primary, size: 36),
-      ),
-      const SizedBox(width: 16),
-      Container(width: 2, height: 36, color: Colors.grey.withOpacity(0.5)),
-      const SizedBox(width: 16),
-      Text(title, style: AppTextStyles.heading),
-    ],
-  );
 }

@@ -16,7 +16,6 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
   late AnimationController _contentController;
   late Animation<Offset> _contentIntro;
   late Animation<double> _fadeAnim;
-  late Animation<Offset> _sideRectangleAnim;
 
   @override
   void initState() {
@@ -24,7 +23,7 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
 
     _contentController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 600),
     );
 
     _contentIntro = Tween<Offset>(
@@ -41,14 +40,6 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
       parent: _contentController,
       curve: Curves.easeOut,
     );
-
-    _sideRectangleAnim = Tween<Offset>(
-      begin: const Offset(1.2, 0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _contentController,
-      curve: const Interval(0.0, 0.45, curve: Curves.easeOutCubic),
-    ));
 
     Future.delayed(const Duration(milliseconds: 200), () {
       if (mounted) _contentController.forward();
@@ -82,12 +73,15 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
               top: sh * 0.25,
               right: -200,
               child: IgnorePointer(
-                child: Opacity(
-                  opacity: 0.9,
-                  child: Image.asset(
-                    "assets/images/Rectangle.png",
-                    width: 550,
-                    fit: BoxFit.contain,
+                child: Hero(
+                  tag: 'shared-rectangle',
+                  child: Opacity(
+                    opacity: 0.9,
+                    child: Image.asset(
+                      "assets/images/Rectangle.png",
+                      width: 550,
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
               ),
@@ -159,12 +153,11 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
                             text: "Back to Login",
                             sw: sw, // Pass screen width
                             onTap: () {
-                              Navigator.pushAndRemoveUntil(
+                              Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => const LoginScreen(),
                                 ),
-                                    (route) => false,
                               );
                             },
                           ),

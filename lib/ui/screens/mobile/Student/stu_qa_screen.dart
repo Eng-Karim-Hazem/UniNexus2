@@ -9,10 +9,7 @@ import '../Student/stu_schedule.dart';
 import '../profile_screen.dart';
 
 class StuQAScreen extends StatefulWidget {
-  final bool embedded;
-  final ValueChanged<int>? onTabSelected;
-
-  const StuQAScreen({super.key, this.embedded = false, this.onTabSelected});
+  const StuQAScreen({super.key});
 
   @override
   State<StuQAScreen> createState() => _StuQAScreenState();
@@ -61,13 +58,10 @@ class _StuQAScreenState extends State<StuQAScreen> {
 
     Widget next;
     if (index == 0) {
-      if (widget.embedded && widget.onTabSelected != null) { widget.onTabSelected!(1); return; }
       next = const StuCommunity();
     } else if (index == 1) {
-      if (widget.embedded && widget.onTabSelected != null) { widget.onTabSelected!(2); return; }
       next = const StuSchedule();
     } else if (index == 3) {
-      if (widget.embedded && widget.onTabSelected != null) { widget.onTabSelected!(4); return; }
       next = const ProfileScreen();
     } else {
       return;
@@ -90,9 +84,9 @@ class _StuQAScreenState extends State<StuQAScreen> {
 
     return Scaffold(
       extendBody: true,
-      floatingActionButton: widget.embedded ? null : _buildHomeFab(),
+      floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: widget.embedded ? null : _buildBottomBar(),
+      bottomNavigationBar: _buildBottomBar(),
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -231,7 +225,7 @@ class _StuQAScreenState extends State<StuQAScreen> {
         ],
       ),
       child: FloatingActionButton(
-        onPressed: () => widget.embedded && widget.onTabSelected != null ? widget.onTabSelected!(0) : Navigator.of(context).popUntil((route) => route.isFirst),
+        onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
         backgroundColor: Colors.transparent,
         elevation: 0,
         shape: const CircleBorder(),
@@ -341,7 +335,7 @@ class _QACardItemState extends State<QACardItem> {
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(20),
-          border: MobileCardStyles.highlightedBorder(),
+          border: Border.all(color: widget.mainPurple.withValues(alpha: 0.3), width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

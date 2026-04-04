@@ -399,22 +399,9 @@ class _LogRow extends StatelessWidget {
           Container(width: 1.5, height: 24, color: AppColors.divider),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              text,
-              // --- FIX: Added SpaceGrotesk to the main text ---
-              style: AppTextStyles.logRowBodyStyle.copyWith(
-                fontFamily: AppFonts.spaceGrotesk,
-                fontWeight: FontWeight.w300, // Optional: Makes it slightly bolder to read better
-              ),
-            ),
+            child: Text(text, style: AppTextStyles.logRowBodyStyle),
           ),
-          Text(
-            time,
-            // --- FIX: Added SpaceGrotesk to the time text ---
-            style: AppTextStyles.caption.copyWith(
-              fontFamily: AppFonts.spaceGrotesk,
-            ),
-          ),
+          Text(time, style: AppTextStyles.caption),
         ],
       ),
     );

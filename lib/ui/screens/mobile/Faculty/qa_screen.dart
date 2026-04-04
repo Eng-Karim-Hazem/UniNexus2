@@ -9,10 +9,7 @@ import '../profile_screen.dart';
 import '../settings_screen.dart';
 
 class QAScreen extends StatefulWidget {
-  final bool embedded;
-  final ValueChanged<int>? onTabSelected;
-
-  const QAScreen({super.key, this.embedded = false, this.onTabSelected});
+  const QAScreen({super.key});
 
   @override
   State<QAScreen> createState() => _QAScreenState();
@@ -70,11 +67,6 @@ class _QAScreenState extends State<QAScreen> {
 
   void _onNavBarTapped(int index) async {
     if (index == _selectedIndex) return;
-    if (widget.embedded && widget.onTabSelected != null) {
-      final shellIndex = index == 0 ? 1 : index == 1 ? 2 : 4;
-      widget.onTabSelected!(shellIndex);
-      return;
-    }
     setState(() => _selectedIndex = index);
 
     if (index == 0) {
@@ -110,9 +102,9 @@ class _QAScreenState extends State<QAScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: false, // Keeps FAB and BottomBar stationary
       extendBody: true,
-      floatingActionButton: widget.embedded ? null : _buildHomeFab(),
+      floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: widget.embedded ? null : _buildBottomBar(),
+      bottomNavigationBar: _buildBottomBar(),
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -265,7 +257,7 @@ class _QAScreenState extends State<QAScreen> {
       height: 72, width: 72,
       decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: _mainPurple.withValues(alpha: 0.6), blurRadius: 25, spreadRadius: 6, offset: const Offset(0, 2))]),
       child: FloatingActionButton(
-        onPressed: () => widget.embedded && widget.onTabSelected != null ? widget.onTabSelected!(0) : Navigator.of(context).popUntil((route) => route.isFirst),
+        onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
         backgroundColor: Colors.transparent, elevation: 0, shape: const CircleBorder(),
         child: Container(
           decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),

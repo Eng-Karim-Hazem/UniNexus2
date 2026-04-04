@@ -296,13 +296,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                         style: AppTextStyles.body),
                                   )
                                       : ListView.builder(
-                                    padding: EdgeInsets.zero,
                                     itemCount: _recentNotices.length,
                                     itemBuilder: (context, index) {
                                       final n = _recentNotices[index];
                                       return Padding(
-                                        // --- FIX 2: Reduced bottom spacing from 12 to 6 ---
-                                        padding: const EdgeInsets.only(bottom: 6),
+                                        padding: const EdgeInsets.only(bottom: 12),
                                         child: _buildNoticeItem(
                                           n['sender'] ?? 'Management',
                                           n['message'] ?? '',

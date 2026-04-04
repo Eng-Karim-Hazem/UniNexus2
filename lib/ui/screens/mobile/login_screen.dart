@@ -34,7 +34,6 @@ class _LoginScreenState extends State<LoginScreen>
   late Animation<double> _field1Anim;
   late Animation<double> _field2Anim;
   late Animation<double> _checkAnim;
-  late Animation<Offset> _sideRectangleAnim;
 
   @override
   void initState() {
@@ -67,15 +66,7 @@ class _LoginScreenState extends State<LoginScreen>
       curve: const Interval(0.5, 0.8, curve: Curves.easeOut),
     );
 
-    _sideRectangleAnim = Tween<Offset>(
-      begin: const Offset(1.2, 0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _contentController,
-      curve: const Interval(0.0, 0.45, curve: Curves.easeOutCubic),
-    ));
-
-    Future.delayed(const Duration(milliseconds: 650), () {
+    Future.delayed(const Duration(milliseconds: 250), () {
       if (mounted) _contentController.forward();
     });
 
@@ -144,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen>
           }
 
           if (!mounted) return;
-          Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => nextScreen), (route) => false);
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => nextScreen));
           break;
         default:
           throw "Unknown login response.";
@@ -156,7 +147,6 @@ class _LoginScreenState extends State<LoginScreen>
             content: Text(e.toString().replaceAll("Exception:", ""), style: MobileAppTextStyles.bodyText),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 120),
           ),
         );
       }
@@ -203,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen>
     final sh = MediaQuery.of(context).size.height;
 
     return PopScope(
-      canPop: true,
+      canPop: false,
       child: Scaffold(
         // 1. REMOVED: resizeToAvoidBottomInset: false. We want the scaffold to react to the keyboard now!
         body: Stack(
@@ -213,12 +203,12 @@ class _LoginScreenState extends State<LoginScreen>
               child: Image.asset("assets/images/WelcomeBackground.png", fit: BoxFit.cover),
             ),
             Positioned(
-              top: sh * 0.28,
+              top: sh * 0.25,
               right: -200,
               child: RepaintBoundary(
                 child: IgnorePointer(
-                  child: SlideTransition(
-                    position: _sideRectangleAnim,
+                  child: Hero(
+                    tag: 'shared-rectangle',
                     child: Opacity(
                       opacity: 0.9,
                       child: Image.asset("assets/images/Rectangle.png", width: 550, fit: BoxFit.contain),
@@ -248,14 +238,15 @@ class _LoginScreenState extends State<LoginScreen>
                                 child: Image.asset(
                                   "assets/images/uni.jpeg",
                                   width: MobileAppDimensions.heroImageWidth,
-                                  height: sh * 0.13,
+                                  height: sh * 0.15,
                                   fit: BoxFit.contain,
                                 ),
                               ),
+                              const SizedBox(height: 10),
                               const Text("Log in to UniNexus", style: MobileAppTextStyles.screenTitle),
                               const Text("Access your campus services securely", style: MobileAppTextStyles.screenSubtitle),
-                              const SizedBox(height: 70),
 
+                              const Spacer(flex: 1),
 
                               _animatedItem(
                                 anim: _field1Anim,

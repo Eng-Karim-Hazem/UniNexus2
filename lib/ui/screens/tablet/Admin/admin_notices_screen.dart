@@ -54,6 +54,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
     super.dispose();
   }
 
+  // Load specializations from Firestore
   Future<void> _loadSpecializations() async {
     try {
       final List<String> loaded = await _noticesService.getAvailableSpecializations();
@@ -71,6 +72,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
     }
   }
 
+  // Load admin name from preferences
   Future<void> _loadSenderName() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String firstName = (prefs.getString('fName') ?? '').trim();
@@ -89,6 +91,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
     });
   }
 
+  // Build input section based on active category
   Widget _buildInputSection() {
     if (_activeCategory == 'Specialization' && _isLoadingSpecializations) {
       return const LoadingState(message: 'Loading specializations...');
@@ -135,6 +138,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
     }
   }
 
+  // Form layout with label
   Widget _buildFormLayout({required String label, required Widget child}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,6 +159,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
     );
   }
 
+  // Text field widget
   Widget _buildTextField(
       TextEditingController controller,
       String hint, {
@@ -181,6 +186,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
     );
   }
 
+  // Dropdown widget
   Widget _buildDropdown(
       List<String> items,
       String? current,
@@ -229,6 +235,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
     );
   }
 
+  // Send notice to selected recipients
   Future<void> _sendNotice() async {
     final String message = _messageController.text.trim();
 
@@ -246,39 +253,52 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
       late final String targetValue;
       late final String title;
 
+      // Get recipients based on category
       switch (_activeCategory) {
         case 'Individual':
           final String id = _idController.text.trim();
-          if (id.isEmpty) throw Exception('Please enter a user ID.');
+          if (id.isEmpty) {
+            throw Exception('Please enter a user ID.');
+          }
           recipientIds = [id];
           targetType = NoticeTargetType.individual;
           targetValue = id;
           title = 'Individual Notice';
           break;
+
         case 'Groups':
           final String? group = _selectedGroup;
-          if (group == null || group.isEmpty) throw Exception('Please choose a group.');
+          if (group == null || group.isEmpty) {
+            throw Exception('Please choose a group.');
+          }
           recipientIds = await _noticesService.getAllUserIdsByGroup(group);
           targetType = NoticeTargetType.group;
           targetValue = group;
           title = 'Group Notice: $group';
           break;
+
         case 'Specialization':
           final String? specialization = _selectedSpecialization;
-          if (specialization == null || specialization.isEmpty) throw Exception('Please choose a specialization.');
+          if (specialization == null || specialization.isEmpty) {
+            throw Exception('Please choose a specialization.');
+          }
           recipientIds = await _noticesService.getFacultyIdsBySubject(specialization);
           targetType = NoticeTargetType.specialization;
           targetValue = specialization;
           title = 'Specialization Notice: $specialization';
           break;
+
         case 'Program':
           final String? program = _selectedProgram;
-          if (program == null || program.isEmpty) throw Exception('Please choose a program.');
+          if (program == null || program.isEmpty) {
+            throw Exception('Please choose a program.');
+          }
           recipientIds = await _noticesService.getStudentIdsByProgram(program);
           targetType = NoticeTargetType.program;
           targetValue = program;
           title = 'Program Notice: $program';
           break;
+
         default:
           throw Exception('Unknown notice category.');
       }
@@ -337,85 +357,65 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
             const SizedBox(height: 40),
             Expanded(
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // DYNAMIC LAYOUT SIDEBAR
+                  // Category selection sidebar
                   SizedBox(
                     width: 180,
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        // Calculate available space minus the gaps (3 gaps of 16px)
-                        final totalSpacing = 16.0 * 3;
-                        final availableHeight = constraints.maxHeight - totalSpacing;
-                        final dynamicHeight = availableHeight / 4;
-
-                        // Set a safe minimum height so it won't overflow when keyboard appears
-                        final safeHeight = dynamicHeight < 110.0 ? 110.0 : dynamicHeight;
-
-                        return SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          child: Column(
-                            children: [
-                              SizedBox(
-                                height: safeHeight,
-                                child: _CategoryButton(
-                                  imagePath: 'assets/icons/Individual.png',
-                                  label: 'Individual',
-                                  isActive: _activeCategory == 'Individual',
-                                  onTap: () => setState(() {
-                                    _activeCategory = 'Individual';
-                                    _selectedSpecialization = null;
-                                    _selectedGroup = null;
-                                    _selectedProgram = null;
-                                  }),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              SizedBox(
-                                height: safeHeight,
-                                child: _CategoryButton(
-                                  imagePath: 'assets/images/multi_users.png',
-                                  label: 'Specialization',
-                                  isActive: _activeCategory == 'Specialization',
-                                  onTap: () => setState(() {
-                                    _activeCategory = 'Specialization';
-                                    _selectedGroup = null;
-                                    _selectedProgram = null;
-                                  }),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              SizedBox(
-                                height: safeHeight,
-                                child: _CategoryButton(
-                                  imagePath: 'assets/images/multi_users.png',
-                                  label: 'Groups',
-                                  isActive: _activeCategory == 'Groups',
-                                  onTap: () => setState(() {
-                                    _activeCategory = 'Groups';
-                                    _selectedSpecialization = null;
-                                    _selectedProgram = null;
-                                  }),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              SizedBox(
-                                height: safeHeight,
-                                child: _CategoryButton(
-                                  imagePath: 'assets/images/multi_users.png',
-                                  label: 'Program',
-                                  isActive: _activeCategory == 'Program',
-                                  onTap: () => setState(() {
-                                    _activeCategory = 'Program';
-                                    _selectedSpecialization = null;
-                                    _selectedGroup = null;
-                                  }),
-                                ),
-                              ),
-                            ],
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: _CategoryButton(
+                            imagePath: 'assets/icons/Individual.png',
+                            label: 'Individual',
+                            isActive: _activeCategory == 'Individual',
+                            onTap: () => setState(() {
+                              _activeCategory = 'Individual';
+                              _selectedSpecialization = null;
+                              _selectedGroup = null;
+                              _selectedProgram = null;
+                            }),
                           ),
-                        );
-                      },
+                        ),
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: _CategoryButton(
+                            imagePath: 'assets/images/multi_users.png',
+                            label: 'Specialization',
+                            isActive: _activeCategory == 'Specialization',
+                            onTap: () => setState(() {
+                              _activeCategory = 'Specialization';
+                              _selectedGroup = null;
+                              _selectedProgram = null;
+                            }),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: _CategoryButton(
+                            imagePath: 'assets/images/multi_users.png',
+                            label: 'Groups',
+                            isActive: _activeCategory == 'Groups',
+                            onTap: () => setState(() {
+                              _activeCategory = 'Groups';
+                              _selectedSpecialization = null;
+                              _selectedProgram = null;
+                            }),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: _CategoryButton(
+                            imagePath: 'assets/images/multi_users.png',
+                            label: 'Program',
+                            isActive: _activeCategory == 'Program',
+                            onTap: () => setState(() {
+                              _activeCategory = 'Program';
+                              _selectedSpecialization = null;
+                              _selectedGroup = null;
+                            }),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 40),

@@ -223,7 +223,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                               iconPath: item['icon']!,
                               label: item['label']!,
                               onTap: () {
-                                if (index == 4) { // Changed index to 4 due to logs removal
+                                if (index == 4) {
                                   _logout();
                                 } else {
                                   setState(() => selectedSettingTab = index);
@@ -280,13 +280,10 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
   }
 
   Widget _buildAccountManagement() {
-    // Dynamic width: 20% of screen, clamped between 200 and 280 pixels
-    final buttonWidth = (MediaQuery.of(context).size.width * 0.25).clamp(240.0, 300.0);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader("Account Management", 'assets/images/information_1.png', Icons.person),
+        const Text("Account Management", style: AppTextStyles.heading),
         const SizedBox(height: 30),
         _buildTextField("New Phone", "Enter phone number", _phoneController, TextInputType.phone),
         const SizedBox(height: 20),
@@ -294,24 +291,16 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
         const SizedBox(height: 40),
         _isBusy
             ? const Center(child: CircularProgressIndicator())
-            : Center(
-          child: SizedBox(
-            width: buttonWidth,
-            child: PillButton(label: 'Update Info', onTap: _performAccountUpdate),
-          ),
-        ),
+            : PillButton(label: 'Update', onTap: _performAccountUpdate),
       ],
     );
   }
 
   Widget _buildNotificationSettings() {
-    // Dynamic width: 20% of screen, clamped between 200 and 280 pixels
-    final buttonWidth = (MediaQuery.of(context).size.width * 0.25).clamp(220.0, 300.0);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader("Notification Settings", 'assets/images/notify_1.png', Icons.notifications),
+        const Text("Notification Settings", style: AppTextStyles.heading),
         const SizedBox(height: 30),
         _buildDropdown("Gate Alerts", _selectedGate, (val) => setState(() => _selectedGate = val)),
         const SizedBox(height: 20),
@@ -321,24 +310,16 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
         const SizedBox(height: 40),
         _isBusy
             ? const Center(child: CircularProgressIndicator())
-            : Center(
-          child: SizedBox(
-            width: buttonWidth,
-            child: PillButton(label: 'Save Preferences', onTap: _saveNotificationSettings),
-          ),
-        ),
+            : PillButton(label: 'Save', onTap: _saveNotificationSettings),
       ],
     );
   }
 
   Widget _buildFeedback() {
-    // Dynamic width: 20% of screen, clamped between 200 and 280 pixels
-    final buttonWidth = (MediaQuery.of(context).size.width * 0.25).clamp(220.0, 300.0);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader("Feedback", 'assets/images/review_1.png', Icons.rate_review),
+        const Text("Feedback", style: AppTextStyles.heading),
         const SizedBox(height: 30),
         Row(
           children: List.generate(5, (index) {
@@ -357,7 +338,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
           maxLines: 4,
           maxLength: 250,
           decoration: InputDecoration(
-            hintText: "Enter feedback as Admin...",
+            hintText: "Write feedback...",
             filled: true,
             fillColor: Colors.grey[100],
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
@@ -366,43 +347,20 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
         const SizedBox(height: 30),
         _isBusy
             ? const Center(child: CircularProgressIndicator())
-            : Center(
-          child: SizedBox(
-            width: buttonWidth,
-            child: PillButton(label: 'Submit Feedback', onTap: _submitFeedback),
-          ),
-        ),
+            : PillButton(label: 'Submit', onTap: _submitFeedback),
       ],
     );
   }
 
   Widget _buildAppInfo() {
-    return Column(
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader("App Information", 'assets/images/merge_1.png', Icons.account_tree),
-        const SizedBox(height: 24),
-        const Text(
-          "This feature is used to acknowledge the system developers and supervisors also to check the UniNexus version.",
-          style: TextStyle(fontSize: 16, height: 1.5, color: Colors.black87),
-        ),
-        const SizedBox(height: 80),
-        const Center(
-          child: Text(
-            "App Version: UN2.0",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.black87),
-          ),
-        ),
-        const SizedBox(height: 80),
-        const Text(
-          "Presented to you by the family of the UniNexus team and supervised by:",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black87),
-        ),
-        const SizedBox(height: 6),
-        const Text(
-          "DR. Iman El-Sayed\nEng. Hossam Medhat",
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black87, height: 1.4),
-        ),
+        Text("App Information", style: AppTextStyles.heading),
+        SizedBox(height: 20),
+        Text("App Version: UN2.0"),
+        SizedBox(height: 10),
+        Text("Portal: Administrator"),
       ],
     );
   }
@@ -410,10 +368,10 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
   Future<void> _logout() async {
     final confirmed = await showConfirmDialog(
       context,
-      title: "Logout Admin Session?",
-      message: "Are you sure you want to exit the admin portal?",
+      title: "Confirm Logout",
+      message: "Are you sure you want to logout?",
       confirmText: "Logout",
-      cancelText: "Stay",
+      cancelText: "Cancel",
       confirmColor: Colors.red,
       icon: Icons.logout,
     );
@@ -456,7 +414,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
             child: DropdownButton<String>(
               isExpanded: true,
               value: currentValue,
-              hint: const Text("Set alert mode"),
+              hint: const Text("Choose alert mode"),
               items: _alertModes.map((mode) => DropdownMenuItem(value: mode, child: Text(mode))).toList(),
               onChanged: onChanged,
             ),
@@ -465,23 +423,4 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
       ],
     );
   }
-}
-
-// --- HELPER WIDGET ---
-Widget _buildSectionHeader(String title, String iconPath, IconData fallbackIcon) {
-  return Row(
-    children: [
-      Image.asset(
-        iconPath,
-        width: 36,
-        height: 36,
-        color: AppColors.primary,
-        errorBuilder: (_, __, ___) => Icon(fallbackIcon, color: AppColors.primary, size: 36),
-      ),
-      const SizedBox(width: 16),
-      Container(width: 2, height: 36, color: Colors.grey.withOpacity(0.5)),
-      const SizedBox(width: 16),
-      Text(title, style: AppTextStyles.heading),
-    ],
-  );
 }

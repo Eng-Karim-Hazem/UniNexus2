@@ -61,14 +61,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
     _topExit = Tween(
       begin: Offset.zero,
-      end: const Offset(1.4, -1.4),
+      end: const Offset(1.6, -1.6),
     ).animate(
       CurvedAnimation(parent: _exitController, curve: Curves.easeInOutCubic),
     );
 
     _bottomExit = Tween(
       begin: Offset.zero,
-      end: const Offset(-1.4, 1.4),
+      end: const Offset(0.494, -0.72),
     ).animate(
       CurvedAnimation(parent: _exitController, curve: Curves.easeInOutCubic),
     );
@@ -156,7 +156,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               position: _bottomIntro,
               child: SlideTransition(
                 position: _bottomExit,
-                child: _rectangle(),
+                child: Hero(
+                  tag: 'shared-rectangle',
+                  child: _rectangle(),
+                ),
               ),
             ),
           ),
