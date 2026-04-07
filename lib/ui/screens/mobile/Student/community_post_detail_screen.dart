@@ -310,12 +310,12 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
       child: GestureDetector(
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateCommunityPostScreen())),
         child: Container(
-          width: 75, height: 75,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.25), blurRadius: 15, offset: const Offset(0, 6))],
-          ),
+            width: 75, height: 75,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.25), blurRadius: 15, offset: const Offset(0, 6))],
+            ),
             child: Center(
               child: Image.asset(
                 'assets/icons/solidarity.png',

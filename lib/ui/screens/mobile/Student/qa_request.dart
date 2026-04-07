@@ -74,8 +74,13 @@ class _QARequestScreenState extends State<QARequestScreen> {
   }
 
   Future<void> _handleSubmit() async {
-    if (_selectedCourse == null || _subjectController.text.trim().isEmpty || _questionController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please complete all fields")));
+    if (_selectedCourse == null || _subjectController.text
+        .trim()
+        .isEmpty || _questionController.text
+        .trim()
+        .isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please complete all fields")));
       return;
     }
     setState(() => _isSubmitting = true);
@@ -99,7 +104,8 @@ class _QARequestScreenState extends State<QARequestScreen> {
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to submit question.")));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to submit question.")));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -107,9 +113,13 @@ class _QARequestScreenState extends State<QARequestScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_isInit) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (!_isInit)
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
-    final double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final double keyboardHeight = MediaQuery
+        .of(context)
+        .viewInsets
+        .bottom;
 
     return Scaffold(
       extendBody: true,
@@ -122,7 +132,9 @@ class _QARequestScreenState extends State<QARequestScreen> {
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
-          image: DecorationImage(image: AssetImage('assets/images/Phone_Background.png'), fit: BoxFit.cover),
+          image: DecorationImage(
+              image: AssetImage('assets/images/Phone_Background.png'),
+              fit: BoxFit.cover),
         ),
         child: SafeArea(
           bottom: false,
@@ -133,7 +145,8 @@ class _QARequestScreenState extends State<QARequestScreen> {
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
                   // FIXED: Dynamic bottom padding allows scrolling past the fixed UI elements
-                  padding: EdgeInsets.fromLTRB(24, 40, 24, keyboardHeight > 0 ? keyboardHeight + 20 : 150),
+                  padding: EdgeInsets.fromLTRB(24, 40, 24,
+                      keyboardHeight > 0 ? keyboardHeight + 20 : 150),
                   child: Column(
                     children: [
                       _buildFormCard(),
@@ -157,11 +170,17 @@ class _QARequestScreenState extends State<QARequestScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           GestureDetector(
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen())),
-            child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
+            onTap: () =>
+                Navigator.push(context, MaterialPageRoute(
+                    builder: (context) => const SettingsScreen())),
+            child: Image.asset(
+                'assets/images/settings_1.png', width: 28, color: _mainPurple),
           ),
           Text("Q&A",
-              style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
+              style: TextStyle(fontFamily: MobileAppFonts.heading,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: _textIndigo)),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -198,10 +217,15 @@ class _QARequestScreenState extends State<QARequestScreen> {
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _selectedCourse,
-                    hint: Text(snapshot.connectionState == ConnectionState.waiting ? "Loading..." : "Choose Course",
-                        style: const TextStyle(fontFamily: MobileAppFonts.body)),
+                    hint: Text(
+                        snapshot.connectionState == ConnectionState.waiting
+                            ? "Loading..."
+                            : "Choose Course",
+                        style: const TextStyle(
+                            fontFamily: MobileAppFonts.body)),
                     isExpanded: true,
-                    items: subjects.map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
+                    items: subjects.map((v) =>
+                        DropdownMenuItem(value: v, child: Text(v))).toList(),
                     onChanged: (val) => setState(() => _selectedCourse = val),
                   ),
                 ),
@@ -213,7 +237,8 @@ class _QARequestScreenState extends State<QARequestScreen> {
           _buildTextField("Enter topic", _subjectController),
           const SizedBox(height: 20),
           _buildLabel("Question"),
-          _buildTextField("Type your question...", _questionController, maxLines: 4),
+          _buildTextField(
+              "Type your question...", _questionController, maxLines: 4),
         ],
       ),
     );
@@ -222,11 +247,15 @@ class _QARequestScreenState extends State<QARequestScreen> {
   Widget _buildLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8),
-      child: Text(text, style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 15, fontWeight: FontWeight.bold)),
+      child: Text(text, style: const TextStyle(
+          fontFamily: MobileAppFonts.heading,
+          fontSize: 15,
+          fontWeight: FontWeight.bold)),
     );
   }
 
-  Widget _buildTextField(String hint, TextEditingController controller, {int maxLines = 1}) {
+  Widget _buildTextField(String hint, TextEditingController controller,
+      {int maxLines = 1}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -254,12 +283,17 @@ class _QARequestScreenState extends State<QARequestScreen> {
         onPressed: _isSubmitting ? null : _handleSubmit,
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: _mainPurple, width: 1.5),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30)),
           backgroundColor: Colors.white,
         ),
         child: _isSubmitting
             ? CircularProgressIndicator(color: _mainPurple)
-            : Text("Submit", style: TextStyle(fontFamily: MobileAppFonts.heading, color: _mainPurple, fontSize: 18, fontWeight: FontWeight.bold)),
+            : Text("Submit", style: TextStyle(
+            fontFamily: MobileAppFonts.heading,
+            color: _mainPurple,
+            fontSize: 18,
+            fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -269,14 +303,24 @@ class _QARequestScreenState extends State<QARequestScreen> {
       height: 72, width: 72,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.4), blurRadius: 20, spreadRadius: 2, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(color: _mainPurple.withOpacity(0.4),
+              blurRadius: 20,
+              spreadRadius: 2,
+              offset: const Offset(0, 2))
+        ],
       ),
       child: FloatingActionButton(
-        onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-        backgroundColor: Colors.transparent, elevation: 0, shape: const CircleBorder(),
+        onPressed: () =>
+            Navigator.of(context).popUntil((route) => route.isFirst),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        shape: const CircleBorder(),
         child: Container(
-          decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
-          child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
+          decoration: BoxDecoration(
+              shape: BoxShape.circle, gradient: _fabGradient),
+          child: const Center(
+              child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
         ),
       ),
     );
@@ -284,10 +328,17 @@ class _QARequestScreenState extends State<QARequestScreen> {
 
   Widget _buildBottomBar() {
     return Container(
-      decoration: BoxDecoration(boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, -5))]),
+      decoration: BoxDecoration(boxShadow: [
+        BoxShadow(color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, -5))
+      ]),
       child: BottomAppBar(
-        clipBehavior: Clip.antiAlias, shape: const CircularNotchedRectangle(),
-        notchMargin: 8.0, color: Colors.white, height: 80,
+        clipBehavior: Clip.antiAlias,
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 8.0,
+        color: Colors.white,
+        height: 80,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -323,9 +374,13 @@ class _QARequestScreenState extends State<QARequestScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(path, width: 26, height: 26, color: isSelected ? _mainPurple : Colors.grey.shade400),
+          Image.asset(path, width: 26,
+              height: 26,
+              color: isSelected ? _mainPurple : Colors.grey.shade400),
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 11, color: isSelected ? _mainPurple : Colors.grey.shade600)),
+          Text(label, style: TextStyle(fontFamily: MobileAppFonts.body,
+              fontSize: 11,
+              color: isSelected ? _mainPurple : Colors.grey.shade600)),
         ],
       ),
     );

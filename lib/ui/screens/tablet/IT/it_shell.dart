@@ -97,19 +97,33 @@ class _ITShellState extends State<ITShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Row(
-        children: [
-          ITSidebar(
-            current: _currentTab,
-            onNavigate: _navigate,
-            // --- NEW: PASS THE BOOLEANS TO THE SIDEBAR ---
-            hasActiveHallErrors: _hasActiveHallErrors,
-            hasActiveRequests: _hasActiveRequests,
-          ),
-          Expanded(child: _buildScreen()),
-        ],
+    // --- ADDED: PopScope to intercept the Android Hardware Back Button ---
+    return PopScope(
+      canPop: false, // Prevents the app from exiting automatically
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        if (didPop) return;
+
+        // If the user presses back and they are NOT on the dashboard...
+        if (_currentTab != UninexusTab.dashboard) {
+          // Send them back to the dashboard!
+          _navigate(UninexusTab.dashboard);
+        }
+        // If they are already on the dashboard, it does nothing.
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: Row(
+          children: [
+            ITSidebar(
+              current: _currentTab,
+              onNavigate: _navigate,
+              // --- NEW: PASS THE BOOLEANS TO THE SIDEBAR ---
+              hasActiveHallErrors: _hasActiveHallErrors,
+              hasActiveRequests: _hasActiveRequests,
+            ),
+            Expanded(child: _buildScreen()),
+          ],
+        ),
       ),
     );
   }

@@ -54,9 +54,14 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
   }
 
   Future<void> _submitPost() async {
-    if (_titleController.text.trim().isEmpty || _questionController.text.trim().isEmpty) {
+    if (_titleController.text
+        .trim()
+        .isEmpty || _questionController.text
+        .trim()
+        .isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please fill in both Title and Question fields")));
+          const SnackBar(
+              content: Text("Please fill in both Title and Question fields")));
       return;
     }
 
@@ -64,24 +69,33 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      String userId = prefs.getString('userCode') ?? prefs.getString('ID') ?? 'unknown_id';
+      String userId = prefs.getString('userCode') ?? prefs.getString('ID') ??
+          'unknown_id';
       bool isFaculty = userId.toUpperCase().startsWith('FA');
       String detectedRole = isFaculty ? 'Faculty' : 'Student';
       String faculty = prefs.getString('userFaculty') ?? 'General';
 
-      String fName = prefs.getString('fName') ?? prefs.getString('userFirstName') ?? '';
-      String lName = prefs.getString('lName') ?? prefs.getString('userLastName') ?? '';
+      String fName = prefs.getString('fName') ??
+          prefs.getString('userFirstName') ?? '';
+      String lName = prefs.getString('lName') ??
+          prefs.getString('userLastName') ?? '';
 
       if (fName.isEmpty && userId.isNotEmpty) {
         try {
           if (isFaculty) {
-            var doc = await FirebaseFirestore.instance.collection('faculty').doc(userId).get();
+            var doc = await FirebaseFirestore.instance
+                .collection('faculty')
+                .doc(userId)
+                .get();
             if (doc.exists) {
               fName = doc.data()?['fName'] ?? '';
               lName = doc.data()?['lName'] ?? '';
             }
           } else {
-            var doc = await FirebaseFirestore.instance.collection('students').doc(userId).get();
+            var doc = await FirebaseFirestore.instance
+                .collection('students')
+                .doc(userId)
+                .get();
             if (doc.exists) {
               fName = doc.data()?['fName'] ?? '';
               lName = doc.data()?['lName'] ?? '';
@@ -114,7 +128,8 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Post Submitted Successfully!", style: TextStyle(fontFamily: MobileAppFonts.body)))
+            const SnackBar(content: Text("Post Submitted Successfully!",
+                style: TextStyle(fontFamily: MobileAppFonts.body)))
         );
         Navigator.pop(context);
       }
@@ -133,25 +148,33 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
       Navigator.of(context).popUntil((route) => route.isFirst);
     } else if (index == 1) {
       Widget target = _isStudent ? const StuSchedule() : const HallsScreen();
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => target));
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (_) => target));
     } else if (index == 2) {
       Widget target = _isStudent ? const StuQAScreen() : const QAScreen();
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => target));
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (_) => target));
     } else if (index == 3) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final double keyboardHeight = MediaQuery
+        .of(context)
+        .viewInsets
+        .bottom;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: _isStudent ? _buildStudentBottomBar() : _buildFacultyBottomBar(),
+      bottomNavigationBar: _isStudent
+          ? _buildStudentBottomBar()
+          : _buildFacultyBottomBar(),
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -167,14 +190,16 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
             children: [
               // FIXED: Placed outside the scroll view so it stays at the top
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24, vertical: 10),
                 child: _buildTopHeader(),
               ),
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
                   // Padding adjusted since header is now separate
-                  padding: EdgeInsets.fromLTRB(24, 10, 24, keyboardHeight > 0 ? keyboardHeight + 20 : 150),
+                  padding: EdgeInsets.fromLTRB(24, 10, 24,
+                      keyboardHeight > 0 ? keyboardHeight + 20 : 150),
                   child: Column(
                     children: [
                       const SizedBox(height: 50),
@@ -204,7 +229,8 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
               color: Colors.white.withOpacity(0.5),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: _mainPurple),
+            child: Icon(
+                Icons.arrow_back_ios_new_rounded, size: 24, color: _mainPurple),
           ),
         ),
         const Text(
@@ -242,7 +268,11 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Title", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+          const Text("Title", style: TextStyle(
+              fontFamily: MobileAppFonts.heading,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black)),
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
@@ -254,14 +284,21 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
               style: const TextStyle(fontFamily: MobileAppFonts.body),
               decoration: InputDecoration(
                 hintText: "Submit a title max one sentence..",
-                hintStyle: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400, fontSize: 14),
+                hintStyle: TextStyle(fontFamily: MobileAppFonts.body,
+                    color: Colors.grey.shade400,
+                    fontSize: 14),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 14),
               ),
             ),
           ),
           const SizedBox(height: 20),
-          const Text("Question", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+          const Text("Question", style: TextStyle(
+              fontFamily: MobileAppFonts.heading,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black)),
           const SizedBox(height: 8),
           Container(
             height: 250,
@@ -276,9 +313,12 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
               style: const TextStyle(fontFamily: MobileAppFonts.body),
               decoration: InputDecoration(
                 hintText: "Submit your Question maximum 250 letters...",
-                hintStyle: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400, fontSize: 14),
+                hintStyle: TextStyle(fontFamily: MobileAppFonts.body,
+                    color: Colors.grey.shade400,
+                    fontSize: 14),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 16),
               ),
             ),
           ),
@@ -295,11 +335,15 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
         onPressed: _isLoading ? null : _submitPost,
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: _mainPurple, width: 2),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20)),
           backgroundColor: Colors.white,
         ),
         child: _isLoading
-            ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: _mainPurple, strokeWidth: 2.5))
+            ? SizedBox(width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+                color: _mainPurple, strokeWidth: 2.5))
             : Text(
           "Submit",
           style: TextStyle(
@@ -319,22 +363,33 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         boxShadow: [
-          BoxShadow(color: _mainPurple.withOpacity(0.6), blurRadius: 25, spreadRadius: 6, offset: const Offset(0, 2))
+          BoxShadow(color: _mainPurple.withOpacity(0.6),
+              blurRadius: 25,
+              spreadRadius: 6,
+              offset: const Offset(0, 2))
         ],
       ),
       child: FloatingActionButton(
-        onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-        backgroundColor: Colors.transparent, elevation: 0, shape: const CircleBorder(),
+        onPressed: () =>
+            Navigator.of(context).popUntil((route) => route.isFirst),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        shape: const CircleBorder(),
         child: Container(
-          decoration: BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [_primaryBlue, _mainPurple])),
-          child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
+          decoration: BoxDecoration(shape: BoxShape.circle,
+              gradient: LinearGradient(colors: [_primaryBlue, _mainPurple])),
+          child: const Center(
+              child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
         ),
       ),
     );
   }
 
-  Widget _buildStudentBottomBar() => _bottomNavWrapper(child: _buildCommonNavItems(_isStudent));
-  Widget _buildFacultyBottomBar() => _bottomNavWrapper(child: _buildCommonNavItems(_isStudent));
+  Widget _buildStudentBottomBar() =>
+      _bottomNavWrapper(child: _buildCommonNavItems(_isStudent));
+
+  Widget _buildFacultyBottomBar() =>
+      _bottomNavWrapper(child: _buildCommonNavItems(_isStudent));
 
   Widget _buildCommonNavItems(bool isStudent) {
     return Row(
@@ -345,7 +400,10 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _navItem('assets/images/solidarity_1.png', 'Community', 0),
-              _navItem(isStudent ? 'assets/images/calendar.png' : 'assets/images/classroom_1.png', isStudent ? 'Schedule' : 'Halls', 1),
+              _navItem(isStudent
+                  ? 'assets/images/calendar.png'
+                  : 'assets/images/classroom_1.png',
+                  isStudent ? 'Schedule' : 'Halls', 1),
             ],
           ),
         ),
@@ -368,12 +426,19 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
       decoration: BoxDecoration(
         color: Colors.transparent,
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 20, spreadRadius: 4, offset: const Offset(0, -6)),
+          BoxShadow(color: Colors.black.withOpacity(0.18),
+              blurRadius: 20,
+              spreadRadius: 4,
+              offset: const Offset(0, -6)),
         ],
       ),
       child: BottomAppBar(
-        clipBehavior: Clip.antiAlias, shape: const CircularNotchedRectangle(),
-        notchMargin: 9.0, color: Colors.white, height: 80, child: child,
+        clipBehavior: Clip.antiAlias,
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 9.0,
+        color: Colors.white,
+        height: 80,
+        child: child,
       ),
     );
   }
@@ -385,7 +450,9 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(path, width: 28, height: 28, color: sel ? _mainPurple : Colors.grey.shade500),
+          Image.asset(path, width: 28,
+              height: 28,
+              color: sel ? _mainPurple : Colors.grey.shade500),
           const SizedBox(height: 5),
           Text(
             label,
