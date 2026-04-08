@@ -170,7 +170,7 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
                           Expanded(
                             child: StreamBuilder<QuerySnapshot>(
                               stream: FirebaseFirestore.instance
-                                  .collection('gate_sc_ans')
+                                  .collection('gate_scans')
                                   .where('date', isEqualTo: todayDateStr)
                                   .limit(10)
                                   .snapshots(),
@@ -280,7 +280,7 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
 
   Widget _buildGateCounter(String dateStr) {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('gate_sc_ans').where('date', isEqualTo: dateStr).snapshots(),
+      stream: FirebaseFirestore.instance.collection('gate_scans').where('date', isEqualTo: dateStr).snapshots(),
       builder: (context, snapshot) {
         int count = snapshot.hasData ? snapshot.data!.docs.length : 0;
         return Container(

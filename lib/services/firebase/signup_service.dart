@@ -10,11 +10,14 @@ class SignupService {
 
   Future<bool> registerUser({
     required String nationalId,
-    required String universityId, // Renamed from studentId to be more generic
+    required String universityId,
     required String email,
   }) async {
     try {
       bool userExists = false;
+      String? firstName;
+      String? lastName;
+      String? userRole;
 
       // Search through all collections for this ID
       for (String col in _userCollections) {
@@ -26,6 +29,13 @@ class SignupService {
 
         if (userCheck.docs.isNotEmpty) {
           userExists = true;
+          userRole = col; // Save the collection they were found in
+
+          // Extract the user data
+          final data = userCheck.docs.first.data() as Map<String, dynamic>;
+          firstName = data['fName']?.toString() ?? '';
+          lastName = data['lName']?.toString() ?? '';
+
           break; // Stop searching once we find them!
         }
       }
@@ -35,13 +45,18 @@ class SignupService {
         return false;
       }
 
-      // If found, create the pending request
+      // If found, create the pending request with the extracted info
       await _db.collection(_collection).doc(nationalId).set({
         'nationalId': nationalId,
-        'universityId': universityId.toUpperCase(),
+        'ID': universityId.toUpperCase(),
         'email': email,
+        'fName': firstName,
+        'lName': lastName,
+        'fullName': '$firstName $lastName'.trim(),
+        'userRole': userRole,
         'status': 'pending',
-        'createdAt': FieldValue.serverTimestamp(),
+        'isProcessed': false,
+        'requestDate': FieldValue.serverTimestamp(),
       });
       return true;
 

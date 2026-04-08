@@ -892,8 +892,8 @@ class ProfileHeader extends StatelessWidget {
   }
 }
 
-// Basic text field
-class AppTextField extends StatelessWidget {
+
+class AppTextField extends StatefulWidget {
   final TextEditingController controller;
   final String hint;
   final bool obscure;
@@ -906,12 +906,49 @@ class AppTextField extends StatelessWidget {
   });
 
   @override
+  State<AppTextField> createState() => _AppTextFieldState();
+}
+
+class _AppTextFieldState extends State<AppTextField> {
+  // Local state to track visibility
+  late bool _isObscure;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with the value passed from the parent
+    _isObscure = widget.obscure;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Get the base decoration from your theme file
+    InputDecoration baseDecoration = AppInputStyles.textField(hint: widget.hint);
+
+    // If the field is meant to be a password field, append the toggle icon
+    if (widget.obscure) {
+      baseDecoration = baseDecoration.copyWith(
+        suffixIcon: IconButton(
+          splashRadius: 24, // Keeps the ripple effect neat
+          icon: Icon(
+            _isObscure ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+            color: Colors.grey, // Adjust color to match your theme if needed
+            size: 22,
+          ),
+          onPressed: () {
+            setState(() {
+              _isObscure = !_isObscure; // Toggle the state
+            });
+          },
+        ),
+      );
+    }
+
     return TextField(
-      controller: controller,
-      obscureText: obscure,
+      controller: widget.controller,
+      obscureText: _isObscure, // Use the local state here
       style: AppTextStyles.body.copyWith(color: AppColors.textDark, fontSize: 13),
-      decoration: AppInputStyles.textField(hint: hint),
+      decoration: baseDecoration,
     );
   }
 }

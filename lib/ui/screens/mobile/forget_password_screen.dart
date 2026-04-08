@@ -15,7 +15,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     with SingleTickerProviderStateMixin {
 
-  final _emailController = TextEditingController();
+  final _idController = TextEditingController();
   final _nationalIdController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -47,7 +47,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
       if (mounted) _contentController.forward();
     });
 
-    _emailController.addListener(_validate);
+    _idController.addListener(_validate);
     _nationalIdController.addListener(_validate);
     _newPasswordController.addListener(_validate);
     _confirmPasswordController.addListener(_validate);
@@ -55,7 +55,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
   void _validate() {
     setState(() {
-      _isFormValid = _emailController.text.isNotEmpty &&
+      _isFormValid = _idController.text.isNotEmpty &&
           _nationalIdController.text.isNotEmpty &&
           _newPasswordController.text.isNotEmpty &&
           _confirmPasswordController.text.isNotEmpty &&
@@ -76,7 +76,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     setState(() => _isLoading = true);
 
     bool success = await ForpassService().sendRenewalRequest(
-      emailOrId: _emailController.text,
+      universityId: _idController.text,
       nationalId: _nationalIdController.text,
       newPassword: _confirmPasswordController.text,
     );
@@ -98,7 +98,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
   @override
   void dispose() {
     _contentController.dispose();
-    _emailController.dispose();
+    _idController.dispose();
     _nationalIdController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
@@ -154,7 +154,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                             opacity: _field1Anim,
                             child: SlideTransition(
                               position: Tween<Offset>(begin: const Offset(-0.3, 0), end: Offset.zero).animate(_field1Anim),
-                              child: _modernField(label: "Email / ID", hint: "Enter Your Email/ID", controller: _emailController),
+                              child: _modernField(label: "ID", hint: "Enter Your ID", controller: _idController),
                             ),
                           ),
                           const SizedBox(height: 20),

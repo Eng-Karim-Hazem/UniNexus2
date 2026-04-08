@@ -61,30 +61,34 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       final notices = results[2];
 
       // Filter pending password reset requests
-      final List<Map<String, String>> resetRequests = pass.docs
-          .where((doc) {
+      final pendingPassDocs = pass.docs.where((doc) {
         final data = doc.data();
         final status = (data['status'] ?? '').toString().toLowerCase();
         final isProcessed = data['isProcessed'] == true;
         final isClosed = status == 'accepted' || status == 'rejected' || status == 'processed';
+        // Only keep if NOT processed and NOT closed
         return !(isProcessed || isClosed);
-      })
-          .map((doc) {
+      }).toList();
+
+      final List<Map<String, String>> resetRequests = pendingPassDocs.map((doc) {
         final data = doc.data();
         return {
           'id': 'pass_${doc.id}',
           'text': '${(data['emailOrId'] ?? 'User').toString()} submitted a password reset request',
         };
-      })
-          .toList();
+      }).toList();
 
       // Filter pending registration requests
-      final List<Map<String, String>> registrationRequests = reg.docs.where((doc) {
+      final pendingRegDocs = reg.docs.where((doc) {
         final data = doc.data();
         final status = (data['status'] ?? '').toString().toLowerCase();
+        final isProcessed = data['isProcessed'] == true;
         final isClosed = status == 'accepted' || status == 'rejected' || status == 'processed';
-        return !isClosed;
-      }).map((doc) {
+        // Only keep if NOT processed and NOT closed
+        return !(isProcessed || isClosed);
+      }).toList();
+
+      final List<Map<String, String>> registrationRequests = pendingRegDocs.map((doc) {
         final data = doc.data();
         final name = (data['fullName'] ?? data['name'] ?? data['fName'] ?? 'User').toString();
         return {
@@ -129,8 +133,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       if (!mounted) return;
       setState(() {
         _adminName = fName.isNotEmpty ? fName : 'Admin';
-        _registrationCount = reg.docs.length;
-        _passwordResetCount = pass.docs.length;
+
+        // Use the length of the filtered pending lists instead of the total collection length
+        _registrationCount = pendingRegDocs.length;
+        _passwordResetCount = pendingPassDocs.length;
+
         _recentRequests = requestItems;
         _recentNotices = noticesList;
         _loading = false;
@@ -301,7 +308,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                     itemBuilder: (context, index) {
                                       final n = _recentNotices[index];
                                       return Padding(
-                                        // --- FIX 2: Reduced bottom spacing from 12 to 6 ---
                                         padding: const EdgeInsets.only(bottom: 6),
                                         child: _buildNoticeItem(
                                           n['sender'] ?? 'Management',

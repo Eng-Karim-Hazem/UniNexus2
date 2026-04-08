@@ -251,8 +251,8 @@ class _LoginScreenState extends State<LoginScreen>
                               _animatedItem(
                                 anim: _field1Anim,
                                 child: _modernField(
-                                  label: "Email / ID",
-                                  hint: "Enter Your Email/ID",
+                                  label: "ID",
+                                  hint: "Enter Your ID",
                                   controller: _codeController,
                                 ),
                               ),

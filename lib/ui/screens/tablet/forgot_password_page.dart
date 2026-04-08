@@ -59,7 +59,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
 
     // 3. Send request with the new password
     bool success = await ForpassService().sendRenewalRequest(
-      emailOrId: emailOrId,
+      universityId: emailOrId,
       nationalId: nId,
       newPassword: newPass, // <--- Passing the new password
     );

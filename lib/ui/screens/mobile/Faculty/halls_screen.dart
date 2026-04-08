@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:uninexus/theme/mobile_app_theme.dart';
-import 'package:intl/intl.dart';
 import 'package:uninexus/model/hall_model.dart';
 import 'package:uninexus/services/firebase/hall_service.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
@@ -22,11 +21,13 @@ class _HallsScreenState extends State<HallsScreen> {
   final HallService _hallService = HallService();
   final TextEditingController _searchController = TextEditingController();
 
-  // 1. Create a variable to hold the stream
   late Stream<List<HallModel>> _hallsStream;
 
   String _searchQuery = "";
   int _selectedIndex = 1;
+
+  // 1. ADD FILTER STATE
+  String _selectedFilter = 'All';
 
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _textIndigo = const Color(0xFF5C5C80);
@@ -42,26 +43,7 @@ class _HallsScreenState extends State<HallsScreen> {
   @override
   void initState() {
     super.initState();
-    // 2. Initialize the stream once so it doesn't reset on rebuilds
-    _hallsStream = _hallService.streamHallsByToday();
-  }
-
-  String _getCurrentTimeSlot() {
-    final now = DateTime.now();
-    int totalMinutes = now.hour * 60 + now.minute;
-    int toMin(int h, int m) => h * 60 + m;
-
-    if (totalMinutes >= toMin(9, 0) && totalMinutes < toMin(9, 50)) return "9:00-9:50";
-    if (totalMinutes >= toMin(9, 50) && totalMinutes < toMin(10, 40)) return "9:50-10:40";
-    if (totalMinutes >= toMin(10, 50) && totalMinutes < toMin(11, 40)) return "10:50-11:40";
-    if (totalMinutes >= toMin(11, 40) && totalMinutes < toMin(12, 30)) return "11:40-12:30";
-    if (totalMinutes >= toMin(13, 0) && totalMinutes < toMin(13, 50)) return "1:00-1:50";
-    if (totalMinutes >= toMin(13, 50) && totalMinutes < toMin(14, 40)) return "1:50-2:40";
-    if (totalMinutes >= toMin(14, 50) && totalMinutes < toMin(15, 40)) return "2:50-3:40";
-    if (totalMinutes >= toMin(15, 40) && totalMinutes < toMin(16, 30)) return "3:40-4:30";
-    if (totalMinutes >= toMin(16, 30) && totalMinutes < toMin(17, 20)) return "4:30-5:20";
-    if (totalMinutes >= toMin(17, 20) && totalMinutes < toMin(18, 10)) return "5:20-6:10";
-    return "OFF_HOURS";
+    _hallsStream = _hallService.streamAllHalls();
   }
 
   void _onNavBarTapped(int index) async {
@@ -82,9 +64,6 @@ class _HallsScreenState extends State<HallsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    String currentSlotKey = _getCurrentTimeSlot();
-    String todayName = DateFormat('EEEE').format(DateTime.now());
-
     final sw = MediaQuery.of(context).size.width;
     final sh = MediaQuery.of(context).size.height;
 
@@ -105,35 +84,48 @@ class _HallsScreenState extends State<HallsScreen> {
           child: Stack(
             children: [
               Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildHeader(sw),
                   _buildSearchField(sw),
+                  const SizedBox(height: 16), // Spacing
+                  _buildFilterRow(sw),        // 2. ADD FILTER ROW HERE
                   SizedBox(height: sh * 0.02),
                   Expanded(
                     child: StreamBuilder<List<HallModel>>(
-                      stream: _hallsStream, // 3. Use the persistent stream variable
+                      stream: _hallsStream,
                       builder: (context, snapshot) {
-                        // Only show loading if we have NO data yet
                         if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                           return const Center(child: CircularProgressIndicator());
                         }
                         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return Center(
-                            child: Text("No halls data for $todayName.",
-                                style: const TextStyle(fontFamily: MobileAppFonts.body)),
+                          return const Center(
+                            child: Text("No halls data found.",
+                                style: TextStyle(fontFamily: MobileAppFonts.body)),
                           );
                         }
 
                         final normalizedQuery = _searchQuery.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), "");
 
+                        // 3. APPLY COMBINED FILTER LOGIC
                         final filteredHalls = snapshot.data!.where((hall) {
-                          if (normalizedQuery.isEmpty) return true;
-                          final normalizedHallName = hall.displayName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), "");
-                          return normalizedHallName.contains(normalizedQuery);
+                          // Check Search Query
+                          if (normalizedQuery.isNotEmpty) {
+                            final normalizedHallName = hall.displayName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), "");
+                            if (!normalizedHallName.contains(normalizedQuery)) return false;
+                          }
+
+                          // Check Filter Chips
+                          if (_selectedFilter == 'Available') return hall.isAvailable;
+                          if (_selectedFilter == 'Occupied') return hall.isBusy;
+                          return true; // 'All'
                         }).toList();
 
+                        // Sort the halls in ascending order
+                        filteredHalls.sort((a, b) => a.displayName.compareTo(b.displayName));
+
                         if (filteredHalls.isEmpty) {
-                          return const Center(child: Text("No matches found."));
+                          return const Center(child: Text("No matches found.", style: TextStyle(fontFamily: MobileAppFonts.body)));
                         }
 
                         return ListView.builder(
@@ -142,7 +134,7 @@ class _HallsScreenState extends State<HallsScreen> {
                           itemCount: filteredHalls.length,
                           itemBuilder: (context, index) {
                             final hall = filteredHalls[index];
-                            return _buildHallCard(hall.displayName, hall.isBusy(currentSlotKey));
+                            return _buildHallCard(hall.displayName, hall.isBusy);
                           },
                         );
                       },
@@ -210,7 +202,7 @@ class _HallsScreenState extends State<HallsScreen> {
           style: const TextStyle(fontFamily: MobileAppFonts.body),
           decoration: InputDecoration(
             counterText: "",
-            hintText: "Search Hall (e.g. A101)",
+            hintText: "Search Hall (e.g. A303)",
             hintStyle: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -222,6 +214,44 @@ class _HallsScreenState extends State<HallsScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // 4. NEW FILTER ROW WIDGET
+  Widget _buildFilterRow(double sw) {
+    final List<String> options = ['All', 'Available', 'Occupied'];
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: sw * 0.06),
+      child: Row(
+        children: options.map((filter) {
+          final isSelected = _selectedFilter == filter;
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedFilter = filter;
+              });
+            },
+            child: Container(
+              margin: const EdgeInsets.only(right: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected ? _mainPurple : Colors.white.withOpacity(0.8),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: _mainPurple, width: 1.5),
+              ),
+              child: Text(
+                filter,
+                style: TextStyle(
+                  fontFamily: MobileAppFonts.body,
+                  color: isSelected ? Colors.white : _mainPurple,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }

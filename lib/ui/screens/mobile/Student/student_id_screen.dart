@@ -8,7 +8,6 @@ import '../profile_screen.dart';
 import '../settings_screen.dart';
 import 'stu_community.dart';
 
-
 class StudentIDScreen extends StatefulWidget {
   const StudentIDScreen({super.key});
 
@@ -73,49 +72,41 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
           ),
           child: SafeArea(
             bottom: false,
-            child:Padding(
+            child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
               child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
                 child: Column(
                   children: [
                     _buildTopHeader(),
                     const SizedBox(height: 30),
-                    _buildMainCard(),
+                    _buildMainCard(context), // Passed context here
                     const SizedBox(height: 40),
                   ],
                 ),
               ),
             ),
           ),
-        )
-    );
+        ));
   }
 
   Widget _buildTopHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // --- ADDED NAVIGATION HERE ---
         GestureDetector(
           onTap: () {
             Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen())
-            );
+                context, MaterialPageRoute(builder: (context) => const SettingsScreen()));
           },
           child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
         ),
-
-        const Text(
-            "Home",
+        const Text("Home",
             style: TextStyle(
                 fontFamily: MobileAppFonts.heading,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF5C5C80)
-            )
-        ),
-
+                color: Color(0xFF5C5C80))),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -124,10 +115,17 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
     );
   }
 
-  Widget _buildMainCard() {
+  Widget _buildMainCard(BuildContext context) {
+    // Dynamic QR size based on screen width to prevent overflow
+    double screenWidth = MediaQuery.of(context).size.width;
+    // Screen padding (48) + Card padding (40) = 88. Leaving breathing room.
+    double qrSize = screenWidth - 100;
+    if (qrSize > 240) qrSize = 240; // Cap max size
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 30),
+      width: double.infinity,
+      // Removed the redundant horizontal margin since the parent has Padding
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(30),
@@ -148,7 +146,8 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
               _buildDot(),
               const SizedBox(width: 15),
               Container(
-                width: 60, height: 12,
+                width: 60,
+                height: 12,
                 decoration: BoxDecoration(
                   color: const Color(0xFFE0E0FF),
                   borderRadius: BorderRadius.circular(10),
@@ -160,29 +159,48 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
           ),
           const SizedBox(height: 30),
 
-          Text(_userName, style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
+          Text(_userName,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  fontFamily: MobileAppFonts.heading,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF5C5C80))),
           const SizedBox(height: 5),
-          Text("ID: $_userID", style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500)),
-
-          const SizedBox(height: 40),
-
-          ShaderMask(
-            shaderCallback: (bounds) => const LinearGradient(
-              colors: [Color(0xFF237ABA), Color(0xFF9C2CF3)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ).createShader(bounds),
-            blendMode: BlendMode.srcIn,
-            child: QrImageView(
-              data: _userID,
-              version: QrVersions.auto,
-              size: 240.0,
-              embeddedImage: const AssetImage('assets/images/uni.jpeg'),
-              embeddedImageStyle: const QrEmbeddedImageStyle(size: Size(45, 45)),
-            ),
-          ),
+          Text("ID: $_userID",
+              style: const TextStyle(
+                  fontFamily: MobileAppFonts.body,
+                  fontSize: 16,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500)),
 
           const SizedBox(height: 30),
+
+          // Quiet Zone Wrapper to guarantee scanner readability
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: ShaderMask(
+              shaderCallback: (bounds) => const LinearGradient(
+                colors: [Color(0xFF237ABA), Color(0xFF9C2CF3)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ).createShader(bounds),
+              blendMode: BlendMode.srcIn,
+              child: QrImageView(
+                data: _userID,
+                version: QrVersions.auto,
+                size: qrSize, // Responsive Size
+                backgroundColor: Colors.transparent,
+              ),
+            ),
+
+          ),
+
+          const SizedBox(height: 25),
           const Text(
             "Scan for Identity Verification",
             style: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey, fontSize: 14),
@@ -193,7 +211,8 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
   }
 
   Widget _buildDot() => Container(
-    width: 12, height: 12,
+    width: 12,
+    height: 12,
     decoration: const BoxDecoration(color: Color(0xFFE0E0FF), shape: BoxShape.circle),
   );
 
@@ -287,13 +306,17 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
         setState(() => _selectedIndex = index);
 
         if (index == 0) {
-          await Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuCommunity()));
+          await Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (_) => const StuCommunity()));
         } else if (index == 1) {
-          await Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuSchedule()));
+          await Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (_) => const StuSchedule()));
         } else if (index == 2) {
-          await Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuQAScreen()));
+          await Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (_) => const StuQAScreen()));
         } else if (index == 3) {
-          await Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+          await Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
         }
 
         if (mounted) setState(() => _selectedIndex = -1);

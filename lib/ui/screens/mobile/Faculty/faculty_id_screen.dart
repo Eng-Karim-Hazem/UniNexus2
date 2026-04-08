@@ -220,18 +220,6 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
                   errorCorrectionLevel: QrErrorCorrectLevel.H,
                 ),
               ),
-              Container(
-                width: 45,
-                height: 45,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Image.asset(
-                  'assets/images/LOGO.png',
-                  fit: BoxFit.contain,
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 30),

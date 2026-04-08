@@ -41,22 +41,16 @@ class _AdminShellState extends State<AdminShell> {
     switch (_currentTab) {
       case AdminTab.dashboard:
         return AdminDashboardScreen(onNavigate: _navigate);
-
       case AdminTab.requests:
         return AdminRequestsScreen(onNavigate: _navigate);
-
       case AdminTab.notices:
         return AdminNoticesScreen(onNavigate: _navigate);
-
       case AdminTab.profile:
         return AdminProfileScreen(onNavigate: _navigate);
-
       case AdminTab.settings:
         return AdminSettingsScreen(onNavigate: _navigate);
-
       case AdminTab.userSearch:
         return AdminUserSearchScreen(onNavigate: _navigate);
-
       case AdminTab.sentNotices:
         return AdminSentNoticesScreen(onNavigate: _navigate);
       case AdminTab.receivedNotices:
@@ -68,18 +62,33 @@ class _AdminShellState extends State<AdminShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Row(
-        children: [
+    // Check if we are currently on the Dashboard
+    final isDashboard = _currentTab == AdminTab.dashboard;
 
-          AdminSidebar(
-            current: _currentTab,
-            onNavigate: _navigate,
-          ),
+    return PopScope(
+      // Set to false unconditionally so the physical back button NEVER closes the app
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
 
-          Expanded(child: _buildScreen()),
-        ],
+        // If we intercepted the pop and they are NOT on the dashboard,
+        // safely navigate the user back to the Dashboard.
+        // If they ARE on the dashboard, it does nothing (ignored).
+        if (!isDashboard) {
+          _navigate(AdminTab.dashboard);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: Row(
+          children: [
+            AdminSidebar(
+              current: _currentTab,
+              onNavigate: _navigate,
+            ),
+            Expanded(child: _buildScreen()),
+          ],
+        ),
       ),
     );
   }
