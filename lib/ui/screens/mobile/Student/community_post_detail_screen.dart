@@ -305,12 +305,13 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
 
   Widget _buildCreatePostFab(double sw, double sh) {
     return Positioned(
-      bottom: sh * 0.12,
-      right: sw * 0.06,
+      bottom: (sh * 0.12).clamp(110.0, 140.0),
+      right: (sw * 0.06).clamp(20.0, 35.0),
       child: GestureDetector(
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateCommunityPostScreen())),
         child: Container(
-            width: 75, height: 75,
+            width: (sw * 0.20).clamp(70.0, 85.0),
+            height: (sw * 0.20).clamp(70.0, 85.0),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
