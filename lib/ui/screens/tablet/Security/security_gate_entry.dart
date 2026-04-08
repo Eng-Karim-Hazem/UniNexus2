@@ -1,3 +1,4 @@
+import 'dart:convert'; // Required for base64 decoding
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:uninexus/model/gate_scan_model.dart';
@@ -189,132 +190,165 @@ class _SecurityGateEntryScreenState extends State<SecurityGateEntryScreen> {
   }
 }
 
-// User data panel widget
+// User data panel widget with Base64 photo in top-right
 class _UserDataPanel extends StatelessWidget {
   final GateScan scan;
   const _UserDataPanel({required this.scan});
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Image.asset(
-                'assets/icons/Individual.png',
-                width: 40, height: 40,
-                errorBuilder: (_, __, ___) => const Icon(Icons.person, color: AppColors.primary, size: 40),
-              ),
-              const SizedBox(width: 16),
-              Container(width: 3, height: 40, color: AppColors.primary.withValues(alpha: 0.4)),
-              const SizedBox(width: 16),
-              const Text("User Data", style: TextStyle(fontFamily: AppFonts.batangas, fontWeight: FontWeight.w800, fontSize: 26, color: AppColors.primary)),
-            ],
-          ),
-          const SizedBox(height: 36),
-          buildInfoRow(
-            label: "Name",
-            value: scan.name,
-            fontSize: 18,
-            verticalPadding: 12,
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: buildInfoRow(
-                  label: "User Type",
-                  value: scan.type,
-                  fontSize: 18,
-                  verticalPadding: 12,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 2,
-                child: buildInfoRow(
-                  label: "Year",
-                  value: scan.year,
-                  fontSize: 18,
-                  verticalPadding: 12,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          buildInfoRow(
-            label: "ID",
-            value: scan.studentId,
-            fontSize: 18,
-            verticalPadding: 12,
-          ),
-          const SizedBox(height: 24),
-          buildInfoRow(
-            label: "Faculty",
-            value: scan.faculty,
-            fontSize: 18,
-            verticalPadding: 12,
-          ),
-          const SizedBox(height: 24),
-
-          // --- UPDATED: DATE & TIME ROW ---
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: buildInfoRow(
-                  label: "Date",
-                  value: scan.date,
-                  fontSize: 18,
-                  verticalPadding: 12,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 2,
-                child: buildInfoRow(
-                  label: "Time",
-                  value: scan.time, // Ensure 'time' is mapped in your GateScan model
-                  fontSize: 18,
-                  verticalPadding: 12,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          // --------------------------------
-
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Row(
-              children: [
-                const Text(
-                  'Status : ',
-                  style: TextStyle(
-                    fontFamily: AppFonts.spaceGrotesk,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textDark,
+              Row(
+                children: [
+                  Image.asset(
+                    'assets/icons/Individual.png',
+                    width: 40, height: 40,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.person, color: AppColors.primary, size: 40),
                   ),
+                  const SizedBox(width: 16),
+                  Container(width: 3, height: 40, color: AppColors.primary.withValues(alpha: 0.4)),
+                  const SizedBox(width: 16),
+                  const Text("User Data", style: TextStyle(fontFamily: AppFonts.batangas, fontWeight: FontWeight.w800, fontSize: 26, color: AppColors.primary)),
+                ],
+              ),
+              const SizedBox(height: 36),
+              buildInfoRow(
+                label: "Name",
+                value: scan.name,
+                fontSize: 18,
+                verticalPadding: 12,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: buildInfoRow(
+                      label: "User Type",
+                      value: scan.type,
+                      fontSize: 18,
+                      verticalPadding: 12,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: buildInfoRow(
+                      label: "Year",
+                      value: scan.year,
+                      fontSize: 18,
+                      verticalPadding: 12,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              buildInfoRow(
+                label: "ID",
+                value: scan.studentId,
+                fontSize: 18,
+                verticalPadding: 12,
+              ),
+              const SizedBox(height: 24),
+              buildInfoRow(
+                label: "Faculty",
+                value: scan.faculty,
+                fontSize: 18,
+                verticalPadding: 12,
+              ),
+              const SizedBox(height: 24),
+
+              Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: buildInfoRow(
+                      label: "Date",
+                      value: scan.date,
+                      fontSize: 18,
+                      verticalPadding: 12,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: buildInfoRow(
+                      label: "Time",
+                      value: scan.time,
+                      fontSize: 18,
+                      verticalPadding: 12,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  children: [
+                    const Text(
+                      'Status : ',
+                      style: TextStyle(
+                        fontFamily: AppFonts.spaceGrotesk,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                    StatusBadge(status: scan.status, isDot: false),
+                  ],
                 ),
-                StatusBadge(status: scan.status, isDot: false),
-              ],
+              ),
+              const SizedBox(height: 24),
+              buildInfoRow(
+                label: "Note",
+                value: scan.note,
+                fontSize: 18,
+                verticalPadding: 12,
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+
+        // --- TOP RIGHT PHOTO PANEL (Matches ID Lookup style) ---
+        Positioned(
+          top: 0,
+          right: 0,
+          child: Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 2),
+              color: Colors.white.withOpacity(0.3),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: (scan.photo != null && scan.photo!.isNotEmpty)
+                  ? Image.memory(
+                base64Decode(scan.photo!),
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: Colors.grey[200],
+                  child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                ),
+              )
+                  : Container(
+                color: Colors.grey[200],
+                child: const Icon(Icons.person, size: 50, color: Colors.grey),
+              ),
             ),
           ),
-          const SizedBox(height: 24),
-          buildInfoRow(
-            label: "Note",
-            value: scan.note,
-            fontSize: 18,
-            verticalPadding: 12,
-          ),
-          const SizedBox(height: 24),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

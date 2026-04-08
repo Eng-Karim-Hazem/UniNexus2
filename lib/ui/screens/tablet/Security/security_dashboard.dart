@@ -148,14 +148,15 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
                           const SizedBox(height: 20),
                           const Row(
                             children: [
+                              SizedBox(width: 20),
                               StatusBadge(status: 'approved', isDot: true),
                               SizedBox(width: 8),
                               Text("Approved", style: AppTextStyles.legendLabelStyle),
-                              SizedBox(width: 26),
+                              SizedBox(width: 110),
                               StatusBadge(status: 'unknown', isDot: true),
                               SizedBox(width: 8),
                               Text("Unknown", style: AppTextStyles.legendLabelStyle),
-                              SizedBox(width: 26),
+                              SizedBox(width: 110),
                               StatusBadge(status: 'denied', isDot: true),
                               SizedBox(width: 8),
                               Text("Denied", style: AppTextStyles.legendLabelStyle),

@@ -89,7 +89,6 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
       final bool isAccepted = status == 'accepted';
 
       if (isPasswordRequest) {
-        // Password Reset logic
         if (isAccepted) {
           final newPassword = data['newPassword'];
           final userRole = data['userRole'];
@@ -100,8 +99,9 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
           }
         }
       } else {
-        // Registration Logic: Update isRegistered AND app fields
-        final String? universityId = data['universityId']?.toString();
+        // Updated Registration Logic: Syncs true/false based on status
+        final String? universityId = (data['ID'] ?? data['universityId'])?.toString();
+
         if (universityId != null) {
           final studentQuery = await FirebaseFirestore.instance
               .collection('students')
@@ -110,6 +110,7 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
               .get();
 
           if (studentQuery.docs.isNotEmpty) {
+            // If status is 'accepted' -> true. If status is 'rejected' -> false.
             await studentQuery.docs.first.reference.update({
               'isRegistered': isAccepted,
               'app': isAccepted,
@@ -121,7 +122,7 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
       // Mark the request itself as processed
       await doc.reference.update({'isProcessed': true, 'status': status});
 
-      final identifier = data['universityId'] ?? data['emailOrId'] ?? 'User';
+      final identifier = data['ID'] ?? data['universityId'] ?? data['emailOrId'] ?? 'User';
       final actionStr = isAccepted ? 'approved' : 'rejected';
       final requestType = isPasswordRequest ? 'Password reset' : 'Registration';
       await ITLogService.logAction('$requestType request $actionStr for $identifier');
@@ -165,7 +166,6 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
             const PageHeading('User Requests'),
             const SizedBox(height: 20),
 
-            // Filter Tabs
             Row(
               children: _filterOptions.map((filter) {
                 final isSelected = _selectedFilter == filter;
@@ -212,7 +212,6 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                         ...(regSnapshot.data?.docs ?? const []).map((doc) => {'id': doc.id, 'doc': doc, 'data': doc.data(), 'kind': 'registration'}),
                       ];
 
-                      // Filter logic
                       requestItems = requestItems.where((item) {
                         final docData = item['data'] as Map<String, dynamic>;
                         final statusStr = docData['status']?.toString().toLowerCase() ?? (docData['isProcessed'] == true ? 'processed' : 'pending');
@@ -224,7 +223,6 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                         return true;
                       }).toList();
 
-                      // Sort: Pending first, then by date
                       requestItems.sort((a, b) {
                         final dataA = a['data'] as Map<String, dynamic>;
                         final dataB = b['data'] as Map<String, dynamic>;
@@ -252,7 +250,6 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                           return Row(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // Left Panel: Request List
                               Expanded(
                                 flex: 45,
                                 child: GlassCard(
@@ -265,10 +262,9 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                                       final docData = item['data'] as Map<String, dynamic>;
                                       final isPass = item['kind'] == 'password';
 
-                                      // Display ID only
                                       final String displayId = isPass
                                           ? (docData['emailOrId'] ?? 'Unknown')
-                                          : (docData['universityId'] ?? 'Unknown ID');
+                                          : (docData['ID'] ?? 'Unknown ID');
 
                                       final reqDate = _formatDate((docData['requestDate'] ?? docData['date'] ?? docData['createdAt']) as Timestamp?);
                                       final statusStr = docData['status']?.toString().toLowerCase() ?? (docData['isProcessed'] == true ? 'processed' : 'pending');
@@ -307,7 +303,6 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                                 ),
                               ),
                               const SizedBox(width: 16),
-                              // Right Panel: Details
                               Expanded(
                                 flex: 55,
                                 child: GlassCard(
@@ -344,11 +339,13 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                                               },
                                             )
                                                 : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                              buildInfoRow(label: 'Name', value: '${selectedData['fName'] ?? 'N/A'} ${selectedData['lName'] ?? 'N/A'}'),
                                               buildInfoRow(label: 'Email', value: (selectedData['email'] ?? 'N/A').toString()),
-                                              buildInfoRow(label: 'University ID', value: (selectedData['universityId'] ?? 'N/A').toString()),
+                                              buildInfoRow(label: 'University ID', value: (selectedData['ID'] ?? 'N/A').toString()),
+                                              buildInfoRow(label: 'National ID', value: (selectedData['nationalId'] ?? 'N/A').toString()),
                                               if (selectedData['faculty'] != null) buildInfoRow(label: 'Faculty', value: selectedData['faculty'].toString()),
                                               if (selectedData['year'] != null) buildInfoRow(label: 'Year', value: selectedData['year'].toString()),
-                                              buildInfoRow(label: 'Time of Request', value: _formatDate((selectedData['createdAt'] ?? selectedData['date']) as Timestamp?)),
+                                              buildInfoRow(label: 'Time of Request', value: _formatDate((selectedData['requestDate'] ?? selectedData['date']) as Timestamp?)),
                                             ]),
                                           ),
                                         ),

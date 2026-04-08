@@ -20,7 +20,10 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
 
   Student? _selectedStudent;
   List<Student> _recentSearches = [];
+  List<Student> _deniedStudents = []; // Stores list from database
+
   bool _isLoading = false;
+  bool _isShowingDeniedList = false; // Toggle state
   String? _searchError;
 
   @override
@@ -29,7 +32,6 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
     _loadSearchHistory();
   }
 
-  // Load search history from preferences
   Future<void> _loadSearchHistory() async {
     final prefs = await SharedPreferences.getInstance();
     final String? historyData = prefs.getString('search_history');
@@ -41,33 +43,45 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
     }
   }
 
-  // Save search to history
-  Future<void> _saveToHistory(Student student) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    _recentSearches.removeWhere((element) => element.id == student.id);
-    _recentSearches.insert(0, student);
-
-    if (_recentSearches.length > 10) _recentSearches.removeLast();
-
-    final String encoded = jsonEncode(_recentSearches.map((e) => e.toJson()).toList());
-    await prefs.setString('search_history', encoded);
-    setState(() {});
-  }
-
-  // Perform search
-  void _onSearchSubmit() async {
-    final id = _searchController.text.trim();
-    if (id.isEmpty) {
-      setState(() {
-        _searchError = 'Please enter an ID to search';
-      });
+  // Fetch only denied students from Firebase
+  void _toggleDeniedList() async {
+    if (_isShowingDeniedList) {
+      setState(() => _isShowingDeniedList = false);
       return;
     }
 
     setState(() {
       _isLoading = true;
       _searchError = null;
+    });
+
+    final denied = await _idLookupService.getDeniedStudents();
+
+    setState(() {
+      _deniedStudents = denied;
+      _isShowingDeniedList = true;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _saveToHistory(Student student) async {
+    final prefs = await SharedPreferences.getInstance();
+    _recentSearches.removeWhere((element) => element.id == student.id);
+    _recentSearches.insert(0, student);
+    if (_recentSearches.length > 10) _recentSearches.removeLast();
+    final String encoded = jsonEncode(_recentSearches.map((e) => e.toJson()).toList());
+    await prefs.setString('search_history', encoded);
+    setState(() {});
+  }
+
+  void _onSearchSubmit() async {
+    final id = _searchController.text.trim();
+    if (id.isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+      _searchError = null;
+      _isShowingDeniedList = false; // Return to history view on search
     });
 
     final student = await _idLookupService.searchStudentById(id);
@@ -84,12 +98,15 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
         _selectedStudent = null;
         _isLoading = false;
       });
-      showErrorSnackBar(context, "No user found with this ID");
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Decide which list to show based on toggle
+    final displayList = _isShowingDeniedList ? _deniedStudents : _recentSearches;
+    final listLabel = _isShowingDeniedList ? "All Denied Students" : "Recent Searches";
+
     return ITScreenBackground(
       child: Padding(
         padding: const EdgeInsets.all(28),
@@ -102,7 +119,6 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Left panel - Search bar and history
                   Expanded(
                     flex: 5,
                     child: Column(
@@ -110,35 +126,41 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
                       children: [
                         _buildSearchBar(),
                         const SizedBox(height: 20),
-                        const Text("Recent Searches",
-                            style: TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(listLabel, style: const TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold)),
+                            // --- DENIED LIST TOGGLE BUTTON ---
+                            TextButton.icon(
+                              onPressed: _toggleDeniedList,
+                              icon: Icon(
+                                _isShowingDeniedList ? Icons.history : Icons.block,
+                                color: _isShowingDeniedList ? AppColors.primary : Colors.redAccent,
+                                size: 20,
+                              ),
+                              label: Text(
+                                _isShowingDeniedList ? "Show Recent" : "Show All Denied",
+                                style: TextStyle(color: _isShowingDeniedList ? AppColors.primary : Colors.redAccent),
+                              ),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 10),
                         Expanded(
                           child: GlassCard(
                             padding: const EdgeInsets.all(20),
                             child: _isLoading
-                                ? const SingleChildScrollView(child: Center(child: LoadingState()))
-                                : _recentSearches.isEmpty
-                                ? const SingleChildScrollView(
-                              physics: BouncingScrollPhysics(),
-                              child: Center(
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 40),
-                                  child: EmptyState(
-                                    message: 'No recent searches',
-                                    icon: Icons.history,
-                                  ),
-                                ),
-                              ),
-                            )
+                                ? const Center(child: LoadingState())
+                                : displayList.isEmpty
+                                ? Center(child: EmptyState(message: _isShowingDeniedList ? 'No denied entries found' : 'No recent searches', icon: Icons.person_off))
                                 : ListView.builder(
-                              padding: EdgeInsets.zero,
-                              itemCount: _recentSearches.length,
+                              itemCount: displayList.length,
                               itemBuilder: (context, index) {
-                                final student = _recentSearches[index];
+                                final student = displayList[index];
                                 return AppEntryRow(
                                   label: "${student.fName} ${student.lName}",
                                   status: student.entry ? 'approved' : 'denied',
+                                  isSelected: _selectedStudent?.id == student.id,
                                   onTap: () => setState(() => _selectedStudent = student),
                                 );
                               },
@@ -149,30 +171,12 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
                     ),
                   ),
                   const SizedBox(width: 24),
-
-                  // Right panel - User details
                   Expanded(
                     flex: 4,
                     child: GlassCard(
                       padding: const EdgeInsets.all(32),
                       child: _selectedStudent == null
-                          ? SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 80),
-                            child: _searchError != null
-                                ? EmptyState(
-                              message: _searchError!,
-                              icon: Icons.person_off,
-                            )
-                                : const EmptyState(
-                              message: 'Search for a user to view details',
-                              icon: Icons.person_search,
-                            ),
-                          ),
-                        ),
-                      )
+                          ? Center(child: EmptyState(message: _searchError ?? 'Select a user', icon: Icons.person_search))
                           : _UserDataPanel(student: _selectedStudent!),
                     ),
                   ),
@@ -185,138 +189,91 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
     );
   }
 
-
-  // Search bar widget
   Widget _buildSearchBar() {
     return Container(
       width: 350,
       decoration: AppDecorations.smallCard(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: "Search User By ID",
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.send, color: AppColors.primary),
-                onPressed: _onSearchSubmit,
-              ),
-            ),
-            onSubmitted: (_) => _onSearchSubmit(),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: "Search User By ID",
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.send, color: AppColors.primary),
+            onPressed: _onSearchSubmit,
           ),
-        ],
+        ),
+        onSubmitted: (_) => _onSearchSubmit(),
       ),
     );
   }
 }
 
-// User data panel widget
 class _UserDataPanel extends StatelessWidget {
   final Student student;
   const _UserDataPanel({required this.student});
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.person, color: AppColors.primary, size: 40),
-              const SizedBox(width: 16),
-              const Text("User Data", style: TextStyle(fontFamily: AppFonts.batangas, fontWeight: FontWeight.w800, fontSize: 26, color: AppColors.primary)),
+              const Row(
+                children: [
+                  Icon(Icons.person, color: AppColors.primary, size: 40),
+                  SizedBox(width: 16),
+                  Text("User Data", style: TextStyle(fontFamily: AppFonts.batangas, fontWeight: FontWeight.w800, fontSize: 26, color: AppColors.primary)),
+                ],
+              ),
+              const SizedBox(height: 56),
+              buildInfoRow(label: "Name", value: "${student.fName} ${student.lName}", fontSize: 18, verticalPadding: 12),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(flex: 3, child: buildInfoRow(label: "User Type", value: "Student", fontSize: 18, verticalPadding: 12)),
+                  const SizedBox(width: 16),
+                  Expanded(flex: 2, child: buildInfoRow(label: "Year", value: student.year, fontSize: 18, verticalPadding: 12)),
+                ],
+              ),
+              const SizedBox(height: 24),
+              buildInfoRow(label: "ID", value: student.id, fontSize: 18, verticalPadding: 12),
+              const SizedBox(height: 24),
+              buildInfoRow(label: "Faculty", value: student.faculty, fontSize: 18, verticalPadding: 12),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  const Text('Status : ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textDark)),
+                  StatusBadge(status: student.entry ? 'approved' : 'denied', isDot: false),
+                ],
+              ),
+              const SizedBox(height: 24),
+              buildInfoRow(label: "Note", value: student.note, fontSize: 18, verticalPadding: 12),
             ],
           ),
-          const SizedBox(height: 36),
-          buildInfoRow(
-            label: "Name",
-            value: "${student.fName} ${student.lName}",
-            fontSize: 18,
-            verticalPadding: 12,
-            labelWeight: FontWeight.w800,
-            valueWeight: FontWeight.w600,
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: buildInfoRow(
-                  label: "User Type",
-                  value: "Student",
-                  fontSize: 18,
-                  verticalPadding: 12,
-                  labelWeight: FontWeight.w800,
-                  valueWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 2,
-                child: buildInfoRow(
-                  label: "Year",
-                  value: student.year,
-                  fontSize: 18,
-                  verticalPadding: 12,
-                  labelWeight: FontWeight.w800,
-                  valueWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          buildInfoRow(
-            label: "ID",
-            value: student.id,
-            fontSize: 18,
-            verticalPadding: 12,
-            labelWeight: FontWeight.w800,
-            valueWeight: FontWeight.w600,
-          ),
-          const SizedBox(height: 24),
-          buildInfoRow(
-            label: "Faculty",
-            value: student.faculty,
-            fontSize: 18,
-            verticalPadding: 12,
-            labelWeight: FontWeight.w800,
-            valueWeight: FontWeight.w600,
-          ),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Row(
-              children: [
-                const Text(
-                  'Status : ',
-                  style: TextStyle(
-                    fontFamily: AppFonts.spaceGrotesk,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textDark,
-                  ),
-                ),
-                StatusBadge(status: student.entry ? 'approved' : 'denied', isDot: false),
-              ],
+        ),
+        Positioned(
+          top: 0,
+          right: 0,
+          child: Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 2),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: (student.photo != null && student.photo!.isNotEmpty)
+                  ? Image.memory(base64Decode(student.photo!), fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image))
+                  : const Icon(Icons.person, size: 50, color: Colors.grey),
             ),
           ),
-          const SizedBox(height: 24),
-          buildInfoRow(
-            label: "Note",
-            value: student.note,
-            fontSize: 18,
-            verticalPadding: 12,
-            labelWeight: FontWeight.w800,
-            valueWeight: FontWeight.w600,
-          ),
-          const SizedBox(height: 24),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

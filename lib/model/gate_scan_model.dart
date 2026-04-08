@@ -2,6 +2,7 @@ class GateScan {
   final String id;        // Firestore Document ID
   final String date;      // e.g., "2026-03-18"
   final String studentId;
+  final String photo;
   final String faculty;// e.g., "ST20221328"
   final String name;      // e.g., "Abd El-Rahman Mohamed"
   final String year;
@@ -14,6 +15,7 @@ class GateScan {
     required this.id,
     required this.date,
     required this.studentId,
+    required this.photo,
     required this.faculty,
     required this.year,
     required this.name,
@@ -28,6 +30,7 @@ class GateScan {
       id: docId,
       date: data['date']?.toString() ?? '',
       studentId: data['id']?.toString() ?? '',
+      photo: data['photo']?.toString() ?? '',
       faculty: data['faculty']?.toString() ?? '',
       year: data['year']?.toString() ?? '',
       name: data['name']?.toString() ?? '',
