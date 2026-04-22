@@ -17,6 +17,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     with TickerProviderStateMixin {
   late AnimationController _introController;
   late AnimationController _exitController;
+  late AnimationController _contentInController;
 
   late Animation<Offset> _topIntro;
   late Animation<Offset> _bottomIntro;
@@ -25,8 +26,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   late Animation<Offset> _bottomExit;
   late Animation<Offset> _contentExit;
   late Animation<double> _contentFade;
+  late Animation<double> _contentFadeIn;
+  late Animation<Offset> _contentSlideIn;
 
   bool _showGif = true;
+  bool _isNavigating = false;
   Timer? _gifTimer;
 
   @override
@@ -56,31 +60,54 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
     _exitController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1100),
+      duration: const Duration(milliseconds: 900),
     );
 
     _topExit = Tween(
       begin: Offset.zero,
       end: const Offset(1.6, -1.6),
     ).animate(
-      CurvedAnimation(parent: _exitController, curve: Curves.easeInOutCubic),
+      CurvedAnimation(parent: _exitController, curve: Curves.easeInCubic),
     );
 
     _bottomExit = Tween(
       begin: Offset.zero,
-      end: const Offset(0.494, -0.72),
+      end: const Offset(-1.6, 1.6),
     ).animate(
-      CurvedAnimation(parent: _exitController, curve: Curves.easeInOutCubic),
+      CurvedAnimation(parent: _exitController, curve: Curves.easeInCubic),
     );
 
     _contentExit = Tween(
       begin: Offset.zero,
-      end: const Offset(0, -1),
+      end: const Offset(0, -0.5),
     ).animate(
-      CurvedAnimation(parent: _exitController, curve: Curves.easeInOutCubic),
+      CurvedAnimation(parent: _exitController, curve: Curves.easeInCubic),
     );
 
-    _contentFade = Tween<double>(begin: 1, end: 0).animate(_exitController);
+    _contentFade = Tween<double>(begin: 1, end: 0).animate(
+      CurvedAnimation(parent: _exitController, curve: const Interval(0.0, 0.5)),
+    );
+
+    _contentInController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+
+    _contentFadeIn = CurvedAnimation(
+      parent: _contentInController,
+      curve: Curves.easeOut,
+    );
+
+    _contentSlideIn = Tween<Offset>(
+      begin: const Offset(0, 0.25),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _contentInController, curve: Curves.easeOutCubic),
+    );
+
+    Future.delayed(const Duration(milliseconds: 350), () {
+      if (mounted) _contentInController.forward();
+    });
 
     _gifTimer = Timer(const Duration(seconds: 3), () {
       if (mounted) setState(() => _showGif = false);
@@ -94,21 +121,52 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   }
 
   Future<void> _goToLogin() async {
+    if (_isNavigating) return;
+    _isNavigating = true;
     await _exitController.forward();
     if (!mounted) return;
-    Navigator.pushReplacement(
+    Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-    );
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const LoginScreen(),
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+    ).then((_) => _resetAndReplay());
   }
 
   Future<void> _goToRegister() async {
+    if (_isNavigating) return;
+    _isNavigating = true;
     await _exitController.forward();
     if (!mounted) return;
-    Navigator.pushReplacement(
+    Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const SignUpScreen()),
-    );
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const SignUpScreen(),
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+    ).then((_) => _resetAndReplay());
+  }
+
+  void _resetAndReplay() {
+    _isNavigating = false;
+    _exitController.reset();
+    _introController.reset();
+    _contentInController.reset();
+
+    if (mounted) setState(() => _showGif = true);
+
+    _introController.forward();
+    Future.delayed(const Duration(milliseconds: 350), () {
+      if (mounted) _contentInController.forward();
+    });
+
+    _gifTimer?.cancel();
+    _gifTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _showGif = false);
+    });
   }
 
   @override
@@ -116,6 +174,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     _gifTimer?.cancel();
     _introController.dispose();
     _exitController.dispose();
+    _contentInController.dispose();
     super.dispose();
   }
 
@@ -168,70 +227,70 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               position: _contentExit,
               child: FadeTransition(
                 opacity: _contentFade,
-                // --- APPLIED RESPONSIVE WRAPPER HERE ---
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return SingleChildScrollView(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: constraints.maxHeight,
-                        ),
-                        child: IntrinsicHeight(
-                          child: Column(
-                            children: [
-                              // Made top spacing dynamic (10% of screen height)
-                              SizedBox(height: constraints.maxHeight * 0.10),
+                child: SlideTransition(
+                  position: _contentSlideIn,
+                  child: FadeTransition(
+                    opacity: _contentFadeIn,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: IntrinsicHeight(
+                              child: Column(
+                                children: [
+                                  SizedBox(height: constraints.maxHeight * 0.10),
 
-                              AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 600),
-                                child: ClipRRect(
-                                  key: ValueKey(_showGif),
-                                  borderRadius: BorderRadius.circular(23),
-                                  child: Image.asset(
-                                    _showGif
-                                        ? 'assets/icons/UniNexus.gif'
-                                        : 'assets/images/uni.jpeg',
-                                    width: sw * 0.55, // Slightly scaled down logo to guarantee fit
-                                    height: sw * 0.55,
-                                    fit: BoxFit.contain,
+                                  AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 700),
+                                    child: ClipRRect(
+                                      key: ValueKey(_showGif),
+                                      borderRadius: BorderRadius.circular(23),
+                                      child: Image.asset(
+                                        _showGif
+                                            ? 'assets/icons/UniNexus.gif'
+                                            : 'assets/images/uni.jpeg',
+                                        width: sw * 0.55,
+                                        height: sw * 0.55,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
                                   ),
-                                ),
+
+                                  SizedBox(height: constraints.maxHeight * 0.05),
+
+                                  const Text(
+                                    'Welcome to UniNexus',
+                                    style: MobileAppTextStyles.screenTitle,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 20),
+                                    child: Text(
+                                      'Your unified campus experience begins here.',
+                                      style: MobileAppTextStyles.screenSubtitle,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+
+                                  const Spacer(),
+
+                                  _mainButton('Log In', _goToLogin),
+                                  const SizedBox(height: 15),
+                                  _mainButton('Register', _goToRegister),
+
+                                  SizedBox(height: constraints.maxHeight * 0.05),
+                                ],
                               ),
-
-                              // Dynamic spacing between logo and text
-                              SizedBox(height: constraints.maxHeight * 0.05),
-
-                              const Text(
-                                'Welcome to UniNexus',
-                                style: MobileAppTextStyles.screenTitle,
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 8),
-                              const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 20),
-                                child: Text(
-                                  'Your unified campus experience begins here.',
-                                  style: MobileAppTextStyles.screenSubtitle,
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-
-                              // --- THE MAGIC BULLET ---
-                              // This will dynamically stretch to push the buttons down
-                              const Spacer(),
-
-                              _mainButton('Log In', _goToLogin),
-                              const SizedBox(height: 15),
-                              _mainButton('Register', _goToRegister),
-
-                              // Bottom padding so buttons don't hug the absolute edge of the screen
-                              SizedBox(height: constraints.maxHeight * 0.05),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    );
-                  },
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ),
             ),

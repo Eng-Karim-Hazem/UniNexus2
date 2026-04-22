@@ -16,6 +16,8 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
   late AnimationController _contentController;
   late Animation<Offset> _contentIntro;
   late Animation<double> _fadeAnim;
+  late Animation<Offset> _topRectIntro;
+  late Animation<Offset> _bottomRectIntro;
 
   @override
   void initState() {
@@ -23,7 +25,7 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
 
     _contentController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 700),
     );
 
     _contentIntro = Tween<Offset>(
@@ -41,7 +43,21 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
       curve: Curves.easeOut,
     );
 
-    Future.delayed(const Duration(milliseconds: 200), () {
+    _topRectIntro = Tween<Offset>(
+      begin: const Offset(1.4, -1.4),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic),
+    );
+
+    _bottomRectIntro = Tween<Offset>(
+      begin: const Offset(-1.4, 1.4),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic),
+    );
+
+    Future.delayed(const Duration(milliseconds: 700), () {
       if (mounted) _contentController.forward();
     });
   }
@@ -70,17 +86,37 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
               ),
             ),
             Positioned(
-              top: sh * 0.25,
-              right: -200,
-              child: IgnorePointer(
-                child: Hero(
-                  tag: 'shared-rectangle',
+              top: -130,
+              right: -260,
+              child: SlideTransition(
+                position: _topRectIntro,
+                child: IgnorePointer(
                   child: Opacity(
                     opacity: 0.9,
                     child: Image.asset(
                       "assets/images/Rectangle.png",
                       width: 550,
                       fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -260,
+              left: -210,
+              child: SlideTransition(
+                position: _bottomRectIntro,
+                child: IgnorePointer(
+                  child: Hero(
+                    tag: 'shared-rectangle',
+                    child: Opacity(
+                      opacity: 0.9,
+                      child: Image.asset(
+                        "assets/images/Rectangle.png",
+                        width: 550,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
                 ),

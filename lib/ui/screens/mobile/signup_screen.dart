@@ -26,6 +26,8 @@ class _SignUpScreenState extends State<SignUpScreen>
   late Animation<double> _field1Anim;
   late Animation<double> _field2Anim;
   late Animation<double> _field3Anim;
+  late Animation<Offset> _topRectIntro;
+  late Animation<Offset> _bottomRectIntro;
 
   @override
   void initState() {
@@ -33,7 +35,7 @@ class _SignUpScreenState extends State<SignUpScreen>
 
     _contentController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 650),
+      duration: const Duration(milliseconds: 700),
     );
 
     _contentIntro = Tween<Offset>(
@@ -59,7 +61,21 @@ class _SignUpScreenState extends State<SignUpScreen>
       curve: const Interval(0.6, 0.9, curve: Curves.easeOut),
     );
 
-    Future.delayed(const Duration(milliseconds: 250), () {
+    _topRectIntro = Tween<Offset>(
+      begin: const Offset(1.4, -1.4),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic),
+    );
+
+    _bottomRectIntro = Tween<Offset>(
+      begin: const Offset(-1.4, 1.4),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic),
+    );
+
+    Future.delayed(const Duration(milliseconds: 700), () {
       if (mounted) _contentController.forward();
     });
 
@@ -129,16 +145,34 @@ class _SignUpScreenState extends State<SignUpScreen>
             ),
           ),
           Positioned(
-            top: sh * 0.25,
-            right: -200,
-            child: Hero(
-              tag: 'shared-rectangle',
+            top: -130,
+            right: -260,
+            child: SlideTransition(
+              position: _topRectIntro,
               child: Opacity(
                 opacity: 0.9,
                 child: Image.asset(
                   "assets/images/Rectangle.png",
                   width: 550,
                   fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -260,
+            left: -210,
+            child: SlideTransition(
+              position: _bottomRectIntro,
+              child: Hero(
+                tag: 'shared-rectangle',
+                child: Opacity(
+                  opacity: 0.9,
+                  child: Image.asset(
+                    "assets/images/Rectangle.png",
+                    width: 550,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
             ),

@@ -32,18 +32,28 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
   late Animation<double> _field2Anim;
   late Animation<double> _field3Anim;
   late Animation<double> _field4Anim;
+  late Animation<Offset> _topRectIntro;
+  late Animation<Offset> _bottomRectIntro;
 
   @override
   void initState() {
     super.initState();
-    _contentController = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _contentController = AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
     _contentIntro = Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero).animate(CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic));
     _field1Anim = CurvedAnimation(parent: _contentController, curve: const Interval(0.25, 0.6, curve: Curves.easeOut));
     _field2Anim = CurvedAnimation(parent: _contentController, curve: const Interval(0.45, 0.8, curve: Curves.easeOut));
     _field3Anim = CurvedAnimation(parent: _contentController, curve: const Interval(0.55, 0.85, curve: Curves.easeOut));
     _field4Anim = CurvedAnimation(parent: _contentController, curve: const Interval(0.65, 0.95, curve: Curves.easeOut));
+    _topRectIntro = Tween<Offset>(
+      begin: const Offset(1.4, -1.4),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic));
+    _bottomRectIntro = Tween<Offset>(
+      begin: const Offset(-1.4, 1.4),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic));
 
-    Future.delayed(const Duration(milliseconds: 250), () {
+    Future.delayed(const Duration(milliseconds: 700), () {
       if (mounted) _contentController.forward();
     });
 
@@ -117,14 +127,30 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
           children: [
             Positioned.fill(child: Image.asset("assets/images/WelcomeBackground.png", fit: BoxFit.cover)),
             Positioned(
-              top: sh * 0.25,
-              right: -200,
-              child: IgnorePointer(
-                child: Hero(
-                  tag: 'shared-rectangle',
+              top: -130,
+              right: -260,
+              child: SlideTransition(
+                position: _topRectIntro,
+                child: IgnorePointer(
                   child: Opacity(
                     opacity: 0.9,
                     child: Image.asset("assets/images/Rectangle.png", width: 550, fit: BoxFit.contain),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -260,
+              left: -210,
+              child: SlideTransition(
+                position: _bottomRectIntro,
+                child: IgnorePointer(
+                  child: Hero(
+                    tag: 'shared-rectangle',
+                    child: Opacity(
+                      opacity: 0.9,
+                      child: Image.asset("assets/images/Rectangle.png", width: 550, fit: BoxFit.contain),
+                    ),
                   ),
                 ),
               ),

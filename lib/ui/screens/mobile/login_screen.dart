@@ -34,13 +34,15 @@ class _LoginScreenState extends State<LoginScreen>
   late Animation<double> _field1Anim;
   late Animation<double> _field2Anim;
   late Animation<double> _checkAnim;
+  late Animation<Offset> _topRectIntro;
+  late Animation<Offset> _bottomRectIntro;
 
   @override
   void initState() {
     super.initState();
     _contentController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 700),
     );
 
     _contentIntro = Tween<Offset>(
@@ -66,7 +68,21 @@ class _LoginScreenState extends State<LoginScreen>
       curve: const Interval(0.5, 0.8, curve: Curves.easeOut),
     );
 
-    Future.delayed(const Duration(milliseconds: 250), () {
+    _topRectIntro = Tween<Offset>(
+      begin: const Offset(1.4, -1.4),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic),
+    );
+
+    _bottomRectIntro = Tween<Offset>(
+      begin: const Offset(-1.4, 1.4),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic),
+    );
+
+    Future.delayed(const Duration(milliseconds: 700), () {
       if (mounted) _contentController.forward();
     });
 
@@ -203,15 +219,41 @@ class _LoginScreenState extends State<LoginScreen>
               child: Image.asset("assets/images/WelcomeBackground.png", fit: BoxFit.cover),
             ),
             Positioned(
-              top: sh * 0.25,
-              right: -200,
-              child: RepaintBoundary(
-                child: IgnorePointer(
-                  child: Hero(
-                    tag: 'shared-rectangle',
+              top: -130,
+              right: -260,
+              child: SlideTransition(
+                position: _topRectIntro,
+                child: RepaintBoundary(
+                  child: IgnorePointer(
                     child: Opacity(
                       opacity: 0.9,
-                      child: Image.asset("assets/images/Rectangle.png", width: 550, fit: BoxFit.contain),
+                      child: Image.asset(
+                        "assets/images/Rectangle.png",
+                        width: 550,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -260,
+              left: -210,
+              child: SlideTransition(
+                position: _bottomRectIntro,
+                child: RepaintBoundary(
+                  child: IgnorePointer(
+                    child: Hero(
+                      tag: 'shared-rectangle',
+                      child: Opacity(
+                        opacity: 0.9,
+                        child: Image.asset(
+                          "assets/images/Rectangle.png",
+                          width: 550,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
                     ),
                   ),
                 ),
