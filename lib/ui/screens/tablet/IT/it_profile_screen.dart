@@ -1,11 +1,61 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uninexus/theme/uninexus_tab.dart';
+import 'package:uninexus/theme/app_theme.dart';
 
-import '../../../../uninexus_tab.dart';
-import '../theme/app_theme.dart';
-
-class ITProfileScreen extends StatelessWidget {
+class ITProfileScreen extends StatefulWidget {
   final void Function(UninexusTab) onNavigate;
   const ITProfileScreen({super.key, required this.onNavigate});
+
+  @override
+  State<ITProfileScreen> createState() => _ITProfileScreenState();
+}
+
+class _ITProfileScreenState extends State<ITProfileScreen> {
+  // Profile data
+  String _fullName = 'Loading...';
+  String _id = 'Loading...';
+  String _email = 'Loading...';
+  String _phone = 'Loading...';
+  String _department = 'Loading...';
+  String _position = 'Loading...';
+  String _nationalId = 'Loading...';
+  String? _base64Photo;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileData();
+  }
+
+  // Get valid string from preferences
+  String _getValidString(SharedPreferences prefs, String key) {
+    final value = prefs.getString(key);
+    if (value == null || value.trim().isEmpty) return '-';
+    return value;
+  }
+
+  // Load profile data from shared preferences
+  Future<void> _loadProfileData() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      final fName = prefs.getString('fName') ?? 'Unknown';
+      final lName = prefs.getString('lName') ?? 'User';
+      _fullName = '$fName $lName';
+
+      _id = _getValidString(prefs, 'ID');
+      _email = _getValidString(prefs, 'email');
+      _phone = _getValidString(prefs, 'pNum');
+      _department = _getValidString(prefs, 'department');
+      _position = _getValidString(prefs, 'position');
+      _nationalId = _getValidString(prefs, 'nID');
+      _base64Photo = prefs.getString('photo');
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,36 +65,115 @@ class ITProfileScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Profile', style: AppTextStyles.largeHeading),
-            const SizedBox(height: 20),
+            const PageHeading('Profile'),
+            const SizedBox(height: 45),
 
             // Profile header card
             GlassCard(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
-              child: ProfileHeader(
-                iconAsset: 'assets/icons/user_purple.png',
-                title: 'Ahmed Mohamed Ebrahim Mohamed',
-                subtitle: 'IT203021',
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : Row(
+                children: [
+                  // Profile photo
+                  Container(
+                    width: 110,
+                    height: 110,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                      border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.5), width: 2),
+                    ),
+                    child: ClipOval(
+                      child: _base64Photo != null && _base64Photo!.isNotEmpty
+                          ? Image.memory(
+                        base64Decode(_base64Photo!),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _buildFallbackIcon(),
+                      )
+                          : _buildFallbackIcon(),
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _fullName,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: AppFonts.spaceGrotesk,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _id,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.black.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-
             const SizedBox(height: 16),
 
-            // Profile details card
-            GlassCard(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              child: Column(
-                children: [
-                  _buildInfoRow('Department',  'IT'),
-                  const SizedBox(height: 16),
-                  _buildInfoRow('Position',    'Senior Technician'),
-                  const SizedBox(height: 16),
-                  _buildInfoRow('E-mail',      'ahmed3044@gmail.com'),
-                  const SizedBox(height: 16),
-                  _buildInfoRow('Phone no.',   '01920202343'),
-                  const SizedBox(height: 16),
-                  _buildInfoRow('National ID', '2838329204792-32'),
-                ],
+            // Details card
+            Expanded(
+              child: GlassCard(
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 0),
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    buildInfoRow(
+                      label: 'Department',
+                      value: _department,
+                      fontSize: 20,
+                      verticalPadding: 18,
+                      crossAlignment: CrossAxisAlignment.center,
+                    ),
+                    AppDecorations.profileInfoDivider,
+                    buildInfoRow(
+                      label: 'Position',
+                      value: _position,
+                      fontSize: 20,
+                      verticalPadding: 18,
+                      crossAlignment: CrossAxisAlignment.center,
+                    ),
+                    AppDecorations.profileInfoDivider,
+                    buildInfoRow(
+                      label: 'E-mail',
+                      value: _email,
+                      fontSize: 20,
+                      verticalPadding: 18,
+                      crossAlignment: CrossAxisAlignment.center,
+                    ),
+                    AppDecorations.profileInfoDivider,
+                    buildInfoRow(
+                      label: 'Phone no.',
+                      value: _phone,
+                      fontSize: 20,
+                      verticalPadding: 18,
+                      crossAlignment: CrossAxisAlignment.center,
+                    ),
+                    AppDecorations.profileInfoDivider,
+                    buildInfoRow(
+                      label: 'National ID',
+                      value: _nationalId,
+                      fontSize: 20,
+                      verticalPadding: 18,
+                      crossAlignment: CrossAxisAlignment.center,
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -53,26 +182,14 @@ class ITProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 120,
-          child: Text(label,
-              style: AppTextStyles.profileInfoLabelStyle,
-              textAlign: TextAlign.right),
-        ),
-        const SizedBox(
-          width: 20,
-          child: Text(':',
-              style: AppTextStyles.profileInfoLabelStyle,
-              textAlign: TextAlign.center),
-        ),
-        Expanded(
-          child: Text(value, style: AppTextStyles.profileInfoValueStyle),
-        ),
-      ],
+  // Fallback icon for profile photo
+  Widget _buildFallbackIcon() {
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Image.asset(
+        'assets/icons/Profile_Purple.png',
+        fit: BoxFit.contain,
+      ),
     );
   }
 }

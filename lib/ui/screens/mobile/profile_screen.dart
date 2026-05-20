@@ -1,5 +1,9 @@
+import 'dart:convert'; // Required for base64Decode
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // --- ADDED FOR FIRESTORE ---
+
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/settings_screen.dart';
 
@@ -27,7 +31,6 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
-  final Color _textIndigo = const Color(0xFF5C5C80);
 
   // Identity and Contact Variables
   String _displayFirstName = "User";
@@ -39,6 +42,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _displayNID = "N/A";
   String _displayYear = "N/A";
   String _displaySection = "N/A";
+
+  // --- NEW: Subjects Variable ---
+  List<String> _displaySubjects = [];
+
+  // Photo Variable
+  String? _base64Photo;
 
   bool _isStudent = true;
   bool _isLoading = true;
@@ -57,7 +66,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       String id = prefs.getString('ID') ?? prefs.getString('userCode') ?? widget.userID ?? "N/A";
 
       if (mounted) {
-        setState(() {
+        setState(() async {
           _displayID = id;
           _isStudent = id.toUpperCase().startsWith('ST');
           _displayFirstName = prefs.getString('fName') ?? prefs.getString('userFirstName') ?? "User";
@@ -65,15 +74,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _displayEmail = prefs.getString('email') ?? "N/A";
           _displayPhone = prefs.getString('pNum') ?? "N/A";
           _displayFaculty = prefs.getString('faculty') ?? "N/A";
-          _displayNID = prefs.getString('nationalID') ?? "N/A";
+          _displayNID = prefs.getString('nID') ?? "N/A";
+
+          _base64Photo = prefs.getString('photo');
 
           if (_isStudent) {
             _displayYear = prefs.getString('year') ?? "N/A";
             _displaySection = prefs.getString('section') ?? "N/A";
+          } else {
+            // --- INSTANT LOAD FROM LOCAL STORAGE ---
+            _displaySubjects = prefs.getStringList('facultySubjects') ?? [];
           }
-          _isLoading = false;
         });
       }
+
+      if (mounted) setState(() => _isLoading = false);
+
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -91,7 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         height: double.infinity,
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/background.png'),
+            image: AssetImage('assets/images/Phone_Background.png'),
             fit: BoxFit.cover,
           ),
         ),
@@ -123,7 +139,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // --- ADDED NAVIGATION HERE ---
         GestureDetector(
           onTap: () {
             Navigator.push(
@@ -137,7 +152,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const Text(
             "Profile",
             style: TextStyle(
-                fontFamily: 'Batangas',
+                fontFamily: MobileAppFonts.heading,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF5C5C80)
@@ -156,28 +171,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _mainPurple.withOpacity(0.5), width: 1.5),
+        border: Border.all(color: _mainPurple.withValues(alpha: 0.5), width: 1.5),
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 35,
-            backgroundColor: _mainPurple,
-            child: const Icon(Icons.person, color: Colors.white, size: 40),
+          Container(
+            width: 85,
+            height: 85,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _mainPurple.withValues(alpha: 0.1),
+            ),
+            child: ClipOval(
+              child: _base64Photo != null && _base64Photo!.isNotEmpty
+                  ? Image.memory(
+                base64Decode(_base64Photo!),
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _buildFallbackIcon(),
+              )
+                  : _buildFallbackIcon(),
+            ),
           ),
           const SizedBox(width: 15),
-          Container(height: 40, width: 1, color: Colors.grey.shade300),
+          Container(height: 40, width: 2, color: Colors.grey),
           const SizedBox(width: 15),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text("$_displayFirstName $_displayLastName",
-                    style: const TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold)),
                 Text(_displayID,
-                    style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Colors.black54, fontWeight: FontWeight.w600)),
+                    style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: Colors.black54, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
@@ -186,13 +213,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildFallbackIcon() {
+    return Center(
+      child: Icon(Icons.person, color: _mainPurple, size: 40),
+    );
+  }
+
   Widget _buildScrollableDetailsCard() {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.6),
+        color: Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _mainPurple.withOpacity(0.4), width: 1.5),
+        border: Border.all(color: _mainPurple.withValues(alpha: 0.4), width: 1.5),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
@@ -200,6 +233,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.all(20),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start, // Added to align everything left
             children: [
               _buildProfileField("Faculty :", _displayFaculty),
               if (_isStudent) ...[
@@ -209,6 +243,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildProfileField("E-mail :", _displayEmail),
               _buildProfileField("Phone no. :", _displayPhone),
               _buildProfileField("National ID :", _displayNID),
+
+              // --- NEW: DISPLAY SUBJECTS IF FACULTY ---
+              if (!_isStudent && _displaySubjects.isNotEmpty)
+                _buildSubjectsField(),
             ],
           ),
         ),
@@ -222,17 +260,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontFamily: 'Batangas', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54)),
+          Text(label, style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54)),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+          Text(value, style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
           const SizedBox(height: 8),
-          Divider(color: _mainPurple.withOpacity(0.1), thickness: 1),
+          Divider(color: _mainPurple.withValues(alpha: 0.1), thickness: 1),
         ],
       ),
     );
   }
 
-  // --- GLOWING HOME FAB ---
+  // --- NEW: Custom builder for the Subjects Array ---
+  Widget _buildSubjectsField() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Assigned Subjects :", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black54)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: _displaySubjects.map((subject) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: _mainPurple.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _mainPurple.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  subject,
+                  style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, fontWeight: FontWeight.bold, color: _mainPurple),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+          Divider(color: _mainPurple.withValues(alpha: 0.1), thickness: 1),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHomeFab() {
     return Container(
       height: 72,
@@ -241,7 +312,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: _mainPurple.withOpacity(0.6),
+              color: _mainPurple.withValues(alpha: 0.6),
               blurRadius: 25,
               spreadRadius: 6,
               offset: const Offset(0, 2),
@@ -269,8 +340,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // --- BOTTOM NAVIGATION BARS WITH NATIVE CUTOUT SHADOW ---
-
   Widget _buildStudentBottomBar() {
     return _bottomNavWrapper(
       child: Row(
@@ -289,7 +358,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 72), // Space for the FAB notch
+          const SizedBox(width: 72),
           Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -324,7 +393,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 72), // Space for the FAB notch
+          const SizedBox(width: 72),
           Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -347,7 +416,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 20,
             spreadRadius: 4,
             offset: const Offset(0, -6),
@@ -384,7 +453,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 12,
               color: sel ? _mainPurple : Colors.grey.shade600,
               fontWeight: sel ? FontWeight.w900 : FontWeight.w600,

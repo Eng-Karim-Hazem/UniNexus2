@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/model/schedule_model.dart';
-import 'package:uninexus/services/firebase/Schedule_service.dart';
+import 'package:uninexus/services/firebase/schedule_service.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import '../profile_screen.dart';
@@ -50,7 +51,7 @@ class _StuScheduleState extends State<StuSchedule> {
         height: double.infinity,
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/background.png'),
+            image: AssetImage('assets/images/Phone_Background.png'),
             fit: BoxFit.cover,
           ),
         ),
@@ -69,7 +70,7 @@ class _StuScheduleState extends State<StuSchedule> {
                     future: _fetchMySchedule(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-                      if (!snapshot.hasData) return Center(child: Text("No schedule found", style: TextStyle(fontFamily: 'SpaceGrotesk', color: _textIndigo, fontWeight: FontWeight.bold)));
+                      if (!snapshot.hasData) return Center(child: Text("No schedule found", style: TextStyle(fontFamily: MobileAppFonts.body, color: _textIndigo, fontWeight: FontWeight.bold)));
                       return _buildSchedulePanel(snapshot.data!);
                     },
                   ),
@@ -101,7 +102,7 @@ class _StuScheduleState extends State<StuSchedule> {
         const Text(
             "Schedule",
             style: TextStyle(
-                fontFamily: 'Batangas',
+                fontFamily: MobileAppFonts.heading,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF5C5C80)
@@ -121,19 +122,19 @@ class _StuScheduleState extends State<StuSchedule> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 25),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.8),
+        color: Colors.white.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           // INCREASED OPACITY TO 0.1
-          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 24, offset: const Offset(0, -12)),
-          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 24, offset: const Offset(0, 7)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 24, offset: const Offset(0, -12)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 24, offset: const Offset(0, 7)),
         ],
       ),
       child: Column(
         children: [
-          const Text("Today's Schedule", style: TextStyle(fontFamily: 'Batangas', fontSize: 24, fontWeight: FontWeight.w900)),
+          const Text("Today's Schedule", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 24, fontWeight: FontWeight.w900)),
           Text(DateFormat('MMMM d, yyyy').format(DateTime.now()),
-              style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Color(0xFF5BA4F5), fontWeight: FontWeight.w600)),
+              style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: Color(0xFF5BA4F5), fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -145,9 +146,9 @@ class _StuScheduleState extends State<StuSchedule> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.4),
+        color: Colors.white.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _mainPurple.withOpacity(0.5), width: 1.5),
+        border: Border.all(color: _mainPurple.withValues(alpha: 0.5), width: 1.5),
       ),
       child: ListView.builder(
         physics: const BouncingScrollPhysics(),
@@ -175,23 +176,23 @@ class _StuScheduleState extends State<StuSchedule> {
           padding: const EdgeInsets.symmetric(vertical: 12.0),
           child: Row(
             children: [
-              SizedBox(width: 75, child: Text("$start\n$end", style: const TextStyle(fontFamily: 'SpaceGrotesk', fontWeight: FontWeight.bold, fontSize: 13))),
+              SizedBox(width: 75, child: Text("$start\n$end", style: const TextStyle(fontFamily: MobileAppFonts.body, fontWeight: FontWeight.bold, fontSize: 13))),
               const SizedBox(width: 10),
-              Container(width: 1.5, height: 40, color: _mainPurple.withOpacity(0.3)),
+              Container(width: 1.5, height: 40, color: _mainPurple.withValues(alpha: 0.3)),
               const SizedBox(width: 15),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(subject, style: const TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold)),
-                    Text(faculty, style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 13, color: Colors.black54)),
+                    Text(subject, style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(faculty, style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 13, color: Colors.black54)),
                   ],
                 ),
               ),
             ],
           ),
         ),
-        Divider(color: _mainPurple.withOpacity(0.1)),
+        Divider(color: _mainPurple.withValues(alpha: 0.1)),
       ],
     );
   }
@@ -205,7 +206,7 @@ class _StuScheduleState extends State<StuSchedule> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withOpacity(0.6),
+            color: _mainPurple.withValues(alpha: 0.6),
             blurRadius: 25,
             spreadRadius: 6,
             offset: const Offset(0, 2),
@@ -235,7 +236,7 @@ class _StuScheduleState extends State<StuSchedule> {
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 20,
             spreadRadius: 4,
             offset: const Offset(0, -6),
@@ -311,7 +312,7 @@ class _StuScheduleState extends State<StuSchedule> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 12,
               color: sel ? _mainPurple : Colors.grey.shade600,
               fontWeight: sel ? FontWeight.w900 : FontWeight.w600,

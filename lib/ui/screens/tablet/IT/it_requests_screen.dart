@@ -1,35 +1,8 @@
 import 'package:flutter/material.dart';
-
-import '../../../../uninexus_tab.dart';
-import '../theme/app_theme.dart';
-
-
-
-// Data model
-
-class _UserRequest {
-  final String id;
-  final String type;
-  final String requesterName;
-  final String userType;
-  final String userId;
-  final String email;
-  final int year;
-  final String faculty;
-
-  const _UserRequest({
-    required this.id,
-    required this.type,
-    required this.requesterName,
-    required this.userType,
-    required this.userId,
-    required this.email,
-    required this.year,
-    required this.faculty,
-  });
-}
-
-// Screen
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uninexus/theme/uninexus_tab.dart';
+import 'package:uninexus/theme/app_theme.dart';
+import '../../../../services/firebase/it_logs_service.dart';
 
 class ITRequestsScreen extends StatefulWidget {
   final void Function(UninexusTab) onNavigate;
@@ -40,113 +13,360 @@ class ITRequestsScreen extends StatefulWidget {
 }
 
 class _ITRequestsScreenState extends State<ITRequestsScreen> {
-  final List<_UserRequest> _requests = [
-    const _UserRequest(
-      id: '1', type: 'Password Reset',
-      requesterName: 'Moaz Osama Gamil', userType: 'Student',
-      userId: 'ST20222', email: 'MoazOsama@gmail.com', year: 4, faculty: 'ICT',
-    ),
-    const _UserRequest(
-      id: '2', type: 'Password Reset',
-      requesterName: 'Eslam Bahy', userType: 'Student',
-      userId: 'ST20180', email: 'EslamBahy@gmail.com', year: 3, faculty: 'Engineering',
-    ),
-    const _UserRequest(
-      id: '3', type: 'Password Reset',
-      requesterName: 'Ammar Tarek', userType: 'Student',
-      userId: 'ST20195', email: 'AmmarTarek@gmail.com', year: 2, faculty: 'Science',
-    ),
-    const _UserRequest(
-      id: '4', type: 'Password Reset',
-      requesterName: 'Hossam Medhat', userType: 'Staff',
-      userId: 'ST20100', email: 'HossamMedhat@gmail.com', year: 1, faculty: 'Arts',
-    ),
-  ];
+  int _selectedIndex = 0;
 
-  _UserRequest? _selected;
+  // --- NEW: Filter State Variables ---
+  String _selectedFilter = 'All';
+  final List<String> _filters = ['All', 'Pending', 'Completed', 'Rejected'];
 
-  @override
-  void initState() {
-    super.initState();
-    if (_requests.isNotEmpty) _selected = _requests.first;
+  // Format timestamp
+  String _formatDate(Timestamp? timestamp) {
+    if (timestamp == null) return 'Unknown Date';
+    final DateTime date = timestamp.toDate();
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day
+        .toString().padLeft(2, '0')} at ${date.hour.toString().padLeft(
+        2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
-  void _approve() {
-    if (_selected == null) return;
-    setState(() {
-      _requests.removeWhere((r) => r.id == _selected!.id);
-      _selected = _requests.isNotEmpty ? _requests.first : null;
-    });
+  // Capitalize string
+  String _capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1).toLowerCase();
   }
 
-  void _reject() {
-    if (_selected == null) return;
-    setState(() {
-      _requests.removeWhere((r) => r.id == _selected!.id);
-      _selected = _requests.isNotEmpty ? _requests.first : null;
-    });
+  // Fetch user details from database
+  Future<Map<String, dynamic>?> _fetchUserDetails(String emailOrId, String expectedRole) async {
+    if (emailOrId.isEmpty) return null;
+
+    final isEmail = emailOrId.contains('@');
+    final queryField = isEmail ? 'email' : 'ID';
+    final searchValue = isEmail ? emailOrId.toLowerCase() : emailOrId.toUpperCase();
+
+    List<String> collections = expectedRole.isNotEmpty
+        ? [expectedRole, 'students', 'faculty', 'staff']
+        : ['students', 'faculty', 'staff'];
+
+    for (String col in collections) {
+      try {
+        final query = await FirebaseFirestore.instance
+            .collection(col)
+            .where(queryField, isEqualTo: searchValue)
+            .limit(1)
+            .get();
+
+        if (query.docs.isNotEmpty) {
+          final data = query.docs.first.data();
+          data['foundRole'] = col;
+          return data;
+        }
+      } catch (e) {
+        print("Error fetching from $col: $e");
+      }
+    }
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     return ITScreenBackground(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('User Requests', style: AppTextStyles.heading),
-            const SizedBox(height: 24),
+            // --- NEW: Header with Filter Buttons ---
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const PageHeading('User Requests'),
+                _buildStatusFilter(),
+              ],
+            ),
+            const SizedBox(height: 45),
+
             Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Left panel
-                  Expanded(
-                    flex: 4,
-                    child: GlassCard(
-                      padding: const EdgeInsets.all(14),
-                      child: _requests.isEmpty
-                          ? Center(
-                          child: Text('No pending requests',
-                              style: AppTextStyles.body))
-                          : ListView.separated(
-                        itemCount: _requests.length,
-                        separatorBuilder: (_, __) =>
-                        const SizedBox(height: 12),
-                        itemBuilder: (_, i) {
-                          final r = _requests[i];
-                          return _RequestTile(
-                            request: r,
-                            isSelected: _selected?.id == r.id,
-                            onTap: () => setState(() => _selected = r),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('ForgotPass_request')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const LoadingState(); // From your theme
+                  }
 
-                  const SizedBox(width: 20),
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error loading requests: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
+                  }
 
-                  // Right panel
-                  Expanded(
-                    flex: 5,
-                    child: _selected == null
-                        ? GlassCard(
-                      child: const Center(
-                        child: Text(
-                          'Select a request to view details',
-                          style: AppTextStyles.emptyStateStyle,
+                  List<QueryDocumentSnapshot> rawDocs = snapshot.data?.docs.toList() ?? [];
+
+                  // --- NEW: Apply the selected filter ---
+                  List<QueryDocumentSnapshot> docs = rawDocs.where((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final isProcessed = data['isProcessed'] == true;
+                    final status = data['status']?.toString().toLowerCase();
+
+                    if (_selectedFilter == 'Pending') {
+                      return !isProcessed;
+                    }
+                    if (_selectedFilter == 'Completed') {
+                      // Show processed items that are NOT rejected (e.g., 'accepted' or old 'processed' ones)
+                      return isProcessed && status != 'rejected';
+                    }
+                    if (_selectedFilter == 'Rejected') {
+                      // Only show processed items specifically marked as rejected
+                      return isProcessed && status == 'rejected';
+                    }
+
+                    return true; // 'All'
+                  }).toList();
+
+                  // Sort: pending first, then by date
+                  docs.sort((a, b) {
+                    final dataA = a.data() as Map<String, dynamic>;
+                    final dataB = b.data() as Map<String, dynamic>;
+
+                    final bool isProcessedA = dataA['isProcessed'] == true;
+                    final bool isProcessedB = dataB['isProcessed'] == true;
+
+                    if (isProcessedA != isProcessedB) return isProcessedA ? 1 : -1;
+
+                    final Timestamp? timeA = dataA['requestDate'] as Timestamp?;
+                    final Timestamp? timeB = dataB['requestDate'] as Timestamp?;
+
+                    if (timeA != null && timeB != null) return timeB.compareTo(timeA);
+                    return 0;
+                  });
+
+                  if (_selectedIndex >= docs.length) _selectedIndex = 0;
+
+                  final bool hasData = docs.isNotEmpty;
+                  final selectedDoc = hasData ? docs[_selectedIndex] : null;
+                  final Map<String, dynamic>? selectedData = selectedDoc?.data() as Map<String, dynamic>?;
+
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Left panel - Request list
+                      Expanded(
+                        flex: 45,
+                        child: GlassCard(
+                          padding: const EdgeInsets.all(12),
+                          child: hasData
+                              ? ListView.builder(
+                            padding: EdgeInsets.zero,
+                            itemCount: docs.length,
+                            itemBuilder: (context, index) {
+                              final docData = docs[index].data() as Map<String, dynamic>;
+                              final emailOrId = docData['emailOrId'] ?? 'Unknown User';
+                              final reqDate = _formatDate(docData['requestDate'] as Timestamp?);
+
+                              final statusStr = docData['status']?.toString().toLowerCase() ??
+                                  (docData['isProcessed'] == true ? 'processed' : 'pending');
+                              final isResolved = statusStr == 'accepted' || statusStr == 'rejected' || statusStr == 'processed';
+                              final isSelected = _selectedIndex == index;
+
+                              return GestureDetector(
+                                onTap: () => setState(() => _selectedIndex = index),
+                                child: Opacity(
+                                  opacity: isResolved ? 0.6 : 1.0,
+                                  child: Container(
+                                    margin: const EdgeInsets.only(bottom: 10),
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+                                    decoration: AppDecorations.smallCard(isSelected: isSelected),
+                                    child: Row(
+                                      children: [
+                                        StatusBadge(
+                                          status: isResolved ? statusStr : 'pending',
+                                          showIcon: true,
+                                          isCompact: false,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Container(width: 1.5, height: 38,
+                                            color: isResolved ? Colors.grey.withValues(alpha: 0.3) : AppColors.primary.withValues(alpha: 0.3)),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(emailOrId,
+                                                  style: AppTextStyles.hallListNumberStyle.copyWith(
+                                                    decoration: isResolved ? TextDecoration.lineThrough : null,
+                                                    color: isResolved ? Colors.grey : null,
+                                                  )),
+                                              const SizedBox(height: 4),
+                                              Text(reqDate, style: AppTextStyles.caption),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          )
+                              : _buildEmptyPlaceholder("No $_selectedFilter requests found."),
                         ),
                       ),
-                    )
-                        : _RequestDetailPanel(
-                      request: _selected!,
-                      onApprove: _approve,
-                      onReject: _reject,
-                    ),
-                  ),
-                ],
+                      const SizedBox(width: 16),
+
+                      // Right panel - Request details
+                      Expanded(
+                        flex: 55,
+                        child: GlassCard(
+                          child: Padding(
+                            padding: const EdgeInsets.all(18),
+                            child: hasData && selectedData != null
+                                ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.lock_reset_rounded, size: 36, color: AppColors.primary),
+                                    const SizedBox(width: 16),
+                                    Text("Password Reset", style: AppTextStyles.heading.copyWith(
+                                        color: AppColors.primary, fontSize: 24)),
+                                  ],
+                                ),
+                                const SizedBox(height: 30),
+
+                                Expanded(
+                                  child: FutureBuilder<Map<String, dynamic>?>(
+                                    future: _fetchUserDetails(
+                                        selectedData['emailOrId']?.toString() ?? '',
+                                        selectedData['userRole']?.toString() ?? ''
+                                    ),
+                                    builder: (context, userSnap) {
+                                      if (userSnap.connectionState == ConnectionState.waiting) {
+                                        return const LoadingState(isCentered: false);
+                                      }
+
+                                      if (!userSnap.hasData || userSnap.data == null) {
+                                        return Text(
+                                          "Warning: User '${selectedData['emailOrId']}' could not be found in any database collection.",
+                                          style: const TextStyle(color: Colors.red),
+                                        );
+                                      }
+
+                                      final userData = userSnap.data!;
+                                      final fName = userData['fName'] ?? '';
+                                      final lName = userData['lName'] ?? '';
+                                      final fullName = '$fName $lName'.trim();
+                                      final foundRole = userData['foundRole'] ?? 'Unknown';
+
+                                      // --- FIX: Wrapped the details inside a SingleChildScrollView ---
+                                      return SingleChildScrollView(
+                                        physics: const BouncingScrollPhysics(),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            buildInfoRow(
+                                              label: 'Requested by',
+                                              value: fullName.isEmpty ? 'Unknown' : fullName,
+                                              fontSize: 16,
+                                              verticalPadding: 16,
+                                              labelWeight: FontWeight.bold,
+                                              valueWeight: FontWeight.w500,
+                                            ),
+                                            buildInfoRow(
+                                              label: 'User Type',
+                                              value: _capitalize(foundRole),
+                                              fontSize: 16,
+                                              verticalPadding: 16,
+                                              labelWeight: FontWeight.bold,
+                                              valueWeight: FontWeight.w500,
+                                            ),
+                                            buildInfoRow(
+                                              label: 'ID',
+                                              value: userData['ID'] ?? selectedData['emailOrId'] ?? 'N/A',
+                                              fontSize: 16,
+                                              verticalPadding: 16,
+                                              labelWeight: FontWeight.bold,
+                                              valueWeight: FontWeight.w500,
+                                            ),
+                                            buildInfoRow(
+                                              label: 'Email',
+                                              value: userData['email'] ?? 'N/A',
+                                              fontSize: 16,
+                                              verticalPadding: 16,
+                                              labelWeight: FontWeight.bold,
+                                              valueWeight: FontWeight.w500,
+                                            ),
+                                            buildInfoRow(
+                                              label: 'New Password',
+                                              value: selectedData['newPassword'] ?? 'Not provided',
+                                              fontSize: 16,
+                                              verticalPadding: 16,
+                                              labelWeight: FontWeight.bold,
+                                              valueWeight: FontWeight.w500,
+                                            ),
+                                            if (userData.containsKey('year'))
+                                              buildInfoRow(
+                                                label: 'Year',
+                                                value: userData['year'].toString(),
+                                                fontSize: 16,
+                                                verticalPadding: 16,
+                                                labelWeight: FontWeight.bold,
+                                                valueWeight: FontWeight.w500,
+                                              ),
+                                            if (userData.containsKey('faculty'))
+                                              buildInfoRow(
+                                                label: 'Faculty',
+                                                value: userData['faculty'],
+                                                fontSize: 16,
+                                                verticalPadding: 16,
+                                                labelWeight: FontWeight.bold,
+                                                valueWeight: FontWeight.w500,
+                                              ),
+                                            buildInfoRow(
+                                              label: 'Time of Request',
+                                              value: _formatDate(selectedData['requestDate'] as Timestamp?),
+                                              fontSize: 16,
+                                              verticalPadding: 16,
+                                              labelWeight: FontWeight.bold,
+                                              valueWeight: FontWeight.w500,
+                                            ),
+                                            const SizedBox(height: 20), // Extra padding at the bottom
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+
+                                // Action buttons for pending requests
+                                // These stay pinned to the bottom because they are OUTSIDE the scroll view!
+                                if (selectedData['isProcessed'] != true)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 16.0),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: PillButton(
+                                            label: 'Approve',
+                                            onTap: () => _updateRequestStatus(selectedDoc!, 'accepted'),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: PillButton(
+                                            label: 'Reject',
+                                            onTap: () => _updateRequestStatus(selectedDoc!, 'rejected'),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            )
+                                : _buildEmptyPlaceholder("Select a request to view details"),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ],
@@ -154,180 +374,91 @@ class _ITRequestsScreenState extends State<ITRequestsScreen> {
       ),
     );
   }
-}
 
-// Request tile
-
-class _RequestTile extends StatelessWidget {
-  final _UserRequest request;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _RequestTile({
-    required this.request,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary.withOpacity(0.12)
-              : Colors.white.withOpacity(0.55),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primary
-                : AppColors.primary.withOpacity(0.3),
-            width: isSelected ? 2 : 1.2,
+  // --- NEW: Filter Buttons Widget ---
+  Widget _buildStatusFilter() {
+    return Row(
+      children: _filters.map((filter) {
+        final isSelected = _selectedFilter == filter;
+        return Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: GestureDetector(
+            onTap: () => setState(() {
+              _selectedFilter = filter;
+              _selectedIndex = 0; // Reset selection when filter changes
+            }),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primary : Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+              ),
+              child: Text(filter, style: TextStyle(color: isSelected ? Colors.white : AppColors.primary, fontWeight: FontWeight.bold)),
+            ),
           ),
-          boxShadow: isSelected
-              ? [
-            BoxShadow(
-              color: AppColors.primary.withOpacity(0.15),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            )
-          ]
-              : [],
-        ),
-        child: Row(
+        );
+      }).toList(),
+    );
+  }
+
+  // --- NEW: Reusable Empty Placeholder ---
+  Widget _buildEmptyPlaceholder(String message) {
+    return Center(
+      child: Opacity(
+        opacity: 0.5,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              'assets/icons/rotation_lock.png',
-              width: 38, height: 38,
-              fit: BoxFit.contain,
-              color: AppColors.primary,
-              errorBuilder: (_, __, ___) => const Icon(
-                  Icons.lock_reset_rounded, color: AppColors.primary, size: 38),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(request.type, style: AppTextStyles.requestListTitleStyle),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${request.requesterName} send a request',
-                    style: AppTextStyles.requestListNameStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
+            const Icon(Icons.check_circle_outline_rounded, size: 48, color: AppColors.primary),
+            const SizedBox(height: 12),
+            Text(message, style: AppTextStyles.hallListErrorStyle),
           ],
         ),
       ),
     );
   }
-}
 
-// Request detail panel
+  // Update request status
+  Future<void> _updateRequestStatus(DocumentSnapshot doc, String status) async {
+    try {
+      final data = doc.data() as Map<String, dynamic>;
 
-class _RequestDetailPanel extends StatelessWidget {
-  final _UserRequest request;
-  final VoidCallback onApprove;
-  final VoidCallback onReject;
+      if (status == 'accepted') {
+        final newPassword = data['newPassword'];
+        final userRole = data['userRole'];
+        final userDocRef = data['userDocRef'];
 
-  const _RequestDetailPanel({
-    required this.request,
-    required this.onApprove,
-    required this.onReject,
-  });
+        if (newPassword != null && userRole != null && userDocRef != null) {
+          await FirebaseFirestore.instance
+              .collection(userRole)
+              .doc(userDocRef)
+              .update({'pass': newPassword});
+        } else {
+          throw Exception("Missing user reference or password data in this request.");
+        }
+      }
 
-  @override
-  Widget build(BuildContext context) {
-    return GlassCard(
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            children: [
-              Image.asset(
-                'assets/icons/rotation_lock.png',
-                width: 44, height: 44,
-                fit: BoxFit.contain,
-                color: AppColors.primary,
-                errorBuilder: (_, __, ___) => const Icon(
-                    Icons.lock_reset_rounded, color: AppColors.primary, size: 44),
-              ),
-              const SizedBox(width: 14),
-              Container(width: 2, height: 36, color: AppColors.divider),
-              const SizedBox(width: 14),
-              Text(request.type, style: AppTextStyles.requestDetailsHeaderStyle),
-            ],
-          ),
+      await doc.reference.update({
+        'isProcessed': true,
+        'status': status,
+      });
 
-          const SizedBox(height: 28),
+      final userId = data['emailOrId'] ?? 'Unknown User';
+      final actionStr = status == 'accepted' ? 'approved' : 'rejected';
+      await ITLogService.logAction('Password reset $actionStr for $userId');
 
-          // Fields
-          _InfoRow(label: 'Requested by', value: request.requesterName, bold: true),
-          const SizedBox(height: 14),
-          _InfoRow(label: 'User Type', value: request.userType),
-          const SizedBox(height: 10),
-          _InfoRow(label: 'ID', value: request.userId),
-          const SizedBox(height: 10),
-          _InfoRow(label: 'Email', value: request.email),
-          const SizedBox(height: 10),
-          _InfoRow(label: 'Year', value: request.year.toString()),
-          const SizedBox(height: 10),
-          _InfoRow(label: 'Faculty', value: request.faculty),
-
-          const Spacer(),
-
-          // Buttons
-          Row(
-            children: [
-              Expanded(child: PillButton(label: 'Approve', onTap: onApprove)),
-              const SizedBox(width: 16),
-              Expanded(child: PillButton(label: 'Reject', onTap: onReject)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool bold;
-
-  const _InfoRow({
-    required this.label,
-    required this.value,
-    this.bold = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return RichText(
-      text: TextSpan(
-        style: AppTextStyles.requestDetailsInfoStyle,
-        children: [
-          TextSpan(
-            text: '$label : ',
-            style: AppTextStyles.infoRowLabelStyle,
-          ),
-          TextSpan(
-            text: value,
-            style: bold
-                ? AppTextStyles.infoRowValueBoldStyle
-                : AppTextStyles.infoRowValueStyle,
-          ),
-        ],
-      ),
-    );
+      if (mounted) {
+        if (status == 'accepted') {
+          showSuccessSnackBar(context, 'Request Approved & Password Updated in Database!');
+        } else {
+          showSuccessSnackBar(context, 'Request Rejected');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        showErrorSnackBar(context, 'Error: $e');
+      }
+    }
   }
 }

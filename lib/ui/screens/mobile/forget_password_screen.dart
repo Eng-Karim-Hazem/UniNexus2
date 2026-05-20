@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:uninexus/ui/screens/mobile/request_submitted_screen.dart';
 
-
-import '/../../services/firebase/Forpass_service.dart';
+import '/../../services/firebase/for_pass_service.dart';
 import 'login_screen.dart';
-
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -16,7 +15,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     with SingleTickerProviderStateMixin {
 
-  final _emailController = TextEditingController();
+  final _idController = TextEditingController();
   final _nationalIdController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -48,7 +47,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
       if (mounted) _contentController.forward();
     });
 
-    _emailController.addListener(_validate);
+    _idController.addListener(_validate);
     _nationalIdController.addListener(_validate);
     _newPasswordController.addListener(_validate);
     _confirmPasswordController.addListener(_validate);
@@ -56,7 +55,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
   void _validate() {
     setState(() {
-      _isFormValid = _emailController.text.isNotEmpty &&
+      _isFormValid = _idController.text.isNotEmpty &&
           _nationalIdController.text.isNotEmpty &&
           _newPasswordController.text.isNotEmpty &&
           _confirmPasswordController.text.isNotEmpty &&
@@ -69,7 +68,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
     if (_newPasswordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Passwords do not match.", style: TextStyle(fontFamily: 'SpaceGrotesk'))),
+        const SnackBar(content: Text("Passwords do not match.", style: TextStyle(fontFamily: MobileAppFonts.body))),
       );
       return;
     }
@@ -77,8 +76,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     setState(() => _isLoading = true);
 
     bool success = await ForpassService().sendRenewalRequest(
-      emailOrId: _emailController.text,
+      universityId: _idController.text,
       nationalId: _nationalIdController.text,
+      newPassword: _confirmPasswordController.text,
     );
 
     if (mounted) setState(() => _isLoading = false);
@@ -90,7 +90,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
       );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error sending renewal request.", style: TextStyle(fontFamily: 'SpaceGrotesk'))),
+        const SnackBar(content: Text("Error sending renewal request.", style: TextStyle(fontFamily: MobileAppFonts.body))),
       );
     }
   }
@@ -98,7 +98,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
   @override
   void dispose() {
     _contentController.dispose();
-    _emailController.dispose();
+    _idController.dispose();
     _nationalIdController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
@@ -107,6 +107,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
   @override
   Widget build(BuildContext context) {
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -114,7 +117,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
           children: [
             Positioned.fill(child: Image.asset("assets/images/WelcomeBackground.png", fit: BoxFit.cover)),
             Positioned(
-              top: MediaQuery.of(context).size.height * 0.25,
+              top: sh * 0.25,
               right: -200,
               child: IgnorePointer(
                 child: Hero(
@@ -134,27 +137,28 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                   child: Align(
                     alignment: Alignment.topCenter,
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(40, 25, 40, 40),
+                      physics: const BouncingScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(sw * 0.08, sh * 0.04, sw * 0.08, sh * 0.05),
                       child: Column(
                         children: [
                           ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.asset("assets/images/uni.jpeg", width: 90, fit: BoxFit.cover)),
-                          const SizedBox(height: 10),
-                          const Text("Forgotten Password", style: TextStyle(fontFamily: 'Batangas', fontSize: 30, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 2),
-                          const Text("Enter your details to renew your credentials", style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.black54, fontSize: 17)),
-                          const SizedBox(height: 40),
+                          SizedBox(height: sh * 0.015),
 
-                          // Field 1 - Email / ID
+                          const Text("Forgotten Password", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 30, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 2),
+                          const Text("Enter your details to renew your credentials", style: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.black54, fontSize: 15), textAlign: TextAlign.center),
+
+                          SizedBox(height: sh * 0.04),
+
                           FadeTransition(
                             opacity: _field1Anim,
                             child: SlideTransition(
                               position: Tween<Offset>(begin: const Offset(-0.3, 0), end: Offset.zero).animate(_field1Anim),
-                              child: _modernField(label: "Email / ID", hint: "Enter Your Email/ID", controller: _emailController),
+                              child: _modernField(label: "ID", hint: "Enter Your ID", controller: _idController),
                             ),
                           ),
                           const SizedBox(height: 20),
 
-                          // Field 2 - National ID
                           FadeTransition(
                             opacity: _field2Anim,
                             child: SlideTransition(
@@ -164,7 +168,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                           ),
                           const SizedBox(height: 20),
 
-                          // Field 3 - New Password
                           FadeTransition(
                             opacity: _field3Anim,
                             child: SlideTransition(
@@ -180,7 +183,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                           ),
                           const SizedBox(height: 20),
 
-                          // Field 4 - Confirm Password
                           FadeTransition(
                             opacity: _field4Anim,
                             child: SlideTransition(
@@ -195,20 +197,30 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                             ),
                           ),
 
-                          const SizedBox(height: 40),
+                          SizedBox(height: sh * 0.06),
+
                           _mainButton(
                             text: _isLoading ? "Submitting..." : "Submit",
                             enabled: _isFormValid && !_isLoading,
                             onTap: _submit,
+                            sw: sw,
                           ),
-                          const SizedBox(height: 6),
+
+                          SizedBox(height: sh * 0.02),
+
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text("  Back to", style: TextStyle(fontFamily: 'SpaceGrotesk')),
-                              TextButton(
-                                onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen())),
-                                child: const Text("Login", style: TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.bold)),
+                              const Text("Back to ", style: TextStyle(fontFamily: MobileAppFonts.body)),
+                              GestureDetector(
+                                onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen())),
+                                child: const Text("Login",
+                                    style: TextStyle(
+                                      fontFamily: MobileAppFonts.heading,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF7B61FF), // Matches your _mainPurple
+                                    )
+                                ),
                               ),
                             ],
                           ),
@@ -227,16 +239,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
   Widget _modernField({required String label, required String hint, required TextEditingController controller}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(padding: const EdgeInsets.only(left: 10, bottom: 1), child: Text(label, style: const TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold))),
+      Padding(padding: const EdgeInsets.only(left: 10, bottom: 1), child: Text(label, style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 16, fontWeight: FontWeight.bold))),
       Container(
         height: 50,
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1.4)),
         child: TextField(
             controller: controller,
-            style: const TextStyle(fontFamily: 'SpaceGrotesk'),
+            style: const TextStyle(fontFamily: MobileAppFonts.body),
             decoration: InputDecoration(
                 hintText: hint,
-                hintStyle: const TextStyle(fontFamily: 'SpaceGrotesk'),
+                hintStyle: const TextStyle(fontFamily: MobileAppFonts.body),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10)
             )
@@ -253,17 +265,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     required VoidCallback onToggle,
   }) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(padding: const EdgeInsets.only(left: 10, bottom: 1), child: Text(label, style: const TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold))),
+      Padding(padding: const EdgeInsets.only(left: 10, bottom: 1), child: Text(label, style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 16, fontWeight: FontWeight.bold))),
       Container(
         height: 50,
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.grey.withOpacity(0.3), width: 1.4)),
         child: TextField(
           controller: controller,
           obscureText: obscure,
-          style: const TextStyle(fontFamily: 'SpaceGrotesk'),
+          style: const TextStyle(fontFamily: MobileAppFonts.body),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(fontFamily: 'SpaceGrotesk'),
+            hintStyle: const TextStyle(fontFamily: MobileAppFonts.body),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
             suffixIcon: IconButton(
@@ -276,14 +288,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     ]);
   }
 
-  Widget _mainButton({required String text, required bool enabled, required VoidCallback onTap}) {
+  Widget _mainButton({required String text, required bool enabled, required VoidCallback onTap, required double sw}) {
     return Container(
-      width: 280, height: 65,
+      width: sw * 0.75 > 280 ? 280 : sw * 0.75,
+      height: 65,
       decoration: BoxDecoration(border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5), gradient: const LinearGradient(colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)]), borderRadius: BorderRadius.circular(24)),
       child: ElevatedButton(
         onPressed: enabled ? onTap : null,
         style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent, elevation: 0),
-        child: Text(text, style: const TextStyle(color: Colors.white, fontFamily: 'Batangas', fontSize: 22)),
+        child: Text(text, style: const TextStyle(color: Colors.white, fontFamily: MobileAppFonts.heading, fontSize: 22)),
       ),
     );
   }

@@ -1,0 +1,237 @@
+import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uninexus/theme/uninexus_tab.dart';
+import 'package:uninexus/theme/app_theme.dart';
+
+class SecurityIdScreen extends StatefulWidget {
+  final void Function(UninexusTab) onNavigate;
+  const SecurityIdScreen({super.key, required this.onNavigate});
+
+  @override
+  State<SecurityIdScreen> createState() => _SecurityIdScreenState();
+}
+
+class _SecurityIdScreenState extends State<SecurityIdScreen> {
+  String _userID = "";
+  bool _isLoading = true;
+  bool _isPunchedIn = false;
+
+  final Color _primaryBlue = const Color(0xFF237ABA);
+  final Color _secondaryPurple = const Color(0xFF9C2CF3);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDataFromPrefs();
+  }
+
+  // Load user ID from preferences
+  Future<void> _loadDataFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+
+    if (mounted) {
+      setState(() {
+        _userID = prefs.getString('userCode') ?? prefs.getString('ID') ?? "N/A";
+        _isLoading = false;
+      });
+    }
+  }
+
+  // Handle punch in/out
+  void _handlePunch() {
+    setState(() {
+      _isPunchedIn = !_isPunchedIn;
+    });
+    showInfoSnackBar(
+      context,
+      _isPunchedIn ? 'Punched IN successfully' : 'Punched OUT successfully',
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const ITScreenBackground(
+        child: Center(child: LoadingState()),
+      );
+    }
+
+    final String qrData = _isPunchedIn ? "OUT_$_userID" : "IN_$_userID";
+    final List<Color> qrColors = _isPunchedIn
+        ? [_secondaryPurple, _primaryBlue]
+        : [_primaryBlue, _secondaryPurple];
+
+    return ITScreenBackground(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const PageHeading('ID'),
+            const SizedBox(height: 20),
+
+            Expanded(
+              child: Center(
+                child: GlassCard(
+                  padding: const EdgeInsets.all(32),
+                  child: SizedBox(
+                    width: 480,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Digital ID Card
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: AppDecorations.idCardInner,
+                          child: Row(
+                            children: [
+                              // Left decorations
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  Image.asset(
+                                    'assets/icons/Circle.png',
+                                    width: 28,
+                                    height: 28,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (_, __, ___) => const Dot(),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Image.asset(
+                                    'assets/icons/Rectangle_Small.png',
+                                    width: 20,
+                                    height: 80,
+                                    fit: BoxFit.fill,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      width: 4,
+                                      height: 80,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary.withValues(alpha: 0.35),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Image.asset(
+                                    'assets/icons/Circle.png',
+                                    width: 28,
+                                    height: 28,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (_, __, ___) => const Dot(),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(width: 16),
+
+                              // ID card icon
+                              Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: AppDecorations.iconBackground,
+                                child: Image.asset(
+                                  'assets/icons/ID_Card.png',
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.badge_outlined,
+                                    size: 40,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 24),
+
+                              // QR Code with ShaderMask
+                              Expanded(
+                                child: AspectRatio(
+                                  aspectRatio: 1,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      ShaderMask(
+                                        shaderCallback: (bounds) => LinearGradient(
+                                          colors: qrColors,
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ).createShader(bounds),
+                                        blendMode: BlendMode.srcIn,
+                                        child: QrImageView(
+                                          data: qrData,
+                                          version: QrVersions.auto,
+                                          size: 240.0,
+                                          errorCorrectionLevel: QrErrorCorrectLevel.H,
+                                        ),
+                                      ),
+                                      Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Image.asset(
+                                          'assets/images/LOGO.png',
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (_, __, ___) => const Icon(
+                                            Icons.image,
+                                            size: 30,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 36),
+
+                        // Animated Punch IN/OUT Button
+                        GestureDetector(
+                          onTap: _handlePunch,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: _isPunchedIn
+                                ? AppDecorations.pillButtonOutline()
+                                : AppDecorations.pillButton(),
+                            child: Center(
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 250),
+                                transitionBuilder: (child, anim) => FadeTransition(
+                                  opacity: anim,
+                                  child: SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(0, 0.3),
+                                      end: Offset.zero,
+                                    ).animate(anim),
+                                    child: child,
+                                  ),
+                                ),
+                                child: Text(
+                                  _isPunchedIn ? 'Punch OUT' : 'Punch IN',
+                                  key: ValueKey(_isPunchedIn),
+                                  style: AppTextStyles.buttonStyle,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

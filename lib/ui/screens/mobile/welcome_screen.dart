@@ -1,6 +1,9 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:uninexus/ui/screens/mobile/signup_screen.dart';
+
 import 'login_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -23,7 +26,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   late Animation<Offset> _contentExit;
   late Animation<double> _contentFade;
 
-  bool showGif = true;
+  bool _showGif = true;
+  Timer? _gifTimer;
 
   @override
   void initState() {
@@ -78,18 +82,15 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
     _contentFade = Tween<double>(begin: 1, end: 0).animate(_exitController);
 
-    // Timer to switch from GIF to Static Image
-    Timer(const Duration(seconds: 3), () {
-      if (mounted) setState(() => showGif = false);
+    _gifTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _showGif = false);
     });
   }
 
-  // --- FIX: PRECACHE THE IMAGE ---
-  // This loads the static image into memory BEFORE it is needed, eliminating the loading flicker.
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    precacheImage(const AssetImage("assets/images/uni.jpeg"), context);
+    precacheImage(const AssetImage('assets/images/uni.jpeg'), context);
   }
 
   Future<void> _goToLogin() async {
@@ -112,31 +113,34 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   @override
   void dispose() {
+    _gifTimer?.cancel();
     _introController.dispose();
     _exitController.dispose();
     super.dispose();
   }
 
   Widget _rectangle() => Image.asset(
-    "assets/images/Rectangle.png",
+    'assets/images/Rectangle.png',
     width: 550,
     fit: BoxFit.contain,
   );
 
   @override
   Widget build(BuildContext context) {
+    final sw = MediaQuery.of(context).size.width;
+
     return Scaffold(
       body: Stack(
         children: [
           Positioned.fill(
             child: Image.asset(
-              "assets/images/WelcomeBackground.png",
+              'assets/images/WelcomeBackground.png',
               fit: BoxFit.cover,
             ),
           ),
           Positioned(
-            top: -80,
-            right: -245,
+            top: -130,
+            right: -260,
             child: SlideTransition(
               position: _topIntro,
               child: SlideTransition(
@@ -164,55 +168,70 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               position: _contentExit,
               child: FadeTransition(
                 opacity: _contentFade,
-                child: Center(
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 90),
-                      // --- UPDATED ANIMATED SWITCHER ---
-                      AnimatedSwitcher(
-                        // If the static image is identical to the last GIF frame,
-                        // setting duration to 0 makes the cut invisible.
-                        // If they are different, keep the 600ms fade.
-                        duration: const Duration(milliseconds: 0),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(26),
-                          child: Image.asset(
-                            showGif
-                                ? "assets/images/UniNexus.gif"
-                                : "assets/images/uni.jpeg",
-                            key: ValueKey(showGif),
-                            width: 270,
-                            height: 270,
-                            fit: BoxFit.fill,
-                            // Helps prevent white flashes during rebuilds
-                            gaplessPlayback: true,
+                // --- APPLIED RESPONSIVE WRAPPER HERE ---
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                        ),
+                        child: IntrinsicHeight(
+                          child: Column(
+                            children: [
+                              // Made top spacing dynamic (10% of screen height)
+                              SizedBox(height: constraints.maxHeight * 0.10),
+
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 600),
+                                child: ClipRRect(
+                                  key: ValueKey(_showGif),
+                                  borderRadius: BorderRadius.circular(23),
+                                  child: Image.asset(
+                                    _showGif
+                                        ? 'assets/icons/UniNexus.gif'
+                                        : 'assets/images/uni.jpeg',
+                                    width: sw * 0.55, // Slightly scaled down logo to guarantee fit
+                                    height: sw * 0.55,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              ),
+
+                              // Dynamic spacing between logo and text
+                              SizedBox(height: constraints.maxHeight * 0.05),
+
+                              const Text(
+                                'Welcome to UniNexus',
+                                style: MobileAppTextStyles.screenTitle,
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 8),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 20),
+                                child: Text(
+                                  'Your unified campus experience begins here.',
+                                  style: MobileAppTextStyles.screenSubtitle,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+
+                              // --- THE MAGIC BULLET ---
+                              // This will dynamically stretch to push the buttons down
+                              const Spacer(),
+
+                              _mainButton('Log In', _goToLogin),
+                              const SizedBox(height: 15),
+                              _mainButton('Register', _goToRegister),
+
+                              // Bottom padding so buttons don't hug the absolute edge of the screen
+                              SizedBox(height: constraints.maxHeight * 0.05),
+                            ],
                           ),
                         ),
                       ),
-                      const SizedBox(height: 90),
-                      const Text(
-                        "Welcome to UniNexus",
-                        style: TextStyle(
-                          fontFamily: 'Batangas',
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      const Text(
-                        "Your unified campus experience begins here.",
-                        style: TextStyle(
-                          fontFamily: 'SpaceGrotesk',
-                          fontSize: 16,
-                          color: Colors.black54,
-                        ),
-                      ),
-                      const SizedBox(height: 120),
-                      _mainButton("Log In", _goToLogin),
-                      const SizedBox(height: 15),
-                      _mainButton("Register", _goToRegister),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -225,31 +244,15 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   Widget _mainButton(String text, VoidCallback onTap) {
     return Container(
       width: double.infinity,
-      height: 64,
-      margin: const EdgeInsets.symmetric(horizontal: 65),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.4),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)],
-        ),
-        borderRadius: BorderRadius.circular(24),
+      height: MobileAppDimensions.wideButtonHeight,
+      margin: const EdgeInsets.symmetric(
+        horizontal: MobileAppDimensions.wideButtonHorizontalMargin,
       ),
+      decoration: MobileAppDecorations.wideButtonBox,
       child: ElevatedButton(
         onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          elevation: 0,
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontFamily: 'Batangas',
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        style: MobileAppButtonStyles.transparentElevated,
+        child: Text(text, style: MobileAppTextStyles.buttonText),
       ),
     );
   }

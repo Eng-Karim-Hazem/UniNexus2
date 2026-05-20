@@ -8,7 +8,7 @@ class QnAModel {
   final String sEmail;
   final String sName;
   final String subject;
-  final String ID;
+  final String id;
 
   QnAModel({
     required this.title,
@@ -18,13 +18,13 @@ class QnAModel {
     required this.sEmail,
     required this.sName,
     required this.subject,
-    required this.ID,
+    required this.id,
   });
 
   Map<String, dynamic> toFirestore() {
     return {
       'title': title,
-      'ID': ID,
+      'ID': id,
       'answer': answer,
       'question': question,
       'rName': rName,

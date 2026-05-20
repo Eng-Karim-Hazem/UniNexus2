@@ -1,12 +1,65 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../admin_tab.dart';
-import '../../../../uninexus_tab.dart';
-import '../theme/app_theme.dart';
+import 'package:uninexus/theme/app_theme.dart';
 
-class AdminProfileScreen extends StatelessWidget {
+class AdminProfileScreen extends StatefulWidget {
   final void Function(AdminTab) onNavigate;
   const AdminProfileScreen({super.key, required this.onNavigate});
+
+  @override
+  State<AdminProfileScreen> createState() => _AdminProfileScreenState();
+}
+
+class _AdminProfileScreenState extends State<AdminProfileScreen> {
+  // Profile data
+  String _fullName = 'Loading...';
+  String _id = 'Loading...';
+  String _email = 'Loading...';
+  String _phone = 'Loading...';
+  String _department = 'Loading...';
+  String _position = 'Loading...';
+  String _nationalId = 'Loading...';
+  String? _base64Photo;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileData();
+  }
+
+  // Get valid string from preferences
+  String _getValidString(SharedPreferences prefs, String key) {
+    final value = prefs.getString(key);
+    if (value == null || value.trim().isEmpty) return '-';
+    return value;
+  }
+
+  // Load profile data from shared preferences
+  Future<void> _loadProfileData() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (!mounted) return;
+
+    setState(() {
+      final fName = prefs.getString('fName') ?? 'Unknown';
+      final lName = prefs.getString('lName') ?? 'User';
+      _fullName = '$fName $lName';
+
+      _id = _getValidString(prefs, 'ID');
+      _email = _getValidString(prefs, 'email');
+      _phone = _getValidString(prefs, 'pNum');
+      _department = _getValidString(prefs, 'department');
+      _position = _getValidString(prefs, 'position');
+      _nationalId = _getValidString(prefs, 'nID');
+      _base64Photo = prefs.getString('photo');
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,36 +69,128 @@ class AdminProfileScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Profile', style: AppTextStyles.largeHeading),
-            const SizedBox(height: 20),
+            const PageHeading('Profile'),
+            const SizedBox(height: 47),
 
             // Profile header card
             GlassCard(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
-              child: ProfileHeader(
-                iconAsset: 'assets/icons/user_purple.png',
-                title: 'Ahmed Mohamed Ebrahim Mohamed',
-                subtitle: 'IT203021',
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : Row(
+                children: [
+                  // Profile photo
+                  Container(
+                    width: 110,
+                    height: 110,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.5),
+                        width: 2,
+                      ),
+                    ),
+                    child: ClipOval(
+                      child: _base64Photo != null && _base64Photo!.isNotEmpty
+                          ? Image.memory(
+                        base64Decode(_base64Photo!),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _buildFallbackIcon(),
+                      )
+                          : _buildFallbackIcon(),
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _fullName,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: AppFonts.spaceGrotesk,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _id,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.black.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
 
             const SizedBox(height: 16),
 
-            // Profile details card
-            GlassCard(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              child: Column(
-                children: [
-                  _buildInfoRow('Department',  'Staff'),
-                  const SizedBox(height: 16),
-                  _buildInfoRow('Position',    'Financail'),
-                  const SizedBox(height: 16),
-                  _buildInfoRow('E-mail',      'sarah@gmail.com'),
-                  const SizedBox(height: 16),
-                  _buildInfoRow('Phone no.',   '01920202343'),
-                  const SizedBox(height: 16),
-                  _buildInfoRow('National ID', '2838329204792-32'),
-                ],
+            // Details card
+            Expanded(
+              child: GlassCard(
+                padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 10),
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : SizedBox(
+                  width: double.infinity,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        buildInfoRow(
+                          label: 'Department',
+                          value: _department,
+                          fontSize: 18,
+                          verticalPadding: 24,
+                          labelWeight: FontWeight.w800,
+                          valueWeight: FontWeight.w800,
+                        ),
+                        _buildDivider(),
+                        buildInfoRow(
+                          label: 'Position',
+                          value: _position,
+                          fontSize: 18,
+                          verticalPadding: 24,
+                          labelWeight: FontWeight.w800,
+                          valueWeight: FontWeight.w800,
+                        ),
+                        _buildDivider(),
+                        buildInfoRow(
+                          label: 'E-mail',
+                          value: _email,
+                          fontSize: 18,
+                          verticalPadding: 24,
+                          labelWeight: FontWeight.w800,
+                          valueWeight: FontWeight.w800,
+                        ),
+                        _buildDivider(),
+                        buildInfoRow(
+                          label: 'Phone no.',
+                          value: _phone,
+                          fontSize: 18,
+                          verticalPadding: 24,
+                          labelWeight: FontWeight.w800,
+                          valueWeight: FontWeight.w800,
+                        ),
+                        _buildDivider(),
+                        buildInfoRow(
+                          label: 'National ID',
+                          value: _nationalId,
+                          fontSize: 18,
+                          verticalPadding: 24,
+                          labelWeight: FontWeight.w800,
+                          valueWeight: FontWeight.w800,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
@@ -54,26 +199,20 @@ class AdminProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 120,
-          child: Text(label,
-              style: AppTextStyles.profileInfoLabelStyle,
-              textAlign: TextAlign.right),
-        ),
-        const SizedBox(
-          width: 20,
-          child: Text(':',
-              style: AppTextStyles.profileInfoLabelStyle,
-              textAlign: TextAlign.center),
-        ),
-        Expanded(
-          child: Text(value, style: AppTextStyles.profileInfoValueStyle),
-        ),
-      ],
+  // Fallback icon for profile photo
+  Widget _buildFallbackIcon() {
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Image.asset('assets/icons/Profile_Purple.png', fit: BoxFit.contain),
+    );
+  }
+
+  // Divider widget
+  Widget _buildDivider() {
+    return Divider(
+      color: Colors.black.withValues(alpha: 0.3),
+      thickness: 1,
+      height: 1,
     );
   }
 }

@@ -1,3 +1,4 @@
+
 enum AdminTab {
   dashboard,
   id,
@@ -5,6 +6,7 @@ enum AdminTab {
   notices,
   profile,
   settings,
-  usersearch,
-  sentnotices,
+  userSearch,
+  sentNotices,
+  receivedNotices,
 }

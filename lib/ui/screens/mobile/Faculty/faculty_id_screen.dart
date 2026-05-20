@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
-import '../Faculty/halls_screen.dart';
-import '../Faculty/qa_screen.dart';
+import 'halls_screen.dart';
+import 'qa_screen.dart';
 import '../profile_screen.dart';
 import '../settings_screen.dart';
 
@@ -15,17 +16,18 @@ class FacultyIDScreen extends StatefulWidget {
 }
 
 class _FacultyIDScreenState extends State<FacultyIDScreen> {
+  // State Variables
   String _userID = "";
   String _userName = "";
   bool _isLoading = true;
   int _selectedIndex = -1;
-
-  // Track punch state
   bool _isPunchedIn = false;
 
+  // Colors preserved from your design
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
   final Color _secondaryPurple = const Color(0xFF9C2CF3);
+  final Color _textIndigo = const Color(0xFF5C5C80);
 
   final Gradient _fabGradient = const LinearGradient(
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
@@ -60,41 +62,58 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    final String qrData = _isPunchedIn ? "OUT_$_userID" : "IN_$_userID";
+    final List<Color> qrColors = _isPunchedIn
+        ? [_secondaryPurple, _primaryBlue]
+        : [_primaryBlue, _secondaryPurple];
+
     return Scaffold(
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildBottomBar(),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/background.png'),
-            fit: BoxFit.cover,
+      body: Stack(
+        children: [
+          // 1. Fixed Background Image - Stays static in the back
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/Phone_Background.png',
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+
+          // 2. Main Content Structure
+          SafeArea(
+            bottom: false,
             child: Column(
               children: [
-                _buildTopHeader(),
-                const SizedBox(height: 30),
-                _buildMainCard(),
-
-                // --- WIDE PUNCH BUTTON ---
-                const SizedBox(height: 30),
+                // --- FIXED TOP BAR (Outside ScrollView) ---
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: _buildWidePunchButton(),
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
+                  child: _buildTopHeader(),
                 ),
-                const SizedBox(height: 20),
+
+                // --- SCROLLABLE CONTENT (Inside Expanded) ---
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        _buildMainCard(qrData, qrColors),
+                        const SizedBox(height: 30),
+                        _buildWidePunchButton(),
+                        // Extra padding to ensure you can scroll past the FAB/BottomBar
+                        const SizedBox(height: 160),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -103,27 +122,22 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // --- ADDED NAVIGATION HERE ---
         GestureDetector(
-          onTap: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen())
-            );
-          },
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SettingsScreen()),
+          ),
           child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
         ),
-
-        const Text(
-            "ID",
-            style: TextStyle(
-                fontFamily: 'Batangas',
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF5C5C80)
-            )
+        Text(
+          "ID",
+          style: TextStyle(
+            fontFamily: MobileAppFonts.heading,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: _textIndigo,
+          ),
         ),
-
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -132,21 +146,16 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
     );
   }
 
-  Widget _buildMainCard() {
-    // Gradient Logic
-    final List<Color> qrColors = _isPunchedIn
-        ? [_secondaryPurple, _primaryBlue]
-        : [_primaryBlue, _secondaryPurple];
-
+  Widget _buildMainCard(String qrData, List<Color> qrColors) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 30),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.85),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF237ABA).withOpacity(0.1),
+            color: _primaryBlue.withOpacity(0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           )
@@ -161,7 +170,8 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
               _buildDot(),
               const SizedBox(width: 15),
               Container(
-                width: 60, height: 12,
+                width: 60,
+                height: 12,
                 decoration: BoxDecoration(
                   color: const Color(0xFFE0E0FF),
                   borderRadius: BorderRadius.circular(10),
@@ -172,18 +182,30 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
             ],
           ),
           const SizedBox(height: 30),
-
-          Text(_userName, style: const TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
+          Text(
+            _userName,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: MobileAppFonts.heading,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: _textIndigo,
+            ),
+          ),
           const SizedBox(height: 5),
-          Text("ID: $_userID", style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500)),
-
+          Text(
+            "ID: $_userID",
+            style: const TextStyle(
+              fontFamily: MobileAppFonts.body,
+              fontSize: 16,
+              color: Colors.grey,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
           const SizedBox(height: 40),
-
-          // --- STACK APPROACH: Layer Logo ON TOP of Gradient QR ---
           Stack(
             alignment: Alignment.center,
             children: [
-              // Layer 1: The QR Code with Gradient (No Image Here)
               ShaderMask(
                 shaderCallback: (bounds) => LinearGradient(
                   colors: qrColors,
@@ -192,37 +214,22 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
                 ).createShader(bounds),
                 blendMode: BlendMode.srcIn,
                 child: QrImageView(
-                  data: _userID,
+                  data: qrData,
                   version: QrVersions.auto,
                   size: 240.0,
-                  // IMPORTANT: Set Error Correction to HIGH so covering the center is safe
                   errorCorrectionLevel: QrErrorCorrectLevel.H,
-                  // We remove the embeddedImage from here so it doesn't get tinted
-                ),
-              ),
-
-              // Layer 2: The Logo (Untouched colors)
-              Container(
-                width: 45,
-                height: 45,
-                // Optional: Add a white background behind the logo for better visibility
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
-                child: Image.asset(
-                  'assets/images/LOGO.png',
-                  fit: BoxFit.contain,
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 30),
-          Text(
-            _isPunchedIn ? "Active Session - Scan to Punch Out" : "Scan for Identity Verification",
+          const Text(
+            "Scan for Identity Verification",
             style: TextStyle(
-                fontFamily: 'SpaceGrotesk',
-                color: _isPunchedIn ? _primaryBlue : Colors.grey,
-                fontSize: 14,
-                fontWeight: _isPunchedIn ? FontWeight.bold : FontWeight.normal
+              fontFamily: MobileAppFonts.body,
+              color: Colors.grey,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
@@ -230,26 +237,17 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
     );
   }
 
-  // --- WIDE PUNCH BUTTON ---
   Widget _buildWidePunchButton() {
     final Color activeColor = _isPunchedIn ? _primaryBlue : _mainPurple;
-
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _isPunchedIn = !_isPunchedIn;
-        });
-      },
+      onTap: () => setState(() => _isPunchedIn = !_isPunchedIn),
       child: Container(
         width: 240,
         height: 60,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(
-              color: activeColor,
-              width: 2
-          ),
+          border: Border.all(color: activeColor, width: 2),
           boxShadow: [
             BoxShadow(
               color: activeColor.withOpacity(0.2),
@@ -262,7 +260,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
           child: Text(
             _isPunchedIn ? "Punch OUT" : "Punch IN",
             style: TextStyle(
-              fontFamily: 'Batangas',
+              fontFamily: MobileAppFonts.heading,
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: activeColor,
@@ -281,29 +279,16 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
 
   Widget _buildHomeFab() {
     return Container(
-      height: 72,
-      width: 72,
+      height: 72, width: 72,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: _mainPurple.withOpacity(0.6),
-            blurRadius: 25,
-            spreadRadius: 6,
-            offset: const Offset(0, 2),
-          )
-        ],
+        boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.6), blurRadius: 25, spreadRadius: 6, offset: const Offset(0, 2))],
       ),
       child: FloatingActionButton(
         onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        shape: const CircleBorder(),
+        backgroundColor: Colors.transparent, elevation: 0, shape: const CircleBorder(),
         child: Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: _fabGradient,
-          ),
+          decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
           child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
         ),
       ),
@@ -313,92 +298,60 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
   Widget _buildBottomBar() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.transparent,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.18),
-            blurRadius: 20,
-            spreadRadius: 4,
-            offset: const Offset(0, -6),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, -5))],
       ),
       child: BottomAppBar(
-        clipBehavior: Clip.antiAlias,
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 9.0,
-        color: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        shadowColor: Colors.transparent,
-        height: 80,
+        clipBehavior: Clip.antiAlias, shape: const CircularNotchedRectangle(),
+        notchMargin: 9.0, color: Colors.white, height: 80,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _navItem('assets/images/solidarity_1.png', 'Community', 0),
-                  _navItem('assets/images/classroom_1.png', 'Halls', 1),
-                ],
-              ),
-            ),
+            _navItem('assets/images/solidarity_1.png', 'Community', 0),
+            _navItem('assets/images/classroom_1.png', 'Halls', 1),
             const SizedBox(width: 72),
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _navItem('assets/images/qa.png', 'Q&A', 2),
-                  _navItem('assets/images/user.png', 'Profile', 3),
-                ],
-              ),
-            ),
+            _navItem('assets/images/qa.png', 'Q&A', 2),
+            _navItem('assets/images/user.png', 'Profile', 3),
           ],
         ),
       ),
     );
   }
 
-  Widget _navItem(String path, String label, int index) {
-    bool sel = _selectedIndex == index;
+  Widget _navItem(String iconPath, String label, int index) {
+    final bool isSelected = _selectedIndex == index;
+    final Color itemColor = isSelected ? _mainPurple : Colors.grey.shade500;
     return GestureDetector(
-      onTap: () async {
-        setState(() => _selectedIndex = index);
-
-        if (index == 0) {
-          await Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuCommunity()));
-        } else if (index == 1) {
-          await Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HallsScreen()));
-        } else if (index == 2) {
-          await Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const QAScreen()));
-        } else if (index == 3) {
-          await Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
-        }
-
-        if (mounted) setState(() => _selectedIndex = -1);
-      },
+      onTap: () => _onNavBarTapped(index),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(
-            path,
-            width: 28,
-            height: 28,
-            color: sel ? _mainPurple : Colors.grey.shade500,
-          ),
+          Image.asset(iconPath, width: 28, height: 28, color: itemColor),
           const SizedBox(height: 5),
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
-              fontSize: 12,
-              color: sel ? _mainPurple : Colors.grey.shade600,
-              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+              fontFamily: MobileAppFonts.body, fontSize: 12,
+              color: isSelected ? _mainPurple : Colors.grey.shade600,
+              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
             ),
           ),
         ],
       ),
     );
+  }
+
+  void _onNavBarTapped(int index) async {
+    if (index == _selectedIndex) return;
+    setState(() => _selectedIndex = index);
+    final Map<int, Widget> routes = {
+      0: const StuCommunity(),
+      1: const HallsScreen(),
+      2: const QAScreen(),
+      3: const ProfileScreen(),
+    };
+    if (routes.containsKey(index)) {
+      await Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => routes[index]!));
+    }
+    if (mounted) setState(() => _selectedIndex = -1);
   }
 }

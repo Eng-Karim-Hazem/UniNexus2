@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import '../settings_screen.dart';
 import 'faculty_id_screen.dart';
@@ -24,14 +27,17 @@ class FacultyHomeScreen extends StatefulWidget {
 }
 
 class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
-  // SET TO -1: Ensures no icon is highlighted on the Home Screen
   int _selectedIndex = -1;
   String _storedFirstName = "";
   String _storedLastName = "";
   String _storedUserID = "";
+  List<String> _facultySubjects = [];
 
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
+  final Color _textIndigo = const Color(0xFF5C5C80);
+  final Color _darkText = const Color(0xFF1A1A1A);
+  final Color _dateBlue = const Color(0xFF5BA4F5);
 
   final Gradient _fabGradient = const LinearGradient(
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
@@ -49,79 +55,117 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
 
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _storedFirstName = prefs.getString('fName') ?? "Faculty";
-      _storedLastName = prefs.getString('lName') ?? "";
-      _storedUserID = prefs.getString('ID') ?? "No ID";
-    });
+    if (mounted) {
+      setState(() {
+        _storedFirstName = prefs.getString('fName') ?? "Faculty";
+        _storedLastName = prefs.getString('lName') ?? "";
+        _storedUserID = prefs.getString('ID') ?? "No ID";
+        _facultySubjects = prefs.getStringList('facultySubjects') ?? [];
+      });
+    }
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
   }
 
   String _getCurrentDate() {
     return DateFormat('MMMM d, yyyy').format(DateTime.now());
   }
 
-  void _onItemTapped(int index) async {
+  bool _isNoticeForFaculty(Map<String, dynamic> data) {
+    final String userId = _storedUserID.trim();
+    final List<String> specializations = _facultySubjects.map((e) => e.trim().toLowerCase()).toList();
+    final List<String> recipientIds = (data['recipientIds'] as List<dynamic>? ?? const [])
+        .map((e) => e.toString().trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    if (userId.isNotEmpty && recipientIds.contains(userId)) return true;
+
+    final String targetType = (data['type'] ?? '').toString().trim().toLowerCase();
+    final String targetValue = (data['targetValue'] ?? '').toString().trim().toLowerCase();
+
+    if (targetType == 'individual' && userId.isNotEmpty && targetValue == userId.toLowerCase()) return true;
+    if (targetType == 'group' && (targetValue == 'faculty' || targetValue == 'all')) return true;
+    if (targetType == 'specialization' && specializations.contains(targetValue)) return true;
+
+    if (targetType.isEmpty) {
+      if (targetValue == 'faculty' || targetValue == 'all' || specializations.contains(targetValue)) return true;
+      if (userId.isNotEmpty && targetValue == userId.toLowerCase()) return true;
+    }
+    return false;
+  }
+
+  void _onNavBarTapped(int index) async {
     if (index == _selectedIndex) return;
-
     setState(() => _selectedIndex = index);
-
-    if (index == 0) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
-    } else if (index == 1) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen()));
-    } else if (index == 2) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
-    } else if (index == 3) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+    final Map<int, Widget> routes = {
+      0: const StuCommunity(),
+      1: const HallsScreen(),
+      2: const QAScreen(),
+      3: const ProfileScreen(),
+    };
+    if (routes.containsKey(index)) {
+      await Navigator.push(context, MaterialPageRoute(builder: (context) => routes[index]!));
     }
-
-    // Reset highlight when popped back to the home screen
-    if (mounted) {
-      setState(() => _selectedIndex = -1);
-    }
+    if (mounted) setState(() => _selectedIndex = -1);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBody: true,
-      floatingActionButton: _buildFab(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: _buildBottomBar(),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/background.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                child: _buildTopHeader(),
-              ),
-              const SizedBox(height: 30),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: _buildGreetingCard(),
-              ),
-              const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: _buildActionButtons(),
-              ),
-              const SizedBox(height: 24),
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
 
-              // EXPANDED fills the rest of the screen
-              Expanded(
-                child: _buildNotificationsArea(),
-              ),
-            ],
+    // WRAP THE SCAFFOLD IN POPSCOPE TO DISABLE THE BACK BUTTON
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        extendBody: true,
+        floatingActionButton: _buildFab(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        bottomNavigationBar: _buildBottomBar(),
+        body: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/Phone_Background.png'),
+              fit: BoxFit.cover,
+            ),
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                // --- FIXED TOP HEADER (OUTSIDE SCROLLVIEW) ---
+                Padding(
+                  padding: EdgeInsets.fromLTRB(sw * 0.06, sh * 0.02, sw * 0.06, 10),
+                  child: _buildTopHeader(),
+                ),
+
+                // --- SCROLLABLE AREA ---
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(horizontal: sw * 0.06),
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: sh * 0.02),
+                        _buildGreetingCard(sw, sh),
+                        SizedBox(height: sh * 0.03),
+                        _buildActionButtons(sw, sh),
+                        const SizedBox(height: 12),
+                        _buildNotificationsArea(sw, sh),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -132,75 +176,60 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // --- ADDED NAVIGATION HERE ---
         GestureDetector(
-          onTap: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen())
-            );
-          },
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen())),
           child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
         ),
-
-        const Text(
-            "Home",
-            style: TextStyle(
-                fontFamily: 'Batangas',
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF5C5C80)
-            )
-        ),
-
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
-        ),
+        Text("Home", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
+        ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.asset('assets/images/LOGO.png', width: 36, height: 36)),
       ],
     );
   }
 
-  Widget _buildGreetingCard() {
+  Widget _buildGreetingCard(double sw, double sh) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+      padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.025),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.9),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 24, offset: const Offset(0, 10)),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 24, offset: const Offset(0, 10))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "Hi Dr. $_storedFirstName $_storedLastName!",
-            style: const TextStyle(fontFamily: 'Batangas', fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF1A1A1A)),
-          ),
+          Text("Hi Dr. $_storedFirstName $_storedLastName!",
+              style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 26, fontWeight: FontWeight.w900, color: _darkText)),
+          Text(_getGreeting(),
+              style: const TextStyle(
+                  fontFamily: MobileAppFonts.body,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black
+              )),
           const SizedBox(height: 8),
-          Text(_getCurrentDate(), style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Color(0xFF5BA4F5), fontWeight: FontWeight.w600)),
+          Text(_getCurrentDate(),
+              style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: _dateBlue, fontWeight: FontWeight.w600)),
         ],
       ),
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(double sw, double sh) {
     return Row(
       children: [
-        Expanded(child: _buildActionCard("Halls", 'assets/images/classroom_1.png', () => Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen())))),
+        Expanded(child: _buildActionCard("Halls", 'assets/images/classroom_1.png', () => Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen())), sh)),
         const SizedBox(width: 16),
-        Expanded(child: _buildActionCard("Attendance", 'assets/images/user-check_1.png', () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AttendanceSessionScreen())))),
+        Expanded(child: _buildActionCard("Attendance", 'assets/images/user-check_1.png', () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AttendanceSessionScreen())), sh)),
       ],
     );
   }
 
-  Widget _buildActionCard(String title, String iconPath, VoidCallback onTap) {
+  Widget _buildActionCard(String title, String iconPath, VoidCallback onTap, double sh) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 125,
+        height: sh * 0.15 > 125 ? sh * 0.15 : 125,
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.9),
           borderRadius: BorderRadius.circular(24),
@@ -209,141 +238,106 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(iconPath, width: 38, height: 38, color: const Color(0xFF5C5C80)),
+            Image.asset(iconPath, width: 38, height: 38, color: _textIndigo),
             const SizedBox(height: 12),
-            Text(title, style: TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold, color: _mainPurple)),
+            Text(title, style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 16, fontWeight: FontWeight.bold, color: _mainPurple)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNotificationsArea() {
+  Widget _buildNotificationsArea(double sw, double sh) {
     return Container(
       width: double.infinity,
-      // MARGIN: This pushes the box up so it stops right at the top of the Nav Bar
-      margin: const EdgeInsets.fromLTRB(24, 0, 24, 115),
+      margin: EdgeInsets.only(bottom: sh * 0.15),
+      constraints: BoxConstraints(minHeight: sh * 0.35),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.6),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
-        boxShadow: [BoxShadow(color: const Color(0xFF237ABA).withOpacity(0.12), blurRadius: 25, offset: const Offset(0, 8))],
+        boxShadow: [BoxShadow(color: _primaryBlue.withOpacity(0.12), blurRadius: 25, offset: const Offset(0, 8))],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          physics: const BouncingScrollPhysics(),
-          children: [
-            _buildNotifyItem("Management", "Faculty meeting today at 12:30 PM"),
-            const SizedBox(height: 12),
-            _buildNotifyItem("System Update", "Student portal maintenance scheduled"),
-            const SizedBox(height: 12),
-            _buildNotifyItem("Reminder", "Submit grades by Friday"),
-            const SizedBox(height: 12),
-            _buildNotifyItem("Event", "Campus tech fair next week"),
-          ],
+        child: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('Notifications').orderBy('date', descending: true).snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const SizedBox(height: 150, child: Center(child: CircularProgressIndicator(color: Color(0xFF7B61FF))));
+            }
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return const Padding(padding: EdgeInsets.all(40), child: Center(child: Text('No announcements.')));
+            }
+            final docs = snapshot.data!.docs.where((doc) => _isNoticeForFaculty(doc.data() as Map<String, dynamic>)).toList();
+            if (docs.isEmpty) return const Padding(padding: EdgeInsets.all(40), child: Center(child: Text('No relevant notices.')));
+
+            return ListView.builder(
+              padding: EdgeInsets.all(sw * 0.04),
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: docs.length,
+              itemBuilder: (context, index) {
+                final data = docs[index].data() as Map<String, dynamic>;
+                final timestamp = data['date'] as Timestamp?;
+                String timeStr = timestamp != null ? DateFormat('MMM d, h:mm a').format(timestamp.toDate()) : '';
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildNotifyItem(data['sentBy'] ?? 'Management', data['description'] ?? '', timeStr),
+                );
+              },
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildNotifyItem(String title, String msg) {
+  Widget _buildNotifyItem(String title, String msg, String time) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: const Color(0xFFEAF4FF).withOpacity(0.9), borderRadius: BorderRadius.circular(20)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            Icon(Icons.notifications_active_outlined, color: _mainPurple, size: 20),
-            const SizedBox(width: 8),
-            Text(title, style: TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.bold, color: _mainPurple)),
-          ]),
-          const SizedBox(height: 4),
-          Text(msg, style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Colors.black87)),
+          Row(
+            children: [
+              Icon(Icons.notifications_active_outlined, color: _mainPurple, size: 20),
+              const SizedBox(width: 8),
+              Expanded(child: Text(title, style: TextStyle(fontFamily: MobileAppFonts.heading, fontWeight: FontWeight.bold, color: _mainPurple))),
+              if (time.isNotEmpty) Text(time, style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 11, color: Colors.grey.shade600)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(msg, style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: Colors.black87)),
         ],
       ),
     );
   }
 
-  // --- GLOWING FAB ---
   Widget _buildFab() {
     return Container(
-      height: 72,
-      width: 72,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: _mainPurple.withOpacity(0.6),
-            blurRadius: 25,
-            spreadRadius: 6,
-            offset: const Offset(0, 2),
-          )
-        ],
-      ),
+      height: 72, width: 72,
+      decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.6), blurRadius: 25, spreadRadius: 6, offset: const Offset(0, 2))]),
       child: FloatingActionButton(
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const FacultyIDScreen())),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        shape: const CircleBorder(),
-        child: Container(
-          decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
-          child: Padding(
-            padding: const EdgeInsets.all(18.0),
-            child: Image.asset('assets/images/qr_code.png', color: Colors.white),
-          ),
-        ),
+        elevation: 0, backgroundColor: Colors.transparent, shape: const CircleBorder(),
+        child: Container(decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient), child: Padding(padding: const EdgeInsets.all(18.0), child: Image.asset('assets/icons/QR_Icon.png', color: Colors.white))),
       ),
     );
   }
 
-  // --- BOTTOM NAVIGATION BAR WITH NATIVE CUTOUT SHADOW ---
   Widget _buildBottomBar() {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.18),
-            blurRadius: 20,
-            spreadRadius: 4,
-            offset: const Offset(0, -6),
-          ),
-        ],
-      ),
+      decoration: BoxDecoration(color: Colors.transparent, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 20, spreadRadius: 4, offset: const Offset(0, -6))]),
       child: BottomAppBar(
-        clipBehavior: Clip.antiAlias,
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 9.0,
-        color: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        shadowColor: Colors.transparent,
-        height: 80,
+        clipBehavior: Clip.antiAlias, shape: const CircularNotchedRectangle(), notchMargin: 9.0, color: Colors.white, height: 80,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
-                  _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1),
-                ],
-              ),
-            ),
-            const SizedBox(width: 72), // Space for the FAB notch
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
-                  _buildNavBarItem('assets/images/user.png', "Profile", 3),
-                ],
-              ),
-            ),
+            Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [_buildNavBarItem('assets/images/solidarity_1.png', "Community", 0), _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1)])),
+            const SizedBox(width: 72),
+            Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [_buildNavBarItem('assets/images/qa.png', "Q&A", 2), _buildNavBarItem('assets/images/user.png', "Profile", 3)])),
           ],
         ),
       ),
@@ -352,29 +346,16 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
 
   Widget _buildNavBarItem(String iconPath, String label, int index) {
     final bool isSelected = _selectedIndex == index;
+    final Color itemColor = isSelected ? _mainPurple : Colors.grey.shade500;
     return GestureDetector(
-      onTap: () => _onItemTapped(index),
-      behavior: HitTestBehavior.opaque,
+      onTap: () => _onNavBarTapped(index), behavior: HitTestBehavior.opaque,
       child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset(
-            iconPath,
-            width: 28,
-            height: 28,
-            color: isSelected ? _mainPurple : Colors.grey.shade500,
-          ),
-          const SizedBox(height: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
-              fontSize: 12,
-              color: isSelected ? _mainPurple : Colors.grey.shade600,
-              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-            ),
-          ),
-        ],
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(iconPath, width: 28, height: 28, color: itemColor),
+            const SizedBox(height: 5),
+            Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 12, color: itemColor, fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600))),
+          ]
       ),
     );
   }
