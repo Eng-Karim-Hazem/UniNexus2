@@ -4,6 +4,9 @@ class Staff {
   final String lName;
   final String pNum;
   final String email;
+  final String nID;
+  final String department;
+  final String prosition;
   final String pass;
   final String photo;
   final int workDays;
@@ -15,6 +18,9 @@ class Staff {
     required this.lName,
     required this.pNum,
     required this.email,
+    required this.nID,
+    required this.department,
+    required this.prosition,
     required this.pass,
     required this.photo,
     required this.workDays,
@@ -29,6 +35,9 @@ class Staff {
       lName: json['lName'] ?? '',
       pNum: json['pNum'] ?? '',
       email: json['email'] ?? '',
+      nID: json['nID'] ?? '',
+      department: json['department'] ?? '',
+      prosition: json['prosition'] ?? '',
       pass: json['pass'] ?? '',
       photo: json['photo'] ?? '',
       workDays: json['workDays'] ?? 0,
@@ -44,6 +53,9 @@ class Staff {
       'lName': lName,
       'pNum': pNum,
       'email': email,
+      'nID': nID,
+      'department': department,
+      'prosition': prosition,
       'pass': pass,
       'photo': photo,
       'workDays': workDays,

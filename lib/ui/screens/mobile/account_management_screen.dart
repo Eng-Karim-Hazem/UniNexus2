@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_schedule.dart';
 import 'package:uninexus/ui/screens/mobile/profile_screen.dart';
-
 
 class AccountManagementScreen extends StatefulWidget {
   const AccountManagementScreen({super.key});
@@ -17,16 +19,21 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
 
-  // No specific index highlighted
-  int _selectedIndex = -1;
-
+  bool _isLoading = false;
+  final int _selectedIndex = -1;
   final Color _mainPurple = const Color(0xFF7B61FF);
-  final Color _primaryBlue = const Color(0xFF237ABA);
 
   final Gradient _fabGradient = const LinearGradient(
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
     begin: Alignment.topLeft, end: Alignment.bottomRight,
   );
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
 
   void _onNavBarTapped(int index) async {
     if (index == 0) {
@@ -40,9 +47,87 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     }
   }
 
+  Future<void> _updateContactInfo() async {
+    final newPhone = _phoneController.text.trim();
+    final newEmail = _emailController.text.trim();
+
+    if (newPhone.isEmpty && newEmail.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter a new phone number or email.", style: TextStyle(fontFamily: MobileAppFonts.body))),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String userId = prefs.getString('ID') ?? '';
+
+      if (userId.isEmpty) throw Exception("User ID not found.");
+
+      String targetCollection = 'students';
+      final prefix = userId.toUpperCase();
+
+      if (prefix.startsWith('FA')) {
+        targetCollection = 'faculty';
+      } else if (prefix.startsWith('ST')) {
+        targetCollection = 'students';
+      }
+
+      final query = await FirebaseFirestore.instance
+          .collection(targetCollection)
+          .where('ID', isEqualTo: prefix)
+          .limit(1)
+          .get();
+
+      if (query.docs.isEmpty) {
+        throw Exception("Could not find your profile in the database.");
+      }
+
+      final docRef = query.docs.first.reference;
+
+      Map<String, dynamic> updates = {};
+      if (newPhone.isNotEmpty) updates['pNum'] = newPhone;
+      if (newEmail.isNotEmpty) updates['email'] = newEmail;
+
+      await docRef.update(updates);
+
+      if (newPhone.isNotEmpty) await prefs.setString('pNum', newPhone);
+      if (newEmail.isNotEmpty) await prefs.setString('email', newEmail);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Contact info updated successfully!", style: TextStyle(fontFamily: MobileAppFonts.body)),
+            backgroundColor: Colors.green,
+          ),
+        );
+        _phoneController.clear();
+        _emailController.clear();
+      }
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+    // Detect keyboard height
+    final double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+
     return Scaffold(
+      // FIXED: Prevents FAB and Bottom Bar from jumping up when keyboard opens
+      resizeToAvoidBottomInset: false,
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -51,21 +136,32 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
         width: double.infinity, height: double.infinity,
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/background.png'),
+            image: AssetImage('assets/images/Phone_Background.png'),
             fit: BoxFit.cover,
           ),
         ),
         child: SafeArea(
           bottom: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 150),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.02),
             child: Column(
               children: [
                 _buildHeader(),
-                const SizedBox(height: 30),
-                _buildFormCard(),
-                const SizedBox(height: 40),
-                _buildUpdateButton(),
+                SizedBox(height: sh * 0.03),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    // FIXED: Adds internal padding only when keyboard is up so user can scroll to the bottom
+                    padding: EdgeInsets.only(bottom: keyboardHeight > 0 ? keyboardHeight + 20 : sh * 0.15),
+                    child: Column(
+                      children: [
+                        _buildFormCard(sw),
+                        SizedBox(height: sh * 0.04),
+                        _buildUpdateButton(sw),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -78,22 +174,19 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Back Button (Settings Icon)
         GestureDetector(
           onTap: () => Navigator.pop(context),
           child: Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: _mainPurple),
         ),
-
         const Text(
           "Account Man.",
           style: TextStyle(
-            fontFamily: 'Batangas',
+            fontFamily: MobileAppFonts.heading,
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Color(0xFF5C5C80),
           ),
         ),
-
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -102,10 +195,10 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     );
   }
 
-  Widget _buildFormCard() {
+  Widget _buildFormCard(double sw) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(sw * 0.06),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.6),
         borderRadius: BorderRadius.circular(24),
@@ -124,7 +217,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           const Text(
             "This feature is used to updating only your contact information for further updates contact the university department",
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 13,
               color: Colors.black87,
               height: 1.4,
@@ -132,18 +225,13 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
             textAlign: TextAlign.left,
           ),
           const SizedBox(height: 20),
-
-          // Phone Input
           _buildLabel("New Phone No."),
           const SizedBox(height: 8),
-          _buildTextField(_phoneController, "Enter the new Phone no."),
-
+          _buildTextField(_phoneController, "Enter the new Phone no.", TextInputType.phone),
           const SizedBox(height: 16),
-
-          // Email Input
           _buildLabel("New E-mail"),
           const SizedBox(height: 8),
-          _buildTextField(_emailController, "Enter the new Email"),
+          _buildTextField(_emailController, "Enter the new Email", TextInputType.emailAddress),
         ],
       ),
     );
@@ -153,7 +241,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     return Text(
       text,
       style: const TextStyle(
-        fontFamily: 'Batangas',
+        fontFamily: MobileAppFonts.heading,
         fontSize: 15,
         fontWeight: FontWeight.bold,
         color: Colors.black,
@@ -161,50 +249,53 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint) {
+  Widget _buildTextField(TextEditingController controller, String hint, TextInputType keyboardType) {
     return Container(
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F2F2), // Light grey background
+        color: const Color(0xFFF2F2F2),
         borderRadius: BorderRadius.circular(16),
       ),
       child: TextField(
         controller: controller,
-        style: const TextStyle(fontFamily: 'SpaceGrotesk'),
+        keyboardType: keyboardType,
+        style: const TextStyle(fontFamily: MobileAppFonts.body),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               color: Colors.grey.shade400,
               fontSize: 13
           ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.only(bottom: 5), // Adjust text alignment
+          contentPadding: const EdgeInsets.only(bottom: 5),
         ),
       ),
     );
   }
 
-  Widget _buildUpdateButton() {
+  Widget _buildUpdateButton(double sw) {
     return SizedBox(
-      width: 200,
+      width: sw * 0.5 > 200 ? 200 : sw * 0.5,
       height: 50,
       child: OutlinedButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Information Updated!")),
-          );
-        },
+        onPressed: _isLoading ? null : _updateContactInfo,
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: _mainPurple, width: 1.5),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           backgroundColor: Colors.white,
         ),
-        child: Text(
+        child: _isLoading
+            ? SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(color: _mainPurple, strokeWidth: 2)
+        )
+            : Text(
           "Update",
           style: TextStyle(
-            fontFamily: 'Batangas',
+            fontFamily: MobileAppFonts.heading,
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: _mainPurple,
@@ -214,7 +305,6 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     );
   }
 
-  // --- GLOWING HOME FAB ---
   Widget _buildHomeFab() {
     return Container(
       height: 72,
@@ -246,7 +336,6 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     );
   }
 
-  // --- BOTTOM NAVIGATION BAR ---
   Widget _buildBottomBar() {
     return Container(
       decoration: BoxDecoration(
@@ -311,13 +400,17 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
             color: sel ? _mainPurple : Colors.grey.shade500,
           ),
           const SizedBox(height: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
-              fontSize: 12,
-              color: sel ? _mainPurple : Colors.grey.shade600,
-              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: MobileAppFonts.body,
+                fontSize: 12,
+                color: sel ? _mainPurple : Colors.grey.shade600,
+                fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+              ),
             ),
           ),
         ],

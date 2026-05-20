@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:uninexus/ui/screens/mobile/request_submitted_screen.dart';
 import '../../../services/firebase/signup_service.dart';
 import 'login_screen.dart';
@@ -25,6 +26,8 @@ class _SignUpScreenState extends State<SignUpScreen>
   late Animation<double> _field1Anim;
   late Animation<double> _field2Anim;
   late Animation<double> _field3Anim;
+  late Animation<Offset> _topRectIntro;
+  late Animation<Offset> _bottomRectIntro;
 
   @override
   void initState() {
@@ -32,7 +35,7 @@ class _SignUpScreenState extends State<SignUpScreen>
 
     _contentController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 650),
+      duration: const Duration(milliseconds: 700),
     );
 
     _contentIntro = Tween<Offset>(
@@ -58,7 +61,21 @@ class _SignUpScreenState extends State<SignUpScreen>
       curve: const Interval(0.6, 0.9, curve: Curves.easeOut),
     );
 
-    Future.delayed(const Duration(milliseconds: 250), () {
+    _topRectIntro = Tween<Offset>(
+      begin: const Offset(1.4, -1.4),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic),
+    );
+
+    _bottomRectIntro = Tween<Offset>(
+      begin: const Offset(-1.4, 1.4),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic),
+    );
+
+    Future.delayed(const Duration(milliseconds: 700), () {
       if (mounted) _contentController.forward();
     });
 
@@ -80,7 +97,7 @@ class _SignUpScreenState extends State<SignUpScreen>
 
     bool success = await SignupService().registerUser(
       nationalId: _nationalIdController.text,
-      studentId: _studentIdController.text,
+      universityId: _studentIdController.text,
       email: _emailController.text,
     );
 
@@ -93,7 +110,12 @@ class _SignUpScreenState extends State<SignUpScreen>
       );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Registration failed. Please try again.", style: TextStyle(fontFamily: 'SpaceGrotesk'))),
+        const SnackBar(
+          content: Text(
+            "Registration failed. Please try again.",
+            style: MobileAppTextStyles.bodyText,
+          ),
+        ),
       );
     }
   }
@@ -109,6 +131,10 @@ class _SignUpScreenState extends State<SignUpScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Grab screen dimensions for perfect proportions
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -119,16 +145,34 @@ class _SignUpScreenState extends State<SignUpScreen>
             ),
           ),
           Positioned(
-            top: MediaQuery.of(context).size.height * 0.25,
-            right: -200,
-            child: Hero(
-              tag: 'shared-rectangle',
+            top: -130,
+            right: -260,
+            child: SlideTransition(
+              position: _topRectIntro,
               child: Opacity(
                 opacity: 0.9,
                 child: Image.asset(
                   "assets/images/Rectangle.png",
                   width: 550,
                   fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -260,
+            left: -210,
+            child: SlideTransition(
+              position: _bottomRectIntro,
+              child: Hero(
+                tag: 'shared-rectangle',
+                child: Opacity(
+                  opacity: 0.9,
+                  child: Image.asset(
+                    "assets/images/Rectangle.png",
+                    width: 550,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
             ),
@@ -141,27 +185,31 @@ class _SignUpScreenState extends State<SignUpScreen>
                 child: Align(
                   alignment: Alignment.topCenter,
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(40, 25, 40, 40),
+                    physics: const BouncingScrollPhysics(),
+                    // Dynamic padding so it breathes perfectly on any screen
+                    padding: EdgeInsets.fromLTRB(sw * 0.08, sh * 0.04, sw * 0.08, sh * 0.04),
                     child: Column(
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: Image.asset("assets/images/uni.jpeg", width: 90),
+                          child: Image.asset(
+                            "assets/images/uni.jpeg",
+                            width: MobileAppDimensions.heroImageWidth,
+                          ),
                         ),
-                        const SizedBox(height: 10),
+                        SizedBox(height: sh * 0.015),
                         const Text(
                           "Register to UniNexus",
-                          style: TextStyle(
-                            fontFamily: 'Batangas',
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: MobileAppTextStyles.screenTitle,
                         ),
                         const Text(
                           "Start your smart campus journey",
-                          style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.black54, fontSize: 17),
+                          style: MobileAppTextStyles.screenSubtitle,
                         ),
-                        const SizedBox(height: 40),
+
+                        // Dynamic spacing replacing the hardcoded 40
+                        SizedBox(height: sh * 0.04),
+
                         _animatedField(
                           anim: _field1Anim,
                           child: _modernField(
@@ -170,7 +218,9 @@ class _SignUpScreenState extends State<SignUpScreen>
                             controller: _nationalIdController,
                           ),
                         ),
-                        const SizedBox(height: 40),
+
+                        SizedBox(height: sh * 0.03),
+
                         _animatedField(
                           anim: _field2Anim,
                           child: _modernField(
@@ -179,7 +229,9 @@ class _SignUpScreenState extends State<SignUpScreen>
                             controller: _emailController,
                           ),
                         ),
-                        const SizedBox(height: 40),
+
+                        SizedBox(height: sh * 0.03),
+
                         _animatedField(
                           anim: _field3Anim,
                           child: _modernField(
@@ -188,17 +240,28 @@ class _SignUpScreenState extends State<SignUpScreen>
                             controller: _studentIdController,
                           ),
                         ),
-                        const SizedBox(height: 180),
+
+                        // Replaced the massive hardcoded 180 gap
+                        SizedBox(height: sh * 0.06),
+
                         _mainButton(
                           text: _isLoading ? "Processing..." : "Register",
                           enabled: _isFormValid && !_isLoading,
                           onTap: _handleSignUp,
+                          sw: sw, // Pass sw to keep the button width constrained safely
                         ),
-                        const SizedBox(height: 6),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+
+                        SizedBox(height: sh * 0.02),
+
+                        // Changed to Wrap to protect against horizontal overflow on narrow phones
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            const Text("Already have an account?", style: TextStyle(fontFamily: 'SpaceGrotesk')),
+                            const Text(
+                              "Already have an account?",
+                              style: MobileAppTextStyles.bodyText,
+                            ),
                             TextButton(
                               onPressed: () => Navigator.pushReplacement(
                                 context,
@@ -206,8 +269,8 @@ class _SignUpScreenState extends State<SignUpScreen>
                                     builder: (_) => const LoginScreen()),
                               ),
                               child: const Text(
-                                "Login",
-                                style: TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.bold),
+                                "Login now",
+                                style: MobileAppTextStyles.textButtonHeading,
                               ),
                             ),
                           ],
@@ -249,31 +312,20 @@ class _SignUpScreenState extends State<SignUpScreen>
           padding: const EdgeInsets.only(left: 10, bottom: 2),
           child: Text(
             label,
-            style: const TextStyle(
-              fontFamily: 'Batangas',
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: MobileAppTextStyles.fieldLabel,
           ),
         ),
         Container(
-          height: 50,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: Colors.grey.withOpacity(0.3),
-              width: 1.4,
-            ),
-          ),
+          height: MobileAppDimensions.inputHeight,
+          decoration: MobileAppDecorations.inputBox,
           child: TextField(
             controller: controller,
-            style: const TextStyle(fontFamily: 'SpaceGrotesk'),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: const TextStyle(fontFamily: 'SpaceGrotesk'),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 15),
+            style: MobileAppTextStyles.fieldText,
+            decoration: MobileAppInputStyles.fieldDecoration(
+              hint: hint,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: MobileAppDimensions.inputHorizontalPadding,
+              ),
             ),
           ),
         ),
@@ -285,32 +337,19 @@ class _SignUpScreenState extends State<SignUpScreen>
     required String text,
     required bool enabled,
     required VoidCallback onTap,
+    required double sw,
   }) {
     return Container(
-      width: 280,
-      height: 65,
-      decoration: BoxDecoration(
-        border: Border.all(
-            color: Colors.white.withOpacity(0.3), width: 1.5),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFA78BFA), Color(0xFF67E8F9)],
-        ),
-        borderRadius: BorderRadius.circular(24),
-      ),
+      // Responsive button width based on screen size, falling back to dimensions if there's enough room
+      width: sw * 0.75 > MobileAppDimensions.primaryButtonWidth ? MobileAppDimensions.primaryButtonWidth : sw * 0.75,
+      height: MobileAppDimensions.primaryButtonHeight,
+      decoration: MobileAppDecorations.primaryButtonBox,
       child: ElevatedButton(
         onPressed: enabled ? onTap : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          elevation: 0,
-        ),
+        style: MobileAppButtonStyles.transparentElevated,
         child: Text(
           text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontFamily: 'Batangas',
-            fontSize: 22,
-          ),
+          style: MobileAppTextStyles.buttonText,
         ),
       ),
     );

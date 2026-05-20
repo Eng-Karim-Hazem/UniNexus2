@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:uninexus/ui/screens/tablet/theme/app_theme.dart';
+import 'package:uninexus/theme/app_theme.dart';
+import 'package:uninexus/ui/screens/tablet/request_submitted_page.dart';
+import 'package:uninexus/services/firebase/signup_service.dart'; // Ensure path is correct
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -11,151 +13,154 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage>
     with SingleTickerProviderStateMixin, PageEntryAnimation {
 
-  // National ID field.
   final _nationalIdController = TextEditingController();
-  // Email / ID field.
   final _emailController      = TextEditingController();
-  // Password field.
   final _passwordController   = TextEditingController();
+
+  bool _isLoading = false; // Added loading state
 
   @override
   void initState() {
     super.initState();
-    // entry animation
     initPageAnimation(vsync: this);
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Replays the animation
-    replayPageAnimation();
-  }
-
-  @override
   void dispose() {
-    disposePageAnimation(); // Clean up the animation controller from the mixin
+    disposePageAnimation();
     _nationalIdController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
+  // --- INTEGRATED SIGNUP LOGIC ---
+  Future<void> _handleRegister() async {
+    final nId = _nationalIdController.text.trim();
+    final uId = _emailController.text.trim(); // User enters ID here
+    final email = _emailController.text.trim(); // Or separate email logic
+
+    if (nId.isEmpty || uId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill in all fields")),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    // Using the universal service that checks Students, Faculty, and Staff
+    bool success = await SignupService().registerUser(
+      nationalId: nId,
+      universityId: uId,
+      email: email,
+    );
+
+    if (mounted) setState(() => _isLoading = false);
+
+    if (success && mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const RequestSubmittedPage()),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("ID not found in our records. Please contact administration.")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final mediaQuery = MediaQuery.of(context);
+    final size = mediaQuery.size;
     final sw = size.width;
     final sh = size.height;
+    final formWidth = (sw * 0.34).clamp(320.0, 520.0);
+    final logoSize = (sw * 0.12).clamp(88.0, 140.0);
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: false,
       body: Stack(
         clipBehavior: Clip.hardEdge,
         children: [
-
-          // Background top-right rectangle
+          /// TOP RIGHT SHAPE
           Positioned(
-            right: -sw * 0.05, top: sh * 0.0,
-            child: Image.asset('assets/images_tab/rectangle_down.png',
-                width: sw * 0.45, height: sw * 0.45, fit: BoxFit.contain),
+            right: -sw * 0.2, top: -sh * 0.27,
+            child: FadeTransition(
+              opacity: pageAnimController,
+              child: SlideTransition(
+                position: Tween<Offset>(begin: const Offset(0.3, -0.3), end: Offset.zero).animate(CurvedAnimation(parent: pageAnimController, curve: Curves.easeOutCubic)),
+                child: Image.asset('assets/images/Rectangle1.png', width: sw * 0.55, height: sw * 0.65),
+              ),
+            ),
           ),
 
-          // Background bottom-right rectangle
+          /// BOTTOM RIGHT SHAPE
           Positioned(
-            right: sw * 0.00, bottom: -sh * 0.10,
-            child: Image.asset('assets/images_tab/Rectangle_up.png',
-                width: sw * 0.45, height: sw * 0.45, fit: BoxFit.contain),
+            right: -sw * 0.001, bottom: -sh * 0.46,
+            child: FadeTransition(
+              opacity: pageAnimController,
+              child: SlideTransition(
+                position: Tween<Offset>(begin: const Offset(0.3, 0.3), end: Offset.zero).animate(CurvedAnimation(parent: pageAnimController, curve: Curves.easeOutCubic)),
+                child: Image.asset('assets/images/Rectangle1.png', width: sw * 0.55, height: sw * 0.65),
+              ),
+            ),
           ),
 
-          // Animated page content (slide-up + fade-in)
           animatedPageContent(
             child: Stack(
               children: [
-
-                // Back button – returns to WelcomePage
                 Positioned(
                   left: sw * 0.02, top: sh * 0.04,
                   child: AppBackButton(width: sw * 0.12),
                 ),
 
-                // UniNexus logo
                 Positioned(
-                  left: sw * 0.19, top: sh * 0.09,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Image.asset('assets/images_tab/logo2.png',
-                        width: sw * 0.12, height: sw * 0.12, fit: BoxFit.contain),
-                  ),
-                ),
-
-                // Page title - subtitle
-                Positioned(
-                  left: sw * 0.18, top: sh * 0.31,
+                  left: sw * 0.08, width: formWidth, top: sh * 0.08, bottom: sh * 0.06,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Register to UniNexus',
-                          style: AppTextStyles.heading.copyWith(fontSize: 22)),
-                      const SizedBox(height: 4),
-                      Text('Start your smart campus journey',
-                          style: AppTextStyles.caption),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.asset('assets/images/uni.jpeg', width: logoSize, height: logoSize, fit: BoxFit.cover),
+                      ),
+                      const SizedBox(height: 20),
+                      Text('Register to UniNexus', style: AppTextStyles.heading.copyWith(fontSize: 26)),
+                      const Text('Start your smart campus journey', style: AppTextStyles.caption),
+                      const SizedBox(height: 24),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom + 40),
+                          child: Column(
+                            children: [
+                              animatedField(anim: field1Anim, child: AppLabeledField(label: 'National ID', controller: _nationalIdController, hint: 'Enter Your National ID')),
+                              const SizedBox(height: 20),
+                              animatedField(anim: field2Anim, child: AppLabeledField(label: 'Email / ID', controller: _emailController, hint: 'Enter Your Email/ID')),
+                              const SizedBox(height: 20),
+                              animatedField(anim: field3Anim, child: AppLabeledField(label: 'Password', controller: _passwordController, hint: 'Enter Your Password', obscure: true)),
+                              const SizedBox(height: 32),
+                              animatedField(
+                                anim: checkAnim,
+                                child: _isLoading
+                                    ? const CircularProgressIndicator()
+                                    : Row( // Using a Row guarantees it centers perfectly
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: (sw * 0.25).clamp(200.0, 350.0),
+                                      child: AppAuthButton(text: 'Register', onTap: _handleRegister),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-
-                // National ID field
-                Positioned(
-                  left: sw * 0.14, right: sw * 0.64, top: sh * 0.42,
-                  child: animatedField(
-                    anim: field1Anim,
-                    child: AppLabeledField(
-                      label: 'National ID',
-                      controller: _nationalIdController,
-                      hint: 'Enter Your National ID',
-                    ),
-                  ),
-                ),
-
-                // ── Email / ID field
-                Positioned(
-                  left: sw * 0.14, right: sw * 0.64, top: sh * 0.57,
-                  child: animatedField(
-                    anim: field2Anim,
-                    child: AppLabeledField(
-                      label: 'Email / ID',
-                      controller: _emailController,
-                      hint: 'Enter Your Email/ID',
-                    ),
-                  ),
-                ),
-
-                // Password field
-                Positioned(
-                  left: sw * 0.14, right: sw * 0.64, top: sh * 0.72,
-                  child: animatedField(
-                    anim: field3Anim,
-                    child: AppLabeledField(
-                      label: 'Password',
-                      controller: _passwordController,
-                      hint: 'Enter Your Password',
-                      obscure: true,
-                    ),
-                  ),
-                ),
-
-                // Register button
-                Positioned(
-                  left: sw * 0.18, right: sw * 0.65, top: sh * 0.86,
-                  child: animatedField(
-                    anim: checkAnim,
-                    child: AppAuthButton(
-                      text: 'Register',
-                      onTap: () {
-                      },
-                    ),
-                  ),
-                ),
-
               ],
             ),
           ),

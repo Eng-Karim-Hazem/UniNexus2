@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-
-import '../../../../uninexus_tab.dart';
-import '../theme/app_theme.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uninexus/theme/uninexus_tab.dart';
+import 'package:uninexus/theme/app_theme.dart';
 
 class ITIdScreen extends StatefulWidget {
   final void Function(UninexusTab) onNavigate;
@@ -12,17 +13,63 @@ class ITIdScreen extends StatefulWidget {
 }
 
 class _ITIdScreenState extends State<ITIdScreen> {
+  String _userID = "";
+  bool _isLoading = true;
   bool _isPunchedIn = false;
+
+  final Color _primaryBlue = const Color(0xFF237ABA);
+  final Color _secondaryPurple = const Color(0xFF9C2CF3);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDataFromPrefs();
+  }
+
+  // Load user ID from preferences
+  Future<void> _loadDataFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+
+    if (mounted) {
+      setState(() {
+        _userID = prefs.getString('userCode') ?? prefs.getString('ID') ?? "N/A";
+        _isLoading = false;
+      });
+    }
+  }
+
+  // Handle punch in/out
+  void _handlePunch() {
+    setState(() {
+      _isPunchedIn = !_isPunchedIn;
+    });
+    showInfoSnackBar(
+      context,
+      _isPunchedIn ? 'Punched IN successfully' : 'Punched OUT successfully',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const ITScreenBackground(
+        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      );
+    }
+
+    final String qrData = _isPunchedIn ? "OUT_$_userID" : "IN_$_userID";
+    final List<Color> qrColors = _isPunchedIn
+        ? [_secondaryPurple, _primaryBlue]
+        : [_primaryBlue, _secondaryPurple];
+
     return ITScreenBackground(
       child: Padding(
         padding: const EdgeInsets.all(28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('ID', style: AppTextStyles.largeHeading),
+            const PageHeading('ID'),
             const SizedBox(height: 20),
 
             Expanded(
@@ -34,69 +81,90 @@ class _ITIdScreenState extends State<ITIdScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // ID card inner
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: AppDecorations.idCardInner,
                           child: Row(
                             children: [
+                              // Left decorative elements
                               Column(
                                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                 children: [
-                                  Image.asset('assets/icons/Ellipse 3 (1).png',
+                                  Image.asset('assets/icons/Circle.png',
                                       width: 28, height: 28, fit: BoxFit.contain,
                                       errorBuilder: (_, __, ___) => const Dot()),
                                   const SizedBox(height: 8),
-                                  Image.asset('assets/icons/Rectangle 25 (1).png',
+                                  Image.asset('assets/icons/Rectangle_Small.png',
                                       width: 20, height: 80, fit: BoxFit.fill,
                                       errorBuilder: (_, __, ___) => Container(
                                         width: 4, height: 80,
                                         decoration: BoxDecoration(
-                                          color: AppColors.primary.withOpacity(0.35),
+                                          color: AppColors.primary.withValues(alpha: 0.35),
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                       )),
                                   const SizedBox(height: 8),
-                                  Image.asset('assets/icons/Ellipse 3 (1).png',
+                                  Image.asset('assets/icons/Circle.png',
                                       width: 28, height: 28, fit: BoxFit.contain,
                                       errorBuilder: (_, __, ___) => const Dot()),
                                 ],
                               ),
                               const SizedBox(width: 16),
+
+                              // ID icon
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: AppDecorations.iconBackground,
-                                child: Image.asset('assets/icons/id-card 4 (1).png',
+                                child: Image.asset('assets/icons/ID_Card.png',
                                     width: 40, height: 40, fit: BoxFit.contain,
                                     errorBuilder: (_, __, ___) => const Icon(
                                         Icons.badge_outlined, size: 40,
                                         color: AppColors.primary)),
                               ),
                               const SizedBox(width: 24),
+
+                              // QR code with gradient
                               Expanded(
                                 child: AspectRatio(
                                   aspectRatio: 1,
-                                  child: Image.asset(
-                                      'assets/icons/qr-code (1) 1.png',
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (_, __, ___) => Container(
-                                        decoration: AppDecorations.qrPlaceholder,
-                                        child: const Center(
-                                          child: Icon(Icons.qr_code_2,
-                                              size: 100, color: AppColors.primary),
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      ShaderMask(
+                                        shaderCallback: (bounds) => LinearGradient(
+                                          colors: qrColors,
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ).createShader(bounds),
+                                        blendMode: BlendMode.srcIn,
+                                        child: QrImageView(
+                                          data: qrData,
+                                          version: QrVersions.auto,
+                                          size: 240.0,
+                                          errorCorrectionLevel: QrErrorCorrectLevel.H,
                                         ),
-                                      )),
+                                      ),
+                                      Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Image.asset('assets/images/LOGO.png', fit: BoxFit.contain),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-
                         const SizedBox(height: 28),
 
-                        // Punch IN / OUT button
+                        // Punch button
                         GestureDetector(
-                          onTap: () => setState(() => _isPunchedIn = !_isPunchedIn),
+                          onTap: _handlePunch,
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
                             curve: Curves.easeInOut,
@@ -121,7 +189,9 @@ class _ITIdScreenState extends State<ITIdScreen> {
                                 child: Text(
                                   _isPunchedIn ? 'Punch OUT' : 'Punch IN',
                                   key: ValueKey(_isPunchedIn),
-                                  style: AppTextStyles.buttonStyle,
+                                  style: AppTextStyles.buttonStyle.copyWith(
+                                    color: _isPunchedIn ? AppColors.primary : AppColors.primary,
+                                  ),
                                 ),
                               ),
                             ),

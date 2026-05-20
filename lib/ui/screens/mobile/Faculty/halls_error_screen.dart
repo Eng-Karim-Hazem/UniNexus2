@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uninexus/model/hall_error_model.dart';
 import 'package:uninexus/services/firebase/hall_error_service.dart';
 import '../Student/stu_community.dart';
-import '../settings_screen.dart';
 import 'qa_screen.dart';
 import '../profile_screen.dart';
 
@@ -22,10 +23,7 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
   final HallErrorService _service = HallErrorService();
   final ImagePicker _picker = ImagePicker();
 
-  // --- NEW STATE VARIABLES ---
   String? _selectedBuilding;
-  final List<String> _buildings = ['A', 'B', 'C'];
-
   String? _selectedDepartment;
   String? _selectedErrorType;
   String _base64Image = "";
@@ -34,11 +32,16 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
   int _selectedIndex = 1;
 
   final Color _mainPurple = const Color(0xFF7B61FF);
+  final Color _textIndigo = const Color(0xFF5C5C80);
+  final Color _primaryBlue = const Color(0xFF237ABA);
+
   final Gradient _fabGradient = const LinearGradient(
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
-    begin: Alignment.topLeft, end: Alignment.bottomRight,
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
   );
 
+  final List<String> _buildings = ['A', 'B', 'C'];
   final List<String> _departments = ['IT', 'Storage', 'Maintenance'];
   final List<String> _errorTypes = ['Projector Issue', 'Air Conditioner', 'Lighting', 'Furniture/Desk', 'Other'];
 
@@ -46,15 +49,16 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
     if (image != null) {
       final bytes = await File(image.path).readAsBytes();
-      setState(() {
-        _base64Image = base64Encode(bytes);
-        _attachmentText = "Image Selected ✓";
-      });
+      if (mounted) {
+        setState(() {
+          _base64Image = base64Encode(bytes);
+          _attachmentText = "Image Selected ✓";
+        });
+      }
     }
   }
 
   Future<void> _submitReport() async {
-    // --- UPDATED VALIDATION ---
     if (_hallNameController.text.isEmpty || _selectedErrorType == null || _selectedDepartment == null || _selectedBuilding == null) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Please fill in Building, Hall Name, Department, and Error Type"))
@@ -65,26 +69,22 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
     setState(() => _isUploading = true);
 
     try {
-      // --- COMBINE BUILDING AND HALL NAME ---
       final String fullHallLocation = "Building $_selectedBuilding - ${_hallNameController.text}";
-
       final report = HallErrorModel(
-        hallName: fullHallLocation, // Saves as "Building A - 101"
+        hallName: fullHallLocation,
         department: _selectedDepartment!,
         errorType: _selectedErrorType!,
         description: _descriptionController.text,
         attachment: _base64Image,
         timestamp: DateTime.now(),
       );
-
       await _service.submitError(report);
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error Report Submitted!")));
         Navigator.pop(context);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }
@@ -93,36 +93,58 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
   void _onNavBarTapped(int index) async {
     if (index == _selectedIndex) return;
     setState(() => _selectedIndex = index);
-    if (index == 0) await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
-    else if (index == 1) Navigator.pop(context);
-    else if (index == 2) await Navigator.push(context, MaterialPageRoute(builder: (context) => const QAScreen()));
-    else if (index == 3) await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+    final Map<int, Widget> routes = {
+      0: const StuCommunity(),
+      2: const QAScreen(),
+      3: const ProfileScreen(),
+    };
+    if (index == 1) {
+      Navigator.pop(context);
+    } else if (routes.containsKey(index)) {
+      await Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => routes[index]!));
+    }
     if (mounted) setState(() => _selectedIndex = 1);
   }
 
   @override
   Widget build(BuildContext context) {
+    final sw = MediaQuery.of(context).size.width;
+
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildBottomBar(),
       body: Container(
-        width: double.infinity, height: double.infinity,
-        decoration: const BoxDecoration(image: DecorationImage(image: AssetImage('assets/images/background.png'), fit: BoxFit.cover)),
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          image: DecorationImage(image: AssetImage('assets/images/Phone_Background.png'), fit: BoxFit.cover),
+        ),
         child: SafeArea(
           bottom: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 150),
-            child: Column(
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 30),
-                _buildFormContainer(),
-                const SizedBox(height: 20),
-                _buildSubmitButton(),
-              ],
-            ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                child: _buildHeader(),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 150),
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 10),
+                      _buildFormContainer(),
+                      const SizedBox(height: 30),
+                      _buildSubmitButton(),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -144,8 +166,12 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
             child: Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: _mainPurple),
           ),
         ),
-        const Text("Hall Error", style: TextStyle(fontFamily: 'Batangas', fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
-        ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.asset('assets/images/LOGO.png', width: 36, height: 36)),
+        Text("Hall Error",
+            style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
+        ),
       ],
     );
   }
@@ -157,16 +183,15 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
           color: Colors.white.withOpacity(0.6),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: _mainPurple.withOpacity(0.2), width: 1.5),
-          boxShadow: [BoxShadow(color: const Color(0xFF237ABA).withOpacity(0.12), blurRadius: 25, offset: const Offset(0, 8))]
-      ),
+          boxShadow: [
+            BoxShadow(color: _primaryBlue.withOpacity(0.12), blurRadius: 25, offset: const Offset(0, 8))
+          ]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- SPLIT ROW FOR BUILDING AND HALL NAME ---
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Building Dropdown (Smaller)
               Expanded(
                 flex: 3,
                 child: Column(
@@ -174,29 +199,16 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
                   children: [
                     _buildLabel("Building"),
                     const SizedBox(height: 8),
-                    Container(
-                      height: 55, // Fixed height to match TextField
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(color: const Color(0xFFF2F2F2), borderRadius: BorderRadius.circular(16)),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _selectedBuilding,
-                          hint: Text("Bld", style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400, fontSize: 14)),
-                          isExpanded: true,
-                          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF5C5C80)),
-                          items: _buildings.map((String value) => DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value, style: const TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.black87))
-                          )).toList(),
-                          onChanged: (newValue) => setState(() => _selectedBuilding = newValue),
-                        ),
-                      ),
+                    _buildDropdown(
+                      value: _selectedBuilding,
+                      hint: "Bld",
+                      items: _buildings,
+                      onChanged: (val) => setState(() => _selectedBuilding = val),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
-              // Hall Name Text Field (Larger)
               Expanded(
                 flex: 5,
                 child: Column(
@@ -204,35 +216,42 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
                   children: [
                     _buildLabel("Hall Name"),
                     const SizedBox(height: 8),
+                    // Applied 3-digit numeric restriction here
                     _buildTextField(
-                        controller: _hallNameController,
-                        hint: "Hall No.",
-                        icon: Icons.send_rounded // Kept the icon as requested
+                      controller: _hallNameController,
+                      hint: "123",
+                      isNumberOnly: true,
                     ),
                   ],
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 20),
-
-          _buildLabel("Designated To"), const SizedBox(height: 8),
-          _buildDepartmentDropdown(),
-
+          _buildLabel("Designated To"),
+          const SizedBox(height: 8),
+          _buildDropdown(
+            value: _selectedDepartment,
+            hint: "Choose Department",
+            items: _departments,
+            onChanged: (val) => setState(() => _selectedDepartment = val),
+          ),
           const SizedBox(height: 20),
-
-          _buildLabel("Error Type"), const SizedBox(height: 8),
-          _buildErrorTypeDropdown(),
-
+          _buildLabel("Error Type"),
+          const SizedBox(height: 8),
+          _buildDropdown(
+            value: _selectedErrorType,
+            hint: "Choose Error Type",
+            items: _errorTypes,
+            onChanged: (val) => setState(() => _selectedErrorType = val),
+          ),
           const SizedBox(height: 20),
-
-          _buildLabel("Description"), const SizedBox(height: 8),
+          _buildLabel("Description"),
+          const SizedBox(height: 8),
           _buildDescriptionField(),
-
           const SizedBox(height: 20),
-
-          _buildLabel("Attachment"), const SizedBox(height: 8),
+          _buildLabel("Attachment"),
+          const SizedBox(height: 8),
           _buildTextField(
             controller: TextEditingController(text: _base64Image.isNotEmpty ? "Image Attached" : ""),
             hint: _attachmentText,
@@ -245,37 +264,19 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
     );
   }
 
-  Widget _buildDepartmentDropdown() {
+  Widget _buildDropdown({required String? value, required String hint, required List<String> items, required Function(String?) onChanged}) {
     return Container(
+      height: 55,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(color: const Color(0xFFF2F2F2), borderRadius: BorderRadius.circular(16)),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: _selectedDepartment,
-          hint: Text("Choose the Department", style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400)),
+          value: value,
+          hint: Text(hint, style: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400, fontSize: 14)),
           isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF5C5C80), size: 30),
-          items: _departments.map((String value) => DropdownMenuItem<String>(
-              value: value,
-              child: Text(value, style: const TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.black87))
-          )).toList(),
-          onChanged: (newValue) => setState(() => _selectedDepartment = newValue),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorTypeDropdown() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(color: const Color(0xFFF2F2F2), borderRadius: BorderRadius.circular(16)),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _selectedErrorType,
-          hint: Text("Choose the error type", style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400)),
-          isExpanded: true, icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF5C5C80), size: 30),
-          items: _errorTypes.map((String value) => DropdownMenuItem<String>(value: value, child: Text(value, style: const TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.black87)))).toList(),
-          onChanged: (newValue) => setState(() => _selectedErrorType = newValue),
+          icon: Icon(Icons.keyboard_arrow_down_rounded, color: _textIndigo, size: 28),
+          items: items.map((String val) => DropdownMenuItem<String>(value: val, child: Text(val, style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14)))).toList(),
+          onChanged: onChanged,
         ),
       ),
     );
@@ -283,41 +284,80 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
 
   Widget _buildDescriptionField() {
     return Container(
-      height: 90, padding: const EdgeInsets.all(16),
+      height: 100,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: const Color(0xFFF2F2F2), borderRadius: BorderRadius.circular(16)),
       child: TextField(
-        controller: _descriptionController, maxLines: 5, style: const TextStyle(fontFamily: 'SpaceGrotesk'),
-        decoration: InputDecoration.collapsed(hintText: "Submit your problem details", hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400)),
+        controller: _descriptionController,
+        maxLines: 5,
+        style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14),
+        decoration: InputDecoration.collapsed(
+          hintText: "Submit your problem details",
+          hintStyle: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400, fontSize: 14),
+        ),
       ),
     );
   }
 
   Widget _buildSubmitButton() {
     return SizedBox(
-      width: 220, height: 55,
+      width: 220,
+      height: 55,
       child: OutlinedButton(
         onPressed: _isUploading ? null : _submitReport,
-        style: OutlinedButton.styleFrom(side: BorderSide(color: _mainPurple, width: 2), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), backgroundColor: Colors.white),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: _mainPurple, width: 2),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: Colors.white,
+        ),
         child: _isUploading
-            ? CircularProgressIndicator(color: _mainPurple)
-            : const Text("Submit", style: TextStyle(fontFamily: 'Batangas', fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF5C5C80))),
+            ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: _mainPurple, strokeWidth: 2.5))
+            : Text("Submit",
+            style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: _textIndigo)),
       ),
     );
   }
 
   Widget _buildLabel(String text) {
-    return Text(text, style: const TextStyle(fontFamily: 'Batangas', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87));
+    return Text(text,
+        style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87));
   }
 
-  Widget _buildTextField({required TextEditingController controller, required String hint, IconData? icon, bool readOnly = false, VoidCallback? onIconTap}) {
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    IconData? icon,
+    bool readOnly = false,
+    VoidCallback? onIconTap,
+    bool isNumberOnly = false, // Parameter for numeric restriction
+  }) {
     return Container(
-      height: 55, // Fixed height ensuring alignment
+      height: 55,
       decoration: BoxDecoration(color: const Color(0xFFF2F2F2), borderRadius: BorderRadius.circular(16)),
       child: TextField(
-        controller: controller, readOnly: readOnly, style: const TextStyle(fontFamily: 'SpaceGrotesk'),
+        controller: controller,
+        readOnly: readOnly,
+        // Restricts keyboard and input length
+        keyboardType: isNumberOnly ? TextInputType.number : TextInputType.text,
+        inputFormatters: isNumberOnly ? [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(3),
+        ] : null,
+        style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14),
         decoration: InputDecoration(
-          hintText: hint, hintStyle: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey.shade400), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          suffixIcon: icon != null ? GestureDetector(onTap: onIconTap, child: Container(margin: const EdgeInsets.all(5), decoration: BoxDecoration(color: _mainPurple.withOpacity(0.8), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: Colors.white, size: 24))) : null,
+          hintText: hint,
+          hintStyle: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400),
+          border: InputBorder.none,
+          counterText: "", // Hides the counter shown by LengthLimitingTextInputFormatter
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          suffixIcon: icon != null
+              ? GestureDetector(
+              onTap: onIconTap,
+              child: Container(
+                  margin: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(color: _mainPurple.withOpacity(0.8), borderRadius: BorderRadius.circular(12)),
+                  child: Icon(icon, color: Colors.white, size: 22)))
+              : null,
         ),
       ),
     );
@@ -325,44 +365,92 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
 
   Widget _buildHomeFab() {
     return Container(
-      height: 72, width: 72,
-      decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.6), blurRadius: 25, spreadRadius: 6, offset: const Offset(0, 2))]),
+      height: 72,
+      width: 72,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: _mainPurple.withOpacity(0.6),
+            blurRadius: 25,
+            spreadRadius: 6,
+            offset: const Offset(0, 2),
+          )
+        ],
+      ),
       child: FloatingActionButton(
         onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-        backgroundColor: Colors.transparent, elevation: 0, shape: const CircleBorder(),
-        child: Container(decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient), child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40))),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        shape: const CircleBorder(),
+        child: Container(
+          decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
+          child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
+        ),
       ),
     );
   }
 
   Widget _buildBottomBar() {
     return Container(
-      decoration: BoxDecoration(color: Colors.transparent, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 20, spreadRadius: 4, offset: const Offset(0, -6))]),
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 20,
+            spreadRadius: 4,
+            offset: const Offset(0, -6),
+          ),
+        ],
+      ),
       child: BottomAppBar(
-        clipBehavior: Clip.antiAlias, shape: const CircularNotchedRectangle(), notchMargin: 9.0, color: Colors.white, elevation: 0, height: 80,
+        clipBehavior: Clip.antiAlias,
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 9.0,
+        color: Colors.white,
+        elevation: 0,
+        height: 80,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [_buildNavBarItem('assets/images/solidarity_1.png', "Community", 0), _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1)])),
+            _buildNavSection([
+              _buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),
+              _buildNavBarItem('assets/images/classroom_1.png', "Halls", 1),
+            ]),
             const SizedBox(width: 72),
-            Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [_buildNavBarItem('assets/images/qa.png', "Q&A", 2), _buildNavBarItem('assets/images/user.png', "Profile", 3)])),
+            _buildNavSection([
+              _buildNavBarItem('assets/images/qa.png', "Q&A", 2),
+              _buildNavBarItem('assets/images/user.png', "Profile", 3),
+            ]),
           ],
         ),
       ),
     );
   }
 
+  Widget _buildNavSection(List<Widget> items) =>
+      Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: items));
+
   Widget _buildNavBarItem(String iconPath, String label, int index) {
     final bool isSelected = _selectedIndex == index;
+    final Color itemColor = isSelected ? _mainPurple : Colors.grey.shade500;
     return GestureDetector(
       onTap: () => _onNavBarTapped(index),
       behavior: HitTestBehavior.opaque,
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset(iconPath, width: 28, height: 28, color: isSelected ? _mainPurple : Colors.grey.shade500),
+          Image.asset(iconPath, width: 28, height: 28, color: itemColor),
           const SizedBox(height: 5),
-          Text(label, style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 12, color: isSelected ? _mainPurple : Colors.grey.shade600, fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600)),
+          Text(label,
+              style: TextStyle(
+                fontFamily: MobileAppFonts.body,
+                fontSize: 12,
+                color: itemColor,
+                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+              )),
         ],
       ),
     );

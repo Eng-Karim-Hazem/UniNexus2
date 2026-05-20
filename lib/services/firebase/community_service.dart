@@ -45,7 +45,7 @@ class CommunityService {
         .map((snapshot) {
       return snapshot.docs.map((doc) {
         return CommunityReplyModel.fromMap(
-            doc.data() as Map<String, dynamic>, doc.id);
+            doc.data(), doc.id);
       }).toList();
     });
   }

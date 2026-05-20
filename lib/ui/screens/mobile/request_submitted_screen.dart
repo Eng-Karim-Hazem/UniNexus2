@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 
 import 'login_screen.dart';
-
 
 class RequestSubmittedScreen extends StatefulWidget {
   const RequestSubmittedScreen({super.key});
@@ -16,6 +16,8 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
   late AnimationController _contentController;
   late Animation<Offset> _contentIntro;
   late Animation<double> _fadeAnim;
+  late Animation<Offset> _topRectIntro;
+  late Animation<Offset> _bottomRectIntro;
 
   @override
   void initState() {
@@ -23,7 +25,7 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
 
     _contentController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 700),
     );
 
     _contentIntro = Tween<Offset>(
@@ -41,7 +43,21 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
       curve: Curves.easeOut,
     );
 
-    Future.delayed(const Duration(milliseconds: 200), () {
+    _topRectIntro = Tween<Offset>(
+      begin: const Offset(1.4, -1.4),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic),
+    );
+
+    _bottomRectIntro = Tween<Offset>(
+      begin: const Offset(-1.4, 1.4),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic),
+    );
+
+    Future.delayed(const Duration(milliseconds: 700), () {
       if (mounted) _contentController.forward();
     });
   }
@@ -54,6 +70,10 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Grab screen dimensions for perfect proportions
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -66,17 +86,37 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
               ),
             ),
             Positioned(
-              top: MediaQuery.of(context).size.height * 0.25,
-              right: -200,
-              child: IgnorePointer(
-                child: Hero(
-                  tag: 'shared-rectangle',
+              top: -130,
+              right: -260,
+              child: SlideTransition(
+                position: _topRectIntro,
+                child: IgnorePointer(
                   child: Opacity(
                     opacity: 0.9,
                     child: Image.asset(
                       "assets/images/Rectangle.png",
                       width: 550,
                       fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -260,
+              left: -210,
+              child: SlideTransition(
+                position: _bottomRectIntro,
+                child: IgnorePointer(
+                  child: Hero(
+                    tag: 'shared-rectangle',
+                    child: Opacity(
+                      opacity: 0.9,
+                      child: Image.asset(
+                        "assets/images/Rectangle.png",
+                        width: 550,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
                 ),
@@ -90,49 +130,64 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
                   child: Align(
                     alignment: Alignment.topCenter,
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(40, 100, 40, 40),
+                      physics: const BouncingScrollPhysics(),
+                      // Dynamic padding so it breathes perfectly
+                      padding: EdgeInsets.fromLTRB(sw * 0.08, sh * 0.1, sw * 0.08, sh * 0.05),
                       child: Column(
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(18),
                             child: Image.asset(
                               "assets/images/uni.jpeg",
-                              width: 180,
+                              // Scale image dynamically
+                              width: sw * 0.45 > 180 ? 180 : sw * 0.45,
                               fit: BoxFit.cover,
                             ),
                           ),
-                          const SizedBox(height: 20),
+
+                          SizedBox(height: sh * 0.03), // Replaced 20
+
                           const Text(
                             "Request Submitted",
                             style: TextStyle(
-                              fontFamily: 'Batangas',
+                              fontFamily: MobileAppFonts.heading,
                               fontSize: 30,
                               fontWeight: FontWeight.bold,
                             ),
+                            textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 50),
+
+                          SizedBox(height: sh * 0.05), // Replaced 50
+
                           const Text(
                             "Your request was sent successfully",
                             style: TextStyle(
-                              fontFamily: 'SpaceGrotesk',
+                              fontFamily: MobileAppFonts.body,
                               color: Colors.black54,
                               fontSize: 17,
                             ),
+                            textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 24),
+
+                          SizedBox(height: sh * 0.03), // Replaced 24
+
                           const Text(
                             "For further questions or if there is any delay in processing your request, please contact the university department.",
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontFamily: 'SpaceGrotesk',
+                              fontFamily: MobileAppFonts.body,
                               color: Colors.black54,
                               fontSize: 15,
                               height: 1.4,
                             ),
                           ),
-                          const SizedBox(height: 210),
+
+                          // THE FIX: Replaced the massive 210 gap with a dynamic proportional spacer
+                          SizedBox(height: sh * 0.25),
+
                           _mainButton(
                             text: "Back to Login",
+                            sw: sw, // Pass screen width
                             onTap: () {
                               Navigator.pushReplacement(
                                 context,
@@ -158,9 +213,11 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
   Widget _mainButton({
     required String text,
     required VoidCallback onTap,
+    required double sw,
   }) {
     return Container(
-      width: 280,
+      // Keep button from overflowing narrow screens
+      width: sw * 0.75 > 280 ? 280 : sw * 0.75,
       height: 65,
       decoration: BoxDecoration(
         border: Border.all(
@@ -186,7 +243,7 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
           text,
           style: const TextStyle(
             color: Colors.white,
-            fontFamily: 'Batangas',
+            fontFamily: MobileAppFonts.heading,
             fontSize: 22,
             fontWeight: FontWeight.w600,
           ),

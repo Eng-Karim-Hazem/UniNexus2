@@ -1,4 +1,6 @@
+
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
@@ -20,10 +22,9 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   // No specific index highlighted for Settings
-  int _selectedIndex = -1;
+  final int _selectedIndex = -1;
 
   final Color _mainPurple = const Color(0xFF7B61FF);
-  final Color _primaryBlue = const Color(0xFF237ABA);
 
   final Gradient _fabGradient = const LinearGradient(
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
@@ -52,20 +53,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
         backgroundColor: Colors.white,
         title: Text(
           "Logout",
-          style: TextStyle(fontFamily: 'Batangas', fontWeight: FontWeight.bold, color: _mainPurple),
+          style: TextStyle(fontFamily: MobileAppFonts.heading, fontWeight: FontWeight.bold, color: _mainPurple),
         ),
         content: const Text(
           "Are you sure you want to logout?",
-          style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 16),
+          style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 16),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text("Cancel", style: TextStyle(color: Colors.grey.shade600, fontFamily: 'SpaceGrotesk')),
+            child: Text("Cancel", style: TextStyle(color: Colors.grey.shade600, fontFamily: MobileAppFonts.body)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text("Logout", style: TextStyle(color: Colors.redAccent, fontFamily: 'SpaceGrotesk', fontWeight: FontWeight.bold)),
+            child: const Text("Logout", style: TextStyle(color: Colors.redAccent, fontFamily: MobileAppFonts.body, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -98,7 +99,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         width: double.infinity, height: double.infinity,
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/background.png'),
+            image: AssetImage('assets/images/Phone_Background.png'),
             fit: BoxFit.cover,
           ),
         ),
@@ -132,7 +133,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.white.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: _mainPurple),
@@ -141,7 +142,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const Text(
           "Settings",
           style: TextStyle(
-            fontFamily: 'Batangas',
+            fontFamily: MobileAppFonts.heading,
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Color(0xFF5C5C80),
@@ -179,15 +180,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         margin: const EdgeInsets.only(bottom: 20),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.6),
+          color: Colors.white.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-              color: isLogout ? Colors.red.withOpacity(0.4) : _mainPurple.withOpacity(0.3),
+              color: isLogout ? Colors.red.withValues(alpha: 0.4) : _mainPurple.withValues(alpha: 0.3),
               width: 1
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF237ABA).withOpacity(0.08),
+              color: const Color(0xFF237ABA).withValues(alpha: 0.08),
               blurRadius: 15,
               offset: const Offset(0, 5),
             )
@@ -206,14 +207,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Container(
               height: 35, // Matched height from previous tweaks
               width: 2.5,
-              color: isLogout ? Colors.red.withOpacity(0.3) : _mainPurple.withOpacity(0.3),
+              color: isLogout ? Colors.red.withValues(alpha: 0.3) : _mainPurple.withValues(alpha: 0.3),
             ),
             const SizedBox(width: 15),
             Expanded(
               child: Text(
                 title,
                 style: TextStyle(
-                  fontFamily: 'Batangas',
+                  fontFamily: MobileAppFonts.heading,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: isLogout ? Colors.red : Colors.black87,
@@ -234,7 +235,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withOpacity(0.6),
+            color: _mainPurple.withValues(alpha: 0.6),
             blurRadius: 25,
             spreadRadius: 6,
             offset: const Offset(0, 2),
@@ -263,7 +264,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 20,
             spreadRadius: 4,
             offset: const Offset(0, -6),
@@ -324,7 +325,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 12,
               color: sel ? _mainPurple : Colors.grey.shade600,
               fontWeight: sel ? FontWeight.w900 : FontWeight.w600,

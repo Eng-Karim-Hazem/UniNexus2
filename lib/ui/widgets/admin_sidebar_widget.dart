@@ -1,8 +1,6 @@
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/app_theme.dart';
 import '../../admin_tab.dart';
-import '../../uninexus_tab.dart';
-import '../screens/tablet/theme/app_theme.dart';
 class AdminSidebar extends StatelessWidget {
   final AdminTab current;
   final void Function(AdminTab) onNavigate;
@@ -15,12 +13,12 @@ class AdminSidebar extends StatelessWidget {
 
   // NAVIGATION ITEMS
   static const _items = [
-    ('assets/icons/home.png',       'Dashboard',   AdminTab.dashboard),
-    ('assets/icons/qr_code.png',    'ID',          AdminTab.id),
-    ('assets/icons/alert1.png',      'Notices',    AdminTab.notices),
-    ('assets/icons/request.png',    'Requests',    AdminTab.requests),
-    ('assets/icons/user_white.png', 'Profile',     AdminTab.profile),
-    ('assets/icons/settings.png',   'Settings',    AdminTab.settings),
+    ('assets/icons/Home.png',       'Dashboard',   AdminTab.dashboard),
+    ('assets/icons/QR_Icon.png',    'ID',          AdminTab.id),
+    ('assets/icons/Notices.png',      'Notices',    AdminTab.notices),
+    ('assets/icons/Request.png',    'Requests',    AdminTab.requests),
+    ('assets/icons/Profile_White.png', 'Profile',     AdminTab.profile),
+    ('assets/icons/Settings.png',   'Settings',    AdminTab.settings),
   ];
 
   @override
@@ -41,7 +39,6 @@ class AdminSidebar extends StatelessWidget {
                 gradient: AppColors.sidebarGradient,
                 borderRadius: BorderRadius.only(
                   topRight: Radius.circular(32),
-                  bottomRight: Radius.circular(32),
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -51,14 +48,29 @@ class AdminSidebar extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: _items
-                      .map((e) => _navItem(e.$1, e.$2, e.$3))
-                      .toList(),
-                ),
+              // THE FIX: Makes the column scrollable only if it runs out of vertical space
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(), // Gives it a nice tablet bounce
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight, // Forces it to take up at least the full sidebar height
+                      ),
+                      child: IntrinsicHeight( // Allows MainAxisAlignment.spaceEvenly to work inside a scroll view
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: _items
+                                .map((e) => _navItem(e.$1, e.$2, e.$3))
+                                .toList(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/model/community_model.dart';
 import 'package:uninexus/services/firebase/community_service.dart';
@@ -11,7 +12,6 @@ import 'package:uninexus/ui/screens/mobile/Faculty/halls_screen.dart';
 import 'create_community_post_screen.dart';
 import 'community_post_detail_screen.dart';
 
-
 class StuCommunity extends StatefulWidget {
   const StuCommunity({super.key});
 
@@ -23,7 +23,6 @@ class _StuCommunityState extends State<StuCommunity> {
   // Service
   final _communityService = CommunityService();
 
-  final int _selectedIndex = 0; // Community is selected
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
   final Color _textIndigo = const Color(0xFF5C5C80);
@@ -52,6 +51,10 @@ class _StuCommunityState extends State<StuCommunity> {
 
   @override
   Widget build(BuildContext context) {
+    // Grab screen dimensions for perfect proportions
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
     return Scaffold(
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
@@ -62,7 +65,7 @@ class _StuCommunityState extends State<StuCommunity> {
         height: double.infinity,
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/background.png'),
+            image: AssetImage('assets/images/Phone_Background.png'),
             fit: BoxFit.cover,
           ),
         ),
@@ -71,11 +74,12 @@ class _StuCommunityState extends State<StuCommunity> {
           child: Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+                // Dynamic padding based on screen size
+                padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.02),
                 child: Column(
                   children: [
                     _buildTopHeader(),
-                    const SizedBox(height: 30),
+                    SizedBox(height: sh * 0.03),
 
                     // --- STREAM BUILDER FOR REAL DATA ---
                     Expanded(
@@ -87,14 +91,14 @@ class _StuCommunityState extends State<StuCommunity> {
                           }
 
                           if (snapshot.hasError) {
-                            return Center(child: Text("Error loading posts", style: TextStyle(color: Colors.red, fontFamily: 'SpaceGrotesk')));
+                            return const Center(child: Text("Error loading posts", style: TextStyle(color: Colors.red, fontFamily: MobileAppFonts.body)));
                           }
 
                           if (!snapshot.hasData || snapshot.data!.isEmpty) {
                             return const Center(
                                 child: Text(
                                     "No questions yet. Be the first to ask!",
-                                    style: TextStyle(fontFamily: 'SpaceGrotesk', color: Colors.grey)
+                                    style: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey)
                                 )
                             );
                           }
@@ -103,36 +107,49 @@ class _StuCommunityState extends State<StuCommunity> {
 
                           return ListView.separated(
                             physics: const BouncingScrollPhysics(),
+                            // Ensure the bottom post isn't hidden behind the floating button
+                            padding: const EdgeInsets.only(bottom: 180),
                             itemCount: posts.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 16),
-                            itemBuilder: (context, i) => _buildPostCard(posts[i]),
+                            separatorBuilder: (_, __) => SizedBox(height: sh * 0.02),
+                            itemBuilder: (context, i) => _buildPostCard(posts[i], sw),
                           );
                         },
                       ),
                     ),
-                    const SizedBox(height: 100),
                   ],
                 ),
               ),
 
-              // Floating "Create Post" Button
+              // --- CLAMPED DYNAMIC FAB ---
               Positioned(
-                bottom: 130,
-                right: 24,
+                // Scales vertically, but never dips below 110px (protecting it from the nav bar)
+                bottom: (sh * 0.12).clamp(110.0, 140.0),
+                // Scales horizontally, maintaining edge padding
+                right: (sw * 0.06).clamp(20.0, 35.0),
                 child: GestureDetector(
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateCommunityPostScreen())),
                   child: Container(
-                    width: 80, height: 80,
+                    // Aims for 16% of screen width, but freezes between 55px and 70px
+                    width: (sw * 0.20).clamp(70.0, 85.0),
+                    height: (sw * 0.20).clamp(70.0, 85.0),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
+                      // Dynamically curves the edges while maintaining shape
+                      borderRadius: BorderRadius.circular((sw * 0.05).clamp(16.0, 24.0)),
+                      boxShadow: [
+                        BoxShadow(
+                            color: _mainPurple.withValues(alpha: 0.25),
+                            blurRadius: 15,
+                            offset: const Offset(0, 6)
+                        )
+                      ],
                     ),
                     child: Center(
                       child: Image.asset(
-                        'assets/images/solidarity_1.png',
-                        width: 50,
-                        height: 50,
+                        'assets/icons/solidarity.png',
+                        // Scales icon perfectly alongside the button bounds
+                        width: (sw * 0.20).clamp(30.0, 50.0),
+                        height: (sw * 0.20).clamp(30.0, 50.0),
                         fit: BoxFit.contain,
                         color: _mainPurple,
                       ),
@@ -164,7 +181,7 @@ class _StuCommunityState extends State<StuCommunity> {
         const Text(
             "Community",
             style: TextStyle(
-                fontFamily: 'Batangas',
+                fontFamily: MobileAppFonts.heading,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF5C5C80)
@@ -179,18 +196,16 @@ class _StuCommunityState extends State<StuCommunity> {
     );
   }
 
-  // --- UPDATED CARD WITH SWIPE TO DELETE ---
-  Widget _buildPostCard(CommunityPostModel post) {
+  Widget _buildPostCard(CommunityPostModel post, double sw) {
     return Dismissible(
       key: Key(post.id),
-      // Only allow swipe if NOT a student (i.e., Faculty)
       direction: _isStudent ? DismissDirection.none : DismissDirection.endToStart,
       background: Container(
         padding: const EdgeInsets.only(right: 25),
         alignment: Alignment.centerRight,
         decoration: BoxDecoration(
-          color: Colors.redAccent.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(20), // Match the card radius
+          color: Colors.redAccent.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(20),
         ),
         child: const Icon(Icons.delete_forever_rounded, color: Colors.white, size: 32),
       ),
@@ -212,7 +227,6 @@ class _StuCommunityState extends State<StuCommunity> {
         );
       },
       onDismissed: (direction) {
-        // Call the service to delete
         _communityService.deletePost(post.id);
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Post deleted"))
@@ -221,14 +235,14 @@ class _StuCommunityState extends State<StuCommunity> {
       child: GestureDetector(
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CommunityPostDetailScreen(post: post))),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: EdgeInsets.symmetric(horizontal: sw * 0.04, vertical: 16),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9),
+            color: Colors.white.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: _mainPurple.withOpacity(0.15), width: 1.5),
+            border: Border.all(color: _mainPurple.withValues(alpha: 0.15), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.12),
+                color: Colors.black.withValues(alpha: 0.12),
                 blurRadius: 18,
                 spreadRadius: 2,
                 offset: const Offset(0, 6),
@@ -248,21 +262,23 @@ class _StuCommunityState extends State<StuCommunity> {
                         children: [
                           Text(
                               post.title,
-                              style: TextStyle(fontFamily: 'Batangas', fontSize: 15, fontWeight: FontWeight.bold, color: _primaryBlue)
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 15, fontWeight: FontWeight.bold, color: _primaryBlue)
                           ),
-                          // Display Role and Name correctly
                           Text(
                             "${post.userRole} • ${post.userName}",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
                           ),
                         ],
                       )
                   ),
-                  // Display Reply Count if > 0
                   if (post.replyCount > 0)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(color: _mainPurple.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                      decoration: BoxDecoration(color: _mainPurple.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
                       child: Text("${post.replyCount}", style: TextStyle(color: _mainPurple, fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   const SizedBox(width: 5),
@@ -274,7 +290,7 @@ class _StuCommunityState extends State<StuCommunity> {
                   post.content,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 13, color: _textIndigo, height: 1.4)
+                  style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 13, color: _textIndigo, height: 1.4)
               ),
             ],
           ),
@@ -291,7 +307,7 @@ class _StuCommunityState extends State<StuCommunity> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withOpacity(0.6),
+            color: _mainPurple.withValues(alpha: 0.6),
             blurRadius: 25,
             spreadRadius: 6,
             offset: const Offset(0, 2),
@@ -375,7 +391,7 @@ class _StuCommunityState extends State<StuCommunity> {
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 20,
             spreadRadius: 4,
             offset: const Offset(0, -6),
@@ -409,13 +425,17 @@ class _StuCommunityState extends State<StuCommunity> {
             color: sel ? _mainPurple : Colors.grey.shade500,
           ),
           const SizedBox(height: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
-              fontSize: 12,
-              color: sel ? _mainPurple : Colors.grey.shade600,
-              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: MobileAppFonts.body,
+                fontSize: 12,
+                color: sel ? _mainPurple : Colors.grey.shade600,
+                fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+              ),
             ),
           ),
         ],

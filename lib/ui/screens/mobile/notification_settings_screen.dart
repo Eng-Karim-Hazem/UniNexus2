@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:uninexus/theme/mobile_app_theme.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_schedule.dart';
@@ -18,18 +21,101 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
   String? _selectedQA;
   String? _selectedAnnouncements;
 
+  bool _isLoading = false;
+
   final List<String> _alertModes = ['Sound', 'Vibrate', 'Silent', 'Priority'];
 
-  // No specific index highlighted
-  int _selectedIndex = -1;
-
+  final int _selectedIndex = -1;
   final Color _mainPurple = const Color(0xFF7B61FF);
-  final Color _primaryBlue = const Color(0xFF237ABA);
-
   final Gradient _fabGradient = const LinearGradient(
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
     begin: Alignment.topLeft, end: Alignment.bottomRight,
   );
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedSettings();
+  }
+
+  Future<void> _loadSavedSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _selectedGeneral = prefs.getString('notif_general');
+        _selectedQA = prefs.getString('notif_qa');
+        _selectedAnnouncements = prefs.getString('notif_announcements');
+      });
+    }
+  }
+
+  Future<void> _saveSettings() async {
+    if (_selectedGeneral == null && _selectedQA == null && _selectedAnnouncements == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please make a selection to update.", style: TextStyle(fontFamily: MobileAppFonts.body))),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String userId = prefs.getString('ID') ?? '';
+
+      if (userId.isEmpty) throw Exception("User ID not found.");
+
+      String targetCollection = 'students';
+      final prefix = userId.toUpperCase();
+
+      if (prefix.startsWith('FA')) {
+        targetCollection = 'faculty';
+      } else if (prefix.startsWith('ST')) {
+        targetCollection = 'students';
+      }
+
+      final query = await FirebaseFirestore.instance
+          .collection(targetCollection)
+          .where('ID', isEqualTo: prefix)
+          .limit(1)
+          .get();
+
+      if (query.docs.isEmpty) throw Exception("Could not find user profile in database.");
+
+      final docRef = query.docs.first.reference;
+
+      Map<String, dynamic> notifSettings = {};
+      if (_selectedGeneral != null) notifSettings['general'] = _selectedGeneral;
+      if (_selectedQA != null) notifSettings['qa'] = _selectedQA;
+      if (_selectedAnnouncements != null) notifSettings['announcements'] = _selectedAnnouncements;
+
+      await docRef.update({
+        'notification_settings': notifSettings
+      });
+
+      if (_selectedGeneral != null) await prefs.setString('notif_general', _selectedGeneral!);
+      if (_selectedQA != null) await prefs.setString('notif_qa', _selectedQA!);
+      if (_selectedAnnouncements != null) await prefs.setString('notif_announcements', _selectedAnnouncements!);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Notification Settings Updated!", style: TextStyle(fontFamily: MobileAppFonts.body)),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error saving settings: $e"), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   void _onNavBarTapped(int index) async {
     if (index == 0) {
@@ -45,6 +131,10 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Grab screen dimensions for perfect proportions
+    final sw = MediaQuery.of(context).size.width;
+    final sh = MediaQuery.of(context).size.height;
+
     return Scaffold(
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
@@ -54,21 +144,36 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         width: double.infinity, height: double.infinity,
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/background.png'),
+            image: AssetImage('assets/images/Phone_Background.png'),
             fit: BoxFit.cover,
           ),
         ),
         child: SafeArea(
           bottom: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 150),
+          child: Padding(
+            // Dynamic padding applied to the entire screen layout
+            padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.02),
             child: Column(
               children: [
+                // 1. HEADER IS OUTSIDE THE SCROLL VIEW (Fixed at top)
                 _buildHeader(),
-                const SizedBox(height: 30),
-                _buildFormCard(),
-                const SizedBox(height: 40),
-                _buildUpdateButton(),
+                SizedBox(height: sh * 0.03),
+
+                // 2. ONLY THE CONTENT BELOW THE HEADER IS SCROLLABLE
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    // Padding at the bottom so content doesn't get hidden behind the floating button
+                    padding: EdgeInsets.only(bottom: sh * 0.15),
+                    child: Column(
+                      children: [
+                        _buildFormCard(sw),
+                        SizedBox(height: sh * 0.04),
+                        _buildUpdateButton(sw),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -81,7 +186,6 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Back Button (Settings Icon)
         GestureDetector(
           onTap: () => Navigator.pop(context),
           child: Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: _mainPurple),
@@ -90,7 +194,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         const Text(
           "Notification",
           style: TextStyle(
-            fontFamily: 'Batangas',
+            fontFamily: MobileAppFonts.heading,
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Color(0xFF5C5C80),
@@ -105,17 +209,18 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     );
   }
 
-  Widget _buildFormCard() {
+  Widget _buildFormCard(double sw) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      // Dynamic internal padding
+      padding: EdgeInsets.all(sw * 0.06),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.6),
+        color: Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _mainPurple.withOpacity(0.6), width: 1.5),
+        border: Border.all(color: _mainPurple.withValues(alpha: 0.6), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF237ABA).withOpacity(0.1),
+            color: const Color(0xFF237ABA).withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           )
@@ -127,7 +232,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           const Text(
             "This feature is used to customize your notification and alerts priority and usage.",
             style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+              fontFamily: MobileAppFonts.body,
               fontSize: 13,
               color: Colors.black87,
               height: 1.4,
@@ -136,7 +241,6 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           ),
           const SizedBox(height: 20),
 
-          // General Dropdown
           _buildLabel("General"),
           const SizedBox(height: 8),
           _buildDropdownField(
@@ -147,7 +251,6 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
           const SizedBox(height: 16),
 
-          // Q&A Dropdown
           _buildLabel("Q&A"),
           const SizedBox(height: 8),
           _buildDropdownField(
@@ -158,7 +261,6 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
 
           const SizedBox(height: 16),
 
-          // Announcements Dropdown
           _buildLabel("Announcements"),
           const SizedBox(height: 8),
           _buildDropdownField(
@@ -175,7 +277,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     return Text(
       text,
       style: const TextStyle(
-        fontFamily: 'Batangas',
+        fontFamily: MobileAppFonts.heading,
         fontSize: 15,
         fontWeight: FontWeight.bold,
         color: Colors.black,
@@ -188,7 +290,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F2F2), // Light grey background
+        color: const Color(0xFFF2F2F2),
         borderRadius: BorderRadius.circular(16),
       ),
       child: DropdownButtonHideUnderline(
@@ -197,7 +299,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           hint: Text(
             hint,
             style: TextStyle(
-                fontFamily: 'SpaceGrotesk',
+                fontFamily: MobileAppFonts.body,
                 color: Colors.grey.shade400,
                 fontSize: 13
             ),
@@ -209,7 +311,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
               value: item,
               child: Text(
                   item,
-                  style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 14, color: Colors.black87)
+                  style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: Colors.black87)
               ),
             );
           }).toList(),
@@ -219,25 +321,24 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     );
   }
 
-  Widget _buildUpdateButton() {
+  Widget _buildUpdateButton(double sw) {
     return SizedBox(
-      width: 200,
+      // Responsive button width so it doesn't overflow small screens
+      width: sw * 0.5 > 200 ? 200 : sw * 0.5,
       height: 50,
       child: OutlinedButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Notification Settings Updated!")),
-          );
-        },
+        onPressed: _isLoading ? null : _saveSettings,
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: _mainPurple, width: 1.5),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           backgroundColor: Colors.white,
         ),
-        child: Text(
+        child: _isLoading
+            ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: _mainPurple, strokeWidth: 2))
+            : Text(
           "Update",
           style: TextStyle(
-            fontFamily: 'Batangas',
+            fontFamily: MobileAppFonts.heading,
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: _mainPurple,
@@ -247,7 +348,6 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     );
   }
 
-  // --- GLOWING HOME FAB ---
   Widget _buildHomeFab() {
     return Container(
       height: 72,
@@ -256,7 +356,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _mainPurple.withOpacity(0.6),
+            color: _mainPurple.withValues(alpha: 0.6),
             blurRadius: 25,
             spreadRadius: 6,
             offset: const Offset(0, 2),
@@ -279,14 +379,13 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     );
   }
 
-  // --- BOTTOM NAVIGATION BAR ---
   Widget _buildBottomBar() {
     return Container(
       decoration: BoxDecoration(
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 20,
             spreadRadius: 4,
             offset: const Offset(0, -6),
@@ -344,13 +443,18 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
             color: sel ? _mainPurple : Colors.grey.shade500,
           ),
           const SizedBox(height: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
-              fontSize: 12,
-              color: sel ? _mainPurple : Colors.grey.shade600,
-              fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+          // Flexible added here to prevent horizontal layout explosions!
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: MobileAppFonts.body,
+                fontSize: 12,
+                color: sel ? _mainPurple : Colors.grey.shade600,
+                fontWeight: sel ? FontWeight.w900 : FontWeight.w600,
+              ),
             ),
           ),
         ],

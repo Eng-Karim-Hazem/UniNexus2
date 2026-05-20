@@ -1,40 +1,40 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../../model/who_sent_model.dart';
 
 class WhoSentService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
+  /// Fetches a student's profile details based on their unique ID (e.g., ST202...).
+  /// It checks both the document name and the 'ID' field for robustness.
   Future<WhoSentModel?> getSenderById(String senderId) async {
-    print("WhoSentService: Searching for Student ID: '$senderId'");
-
-    if (senderId.isEmpty) return null;
+    final String trimmedId = senderId.trim();
+    if (trimmedId.isEmpty) return null;
 
     try {
       // METHOD 1: Direct Document Lookup
       // (Used if the senderId passed IS the document name)
-      DocumentSnapshot doc = await _db.collection('students').doc(senderId).get();
+      final DocumentSnapshot doc = await _db.collection('students').doc(trimmedId).get();
       if (doc.exists && doc.data() != null) {
-        print("WhoSentService: Found student by Document ID");
         return WhoSentModel.fromMap(doc.data() as Map<String, dynamic>);
       }
 
       // METHOD 2: Query by 'ID' field
       // (Used if the senderId passed is the 'ST202...' ID string, not the doc name)
-      QuerySnapshot query = await _db
+      final QuerySnapshot query = await _db
           .collection('students')
-          .where('ID', isEqualTo: senderId)
+          .where('ID', isEqualTo: trimmedId)
           .limit(1)
           .get();
 
       if (query.docs.isNotEmpty) {
-        print("WhoSentService: Found student by Field 'ID'");
         return WhoSentModel.fromMap(query.docs.first.data() as Map<String, dynamic>);
       }
 
-      print("WhoSentService: Student not found in DB.");
       return null;
     } catch (e) {
-      print("WhoSentService Error: $e");
+      // Using debugPrint for production-safe logging
+      debugPrint("WhoSentService Error: $e");
       return null;
     }
   }
