@@ -9,7 +9,7 @@ class IDLookupService {
     try {
       final querySnapshot = await _db
           .collection('students')
-          .where('ID', isEqualTo: id)
+          .where('ID', isEqualTo: id.toUpperCase())//touppercase
           .limit(1)
           .get();
 
