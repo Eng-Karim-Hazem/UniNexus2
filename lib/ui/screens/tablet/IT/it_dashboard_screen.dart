@@ -23,9 +23,10 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
   double _resolutionRate = 0.0;
   bool _isLoadingStats = true;
 
-  // --- NEW: STREAM SUBSCRIPTIONS ---
+  // --- STREAM SUBSCRIPTIONS ---
   StreamSubscription<QuerySnapshot>? _hallErrorsSub;
   StreamSubscription<QuerySnapshot>? _passRequestsSub;
+  StreamSubscription<QuerySnapshot>? _deviceLogSyncSub; // Background subscription to track scanner drops safely
 
   // Variables to hold the live counts from each stream
   int _hallTotal = 0;
@@ -36,18 +37,22 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
   int _passResolved = 0;
   int _passActive = 0;
 
+  // Track scanner alerts with a unique ID combination to prevent continuous duplicate writes across rebuilds
+  final Set<String> _loggedDowntimeScanners = {};
+
   @override
   void initState() {
     super.initState();
     _fetchUserName();
-    _setupRealtimeStats(); // Changed from Future to Stream!
+    _setupRealtimeStats();
+    _setupBackgroundDeviceLogger(); // Start background real-time logging sync
   }
 
   @override
   void dispose() {
-    // ALWAYS cancel streams when leaving the screen to prevent memory leaks!
     _hallErrorsSub?.cancel();
     _passRequestsSub?.cancel();
+    _deviceLogSyncSub?.cancel();
     super.dispose();
   }
 
@@ -89,7 +94,6 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
     }
   }
 
-  // --- NEW: REAL-TIME LISTENERS ---
   void _setupRealtimeStats() {
     final db = FirebaseFirestore.instance;
     final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
@@ -146,7 +150,52 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
     });
   }
 
-  // Merges the data from both streams and updates the UI instantly
+  // --- SAFE IDEMPOTENT BACKGROUND LOGGER ---
+  void _setupBackgroundDeviceLogger() {
+    _deviceLogSyncSub = FirebaseFirestore.instance
+        .collection('Devices')
+        .snapshots()
+        .listen((snapshot) {
+      final int currentUnixTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+      for (var doc in snapshot.docs) {
+        final deviceData = doc.data();
+        final int? lastHeartbeat = deviceData['lastHeartbeatUnix'] as int?;
+        final String scannerName = deviceData['scanner'] ?? 'Unknown Scanner';
+
+        if (lastHeartbeat != null) {
+          final bool isOffline = (currentUnixTime - lastHeartbeat) > 60;
+
+          if (isOffline) {
+            // Use a deterministic composite key matching the specific outage instance
+            final String uniqueLogId = '${scannerName}_$lastHeartbeat';
+
+            if (!_loggedDowntimeScanners.contains(uniqueLogId)) {
+              _loggedDowntimeScanners.add(uniqueLogId);
+
+              // Converts scanner heartbeat unix timestamp directly to a standard Timestamp object
+              final Timestamp lastSeenTimestamp = Timestamp.fromMillisecondsSinceEpoch(lastHeartbeat * 1000);
+
+              // Setting explicit document paths avoids random auto-generated ID replication
+              FirebaseFirestore.instance
+                  .collection('IT_Logs')
+                  .doc(uniqueLogId)
+                  .set({
+                'message': 'Scanner "$scannerName" is down',
+                'timestamp': lastSeenTimestamp, // Preserves the scanner's exact last seen timing parameters
+              }).catchError((_) {
+                _loggedDowntimeScanners.remove(uniqueLogId);
+              });
+            }
+          } else {
+            // Reset local cache references for this scanner once it registers online again
+            _loggedDowntimeScanners.removeWhere((key) => key.startsWith('${scannerName}_'));
+          }
+        }
+      }
+    });
+  }
+
   void _updateCombinedStats() {
     if (!mounted) return;
 
@@ -170,7 +219,7 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
   Widget build(BuildContext context) {
     return ITScreenBackground(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -186,6 +235,7 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // LEFT SIDE CARD PANEL (Registration requests, password requests, and scanner down alerts)
                   Expanded(
                     flex: 5,
                     child: GlassCard(
@@ -199,28 +249,29 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
                                   .orderBy('timestamp', descending: true)
                                   .limit(5)
                                   .snapshots(),
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState == ConnectionState.waiting) {
+                              builder: (context, logSnapshot) {
+                                if (logSnapshot.connectionState == ConnectionState.waiting) {
                                   return const Center(child: CircularProgressIndicator());
                                 }
-                                if (snapshot.hasError) {
+                                if (logSnapshot.hasError) {
                                   return const Center(child: Text('Error loading logs.', style: TextStyle(color: Colors.red)));
                                 }
-                                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+
+                                if (!logSnapshot.hasData || logSnapshot.data!.docs.isEmpty) {
                                   return const Center(child: Text('No recent activity.', style: TextStyle(color: Colors.grey)));
                                 }
 
-                                final docs = snapshot.data!.docs;
+                                final logDocs = logSnapshot.data!.docs;
 
                                 return ListView.builder(
                                   padding: EdgeInsets.zero,
-                                  itemCount: docs.length,
+                                  itemCount: logDocs.length,
                                   itemBuilder: (context, index) {
-                                    final logData = docs[index].data() as Map<String, dynamic>;
-                                    final message = logData['message'] ?? 'Unknown Action';
-                                    final timeStr = _formatTime(logData['timestamp'] as Timestamp?);
-
-                                    return _LogRow(text: message, time: timeStr);
+                                    final logData = logDocs[index].data() as Map<String, dynamic>;
+                                    return _LogRow(
+                                      text: logData['message'] ?? 'Unknown Action',
+                                      time: _formatTime(logData['timestamp'] as Timestamp?),
+                                    );
                                   },
                                 );
                               },
@@ -243,6 +294,7 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
 
                   const SizedBox(width: 20),
 
+                  // RIGHT SIDE CARD PANEL (Announcements panel view context)
                   Expanded(
                     flex: 4,
                     child: Column(
@@ -353,7 +405,6 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
                                   child: _isLoadingStats
                                       ? const Center(child: CircularProgressIndicator())
                                       : CircularStat(
-                                    // Make the circle dynamically fill up based on open issues (max 20 for visual scale)
                                     value: (_activeIssuesCount > 0) ? (_activeIssuesCount / 20.0).clamp(0.1, 1.0) : 0.0,
                                     line1: 'Open',
                                     line2: 'Issues',
@@ -382,7 +433,11 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
 class _LogRow extends StatelessWidget {
   final String text;
   final String time;
-  const _LogRow({required this.text, required this.time});
+
+  const _LogRow({
+    required this.text,
+    required this.time,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -401,16 +456,14 @@ class _LogRow extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              // --- FIX: Added SpaceGrotesk to the main text ---
               style: AppTextStyles.logRowBodyStyle.copyWith(
                 fontFamily: AppFonts.spaceGrotesk,
-                fontWeight: FontWeight.w300, // Optional: Makes it slightly bolder to read better
+                fontWeight: FontWeight.w300,
               ),
             ),
           ),
           Text(
             time,
-            // --- FIX: Added SpaceGrotesk to the time text ---
             style: AppTextStyles.caption.copyWith(
               fontFamily: AppFonts.spaceGrotesk,
             ),

@@ -22,7 +22,7 @@ class ITSidebar extends StatelessWidget {
   static const _items = [
     ('assets/images/home_tab.png',       'Dashboard',   UninexusTab.dashboard),
     ('assets/icons/QR_Icon.png',         'ID',          UninexusTab.id),
-    ('assets/icons/Hall_Error.png',      'Hall Errors', UninexusTab.hallErrors),
+    ('assets/icons/Hall_Error.png',      'Errors', UninexusTab.hallErrors),
     ('assets/images/request_tab.png',    'Requests',    UninexusTab.requests),
     ('assets/images/profile_tab.png',    'Profile',     UninexusTab.profile),
     ('assets/images/settings_tab.png',   'Settings',    UninexusTab.settings),

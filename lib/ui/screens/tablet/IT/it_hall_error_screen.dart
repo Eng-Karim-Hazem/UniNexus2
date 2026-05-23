@@ -19,11 +19,19 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
 
   // Department Filter
   String _selectedDepartment = 'All';
-  final List<String> _departments = ['All', 'IT', 'Storage', 'Maintenance'];
+  final List<String> _departments = ['All', 'IT', 'Storage', 'Maintenance', 'Scanners'];
 
-  // --- NEW: Status Filter ---
+  // Status Filter
   String _selectedStatus = 'All';
   final List<String> _statuses = ['All', 'Pending', 'In repair', 'Fixed'];
+
+  // Helper stream to merge Firestore updates with a periodic ticker for real-time downtime calculation
+  Stream<QuerySnapshot> _getPeriodicDeviceStream() async* {
+    await for (final snapshot in FirebaseFirestore.instance.collection('Devices').snapshots()) {
+      yield snapshot;
+      yield* Stream.periodic(const Duration(seconds: 5), (_) => snapshot).takeWhile((_) => true);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +45,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const PageHeading('Hall Errors'),
+                const PageHeading('Errors'),
                 _buildDepartmentFilter(),
               ],
             ),
@@ -50,7 +58,6 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                   // Left panel
                   Expanded(
                     flex: 45,
-                    // --- FIX: Updated padding to 24 to perfectly match the right card ---
                     child: GlassCard(
                       padding: const EdgeInsets.all(24),
                       child: _buildErrorsListPanel(),
@@ -60,7 +67,6 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                   // Right panel
                   Expanded(
                     flex: 55,
-                    // --- FIX: This padding is also 24, so both sides align! ---
                     child: GlassCard(
                       padding: const EdgeInsets.all(24),
                       child: _selectedDocId != null
@@ -93,55 +99,146 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance.collection('HallErrors').snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) return const LoadingState();
-              List<QueryDocumentSnapshot> docs = snapshot.data?.docs ?? [];
+            builder: (context, errorSnapshot) {
+              if (errorSnapshot.connectionState == ConnectionState.waiting) return const LoadingState();
 
-              if (_selectedDepartment != 'All') {
-                docs = docs.where((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  return (data['department']?.toString().toLowerCase() ?? '') == _selectedDepartment.toLowerCase();
-                }).toList();
-              }
-              if (_selectedStatus != 'All') {
-                docs = docs.where((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  final status = data['status']?.toString().toLowerCase() ?? 'pending';
-                  return status == _selectedStatus.toLowerCase();
-                }).toList();
-              }
+              return StreamBuilder<QuerySnapshot>(
+                stream: _getPeriodicDeviceStream(),
+                builder: (context, deviceSnapshot) {
+                  if (deviceSnapshot.connectionState == ConnectionState.waiting) return const LoadingState();
 
-              docs.sort((a, b) {
-                final dataA = a.data() as Map<String, dynamic>;
-                final dataB = b.data() as Map<String, dynamic>;
-                final bool isFixedA = (dataA['status']?.toString().toLowerCase() ?? 'pending') == 'fixed';
-                final bool isFixedB = (dataB['status']?.toString().toLowerCase() ?? 'pending') == 'fixed';
-                if (isFixedA != isFixedB) return isFixedA ? 1 : -1;
-                final Timestamp? timeA = dataA['timestamp'] as Timestamp?;
-                final Timestamp? timeB = dataB['timestamp'] as Timestamp?;
-                return (timeB ?? Timestamp.now()).compareTo(timeA ?? Timestamp.now());
-              });
+                  List<Map<String, dynamic>> combinedItems = [];
 
-              if (docs.isEmpty) {
-                if (_selectedDocId != null) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) setState(() => _selectedDocId = null);
+                  // 1. Process regular Hall Errors
+                  if (errorSnapshot.hasData) {
+                    for (var doc in errorSnapshot.data!.docs) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      combinedItems.add({
+                        'id': doc.id,
+                        'isDevice': false,
+                        'isTamperedType': false,
+                        'hallName': data['hallName'] ?? 'Unknown',
+                        'errorType': data['errorType'] ?? 'Unknown Issue',
+                        'department': data['department'] ?? 'Maintenance',
+                        'status': data['status']?.toString().toLowerCase() ?? 'pending',
+                        'timestamp': data['timestamp'] as Timestamp?,
+                        'attachment': data['attachment'],
+                        'description': data['description'] ?? 'No description.',
+                      });
+                    }
+                  }
+
+                  // 2. Process Devices Collection exceptions
+                  if (deviceSnapshot.hasData) {
+                    final int currentUnixTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+                    for (var doc in deviceSnapshot.data!.docs) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final int? lastHeartbeatRaw = data['lastHeartbeatUnix'] as int?;
+
+                      final int? lastHeartbeat = lastHeartbeatRaw != null && lastHeartbeatRaw > 9999999999
+                          ? lastHeartbeatRaw ~/ 1000
+                          : lastHeartbeatRaw;
+
+                      final String scannerName = data['scanner'] ?? 'Unknown Scanner';
+                      final String deviceStatus = data['status']?.toString().toLowerCase() ?? 'pending';
+
+                      final bool isTampered = data['tampered'] == true;
+                      final bool isOffline = lastHeartbeat != null && (currentUnixTime - lastHeartbeat) > 60;
+
+                      final Timestamp deviceTime = lastHeartbeat != null
+                          ? Timestamp.fromMillisecondsSinceEpoch(lastHeartbeat * 1000)
+                          : Timestamp.now();
+
+                      // Condition A: Downtime Alert
+                      if (isOffline || deviceStatus == 'in repair' || deviceStatus == 'fixed') {
+                        combinedItems.add({
+                          'id': '${doc.id}_downtime',
+                          'rawDocId': doc.id,
+                          'isDevice': true,
+                          'isTamperedType': false,
+                          'hallName': scannerName,
+                          'errorType': 'Device Downtime Alert',
+                          'department': 'Scanners',
+                          'status': isOffline ? 'downtime' : deviceStatus, // Uses explicit downtime token for coloring
+                          'timestamp': deviceTime,
+                          'attachment': null,
+                          'description': 'Hardware device metrics show that connection was lost. Ensure system power cords and local network nodes are stable.',
+                        });
+                      }
+
+                      // Condition B: Tampered Alert
+                      if (isTampered) {
+                        combinedItems.add({
+                          'id': '${doc.id}_tampered',
+                          'rawDocId': doc.id,
+                          'isDevice': true,
+                          'isTamperedType': true,
+                          'hallName': scannerName,
+                          'errorType': 'Hardware Tampering Detection Alert',
+                          'department': 'Scanners',
+                          'status': 'tampered', // Uses explicit tampered token for coloring
+                          'timestamp': deviceTime,
+                          'attachment': null,
+                          'description': 'Security alert! Enclosure monitoring switches indicate that this device frame has been altered or opened without validation.',
+                        });
+                      }
+                    }
+                  }
+
+                  // Apply Department Filters
+                  if (_selectedDepartment != 'All') {
+                    combinedItems = combinedItems.where((item) {
+                      return item['department'].toString().toLowerCase() == _selectedDepartment.toLowerCase();
+                    }).toList();
+                  }
+
+                  // Apply Status Filters
+                  if (_selectedStatus != 'All') {
+                    combinedItems = combinedItems.where((item) {
+                      final String itemStatus = item['status'];
+                      final String filterTarget = _selectedStatus.toLowerCase();
+
+                      if (filterTarget == 'pending') {
+                        // Include customized downtime or tampering exceptions as high-priority pending issues
+                        return itemStatus == 'pending' || itemStatus == '' || itemStatus == 'downtime' || itemStatus == 'tampered';
+                      }
+                      return itemStatus == filterTarget;
+                    }).toList();
+                  }
+
+                  // Sort items chronologically (Fixed items at the bottom)
+                  combinedItems.sort((a, b) {
+                    final bool isFixedA = a['status'] == 'fixed';
+                    final bool isFixedB = b['status'] == 'fixed';
+                    if (isFixedA != isFixedB) return isFixedA ? 1 : -1;
+                    final Timestamp? timeA = a['timestamp'] as Timestamp?;
+                    final Timestamp? timeB = b['timestamp'] as Timestamp?;
+                    return (timeB ?? Timestamp.now()).compareTo(timeA ?? Timestamp.now());
                   });
-                }
-                return _buildEmptyPlaceholder("No issues reported");
-              }
 
-              final hasSelected = _selectedDocId != null && docs.any((d) => d.id == _selectedDocId);
-              if (!hasSelected) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted) setState(() => _selectedDocId = docs.first.id);
-                });
-              }
+                  if (combinedItems.isEmpty) {
+                    if (_selectedDocId != null) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) setState(() => _selectedDocId = null);
+                      });
+                    }
+                    return _buildEmptyPlaceholder("No issues reported");
+                  }
 
-              return ListView.builder(
-                padding: EdgeInsets.zero,
-                itemCount: docs.length,
-                itemBuilder: (context, index) => _buildErrorItem(docs[index]),
+                  final hasSelected = _selectedDocId != null && combinedItems.any((item) => item['id'] == _selectedDocId);
+                  if (!hasSelected) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) setState(() => _selectedDocId = combinedItems.first['id']);
+                    });
+                  }
+
+                  return ListView.builder(
+                    padding: EdgeInsets.zero,
+                    itemCount: combinedItems.length,
+                    itemBuilder: (context, index) => _buildErrorItem(combinedItems[index]),
+                  );
+                },
               );
             },
           ),
@@ -150,7 +247,6 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
     );
   }
 
-  // Empty placeholder widget
   Widget _buildEmptyPlaceholder(String message) {
     return Center(
       child: Opacity(
@@ -167,15 +263,18 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
     );
   }
 
-// Error item in list
-  Widget _buildErrorItem(QueryDocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    final bool isSelected = _selectedDocId == doc.id;
-    final String status = (data['status']?.toString().toLowerCase() ?? 'pending');
+  Widget _buildErrorItem(Map<String, dynamic> item) {
+    final bool isSelected = _selectedDocId == item['id'];
+    String status = item['status'];
     final bool isFixed = status == 'fixed';
+    final bool isTamperedType = item['isTamperedType'] == true;
+
+    if (status == '') {
+      status = 'pending';
+    }
 
     return GestureDetector(
-      onTap: () => setState(() => _selectedDocId = doc.id),
+      onTap: () => setState(() => _selectedDocId = item['id']),
       child: Opacity(
         opacity: isFixed ? 0.6 : 1.0,
         child: Container(
@@ -187,14 +286,17 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Center(
-                  child: StatusBadge(
-                    status: isFixed ? 'fixed' : status,
+                  child: status == 'downtime'
+                      ? _buildCustomBadge(label: 'Down', color: Colors.red)
+                      : status == 'tampered'
+                      ? _buildCustomBadge(label: 'Tampered', color: Colors.orange)
+                      : StatusBadge(
+                    status: status,
                     showIcon: true,
                     isCompact: true,
                   ),
                 ),
                 const SizedBox(width: 12),
-                // --- FIX: Added vertical padding so the line isn't too tall! ---
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Container(width: 1.5, color: AppColors.primary.withValues(alpha: 0.3)),
@@ -205,9 +307,9 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(data['hallName'] ?? 'Unknown', style: AppTextStyles.hallListNumberStyle),
+                      Text(item['hallName'], style: AppTextStyles.hallListNumberStyle),
                       const SizedBox(height: 2),
-                      Text(data['errorType'] ?? 'Unknown Issue',
+                      Text(item['errorType'],
                           style: AppTextStyles.hallListErrorStyle,
                           overflow: TextOverflow.ellipsis),
                     ],
@@ -221,35 +323,116 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
     );
   }
 
-  Widget _buildDetailsPanel(String docId) {
-    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('HallErrors')
-          .doc(docId)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+  // Helper method to draw standard badges matching your UI theme configuration
+  Widget _buildCustomBadge({required String label, required Color color}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.4), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.circle, size: 8, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailsPanel(String combinedId) {
+    final String cleanDocId = combinedId
+        .replaceAll('_downtime', '')
+        .replaceAll('_tampered', '');
+
+    final bool lookingForTamperedType = combinedId.contains('_tampered');
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('HallErrors').doc(cleanDocId).snapshots(),
+      builder: (context, errorSnap) {
+        if (errorSnap.hasData && errorSnap.data!.exists) {
+          final data = errorSnap.data!.data() as Map<String, dynamic>;
+          return _buildDetailsContent(errorSnap.data!.reference, data, false, false);
         }
 
-        if (!snapshot.hasData || !snapshot.data!.exists) {
-          return _buildEmptyPlaceholder("Select an error to view details");
-        }
+        final Stream<DocumentSnapshot> detailedDeviceStream = FirebaseFirestore.instance
+            .collection('Devices')
+            .doc(cleanDocId)
+            .snapshots();
 
-        final data = snapshot.data!.data()!;
-        final docRef = snapshot.data!.reference;
-        return _buildDetailsContent(docRef, data);
+        return StreamBuilder<DocumentSnapshot>(
+          stream: detailedDeviceStream,
+          builder: (context, deviceSnap) {
+            if (deviceSnap.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (!deviceSnap.hasData || !deviceSnap.data!.exists) {
+              return _buildEmptyPlaceholder("Select an error to view details");
+            }
+
+            final data = deviceSnap.data!.data() as Map<String, dynamic>;
+            final String scannerName = data['scanner'] ?? 'Unknown Scanner';
+            final int? lastHeartbeatRaw = data['lastHeartbeatUnix'] as int?;
+
+            final int? lastHeartbeat = lastHeartbeatRaw != null && lastHeartbeatRaw > 9999999999
+                ? lastHeartbeatRaw ~/ 1000
+                : lastHeartbeatRaw;
+
+            final int currentUnixTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+            String deviceStatus = data['status']?.toString().toLowerCase() ?? 'pending';
+            final bool isOffline = lastHeartbeat != null && (currentUnixTime - lastHeartbeat) > 60;
+
+            if (isOffline) {
+              deviceStatus = 'downtime';
+            }
+
+            final Map<String, dynamic> normalizedDeviceData = lookingForTamperedType
+                ? {
+              'hallName': scannerName,
+              'errorType': 'Hardware Tampering Detection Alert',
+              'status': 'tampered',
+              'attachment': null,
+              'description': 'Security alert! Enclosure monitoring switches indicate that this device frame has been altered or opened without validation.',
+            }
+                : {
+              'hallName': scannerName,
+              'errorType': 'Device Downtime Alert',
+              'status': deviceStatus,
+              'attachment': null,
+              'description': 'Hardware device metrics show that connection was lost. Ensure system power cords and local network nodes are stable.',
+            };
+
+            return _buildDetailsContent(deviceSnap.data!.reference, normalizedDeviceData, true, lookingForTamperedType);
+          },
+        );
       },
     );
   }
 
-// Details content for selected error
   Widget _buildDetailsContent(
-      DocumentReference<Map<String, dynamic>> docRef,
+      DocumentReference docRef,
       Map<String, dynamic> data,
+      bool isDevice,
+      bool isTamperedType,
       ) {
-    final String status = data['status']?.toString().toLowerCase() ?? 'pending';
-    final String hallName = data['hallName'] ?? 'Unknown Hall';
+    String status = data['status']?.toString().toLowerCase() ?? 'pending';
+    final String hallName = data['hallName'] ?? 'Unknown';
+    final bool rawIsFixed = status == 'fixed';
+
+    if (status == '') {
+      status = 'pending';
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -258,11 +441,14 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Center( // --- FIX: Centered the icon ---
-                child: Icon(Icons.warning_amber_rounded, size: 40, color: AppColors.primary),
+              Center(
+                child: Icon(
+                  isDevice ? (isTamperedType ? Icons.gavel_rounded : Icons.router_rounded) : Icons.warning_amber_rounded,
+                  size: 40,
+                  color: AppColors.primary,
+                ),
               ),
               const SizedBox(width: 16),
-              // --- FIX: Added vertical padding so the line isn't too tall! ---
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Container(width: 2, color: AppColors.divider),
@@ -277,7 +463,11 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                     const SizedBox(height: 4),
                     Text(data['errorType'] ?? 'No issue', style: AppTextStyles.hallDetailsErrorStyle),
                     const SizedBox(height: 12),
-                    StatusBadge(status: status, isDot: false),
+                    status == 'downtime'
+                        ? _buildCustomBadge(label: 'Scanner Connection Down', color: Colors.red)
+                        : status == 'tampered'
+                        ? _buildCustomBadge(label: 'Hardware Tampered', color: Colors.orange)
+                        : StatusBadge(status: status, isDot: false),
                   ],
                 ),
               ),
@@ -289,36 +479,49 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
         const SizedBox(height: 20),
         Text(data['description'] ?? 'No description.', style: AppTextStyles.hallDetailsDescriptionStyle),
         const Spacer(),
-        if (status != 'fixed')
+        if (!rawIsFixed)
           Row(
             children: [
               Expanded(
                 child: PillButton(
-                    label: 'In Repair',
-                    onTap: () async {
-                      try {
+                  label: isTamperedType ? 'Clear Tamper' : 'In Repair',
+                  onTap: () async {
+                    try {
+                      if (isTamperedType) {
+                        await docRef.update({'tampered': false});
+                        await ITLogService.logAction('Cleared Hardware Tamper warning on Scanner "$hallName"');
+                        if (mounted) showSuccessSnackBar(context, 'Tamper alert successfully resolved.');
+                      } else {
                         await docRef.update({'status': 'in repair'});
-                        await ITLogService.logAction('Marked $hallName issue as In Repair');
+                        final String trackingLabel = isDevice ? 'Scanner "$hallName"' : '$hallName issue';
+                        await ITLogService.logAction('Marked $trackingLabel as In Repair');
                         if (mounted) showSuccessSnackBar(context, 'Status updated to: In Repair');
-                      } catch (e) {
-                        if (mounted) showErrorSnackBar(context, 'Error updating status: $e');
                       }
+                    } catch (e) {
+                      if (mounted) showErrorSnackBar(context, 'Error updating database parameters: $e');
                     }
+                  },
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: PillButton(
-                    label: 'Fixed',
-                    onTap: () async {
-                      try {
+                  label: 'Fixed',
+                  onTap: () async {
+                    try {
+                      if (isTamperedType) {
+                        await docRef.update({'tampered': false, 'status': 'fixed'});
+                        await ITLogService.logAction('Resolved hardware alignment status on Scanner "$hallName"');
+                      } else {
                         await docRef.update({'status': 'fixed'});
-                        await ITLogService.logAction('Resolved issue in $hallName');
-                        if (mounted) showSuccessSnackBar(context, 'Status updated to: Fixed');
-                      } catch (e) {
-                        if (mounted) showErrorSnackBar(context, 'Error updating status: $e');
+                        final String trackingLabel = isDevice ? 'Scanner "$hallName"' : 'issue in $hallName';
+                        await ITLogService.logAction('Resolved $trackingLabel');
                       }
+                      if (mounted) showSuccessSnackBar(context, 'Status updated to: Fixed');
+                    } catch (e) {
+                      if (mounted) showErrorSnackBar(context, 'Error updating status: $e');
                     }
+                  },
                 ),
               ),
             ],
@@ -327,7 +530,6 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
     );
   }
 
-  // Image preview from base64
   Widget _buildImagePreview(dynamic attachment) {
     final String base64 = attachment?.toString() ?? '';
     return Container(
@@ -343,7 +545,6 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
     );
   }
 
-  // Department filter buttons
   Widget _buildDepartmentFilter() {
     return Row(
       children: _departments.map((dept) {
@@ -370,13 +571,12 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
     );
   }
 
-  // --- NEW: Status filter buttons ---
   Widget _buildStatusFilter() {
     return Row(
       children: _statuses.map((status) {
         final isSelected = _selectedStatus == status;
         return Padding(
-          padding: const EdgeInsets.only(right: 8), // Changed to right padding for horizontal flow
+          padding: const EdgeInsets.only(right: 8),
           child: GestureDetector(
             onTap: () => setState(() {
               _selectedStatus = status;
