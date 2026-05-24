@@ -211,7 +211,6 @@ class _LoginScreenState extends State<LoginScreen>
     return PopScope(
       canPop: false,
       child: Scaffold(
-        // 1. REMOVED: resizeToAvoidBottomInset: false. We want the scaffold to react to the keyboard now!
         body: Stack(
           children: [
             // Background stays fixed
@@ -264,9 +263,6 @@ class _LoginScreenState extends State<LoginScreen>
                 position: _contentIntro,
                 child: FadeTransition(
                   opacity: _contentController,
-                  // 2. ADDED: CustomScrollView & SliverFillRemaining
-                  // This keeps Spacers working when the keyboard is closed,
-                  // but allows scrolling when the keyboard opens!
                   child: CustomScrollView(
                     slivers: [
                       SliverFillRemaining(
@@ -278,15 +274,25 @@ class _LoginScreenState extends State<LoginScreen>
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
                                 child: Image.asset(
-                                  "assets/images/uni.jpeg",
+                                  "assets/images/logonew.png",
                                   width: MobileAppDimensions.heroImageWidth,
                                   height: sh * 0.15,
                                   fit: BoxFit.contain,
                                 ),
                               ),
                               const SizedBox(height: 10),
-                              const Text("Log in to UniNexus", style: MobileAppTextStyles.screenTitle),
-                              const Text("Access your campus services securely", style: MobileAppTextStyles.screenSubtitle),
+
+                              // --- UPDATED BOTH TEXT WIDGETS WITH TEXTALIGN ---
+                              const Text(
+                                "Log in to UniNexus",
+                                style: MobileAppTextStyles.screenTitle,
+                                textAlign: TextAlign.center,
+                              ),
+                              const Text(
+                                "Access your campus services securely",
+                                style: MobileAppTextStyles.screenSubtitle,
+                                textAlign: TextAlign.center,
+                              ),
 
                               const Spacer(flex: 1),
 
@@ -378,7 +384,6 @@ class _LoginScreenState extends State<LoginScreen>
       ),
     );
   }
-
   Widget _animatedItem({required Animation<double> anim, required Widget child}) {
     return FadeTransition(
       opacity: anim,

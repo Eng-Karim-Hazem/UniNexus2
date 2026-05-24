@@ -5,7 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uninexus/model/community_model.dart';
 import 'package:uninexus/services/firebase/community_service.dart';
-
+import 'package:uninexus/ui/screens/mobile/Student/stu_home.dart';
+import 'package:uninexus/ui/screens/mobile/Faculty/faculty_home_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import 'stu_schedule.dart';
 import '../profile_screen.dart';
@@ -106,7 +107,28 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
       if (mounted) setState(() => _isSending = false);
     }
   }
+  Future<void> _goHome() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String userId = prefs.getString('ID') ?? '';
 
+    Widget targetHome;
+
+    // Check the ID prefix to determine if they are Faculty or Student
+    if (userId.toUpperCase().startsWith('FA')) {
+      targetHome = const FacultyHomeScreen();
+    } else {
+      targetHome = const StuHomeScreen(); // Defaults to Student
+    }
+
+    if (!mounted) return;
+
+    // pushAndRemoveUntil destroys the back-stack, preventing ghost screens
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => targetHome),
+          (route) => false,
+    );
+  }
   @override
   Widget build(BuildContext context) {
     final sw = MediaQuery.of(context).size.width;
@@ -337,7 +359,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
       height: 72, width: 72,
       decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.6), blurRadius: 25, spreadRadius: 6, offset: const Offset(0, 2))]),
       child: FloatingActionButton(
-        onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+        onPressed: _goHome,
         backgroundColor: Colors.transparent, elevation: 0, shape: const CircleBorder(),
         child: Container(
           decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),

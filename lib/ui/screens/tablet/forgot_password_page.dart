@@ -36,6 +36,17 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
     super.dispose();
   }
 
+  // Helper to show errors cleanly
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   // --- INTEGRATED FORGOT PASS LOGIC ---
   Future<void> _handleSubmit() async {
     final emailOrId = _emailController.text.trim();
@@ -45,35 +56,55 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
 
     // 1. Check for empty fields
     if (emailOrId.isEmpty || nId.isEmpty || newPass.isEmpty || confPass.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please fill in all fields")));
+      _showError("Please fill in all fields.");
       return;
     }
 
-    // 2. Check if passwords match
+    // 2. Validate National ID length
+    if (nId.length != 14) {
+      _showError("Make sure of your national ID (must be exactly 14 digits).");
+      return;
+    }
+
+    // 3. Check if passwords match
     if (newPass != confPass) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Passwords do not match")));
+      _showError("Passwords do not match.");
       return;
     }
 
     setState(() => _isLoading = true);
 
-    // 3. Send request with the new password
-    bool success = await ForpassService().sendRenewalRequest(
+    // 4. Send request and capture the String status result
+    String resultStatus = await ForpassService().sendRenewalRequest(
       universityId: emailOrId,
       nationalId: nId,
-      newPassword: newPass, // <--- Passing the new password
+      newPassword: newPass,
     );
 
     if (mounted) setState(() => _isLoading = false);
 
-    if (success && mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const RequestSubmittedPage()),
-      );
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Details do not match our records.")),
-      );
+    if (!mounted) return;
+
+    // 5. Handle the descriptive responses
+    switch (resultStatus) {
+      case 'success':
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const RequestSubmittedPage()),
+        );
+        break;
+      case 'user_not_found':
+        _showError("University ID not found in our system.");
+        break;
+      case 'national_id_mismatch':
+        _showError("The National ID provided does not match our records for this ID.");
+        break;
+      case 'same_as_old_password': // <--- ADD THIS CASE
+        _showError("You can't enter an old password. Please choose a new one.");
+        break;
+      case 'error':
+      default:
+        _showError("Error sending renewal request. Please try again later.");
+        break;
     }
   }
 
@@ -148,7 +179,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                                 anim: checkAnim,
                                 child: _isLoading
                                     ? const CircularProgressIndicator()
-                                    : Row( // Using a Row guarantees it centers perfectly
+                                    : Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     SizedBox(

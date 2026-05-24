@@ -7,6 +7,8 @@ import 'halls_screen.dart';
 import 'qa_screen.dart';
 import '../profile_screen.dart';
 import '../settings_screen.dart';
+import 'package:uninexus/ui/screens/mobile/Student/stu_home.dart';
+import 'package:uninexus/ui/screens/mobile/Faculty/faculty_home_screen.dart';
 
 class FacultyIDScreen extends StatefulWidget {
   const FacultyIDScreen({super.key});
@@ -55,7 +57,28 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
       });
     }
   }
+  Future<void> _goHome() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String userId = prefs.getString('ID') ?? '';
 
+    Widget targetHome;
+
+    // Check the ID prefix to determine if they are Faculty or Student
+    if (userId.toUpperCase().startsWith('FA')) {
+      targetHome = const FacultyHomeScreen();
+    } else {
+      targetHome = const StuHomeScreen(); // Defaults to Student
+    }
+
+    if (!mounted) return;
+
+    // pushAndRemoveUntil destroys the back-stack, preventing ghost screens
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => targetHome),
+          (route) => false,
+    );
+  }
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -285,7 +308,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
         boxShadow: [BoxShadow(color: _mainPurple.withOpacity(0.6), blurRadius: 25, spreadRadius: 6, offset: const Offset(0, 2))],
       ),
       child: FloatingActionButton(
-        onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+        onPressed: _goHome,
         backgroundColor: Colors.transparent, elevation: 0, shape: const CircleBorder(),
         child: Container(
           decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),

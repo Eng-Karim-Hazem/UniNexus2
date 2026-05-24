@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Required for input formatters
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:uninexus/ui/screens/mobile/request_submitted_screen.dart';
 
@@ -65,43 +66,71 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
   void _validate() {
     setState(() {
+      // Keep button clickable if fields are filled, explicit validation happens on submit
       _isFormValid = _idController.text.isNotEmpty &&
           _nationalIdController.text.isNotEmpty &&
           _newPasswordController.text.isNotEmpty &&
-          _confirmPasswordController.text.isNotEmpty &&
-          _newPasswordController.text == _confirmPasswordController.text;
+          _confirmPasswordController.text.isNotEmpty;
     });
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(fontFamily: MobileAppFonts.body)),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Future<void> _submit() async {
     if (!_isFormValid) return;
 
+    final nationalIdInput = _nationalIdController.text.trim();
+
+    // Front-end validation rules
+    if (nationalIdInput.length != 14) {
+      _showError("Make sure of your national ID (must be exactly 14 digits).");
+      return;
+    }
+
     if (_newPasswordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Passwords do not match.", style: TextStyle(fontFamily: MobileAppFonts.body))),
-      );
+      _showError("Passwords do not match.");
       return;
     }
 
     setState(() => _isLoading = true);
 
-    bool success = await ForpassService().sendRenewalRequest(
+    String resultStatus = await ForpassService().sendRenewalRequest(
       universityId: _idController.text,
-      nationalId: _nationalIdController.text,
+      nationalId: nationalIdInput,
       newPassword: _confirmPasswordController.text,
     );
 
     if (mounted) setState(() => _isLoading = false);
 
-    if (success && mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const RequestSubmittedScreen()),
-      );
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error sending renewal request.", style: TextStyle(fontFamily: MobileAppFonts.body))),
-      );
+    if (!mounted) return;
+
+    switch (resultStatus) {
+      case 'success':
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const RequestSubmittedScreen()),
+        );
+        break;
+      case 'user_not_found':
+        _showError("University ID not found in our system.");
+        break;
+      case 'national_id_mismatch':
+        _showError("The National ID provided does not match our records for this ID.");
+        break;
+      case 'same_as_old_password': // <--- ADD THIS CASE
+        _showError("You can't enter an old password. Please choose a new one.");
+        break;
+      case 'error':
+      default:
+        _showError("Error sending renewal request. Please try again later.");
+        break;
     }
   }
 
@@ -170,7 +199,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                           ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.asset("assets/images/uni.jpeg", width: 90, fit: BoxFit.cover)),
                           SizedBox(height: sh * 0.015),
 
-                          const Text("Forgotten Password", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 30, fontWeight: FontWeight.bold)),
+                          const Text("Forgotten Password", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 30, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                           const SizedBox(height: 2),
                           const Text("Enter your details to renew your credentials", style: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.black54, fontSize: 15), textAlign: TextAlign.center),
 
@@ -189,7 +218,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                             opacity: _field2Anim,
                             child: SlideTransition(
                               position: Tween<Offset>(begin: const Offset(-0.3, 0), end: Offset.zero).animate(_field2Anim),
-                              child: _modernField(label: "National ID", hint: "Enter Your National ID", controller: _nationalIdController),
+                              child: _modernField(
+                                label: "National ID",
+                                hint: "Enter Your National ID",
+                                controller: _nationalIdController,
+                                isNumeric: true, // Trigger numeric constraints
+                              ),
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -244,7 +278,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                                     style: TextStyle(
                                       fontFamily: MobileAppFonts.heading,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF7B61FF), // Matches your _mainPurple
+                                      color: Color(0xFF7B61FF),
                                     )
                                 ),
                               ),
@@ -263,7 +297,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     );
   }
 
-  Widget _modernField({required String label, required String hint, required TextEditingController controller}) {
+  Widget _modernField({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    bool isNumeric = false, // Added numeric toggle
+  }) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Padding(padding: const EdgeInsets.only(left: 10, bottom: 1), child: Text(label, style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 16, fontWeight: FontWeight.bold))),
       Container(
@@ -272,10 +311,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
         child: TextField(
             controller: controller,
             style: const TextStyle(fontFamily: MobileAppFonts.body),
+            keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+            maxLength: isNumeric ? 14 : null,
+            inputFormatters: isNumeric
+                ? [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(14)]
+                : null,
             decoration: InputDecoration(
                 hintText: hint,
                 hintStyle: const TextStyle(fontFamily: MobileAppFonts.body),
                 border: InputBorder.none,
+                counterText: "", // Hides length counter
                 contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10)
             )
         ),

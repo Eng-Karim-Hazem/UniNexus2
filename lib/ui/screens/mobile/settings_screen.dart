@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,7 +6,8 @@ import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_schedule.dart';
 import 'package:uninexus/ui/screens/mobile/profile_screen.dart';
 import 'package:uninexus/ui/screens/mobile/welcome_screen.dart';
-
+import 'package:uninexus/ui/screens/mobile/Student/stu_home.dart';
+import 'package:uninexus/ui/screens/mobile/Faculty/faculty_home_screen.dart';
 import 'account_management_screen.dart';
 import 'app_info_screen.dart';
 import 'feedback_screen.dart';
@@ -87,7 +87,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     }
   }
+  Future<void> _goHome() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String userId = prefs.getString('ID') ?? '';
 
+    Widget targetHome;
+
+    // Check the ID prefix to determine if they are Faculty or Student
+    if (userId.toUpperCase().startsWith('FA')) {
+      targetHome = const FacultyHomeScreen();
+    } else {
+      targetHome = const StuHomeScreen(); // Defaults to Student
+    }
+
+    if (!mounted) return;
+
+    // pushAndRemoveUntil destroys the back-stack, preventing ghost screens
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => targetHome),
+          (route) => false,
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -243,7 +264,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
       child: FloatingActionButton(
-        onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+        onPressed: _goHome,
         backgroundColor: Colors.transparent,
         elevation: 0,
         shape: const CircleBorder(),

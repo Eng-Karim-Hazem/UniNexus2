@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +8,11 @@ import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_schedule.dart';
 import 'package:uninexus/ui/screens/mobile/profile_screen.dart';
+
+// --- NEW IMPORTS FOR DYNAMIC HOME ROUTING ---
+import 'package:uninexus/ui/screens/mobile/Student/stu_home.dart';
+import 'package:uninexus/ui/screens/mobile/Faculty/faculty_home_screen.dart';
+
 
 class AccountManagementScreen extends StatefulWidget {
   const AccountManagementScreen({super.key});
@@ -47,15 +53,63 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     }
   }
 
+  // Helper for showing error SnackBars cleanly
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(fontFamily: MobileAppFonts.body)),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  // --- NEW: DYNAMIC HOME ROUTING ---
+  Future<void> _goHome() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String userId = prefs.getString('ID') ?? '';
+
+    Widget targetHome;
+
+    // Check if the user is Faculty or Student
+    if (userId.toUpperCase().startsWith('FA')) {
+      targetHome = const FacultyHomeScreen();
+    } else {
+      targetHome = const StuHomeScreen(); // Default to Student
+    }
+
+    if (!mounted) return;
+
+    // pushAndRemoveUntil clears the navigation stack so the back button behaves properly
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => targetHome),
+          (route) => false,
+    );
+  }
+
   Future<void> _updateContactInfo() async {
     final newPhone = _phoneController.text.trim();
     final newEmail = _emailController.text.trim();
 
     if (newPhone.isEmpty && newEmail.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter a new phone number or email.", style: TextStyle(fontFamily: MobileAppFonts.body))),
-      );
+      _showError("Please enter a new phone number or email.");
       return;
+    }
+
+    if (newPhone.isNotEmpty) {
+      if (newPhone.length != 11 || !newPhone.startsWith('01')) {
+        _showError("Please enter a valid 11-digit phone number starting with '01'.");
+        return;
+      }
+    }
+
+    if (newEmail.isNotEmpty) {
+      final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+      if (!emailRegex.hasMatch(newEmail)) {
+        _showError("Please enter a valid email address.");
+        return;
+      }
     }
 
     setState(() => _isLoading = true);
@@ -101,6 +155,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           const SnackBar(
             content: Text("Contact info updated successfully!", style: TextStyle(fontFamily: MobileAppFonts.body)),
             backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
           ),
         );
         _phoneController.clear();
@@ -109,9 +164,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
 
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
-        );
+        _showError("Error: $e");
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -122,11 +175,9 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
   Widget build(BuildContext context) {
     final sw = MediaQuery.of(context).size.width;
     final sh = MediaQuery.of(context).size.height;
-    // Detect keyboard height
     final double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
     return Scaffold(
-      // FIXED: Prevents FAB and Bottom Bar from jumping up when keyboard opens
       resizeToAvoidBottomInset: false,
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
@@ -151,7 +202,6 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    // FIXED: Adds internal padding only when keyboard is up so user can scroll to the bottom
                     padding: EdgeInsets.only(bottom: keyboardHeight > 0 ? keyboardHeight + 20 : sh * 0.15),
                     child: Column(
                       children: [
@@ -227,11 +277,20 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           const SizedBox(height: 20),
           _buildLabel("New Phone No."),
           const SizedBox(height: 8),
-          _buildTextField(_phoneController, "Enter the new Phone no.", TextInputType.phone),
+          _buildTextField(
+              controller: _phoneController,
+              hint: "Enter the new Phone no.",
+              keyboardType: TextInputType.phone,
+              isPhone: true
+          ),
           const SizedBox(height: 16),
           _buildLabel("New E-mail"),
           const SizedBox(height: 8),
-          _buildTextField(_emailController, "Enter the new Email", TextInputType.emailAddress),
+          _buildTextField(
+              controller: _emailController,
+              hint: "Enter the new Email",
+              keyboardType: TextInputType.emailAddress
+          ),
         ],
       ),
     );
@@ -249,7 +308,12 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, TextInputType keyboardType) {
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required TextInputType keyboardType,
+    bool isPhone = false,
+  }) {
     return Container(
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -260,9 +324,14 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        maxLength: isPhone ? 11 : null,
+        inputFormatters: isPhone
+            ? [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)]
+            : null,
         style: const TextStyle(fontFamily: MobileAppFonts.body),
         decoration: InputDecoration(
           hintText: hint,
+          counterText: "",
           hintStyle: TextStyle(
               fontFamily: MobileAppFonts.body,
               color: Colors.grey.shade400,
@@ -321,7 +390,8 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
         ],
       ),
       child: FloatingActionButton(
-        onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+        // --- UPDATED FAB ACTION ---
+        onPressed: _goHome,
         backgroundColor: Colors.transparent,
         elevation: 0,
         shape: const CircleBorder(),

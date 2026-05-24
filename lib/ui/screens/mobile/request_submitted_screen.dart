@@ -145,7 +145,7 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
                             ),
                           ),
 
-                          SizedBox(height: sh * 0.03), // Replaced 20
+                          SizedBox(height: sh * 0.04), // Dynamic spacing
 
                           const Text(
                             "Request Submitted",
@@ -157,33 +157,41 @@ class _RequestSubmittedScreenState extends State<RequestSubmittedScreen>
                             textAlign: TextAlign.center,
                           ),
 
-                          SizedBox(height: sh * 0.05), // Replaced 50
+                          SizedBox(height: sh * 0.02), // Tighter grouping for related text
 
-                          const Text(
-                            "Your request was sent successfully",
-                            style: TextStyle(
-                              fontFamily: MobileAppFonts.body,
-                              color: Colors.black54,
-                              fontSize: 17,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-
-                          SizedBox(height: sh * 0.03), // Replaced 24
-
-                          const Text(
-                            "For further questions or if there is any delay in processing your request, please contact the university department.",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: MobileAppFonts.body,
-                              color: Colors.black54,
-                              fontSize: 15,
-                              height: 1.4,
+                          // Added horizontal padding to force consistent text wrapping
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: sw * 0.05),
+                            child: const Text(
+                              "Your request was sent successfully",
+                              style: TextStyle(
+                                fontFamily: MobileAppFonts.body,
+                                color: Colors.black54,
+                                fontSize: 17,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
                           ),
 
-                          // THE FIX: Replaced the massive 210 gap with a dynamic proportional spacer
-                          SizedBox(height: sh * 0.25),
+                          SizedBox(height: sh * 0.03), // Dynamic spacing
+
+                          // Added larger horizontal padding so this longer text stays beautifully constrained
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: sw * 0.10),
+                            child: const Text(
+                              "For further questions or if there is any delay in processing your request, please contact the university department.",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: MobileAppFonts.body,
+                                color: Colors.black54,
+                                fontSize: 15,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+
+                          // Reduced slightly so the button is always visible without scrolling on smaller devices
+                          SizedBox(height: sh * 0.18),
 
                           _mainButton(
                             text: "Back to Login",

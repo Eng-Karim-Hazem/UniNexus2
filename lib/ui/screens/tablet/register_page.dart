@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:uninexus/theme/app_theme.dart';
 import 'package:uninexus/ui/screens/tablet/request_submitted_page.dart';
-import 'package:uninexus/services/firebase/signup_service.dart'; // Ensure path is correct
+import 'package:uninexus/services/firebase/signup_service.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -13,11 +14,11 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage>
     with SingleTickerProviderStateMixin, PageEntryAnimation {
 
-  final _nationalIdController = TextEditingController();
-  final _emailController      = TextEditingController();
-  final _passwordController   = TextEditingController();
+  final _nationalIdController   = TextEditingController();
+  final _emailController        = TextEditingController();
+  final _universityIdController = TextEditingController(); // Replaced password controller
 
-  bool _isLoading = false; // Added loading state
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -30,27 +31,40 @@ class _RegisterPageState extends State<RegisterPage>
     disposePageAnimation();
     _nationalIdController.dispose();
     _emailController.dispose();
-    _passwordController.dispose();
+    _universityIdController.dispose();
     super.dispose();
   }
 
-  // --- INTEGRATED SIGNUP LOGIC ---
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  // --- RECONCILED SIGNUP SERVICE MANAGEMENT ---
   Future<void> _handleRegister() async {
     final nId = _nationalIdController.text.trim();
-    final uId = _emailController.text.trim(); // User enters ID here
-    final email = _emailController.text.trim(); // Or separate email logic
+    final email = _emailController.text.trim();
+    final uId = _universityIdController.text.trim();
 
-    if (nId.isEmpty || uId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill in all fields")),
-      );
+    if (nId.isEmpty || email.isEmpty || uId.isEmpty) {
+      _showError("Please fill in all fields.");
+      return;
+    }
+
+    if (nId.length != 14) {
+      _showError("Make sure of your national ID (must be exactly 14 digits).");
       return;
     }
 
     setState(() => _isLoading = true);
 
-    // Using the universal service that checks Students, Faculty, and Staff
-    bool success = await SignupService().registerUser(
+    // Call service which returns descriptive status codes
+    String resultStatus = await SignupService().registerUser(
       nationalId: nId,
       universityId: uId,
       email: email,
@@ -58,14 +72,27 @@ class _RegisterPageState extends State<RegisterPage>
 
     if (mounted) setState(() => _isLoading = false);
 
-    if (success && mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const RequestSubmittedPage()),
-      );
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("ID not found in our records. Please contact administration.")),
-      );
+    if (!mounted) return;
+
+    switch (resultStatus) {
+      case 'success':
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const RequestSubmittedPage()),
+        );
+        break;
+      case 'user_not_found':
+        _showError("University ID not found in our system.");
+        break;
+      case 'email_mismatch':
+        _showError("The email provided does not match our records for this ID.");
+        break;
+      case 'national_id_mismatch':
+        _showError("The National ID provided does not match our records for this ID.");
+        break;
+      case 'error':
+      default:
+        _showError("Registration failed. Please try again later.");
+        break;
     }
   }
 
@@ -80,7 +107,6 @@ class _RegisterPageState extends State<RegisterPage>
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      resizeToAvoidBottomInset: false,
       body: Stack(
         clipBehavior: Clip.hardEdge,
         children: [
@@ -125,25 +151,48 @@ class _RegisterPageState extends State<RegisterPage>
                         child: Image.asset('assets/images/uni.jpeg', width: logoSize, height: logoSize, fit: BoxFit.cover),
                       ),
                       const SizedBox(height: 20),
-                      Text('Register to UniNexus', style: AppTextStyles.heading.copyWith(fontSize: 26)),
-                      const Text('Start your smart campus journey', style: AppTextStyles.caption),
+                      Text('Register to UniNexus', style: AppTextStyles.heading.copyWith(fontSize: 26), textAlign: TextAlign.center),
+                      const Text('Start your smart campus journey', style: AppTextStyles.caption, textAlign: TextAlign.center),
                       const SizedBox(height: 24),
                       Expanded(
                         child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
                           padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom + 40),
                           child: Column(
                             children: [
-                              animatedField(anim: field1Anim, child: AppLabeledField(label: 'National ID', controller: _nationalIdController, hint: 'Enter Your National ID')),
+                              // Removed the unsupported parameters to clear the IDE error
+                              animatedField(
+                                  anim: field1Anim,
+                                  child: AppLabeledField(
+                                    label: 'National ID',
+                                    controller: _nationalIdController,
+                                    hint: 'Enter Your National ID',
+                                  )
+                              ),
                               const SizedBox(height: 20),
-                              animatedField(anim: field2Anim, child: AppLabeledField(label: 'Email / ID', controller: _emailController, hint: 'Enter Your Email/ID')),
+                              animatedField(
+                                  anim: field2Anim,
+                                  child: AppLabeledField(
+                                    label: 'University Email',
+                                    controller: _emailController,
+                                    hint: 'Enter Your Email',
+                                  )
+                              ),
                               const SizedBox(height: 20),
-                              animatedField(anim: field3Anim, child: AppLabeledField(label: 'Password', controller: _passwordController, hint: 'Enter Your Password', obscure: true)),
+                              animatedField(
+                                  anim: field3Anim,
+                                  child: AppLabeledField(
+                                    label: 'University ID',
+                                    controller: _universityIdController,
+                                    hint: 'Enter Your ID',
+                                  )
+                              ),
                               const SizedBox(height: 32),
                               animatedField(
                                 anim: checkAnim,
                                 child: _isLoading
                                     ? const CircularProgressIndicator()
-                                    : Row( // Using a Row guarantees it centers perfectly
+                                    : Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     SizedBox(

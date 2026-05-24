@@ -7,6 +7,9 @@ import 'package:uninexus/ui/screens/mobile/Faculty/who_sent_this_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import '../profile_screen.dart';
 import '../settings_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uninexus/ui/screens/mobile/Student/stu_home.dart';
+import 'package:uninexus/ui/screens/mobile/Faculty/faculty_home_screen.dart';
 
 class QAScreen extends StatefulWidget {
   const QAScreen({super.key});
@@ -91,7 +94,28 @@ class _QAScreenState extends State<QAScreen> {
     }
     if (mounted) setState(() => _selectedIndex = 2);
   }
+  Future<void> _goHome() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String userId = prefs.getString('ID') ?? '';
 
+    Widget targetHome;
+
+    // Check the ID prefix to determine if they are Faculty or Student
+    if (userId.toUpperCase().startsWith('FA')) {
+      targetHome = const FacultyHomeScreen();
+    } else {
+      targetHome = const StuHomeScreen(); // Defaults to Student
+    }
+
+    if (!mounted) return;
+
+    // pushAndRemoveUntil destroys the back-stack, preventing ghost screens
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => targetHome),
+          (route) => false,
+    );
+  }
   @override
   Widget build(BuildContext context) {
     // This check now only happens once
@@ -257,7 +281,7 @@ class _QAScreenState extends State<QAScreen> {
       height: 72, width: 72,
       decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: _mainPurple.withValues(alpha: 0.6), blurRadius: 25, spreadRadius: 6, offset: const Offset(0, 2))]),
       child: FloatingActionButton(
-        onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+        onPressed: _goHome,
         backgroundColor: Colors.transparent, elevation: 0, shape: const CircleBorder(),
         child: Container(
           decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),

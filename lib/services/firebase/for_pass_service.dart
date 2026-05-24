@@ -8,60 +8,76 @@ class ForpassService {
   // The three main collections to check
   final List<String> _userCollections = ['students', 'faculty', 'staff'];
 
-  /// Checks if ID exists across all roles, then sends renewal request
-  Future<bool> sendRenewalRequest({
-    required String universityId, // Replaced emailOrId
+  /// Checks if ID exists, matches National ID, ensures password is new, then sends request
+  Future<String> sendRenewalRequest({
+    required String universityId,
     required String nationalId,
     required String newPassword,
   }) async {
     try {
-      String? foundDocId;
+      DocumentSnapshot? foundUserDoc;
       String? foundCollection;
-      String? firstName;
-      String? lastName;
 
-      final String searchValue = universityId.toUpperCase();
+      final String targetId = universityId.trim().toUpperCase();
+      final String targetNationalId = nationalId.trim();
 
+      // Phase 1: Search through all collections by University ID
       for (String col in _userCollections) {
         QuerySnapshot userCheck = await _db
             .collection(col)
-            .where('ID', isEqualTo: searchValue)
+            .where('ID', isEqualTo: targetId)
             .limit(1)
             .get();
 
         if (userCheck.docs.isNotEmpty) {
-          foundDocId = userCheck.docs.first.id;
+          foundUserDoc = userCheck.docs.first;
           foundCollection = col;
-
-          // Extract the user data
-          final data = userCheck.docs.first.data() as Map<String, dynamic>;
-          firstName = data['fName']?.toString() ?? '';
-          lastName = data['lName']?.toString() ?? '';
-
           break;
         }
       }
 
-      if (foundDocId == null) return false;
+      // If the University ID doesn't exist anywhere
+      if (foundUserDoc == null) return 'user_not_found';
+
+      final data = foundUserDoc.data() as Map<String, dynamic>;
+      final storedNationalId = (data['nID'] ?? '').toString().trim();
+
+      // Assumes your database field for the password is 'password'.
+      // Update this key if it is named something else (e.g., 'pass')
+      final storedPassword = (data['pass'] ?? '').toString();
+
+      // Phase 2: Verify if the National ID matches
+      if (storedNationalId != targetNationalId) {
+        return 'national_id_mismatch';
+      }
+
+      // Phase 3: Check if the requested new password is the exact same as the current one
+      if (newPassword == storedPassword) {
+        return 'same_as_old_password';
+      }
+
+      // Everything matches and password is new! Proceed to save the request
+      final firstName = data['fName']?.toString() ?? '';
+      final lastName = data['lName']?.toString() ?? '';
 
       await _db.collection(_requestCollection).add({
-        'ID': searchValue,
-        'nationalId': nationalId,
+        'ID': targetId,
+        'nationalId': targetNationalId,
         'newPassword': newPassword,
         'fName': firstName,
         'lName': lastName,
         'fullName': '$firstName $lastName'.trim(),
         'requestDate': FieldValue.serverTimestamp(),
-        'status': 'pending', // Added to match admin dashboard logic
+        'status': 'pending',
         'isProcessed': false,
-        'userDocRef': foundDocId,
+        'userDocRef': foundUserDoc.id,
         'userRole': foundCollection,
       });
 
-      return true;
+      return 'success';
     } catch (e) {
       debugPrint("Forgot Password Service Error: $e");
-      return false;
+      return 'error';
     }
   }
 

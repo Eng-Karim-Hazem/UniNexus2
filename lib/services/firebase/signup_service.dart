@@ -4,65 +4,76 @@ import 'package:flutter/material.dart';
 class SignupService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final String _collection = "registration_requests";
-
-  // The three main collections to check
   final List<String> _userCollections = ['students', 'faculty', 'staff'];
 
-  Future<bool> registerUser({
+  /// Registers a user and returns a status string indicating the result.
+  Future<String> registerUser({
     required String nationalId,
     required String universityId,
     required String email,
   }) async {
     try {
-      bool userExists = false;
-      String? firstName;
-      String? lastName;
-      String? userRole;
+      final targetId = universityId.trim().toUpperCase();
+      final targetEmail = email.trim().toLowerCase();
+      final targetNationalId = nationalId.trim();
 
-      // Search through all collections for this ID
+      DocumentSnapshot? foundUserDoc;
+      String? foundRole;
+
+      // Phase 1: Search through all collections just by University ID first
       for (String col in _userCollections) {
-        QuerySnapshot userCheck = await _db
+        QuerySnapshot idCheck = await _db
             .collection(col)
-            .where('ID', isEqualTo: universityId.toUpperCase())
+            .where('ID', isEqualTo: targetId)
             .limit(1)
             .get();
 
-        if (userCheck.docs.isNotEmpty) {
-          userExists = true;
-          userRole = col; // Save the collection they were found in
-
-          // Extract the user data
-          final data = userCheck.docs.first.data() as Map<String, dynamic>;
-          firstName = data['fName']?.toString() ?? '';
-          lastName = data['lName']?.toString() ?? '';
-
-          break; // Stop searching once we find them!
+        if (idCheck.docs.isNotEmpty) {
+          foundUserDoc = idCheck.docs.first;
+          foundRole = col;
+          break;
         }
       }
 
-      // If the ID isn't in ANY table, reject the registration
-      if (!userExists) {
-        return false;
+      // If the University ID doesn't exist anywhere
+      if (foundUserDoc == null) {
+        return 'user_not_found';
       }
 
-      // If found, create the pending request with the extracted info
-      await _db.collection(_collection).doc(nationalId).set({
-        'nationalId': nationalId,
-        'ID': universityId.toUpperCase(),
-        'email': email,
+      final userData = foundUserDoc.data() as Map<String, dynamic>;
+      final storedEmail = (userData['email'] ?? '').toString().trim().toLowerCase();
+      final storedNationalId = (userData['nID'] ?? '').toString().trim();
+
+      // Phase 2: Verify if the fields match the records found
+      if (storedEmail != targetEmail) {
+        return 'email_mismatch';
+      }
+      if (storedNationalId != targetNationalId) {
+        return 'national_id_mismatch';
+      }
+
+      // Everything matches perfectly! Proceed to save the request
+      final firstName = userData['fName']?.toString() ?? '';
+      final lastName = userData['lName']?.toString() ?? '';
+
+      await _db.collection(_collection).doc(targetNationalId).set({
+        'nationalId': targetNationalId,
+        'ID': targetId,
+        'email': targetEmail,
         'fName': firstName,
         'lName': lastName,
         'fullName': '$firstName $lastName'.trim(),
-        'userRole': userRole,
+        'userRole': foundRole,
         'status': 'pending',
         'isProcessed': false,
         'requestDate': FieldValue.serverTimestamp(),
       });
-      return true;
+
+      return 'success';
 
     } catch (e) {
       debugPrint("Signup Error: $e");
-      return false;
+      return 'error';
     }
   }
 }
