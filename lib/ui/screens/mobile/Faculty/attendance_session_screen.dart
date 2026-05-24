@@ -432,7 +432,7 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
                 child: _isGenerating
                     ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: _mainPurple, strokeWidth: 2))
                     : Text("Generate QR",
-                    style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: _darkIndigo)),
+                    style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF7B61FF),)),
               ),
             ),
           ),

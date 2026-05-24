@@ -4,6 +4,7 @@ import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/model/community_model.dart';
 import 'package:uninexus/services/firebase/community_service.dart';
+import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_home.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/faculty_home_screen.dart';
@@ -128,10 +129,6 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
       await _communityService.createPost(newPost);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Post Submitted Successfully!",
-                style: TextStyle(fontFamily: MobileAppFonts.body)))
-        );
         Navigator.pop(context);
       }
     } catch (e) {
@@ -146,7 +143,9 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
 
   void _onNavBarTapped(int index) {
     if (index == 0) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      Widget target = _isStudent ? const StuCommunity() : const StuCommunity();
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (_) => target));
     } else if (index == 1) {
       Widget target = _isStudent ? const StuSchedule() : const HallsScreen();
       Navigator.pushReplacement(

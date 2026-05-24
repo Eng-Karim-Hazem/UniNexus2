@@ -30,7 +30,7 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
   String? _selectedDepartment;
   String? _selectedErrorType;
   String _base64Image = "";
-  String _attachmentText = "Attach a photo if possible";
+  String _attachmentText = "Attach a photo (Required)";
   bool _isUploading = false;
   int _selectedIndex = 1;
 
@@ -61,18 +61,81 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
     }
   }
 
+  // Helper function to show floating SnackBars that don't break the FAB layout
+  void _showFloatingSnackBar(String message, Color color) {
+    final sh = MediaQuery.of(context).size.height; // Get dynamic screen height
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(fontFamily: MobileAppFonts.body, fontWeight: FontWeight.bold, color: Colors.white)),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        // Pushes it exactly 78% up the screen, adapting perfectly to any phone size
+        margin: EdgeInsets.only(
+          bottom: sh * 0.01,
+          left: 20,
+          right: 20,
+        ),
+        // Rounds the corners for a cleaner notification look
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+    );
+  }
+
   Future<void> _submitReport() async {
+    // --- ADD THIS LINE TO DROP THE KEYBOARD ---
+    FocusScope.of(context).unfocus();
+
+    // 1. Check all basic dropdowns and hall name
     if (_hallNameController.text.isEmpty || _selectedErrorType == null || _selectedDepartment == null || _selectedBuilding == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please fill in Building, Hall Name, Department, and Error Type"))
-      );
+      _showFloatingSnackBar("Please fill in Building, Hall Name, Department, and Error Type", Colors.redAccent);
+      return;
+    }
+
+    // 2. Check if a description was provided
+    if (_descriptionController.text.trim().isEmpty) {
+      _showFloatingSnackBar("Please provide a description of the error to help with debugging.", Colors.redAccent);
+      return;
+    }
+
+    // 3. Check if an attachment was uploaded
+    if (_base64Image.isEmpty) {
+      _showFloatingSnackBar("Please attach a photo of the issue.", Colors.redAccent);
       return;
     }
 
     setState(() => _isUploading = true);
 
     try {
-      final String fullHallLocation = "Building $_selectedBuilding - ${_hallNameController.text}";
+      final String building = _selectedBuilding!;
+      final String hallCode = _hallNameController.text.trim();
+      final String fullHallLocation = "Building $building - $hallCode";
+
+      // --- 1. VERIFY THE HALL ACTUALLY EXISTS ON CAMPUS ---
+      bool hallExists = await _service.doesHallExist(building, hallCode);
+
+      if (!hallExists) {
+        if (mounted) {
+          _showFloatingSnackBar("This hall does not exist on campus. Please check the building and number.", Colors.redAccent);
+          setState(() => _isUploading = false);
+        }
+        return;
+      }
+
+      // --- 2. CHECK IF ERROR ALREADY EXISTS ---
+      bool isDuplicate = await _service.isErrorAlreadyReported(fullHallLocation, _selectedErrorType!);
+
+      if (isDuplicate) {
+        if (mounted) {
+          _showFloatingSnackBar("This issue has already been reported for this hall!", Colors.orange);
+          setState(() => _isUploading = false);
+        }
+        return;
+      }
+
+      // --- 3. SUBMIT THE ERROR ---
       final report = HallErrorModel(
         hallName: fullHallLocation,
         department: _selectedDepartment!,
@@ -81,13 +144,16 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
         attachment: _base64Image,
         timestamp: DateTime.now(),
       );
+
       await _service.submitError(report);
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error Report Submitted!")));
+        _showFloatingSnackBar("Error Report Submitted!", Colors.green);
         Navigator.pop(context);
       }
+
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+      if (mounted) _showFloatingSnackBar("Error: $e", Colors.redAccent);
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }
@@ -108,28 +174,26 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
     }
     if (mounted) setState(() => _selectedIndex = 1);
   }
+
   Future<void> _goHome() async {
     final prefs = await SharedPreferences.getInstance();
     final String userId = prefs.getString('ID') ?? '';
 
     Widget targetHome;
-
-    // Check the ID prefix to determine if they are Faculty or Student
     if (userId.toUpperCase().startsWith('FA')) {
       targetHome = const FacultyHomeScreen();
     } else {
-      targetHome = const StuHomeScreen(); // Defaults to Student
+      targetHome = const StuHomeScreen();
     }
 
     if (!mounted) return;
-
-    // pushAndRemoveUntil destroys the back-stack, preventing ghost screens
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => targetHome),
           (route) => false,
     );
   }
+
   @override
   Widget build(BuildContext context) {
     final sw = MediaQuery.of(context).size.width;
@@ -240,7 +304,6 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
                   children: [
                     _buildLabel("Hall Name"),
                     const SizedBox(height: 8),
-                    // Applied 3-digit numeric restriction here
                     _buildTextField(
                       controller: _hallNameController,
                       hint: "123",
@@ -316,7 +379,7 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
         maxLines: 5,
         style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14),
         decoration: InputDecoration.collapsed(
-          hintText: "Submit your problem details",
+          hintText: "Submit your problem details (Required)",
           hintStyle: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400, fontSize: 14),
         ),
       ),
@@ -337,7 +400,7 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
         child: _isUploading
             ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: _mainPurple, strokeWidth: 2.5))
             : Text("Submit",
-            style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: _textIndigo)),
+            style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: _mainPurple)),
       ),
     );
   }
@@ -353,7 +416,7 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
     IconData? icon,
     bool readOnly = false,
     VoidCallback? onIconTap,
-    bool isNumberOnly = false, // Parameter for numeric restriction
+    bool isNumberOnly = false,
   }) {
     return Container(
       height: 55,
@@ -361,7 +424,6 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
       child: TextField(
         controller: controller,
         readOnly: readOnly,
-        // Restricts keyboard and input length
         keyboardType: isNumberOnly ? TextInputType.number : TextInputType.text,
         inputFormatters: isNumberOnly ? [
           FilteringTextInputFormatter.digitsOnly,
@@ -372,7 +434,7 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
           hintText: hint,
           hintStyle: TextStyle(fontFamily: MobileAppFonts.body, color: Colors.grey.shade400),
           border: InputBorder.none,
-          counterText: "", // Hides the counter shown by LengthLimitingTextInputFormatter
+          counterText: "",
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           suffixIcon: icon != null
               ? GestureDetector(

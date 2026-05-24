@@ -13,6 +13,7 @@ import 'create_community_post_screen.dart';
 import 'community_post_detail_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_home.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/faculty_home_screen.dart';
+
 class StuCommunity extends StatefulWidget {
   const StuCommunity({super.key});
 
@@ -21,7 +22,6 @@ class StuCommunity extends StatefulWidget {
 }
 
 class _StuCommunityState extends State<StuCommunity> {
-  // Service
   final _communityService = CommunityService();
 
   final Color _mainPurple = const Color(0xFF7B61FF);
@@ -29,6 +29,7 @@ class _StuCommunityState extends State<StuCommunity> {
   final Color _textIndigo = const Color(0xFF5C5C80);
 
   bool _isStudent = true;
+  String _currentUserId = ""; // --- TRACK LOGGED IN USER ---
 
   @override
   void initState() {
@@ -42,6 +43,7 @@ class _StuCommunityState extends State<StuCommunity> {
       final String id = prefs.getString('ID') ?? "";
       if (mounted) {
         setState(() {
+          _currentUserId = id; // --- STORE LOCAL ID FOR COMPARISON ---
           _isStudent = !id.toUpperCase().startsWith('FA');
         });
       }
@@ -49,22 +51,20 @@ class _StuCommunityState extends State<StuCommunity> {
       // Handle error
     }
   }
+
   Future<void> _goHome() async {
     final prefs = await SharedPreferences.getInstance();
     final String userId = prefs.getString('ID') ?? '';
 
     Widget targetHome;
-
-    // Check the ID prefix to determine if they are Faculty or Student
     if (userId.toUpperCase().startsWith('FA')) {
       targetHome = const FacultyHomeScreen();
     } else {
-      targetHome = const StuHomeScreen(); // Defaults to Student
+      targetHome = const StuHomeScreen();
     }
 
     if (!mounted) return;
 
-    // pushAndRemoveUntil destroys the back-stack, preventing ghost screens
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => targetHome),
@@ -74,7 +74,6 @@ class _StuCommunityState extends State<StuCommunity> {
 
   @override
   Widget build(BuildContext context) {
-    // Grab screen dimensions for perfect proportions
     final sw = MediaQuery.of(context).size.width;
     final sh = MediaQuery.of(context).size.height;
 
@@ -97,14 +96,11 @@ class _StuCommunityState extends State<StuCommunity> {
           child: Stack(
             children: [
               Padding(
-                // Dynamic padding based on screen size
                 padding: EdgeInsets.symmetric(horizontal: sw * 0.06, vertical: sh * 0.02),
                 child: Column(
                   children: [
                     _buildTopHeader(),
                     SizedBox(height: sh * 0.03),
-
-                    // --- STREAM BUILDER FOR REAL DATA ---
                     Expanded(
                       child: StreamBuilder<List<CommunityPostModel>>(
                         stream: _communityService.getPostsStream(),
@@ -130,7 +126,6 @@ class _StuCommunityState extends State<StuCommunity> {
 
                           return ListView.separated(
                             physics: const BouncingScrollPhysics(),
-                            // Ensure the bottom post isn't hidden behind the floating button
                             padding: const EdgeInsets.only(bottom: 180),
                             itemCount: posts.length,
                             separatorBuilder: (_, __) => SizedBox(height: sh * 0.02),
@@ -143,21 +138,16 @@ class _StuCommunityState extends State<StuCommunity> {
                 ),
               ),
 
-              // --- CLAMPED DYNAMIC FAB ---
               Positioned(
-                // Scales vertically, but never dips below 110px (protecting it from the nav bar)
                 bottom: (sh * 0.12).clamp(110.0, 140.0),
-                // Scales horizontally, maintaining edge padding
                 right: (sw * 0.06).clamp(20.0, 35.0),
                 child: GestureDetector(
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateCommunityPostScreen())),
                   child: Container(
-                    // Aims for 16% of screen width, but freezes between 55px and 70px
                     width: (sw * 0.20).clamp(70.0, 85.0),
                     height: (sw * 0.20).clamp(70.0, 85.0),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      // Dynamically curves the edges while maintaining shape
                       borderRadius: BorderRadius.circular((sw * 0.05).clamp(16.0, 24.0)),
                       boxShadow: [
                         BoxShadow(
@@ -170,7 +160,6 @@ class _StuCommunityState extends State<StuCommunity> {
                     child: Center(
                       child: Image.asset(
                         'assets/icons/solidarity.png',
-                        // Scales icon perfectly alongside the button bounds
                         width: (sw * 0.20).clamp(30.0, 50.0),
                         height: (sw * 0.20).clamp(30.0, 50.0),
                         fit: BoxFit.contain,
@@ -193,14 +182,10 @@ class _StuCommunityState extends State<StuCommunity> {
       children: [
         GestureDetector(
           onTap: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen())
-            );
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen()));
           },
           child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
         ),
-
         const Text(
             "Community",
             style: TextStyle(
@@ -210,7 +195,6 @@ class _StuCommunityState extends State<StuCommunity> {
                 color: Color(0xFF5C5C80)
             )
         ),
-
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -220,9 +204,14 @@ class _StuCommunityState extends State<StuCommunity> {
   }
 
   Widget _buildPostCard(CommunityPostModel post, double sw) {
+    // --- OWNERSHIP RULES ---
+    // If user is Faculty, they can delete anything. If student, only their own userId works.
+    bool canDelete = !_isStudent || (_currentUserId.isNotEmpty && _currentUserId.toUpperCase() == post.userId.toUpperCase());
+
     return Dismissible(
       key: Key(post.id),
-      direction: _isStudent ? DismissDirection.none : DismissDirection.endToStart,
+      // Set swipe direction to none if the current user doesn't own the post or isn't Faculty
+      direction: canDelete ? DismissDirection.endToStart : DismissDirection.none,
       background: Container(
         padding: const EdgeInsets.only(right: 25),
         alignment: Alignment.centerRight,
@@ -238,9 +227,9 @@ class _StuCommunityState extends State<StuCommunity> {
           builder: (ctx) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text("Delete Post", style: TextStyle(color: _mainPurple, fontWeight: FontWeight.bold)),
-            content: const Text("Are you sure you want to delete this question?"),
+            content: const Text("Are you sure you want to delete this post? This will delete all attached replies."),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel", style: TextStyle(color: Colors.grey))),
               TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
                   child: const Text("Delete", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
@@ -251,9 +240,6 @@ class _StuCommunityState extends State<StuCommunity> {
       },
       onDismissed: (direction) {
         _communityService.deletePost(post.id);
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Post deleted"))
-        );
       },
       child: GestureDetector(
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CommunityPostDetailScreen(post: post))),
@@ -350,6 +336,7 @@ class _StuCommunityState extends State<StuCommunity> {
     );
   }
 
+  // --- REPLACED PUSH WITH PUSHREPLACEMENT FOR PROPER NAV INHERITANCE ---
   Widget _buildStudentBottomBar() {
     return _bottomNavWrapper(
       child: Row(
@@ -360,7 +347,7 @@ class _StuCommunityState extends State<StuCommunity> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _navItem('assets/images/solidarity_1.png', 'Community', true),
-                _navItem('assets/images/calendar.png', 'Schedule', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StuSchedule()))),
+                _navItem('assets/images/calendar.png', 'Schedule', false, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuSchedule()))),
               ],
             ),
           ),
@@ -369,8 +356,8 @@ class _StuCommunityState extends State<StuCommunity> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _navItem('assets/images/qa.png', 'Q&A', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StuQAScreen()))),
-                _navItem('assets/images/user.png', 'Profile', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()))),
+                _navItem('assets/images/qa.png', 'Q&A', false, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuQAScreen()))),
+                _navItem('assets/images/user.png', 'Profile', false, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen()))),
               ],
             ),
           ),
@@ -389,7 +376,7 @@ class _StuCommunityState extends State<StuCommunity> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _navItem('assets/images/solidarity_1.png', 'Community', true),
-                _navItem('assets/images/classroom_1.png', 'Halls', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HallsScreen()))),
+                _navItem('assets/images/classroom_1.png', 'Halls', false, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HallsScreen()))),
               ],
             ),
           ),
@@ -398,8 +385,8 @@ class _StuCommunityState extends State<StuCommunity> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _navItem('assets/images/qa.png', 'Q&A', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QAScreen()))),
-                _navItem('assets/images/user.png', 'Profile', false, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()))),
+                _navItem('assets/images/qa.png', 'Q&A', false, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const QAScreen()))),
+                _navItem('assets/images/user.png', 'Profile', false, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen()))),
               ],
             ),
           ),

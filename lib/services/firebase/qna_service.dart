@@ -6,27 +6,28 @@ class QnAService {
 
   // Fetches QnA posts that match the subjects of a specific year
   Stream<List<Map<String, dynamic>>> streamQnAByYear(int year) {
-    // 1. Listen to the subjects collection filtered by year
     return _db
         .collection('subjects')
         .where('year', isEqualTo: year)
         .snapshots()
         .asyncMap((subjectSnapshot) async {
 
-      // 2. Map the documents to a list of subject names (e.g., ["IOT", "Math"])
       List<String> validSubjects = subjectSnapshot.docs
           .map((doc) => doc['subName'].toString())
           .toList();
 
       if (validSubjects.isEmpty) return [];
 
-      // 3. Query QnA collection where 'subject' is in our validSubjects list
       QuerySnapshot qnaSnapshot = await _db
           .collection('QnA')
           .where('subject', whereIn: validSubjects)
           .get();
 
-      return qnaSnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+      // --- UPDATED: Added docId mapping so we can target it for deletion ---
+      return qnaSnapshot.docs.map((doc) => {
+        ...doc.data() as Map<String, dynamic>,
+        'docId': doc.id
+      }).toList();
     });
   }
 
@@ -40,11 +41,9 @@ class QnAService {
       return snapshot.docs
           .map((doc) => {...doc.data(), 'docId': doc.id})
           .where((data) {
-        // 1. Check if the subject matches the user's assigned subjects
         String? docSubject = data['subject']?.toString();
         bool subjectMatch = subjects.contains(docSubject);
 
-        // 2. Check if the answer is empty or null
         var answer = data['answer'];
         bool isUnanswered = (answer == null || answer.toString().trim().isEmpty);
 
@@ -54,7 +53,6 @@ class QnAService {
     });
   }
 
-  // Updates the document with the answer and the responder's name
   Future<void> submitAnswer(String docId, String answer, String rName) async {
     await _db.collection('QnA').doc(docId).update({
       'answer': answer,
@@ -62,7 +60,11 @@ class QnAService {
     });
   }
 
-  // Used for the Dropdown in the request screen
+  // --- NEW: Delete Question Method ---
+  Future<void> deleteQuestion(String docId) async {
+    await _db.collection('QnA').doc(docId).delete();
+  }
+
   Stream<List<String>> streamSubjectsByYear(int year) {
     return _db
         .collection('subjects')
