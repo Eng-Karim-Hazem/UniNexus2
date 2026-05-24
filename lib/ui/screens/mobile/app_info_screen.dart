@@ -7,6 +7,9 @@ import 'package:uninexus/ui/screens/mobile/profile_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_home.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/faculty_home_screen.dart';
+
+import 'Faculty/halls_screen.dart';
+import 'Faculty/qa_screen.dart';
 class AppInfoScreen extends StatefulWidget {
   const AppInfoScreen({super.key});
 
@@ -17,6 +20,8 @@ class AppInfoScreen extends StatefulWidget {
 class _AppInfoScreenState extends State<AppInfoScreen> {
   // No specific index highlighted
   final int _selectedIndex = -1;
+  bool _isFaculty = false; // Add this
+  bool _isLoadingRole = true; // Add this
 
   final Color _mainPurple = const Color(0xFF7B61FF);
 
@@ -26,14 +31,38 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
   );
 
   void _onNavBarTapped(int index) async {
-    if (index == 0) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
-    } else if (index == 1) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuSchedule()));
-    } else if (index == 2) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuQAScreen()));
-    } else if (index == 3) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+    if (_isFaculty) {
+      // Faculty routes
+      if (index == 0) {
+        await Navigator.push(
+            context, MaterialPageRoute(builder: (_) => const StuCommunity()));
+      } else if (index == 1) {
+        await Navigator.push(
+            context, MaterialPageRoute(builder: (_) => const HallsScreen()));
+      }
+      else if (index == 2) {
+        await Navigator.push(
+            context, MaterialPageRoute(builder: (_) => const QAScreen()));
+      } // Faculty Q&A
+      else if (index == 3) {
+        await Navigator.push(
+            context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+      }
+    } else {
+      // Student routes
+      if (index == 0) {
+        await Navigator.push(
+            context, MaterialPageRoute(builder: (_) => const StuCommunity()));
+      } else if (index == 1) {
+        await Navigator.push(
+            context, MaterialPageRoute(builder: (_) => const StuSchedule()));
+      } else if (index == 2) {
+        await Navigator.push(
+            context, MaterialPageRoute(builder: (_) => const StuQAScreen()));
+      } else if (index == 3) {
+        await Navigator.push(
+            context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+      }
     }
   }
   Future<void> _goHome() async {
@@ -58,7 +87,22 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
           (route) => false,
     );
   }
+  @override
+  void initState() {
+    super.initState();
+    _loadUserRole(); // Call the role loader
+  }
 
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String userId = prefs.getString('ID') ?? '';
+    if (mounted) {
+      setState(() {
+        _isFaculty = userId.toUpperCase().startsWith('FA');
+        _isLoadingRole = false;
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
     // Grab screen dimensions for perfect proportions
@@ -293,7 +337,10 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _navItem('assets/images/solidarity_1.png', "Community", 0),
-                  _navItem('assets/images/calendar.png', "Schedule", 1),
+                  // --- DYNAMIC SWITCH ---
+                  _isFaculty
+                      ? _navItem('assets/images/classroom_1.png', "Halls", 1)
+                      : _navItem('assets/images/calendar.png', "Schedule", 1),
                 ],
               ),
             ),

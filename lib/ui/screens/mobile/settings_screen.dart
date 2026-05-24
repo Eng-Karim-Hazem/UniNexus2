@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// --- STUDENT SCREENS ---
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_schedule.dart';
+import 'package:uninexus/ui/screens/mobile/Student/stu_home.dart';
+
+// --- FACULTY SCREENS ---
+import 'package:uninexus/ui/screens/mobile/Faculty/faculty_home_screen.dart';
+import 'package:uninexus/ui/screens/mobile/Faculty/qa_screen.dart'; // Faculty Q&A
+import 'package:uninexus/ui/screens/mobile/Faculty/halls_screen.dart'; // Faculty Halls
+
+// --- SHARED SCREENS ---
 import 'package:uninexus/ui/screens/mobile/profile_screen.dart';
 import 'package:uninexus/ui/screens/mobile/welcome_screen.dart';
-import 'package:uninexus/ui/screens/mobile/Student/stu_home.dart';
-import 'package:uninexus/ui/screens/mobile/Faculty/faculty_home_screen.dart';
+
 import 'account_management_screen.dart';
 import 'app_info_screen.dart';
 import 'feedback_screen.dart';
@@ -21,31 +30,55 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // No specific index highlighted for Settings
   final int _selectedIndex = -1;
-
   final Color _mainPurple = const Color(0xFF7B61FF);
+
+  // --- ROLE STATE ---
+  bool _isFaculty = false;
+  bool _isLoadingRole = true;
 
   final Gradient _fabGradient = const LinearGradient(
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
     begin: Alignment.topLeft, end: Alignment.bottomRight,
   );
 
-  void _onNavBarTapped(int index) async {
-    if (index == 0) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
-    } else if (index == 1) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuSchedule()));
-    } else if (index == 2) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuQAScreen()));
-    } else if (index == 3) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+  @override
+  void initState() {
+    super.initState();
+    _loadUserRole();
+  }
+
+  // --- DETERMINE USER ROLE ON LOAD ---
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String userId = prefs.getString('ID') ?? '';
+
+    if (mounted) {
+      setState(() {
+        _isFaculty = userId.toUpperCase().startsWith('FA');
+        _isLoadingRole = false;
+      });
     }
   }
 
-  // --- LOGOUT LOGIC ---
+  // --- DYNAMIC NAVIGATION BAR ROUTING ---
+  void _onNavBarTapped(int index) async {
+    if (_isFaculty) {
+      // Faculty Routes
+      if (index == 0) await Navigator.push(context, MaterialPageRoute(builder: (_) => const StuCommunity()));
+      else if (index == 1) await Navigator.push(context, MaterialPageRoute(builder: (_) => const HallsScreen()));
+      else if (index == 2) await Navigator.push(context, MaterialPageRoute(builder: (_) => const QAScreen()));
+      else if (index == 3) await Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+    } else {
+      // Student Routes
+      if (index == 0) await Navigator.push(context, MaterialPageRoute(builder: (_) => const StuCommunity()));
+      else if (index == 1) await Navigator.push(context, MaterialPageRoute(builder: (_) => const StuSchedule()));
+      else if (index == 2) await Navigator.push(context, MaterialPageRoute(builder: (_) => const StuQAScreen()));
+      else if (index == 3) await Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+    }
+  }
+
   Future<void> _handleLogout() async {
-    // 1. Show Confirmation Dialog
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -72,13 +105,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
 
-    // 2. Perform Logout if Confirmed
     if (confirmed == true) {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.clear(); // Clears all saved data (User ID, Name, Login State)
+      await prefs.clear();
 
       if (mounted) {
-        // 3. Navigate to Welcome Screen and remove all previous routes
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const WelcomeScreen()),
@@ -87,30 +118,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     }
   }
+
   Future<void> _goHome() async {
     final prefs = await SharedPreferences.getInstance();
     final String userId = prefs.getString('ID') ?? '';
 
     Widget targetHome;
-
-    // Check the ID prefix to determine if they are Faculty or Student
     if (userId.toUpperCase().startsWith('FA')) {
       targetHome = const FacultyHomeScreen();
     } else {
-      targetHome = const StuHomeScreen(); // Defaults to Student
+      targetHome = const StuHomeScreen();
     }
 
     if (!mounted) return;
-
-    // pushAndRemoveUntil destroys the back-stack, preventing ghost screens
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => targetHome),
           (route) => false,
     );
   }
+
   @override
   Widget build(BuildContext context) {
+    // Prevent layout from building with wrong nav bar briefly
+    if (_isLoadingRole) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+
     return Scaffold(
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
@@ -193,7 +225,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Navigator.push(context, MaterialPageRoute(builder: (context) => const AppInfoScreen()));
         }
         else if (isLogout) {
-          // --- CALL THE LOGOUT FUNCTION HERE ---
           _handleLogout();
         }
       },
@@ -226,7 +257,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(width: 15),
             Container(
-              height: 35, // Matched height from previous tweaks
+              height: 35,
               width: 2.5,
               color: isLogout ? Colors.red.withValues(alpha: 0.3) : _mainPurple.withValues(alpha: 0.3),
             ),
@@ -309,7 +340,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _navItem('assets/images/solidarity_1.png', "Community", 0),
-                  _navItem('assets/images/calendar.png', "Schedule", 1),
+                  // --- DYNAMIC NAV BAR ITEM ---
+                  _isFaculty
+                      ? _navItem('assets/images/classroom_1.png', "Halls", 1)
+                      : _navItem('assets/images/calendar.png', "Schedule", 1),
                 ],
               ),
             ),

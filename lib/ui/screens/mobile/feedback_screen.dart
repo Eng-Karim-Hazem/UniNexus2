@@ -9,6 +9,9 @@ import 'package:uninexus/ui/screens/mobile/Student/stu_schedule.dart';
 import 'package:uninexus/ui/screens/mobile/profile_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_home.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/faculty_home_screen.dart';
+
+import 'Faculty/halls_screen.dart';
+import 'Faculty/qa_screen.dart';
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
 
@@ -20,6 +23,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   final TextEditingController _feedbackController = TextEditingController();
   int _rating = 4;
   bool _isLoading = false;
+  bool _isFaculty = false; // Add this
+  bool _isLoadingRole = true; // Add this
 
   final int _selectedIndex = -1;
   final Color _mainPurple = const Color(0xFF7B61FF);
@@ -28,7 +33,22 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
     begin: Alignment.topLeft, end: Alignment.bottomRight,
   );
+  @override
+  void initState() {
+    super.initState();
+    _loadUserRole(); // Call the role loader
+  }
 
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String userId = prefs.getString('ID') ?? '';
+    if (mounted) {
+      setState(() {
+        _isFaculty = userId.toUpperCase().startsWith('FA');
+        _isLoadingRole = false;
+      });
+    }
+  }
   @override
   void dispose() {
     _feedbackController.dispose();
@@ -79,15 +99,34 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   }
 
   void _onNavBarTapped(int index) async {
-    if (index == 0) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
-    } else if (index == 1) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuSchedule()));
-    } else if (index == 2) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const StuQAScreen()));
-    } else if (index == 3) {
-      await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
-    }
+    if (_isFaculty) {
+      // Faculty routes
+      if (index == 0) {
+        await Navigator.push(context, MaterialPageRoute(builder: (_) => const StuCommunity()));
+      } else if (index == 1) {
+        await Navigator.push(context, MaterialPageRoute(
+            builder: (_) => const HallsScreen()));
+      } else if (index == 2) {
+        await Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const QAScreen())); // Faculty Q&A
+      } else if (index == 3) {
+        await Navigator.push(
+            context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+      }
+    } else {
+      // Student routes
+      if (index == 0) {
+        await Navigator.push(context, MaterialPageRoute(builder: (_) => const StuCommunity()));
+      } else if (index == 1) {
+        await Navigator.push(
+            context, MaterialPageRoute(builder: (_) => const StuSchedule()));
+      } else if (index == 2) {
+        await Navigator.push(
+            context, MaterialPageRoute(builder: (_) => const StuQAScreen()));
+      } else if (index == 3) {
+        await Navigator.push(
+            context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+      }}
   }
   Future<void> _goHome() async {
     final prefs = await SharedPreferences.getInstance();
@@ -345,11 +384,18 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             Expanded(
+        child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _navItem('assets/images/solidarity_1.png', "Community", 0),
-                  _navItem('assets/images/calendar.png', "Schedule", 1),
+                  // --- DYNAMIC SWITCH ---
+                  _isFaculty
+                      ? _navItem('assets/images/classroom_1.png', "Halls", 1)
+                      : _navItem('assets/images/calendar.png', "Schedule", 1),
                 ],
               ),
             ),
@@ -365,6 +411,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             ),
           ],
         ),
+      ),
+      ],
+      ),
       ),
     );
   }

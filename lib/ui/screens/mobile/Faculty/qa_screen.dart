@@ -150,7 +150,7 @@ class _QAScreenState extends State<QAScreen> {
                     if (!snapshot.hasData || snapshot.data!.isEmpty) {
                       return const Center(
                         child: Text("All questions answered!",
-                            style: TextStyle(fontFamily: MobileAppFonts.heading, color: Colors.white70)),
+                            style: TextStyle(fontFamily: MobileAppFonts.heading, color: Colors.black54)),
                       );
                     }
 
