@@ -1,4 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Required for FilteringTextInputFormatter
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -72,6 +74,27 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     if (newPhone.isEmpty && newEmail.isEmpty) {
       showErrorSnackBar(context, "Please enter at least one field to update.");
       return;
+    }
+
+    // Phone Validation: Must be 11 digits and start with "01"
+    if (newPhone.isNotEmpty) {
+      if (newPhone.length != 11 || int.tryParse(newPhone) == null) {
+        showErrorSnackBar(context, "Phone number must be exactly 11 digits.");
+        return;
+      }
+      if (!newPhone.startsWith('01')) {
+        showErrorSnackBar(context, "Phone number must start with 01.");
+        return;
+      }
+    }
+
+    // Email Validation: Standard regex pattern validation
+    if (newEmail.isNotEmpty) {
+      final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+      if (!emailRegex.hasMatch(newEmail)) {
+        showErrorSnackBar(context, "Please enter a valid email address.");
+        return;
+      }
     }
 
     setState(() => _isBusy = true);
@@ -298,7 +321,6 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
   }
 
   Widget _buildAccountManagement() {
-    // Widened: 20% of screen, clamped between 200 and 280 pixels
     final buttonWidth = (MediaQuery.of(context).size.width * 0.20).clamp(200.0, 280.0);
 
     return Column(
@@ -306,13 +328,20 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
       children: [
         _buildSectionHeader("Account Management", 'assets/images/information_1.png', Icons.person),
         const SizedBox(height: 30),
-        _buildTextField("New Phone", "Enter phone number", _phoneController, TextInputType.phone),
+        _buildTextField(
+          "New Phone",
+          "Enter phone number (starts with 01)",
+          _phoneController,
+          TextInputType.phone,
+          maxLength: 11,
+          isNumericOnly: true,
+        ),
         const SizedBox(height: 20),
-        _buildTextField("New Email", "Enter email", _emailController, TextInputType.emailAddress),
+        _buildTextField("New Email", "Enter email address", _emailController, TextInputType.emailAddress),
         const SizedBox(height: 40),
         _isBusy
             ? const Center(child: CircularProgressIndicator())
-            : Center( // <-- WRAPPED IN CENTER
+            : Center(
           child: SizedBox(
               width: buttonWidth,
               child: PillButton(label: 'Update', onTap: _performAccountUpdate)
@@ -323,7 +352,6 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
   }
 
   Widget _buildNotificationSettings() {
-    // Widened: 20% of screen, clamped between 200 and 280 pixels
     final buttonWidth = (MediaQuery.of(context).size.width * 0.20).clamp(200.0, 280.0);
 
     return Column(
@@ -339,7 +367,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
         const SizedBox(height: 40),
         _isBusy
             ? const Center(child: CircularProgressIndicator())
-            : Center( // <-- WRAPPED IN CENTER
+            : Center(
           child: SizedBox(
               width: buttonWidth,
               child: PillButton(label: 'Save', onTap: _saveNotificationSettings)
@@ -350,7 +378,6 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
   }
 
   Widget _buildFeedback() {
-    // Widened: 20% of screen, clamped between 200 and 280 pixels
     final buttonWidth = (MediaQuery.of(context).size.width * 0.20).clamp(200.0, 280.0);
 
     return Column(
@@ -385,7 +412,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
         const SizedBox(height: 30),
         _isBusy
             ? const Center(child: CircularProgressIndicator())
-            : Center( // <-- WRAPPED IN CENTER
+            : Center(
           child: SizedBox(
               width: buttonWidth,
               child: PillButton(label: 'Submit', onTap: _submitFeedback)
@@ -442,7 +469,14 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const WelcomePage()), (route) => false);
   }
 
-  Widget _buildTextField(String label, String hint, TextEditingController controller, TextInputType type) {
+  Widget _buildTextField(
+      String label,
+      String hint,
+      TextEditingController controller,
+      TextInputType type, {
+        int? maxLength,
+        bool isNumericOnly = false,
+      }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -451,6 +485,11 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
         TextField(
           controller: controller,
           keyboardType: type,
+          maxLength: maxLength,
+          inputFormatters: isNumericOnly
+              ? [FilteringTextInputFormatter.digitsOnly]
+              : null,
+          buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
           decoration: InputDecoration(
             hintText: hint,
             filled: true,

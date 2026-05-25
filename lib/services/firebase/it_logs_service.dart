@@ -33,7 +33,7 @@ class ITLogService {
         body: jsonEncode(payload),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 302) {
         final responseData = jsonDecode(response.body);
         if (responseData['status'] == 'Success') {
           print("SUCCESS: Log successfully written to Google Sheets!");

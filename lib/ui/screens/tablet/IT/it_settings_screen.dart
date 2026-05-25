@@ -1,7 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Required for FilteringTextInputFormatter
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:url_launcher/url_launcher.dart'; // --- ADDED URL LAUNCHER ---
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:uninexus/theme/uninexus_tab.dart';
 import 'package:uninexus/theme/app_theme.dart';
@@ -37,7 +39,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
   static const List<Map<String, String>> _items = [
     {'icon': 'assets/icons/Information.png', 'label': 'Account management'},
     {'icon': 'assets/icons/Alarm_1.png',      'label': 'Notification settings'},
-    {'icon': 'assets/icons/Export.png',      'label': 'Logs'}, // Changed label
+    {'icon': 'assets/icons/Export.png',      'label': 'Logs'},
     {'icon': 'assets/icons/Review.png',      'label': 'Feedback'},
     {'icon': 'assets/icons/About.png',       'label': 'App Information'},
     {'icon': 'assets/icons/Logout.png',      'label': 'Logout'},
@@ -123,6 +125,27 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
       return;
     }
 
+    // Phone Validation: Must be 11 digits and start with "01"
+    if (newPhone.isNotEmpty) {
+      if (newPhone.length != 11 || int.tryParse(newPhone) == null) {
+        showErrorSnackBar(context, "Phone number must be exactly 11 digits.");
+        return;
+      }
+      if (!newPhone.startsWith('01')) {
+        showErrorSnackBar(context, "Phone number must start with 01.");
+        return;
+      }
+    }
+
+    // Email Validation: Standard regex pattern validation
+    if (newEmail.isNotEmpty) {
+      final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+      if (!emailRegex.hasMatch(newEmail)) {
+        showErrorSnackBar(context, "Please enter a valid email address.");
+        return;
+      }
+    }
+
     setState(() => _isBusy = true);
 
     try {
@@ -198,13 +221,10 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
 
   // --- LOGIC: Open Google Sheets ---
   Future<void> _openGoogleSheetLogs() async {
-    // PASTE THE LINK TO YOUR GOOGLE SHEET HERE (Not the Webhook URL, the actual viewing URL)
     const String sheetUrl = 'https://docs.google.com/spreadsheets/d/18JxhVOoqC9p7NG_Bzr9M3dmYRA69PL2SDpt03sDAu00/edit?usp=sharing';
-
     final Uri url = Uri.parse(sheetUrl);
 
     try {
-      // mode: LaunchMode.externalApplication forces it to open in the native browser or Google Sheets app
       if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
         if (mounted) showErrorSnackBar(context, 'Could not launch Google Sheets.');
       }
@@ -297,7 +317,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     switch (index) {
       case 0: return _buildAccountManagement();
       case 1: return _buildNotificationSettings();
-      case 2: return _buildExportLogs(); // This now points to the new UI
+      case 2: return _buildExportLogs();
       case 3: return _buildFeedback();
       case 4: return _buildAppInfo();
       default: return const SizedBox();
@@ -305,7 +325,6 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
   }
 
   Widget _buildAccountManagement() {
-    // Dynamic width: 20% of screen, clamped between 200 and 280 pixels
     final buttonWidth = (MediaQuery.of(context).size.width * 0.25).clamp(240.0, 300.0);
 
     return Column(
@@ -313,9 +332,16 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
       children: [
         _buildSectionHeader("Account Management", 'assets/images/information_1.png', Icons.person),
         const SizedBox(height: 30),
-        _buildTextField("New Phone", "Enter phone number", _phoneController, TextInputType.phone),
+        _buildTextField(
+          "New Phone",
+          "Enter phone number (starts with 01)",
+          _phoneController,
+          TextInputType.phone,
+          maxLength: 11,
+          isNumericOnly: true,
+        ),
         const SizedBox(height: 20),
-        _buildTextField("New Email", "Enter email", _emailController, TextInputType.emailAddress),
+        _buildTextField("New Email", "Enter email address", _emailController, TextInputType.emailAddress),
         const SizedBox(height: 40),
         _isBusy
             ? const Center(child: CircularProgressIndicator())
@@ -330,7 +356,6 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
   }
 
   Widget _buildNotificationSettings() {
-    // Dynamic width: 20% of screen, clamped between 200 and 280 pixels
     final buttonWidth = (MediaQuery.of(context).size.width * 0.25).clamp(220.0, 300.0);
 
     return Column(
@@ -356,9 +381,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 
-  // --- UPDATED UI FOR GOOGLE SHEETS ---
   Widget _buildExportLogs() {
-    // Dynamic width: 20% of screen, clamped between 200 and 280 pixels
     final buttonWidth = (MediaQuery.of(context).size.width * 0.25).clamp(220.0, 300.0);
 
     return Column(
@@ -379,7 +402,6 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
   }
 
   Widget _buildFeedback() {
-    // Dynamic width: 20% of screen, clamped between 200 and 280 pixels
     final buttonWidth = (MediaQuery.of(context).size.width * 0.25).clamp(220.0, 300.0);
 
     return Column(
@@ -471,7 +493,14 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const WelcomePage()), (route) => false);
   }
 
-  Widget _buildTextField(String label, String hint, TextEditingController controller, TextInputType type) {
+  Widget _buildTextField(
+      String label,
+      String hint,
+      TextEditingController controller,
+      TextInputType type, {
+        int? maxLength,
+        bool isNumericOnly = false,
+      }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -480,6 +509,11 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
         TextField(
           controller: controller,
           keyboardType: type,
+          maxLength: maxLength,
+          inputFormatters: isNumericOnly
+              ? [FilteringTextInputFormatter.digitsOnly]
+              : null,
+          buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
@@ -516,6 +550,7 @@ class _ITSettingsScreenState extends State<ITSettingsScreen> {
     );
   }
 }
+
 Widget _buildSectionHeader(String title, String iconPath, IconData fallbackIcon) {
   return Row(
     children: [

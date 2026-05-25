@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Required for TextInputFormatter
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -73,6 +74,27 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
     if (newPhone.isEmpty && newEmail.isEmpty) {
       showErrorSnackBar(context, "Please enter at least one field to update.");
       return;
+    }
+
+    // Phone Validation: Must be 11 digits and start with "01"
+    if (newPhone.isNotEmpty) {
+      if (newPhone.length != 11 || int.tryParse(newPhone) == null) {
+        showErrorSnackBar(context, "Phone number must be exactly 11 digits.");
+        return;
+      }
+      if (!newPhone.startsWith('01')) {
+        showErrorSnackBar(context, "Phone number must start with 01.");
+        return;
+      }
+    }
+
+    // Email Validation: Standard regex pattern validation
+    if (newEmail.isNotEmpty) {
+      final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+      if (!emailRegex.hasMatch(newEmail)) {
+        showErrorSnackBar(context, "Please enter a valid email address.");
+        return;
+      }
     }
 
     setState(() => _isBusy = true);
@@ -223,7 +245,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                               iconPath: item['icon']!,
                               label: item['label']!,
                               onTap: () {
-                                if (index == 4) { // Changed index to 4 due to logs removal
+                                if (index == 4) {
                                   _logout();
                                 } else {
                                   setState(() => selectedSettingTab = index);
@@ -280,7 +302,6 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
   }
 
   Widget _buildAccountManagement() {
-    // Dynamic width: 20% of screen, clamped between 200 and 280 pixels
     final buttonWidth = (MediaQuery.of(context).size.width * 0.25).clamp(240.0, 300.0);
 
     return Column(
@@ -288,9 +309,16 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
       children: [
         _buildSectionHeader("Account Management", 'assets/images/information_1.png', Icons.person),
         const SizedBox(height: 30),
-        _buildTextField("New Phone", "Enter phone number", _phoneController, TextInputType.phone),
+        _buildTextField(
+          "New Phone",
+          "Enter phone number (starts with 01)",
+          _phoneController,
+          TextInputType.phone,
+          maxLength: 11,
+          isNumericOnly: true, // Rejects spaces, dashes, or alphanumeric tokens instantly
+        ),
         const SizedBox(height: 20),
-        _buildTextField("New Email", "Enter email", _emailController, TextInputType.emailAddress),
+        _buildTextField("New Email", "Enter email address", _emailController, TextInputType.emailAddress),
         const SizedBox(height: 40),
         _isBusy
             ? const Center(child: CircularProgressIndicator())
@@ -305,7 +333,6 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
   }
 
   Widget _buildNotificationSettings() {
-    // Dynamic width: 20% of screen, clamped between 200 and 280 pixels
     final buttonWidth = (MediaQuery.of(context).size.width * 0.25).clamp(220.0, 300.0);
 
     return Column(
@@ -332,7 +359,6 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
   }
 
   Widget _buildFeedback() {
-    // Dynamic width: 20% of screen, clamped between 200 and 280 pixels
     final buttonWidth = (MediaQuery.of(context).size.width * 0.25).clamp(220.0, 300.0);
 
     return Column(
@@ -423,7 +449,14 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
     Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const WelcomePage()), (route) => false);
   }
 
-  Widget _buildTextField(String label, String hint, TextEditingController controller, TextInputType type) {
+  Widget _buildTextField(
+      String label,
+      String hint,
+      TextEditingController controller,
+      TextInputType type, {
+        int? maxLength,
+        bool isNumericOnly = false,
+      }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -432,6 +465,12 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
         TextField(
           controller: controller,
           keyboardType: type,
+          maxLength: maxLength,
+          // Attaches the numerical extraction logic directly to the keyboard frame pipelines
+          inputFormatters: isNumericOnly
+              ? [FilteringTextInputFormatter.digitsOnly]
+              : null,
+          buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
