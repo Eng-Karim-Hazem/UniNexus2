@@ -101,7 +101,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       final List<Map<String, String>> requestItems = [
         ...registrationRequests,
         ...resetRequests,
-      ].take(10).toList();
+      ].take(5).toList();
 
       // Filter notices meant for this admin
       final List<Map<String, String>> noticesList = notices.docs

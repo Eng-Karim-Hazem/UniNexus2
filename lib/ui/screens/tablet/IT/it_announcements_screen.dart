@@ -89,7 +89,7 @@ class ITAnnouncementsScreen extends StatelessWidget {
                           child: Row(
                             children: [
                               Image.asset(
-                                'assets/icons/notify_1.png',
+                                'assets/icons/Alarm.png',
                                 width: 22, height: 22,
                                 errorBuilder: (_, __, ___) => const Icon(
                                     Icons.notifications_outlined,

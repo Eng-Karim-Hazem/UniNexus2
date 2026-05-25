@@ -101,10 +101,12 @@ class SecurityAnnouncementsScreen extends StatelessWidget {
                                 decoration: AppDecorations.smallCard(),
                                 child: Row(
                                   children: [
-                                    const Icon(
-                                        Icons.security_outlined,
-                                        size: 24,
-                                        color: AppColors.primary
+                                    Image.asset(
+                                      'assets/icons/Alarm.png',
+                                      width: 22, height: 22,
+                                      errorBuilder: (_, __, ___) => const Icon(
+                                          Icons.notifications_outlined,
+                                          size: 22, color: AppColors.primary),
                                     ),
                                     const SizedBox(width: 10),
                                     const SectionDivider(), // Custom divider from your theme

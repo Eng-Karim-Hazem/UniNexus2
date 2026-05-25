@@ -116,8 +116,13 @@ class _AdminReceivedNoticesScreenState extends State<AdminReceivedNoticesScreen>
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.notifications_none_rounded,
-                                        color: AppColors.primary, size: 28),
+                                    Image.asset(
+                                      'assets/icons/Alarm.png',
+                                      width: 22, height: 22,
+                                      errorBuilder: (_, __, ___) => const Icon(
+                                          Icons.notifications_outlined,
+                                          size: 22, color: AppColors.primary),
+                                    ),
                                     const SizedBox(width: 20),
                                     const Text('|', style: TextStyle(fontSize: 24, color: Colors.grey)),
                                     const SizedBox(width: 20),

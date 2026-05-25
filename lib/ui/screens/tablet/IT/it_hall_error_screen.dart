@@ -49,10 +49,12 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                 _buildDepartmentFilter(),
               ],
             ),
-            const SizedBox(height: 30),
+            // Matched perfectly with the 45px spacer height inside ITRequestsScreen
+            const SizedBox(height: 45),
 
             Expanded(
               child: Row(
+                // Reverted to stretch to replicate matching box-sizing metrics across screens
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Left panel
@@ -160,7 +162,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                           'hallName': scannerName,
                           'errorType': 'Device Downtime Alert',
                           'department': 'Scanners',
-                          'status': isOffline ? 'downtime' : deviceStatus, // Uses explicit downtime token for coloring
+                          'status': isOffline ? 'downtime' : deviceStatus,
                           'timestamp': deviceTime,
                           'attachment': null,
                           'description': 'Hardware device metrics show that connection was lost. Ensure system power cords and local network nodes are stable.',
@@ -177,7 +179,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                           'hallName': scannerName,
                           'errorType': 'Hardware Tampering Detection Alert',
                           'department': 'Scanners',
-                          'status': 'tampered', // Uses explicit tampered token for coloring
+                          'status': 'tampered',
                           'timestamp': deviceTime,
                           'attachment': null,
                           'description': 'Security alert! Enclosure monitoring switches indicate that this device frame has been altered or opened without validation.',
@@ -200,7 +202,6 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                       final String filterTarget = _selectedStatus.toLowerCase();
 
                       if (filterTarget == 'pending') {
-                        // Include customized downtime or tampering exceptions as high-priority pending issues
                         return itemStatus == 'pending' || itemStatus == '' || itemStatus == 'downtime' || itemStatus == 'tampered';
                       }
                       return itemStatus == filterTarget;
@@ -267,7 +268,6 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
     final bool isSelected = _selectedDocId == item['id'];
     String status = item['status'];
     final bool isFixed = status == 'fixed';
-    final bool isTamperedType = item['isTamperedType'] == true;
 
     if (status == '') {
       status = 'pending';
@@ -323,7 +323,6 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
     );
   }
 
-  // Helper method to draw standard badges matching your UI theme configuration
   Widget _buildCustomBadge({required String label, required Color color}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
