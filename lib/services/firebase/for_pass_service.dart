@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 class ForpassService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final String _requestCollection = "ForgotPass_request";
-
+//what
   // The three main collections to check
   final List<String> _userCollections = ['students', 'faculty', 'staff'];
 
