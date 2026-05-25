@@ -473,7 +473,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         decoration: AppDecorations.smallCard(),
         child: Row(
           children: [
-            const Icon(Icons.notifications_none_rounded, color: AppColors.primary),
+            Image.asset(
+              'assets/icons/Alarm.png',
+              width: 22, height: 22,
+              errorBuilder: (_, __, ___) => const Icon(
+                  Icons.notifications_outlined,
+                  size: 22, color: AppColors.primary),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
