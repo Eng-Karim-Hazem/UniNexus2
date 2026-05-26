@@ -40,6 +40,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       final String fName = (prefs.getString('fName') ?? '').trim();
+      final String lName = (prefs.getString('lName') ?? '').trim();
       final String adminId = (prefs.getString('ID') ?? '').trim();
       _readRequestIds = (prefs.getStringList(_requestReadKey) ?? const []).toSet();
       _readNoticeIds = (prefs.getStringList(_noticeReadKey) ?? const []).toSet();
@@ -132,7 +133,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
       if (!mounted) return;
       setState(() {
-        _adminName = fName.isNotEmpty ? fName : 'Admin';
+        _adminName = fName.isNotEmpty && lName.isNotEmpty ? '$fName $lName' : fName.isNotEmpty ? fName : 'Admin';
 
         // Use the length of the filtered pending lists instead of the total collection length
         _registrationCount = pendingRegDocs.length;

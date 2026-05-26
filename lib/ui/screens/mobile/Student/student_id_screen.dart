@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -9,6 +10,7 @@ import '../settings_screen.dart';
 import 'stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_home.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/faculty_home_screen.dart';
+import 'package:uninexus/services/qr_generator_service.dart'; // Import your QR Obfuscation Service class
 
 class StudentIDScreen extends StatefulWidget {
   const StudentIDScreen({super.key});
@@ -20,8 +22,10 @@ class StudentIDScreen extends StatefulWidget {
 class _StudentIDScreenState extends State<StudentIDScreen> {
   String _userID = "";
   String _userName = "";
+  String _qrPayload = ""; // Holds the HMAC signed and XOR obfuscated string
   bool _isLoading = true;
   int _selectedIndex = -1; // -1 to not highlight anything when just viewing the ID
+  Timer? _refreshTimer; // Periodically refreshes the dynamic token timestamp
 
   final Color _mainPurple = const Color(0xFF7B61FF);
 
@@ -34,10 +38,27 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
   @override
   void initState() {
     super.initState();
-    _loadDataFromPrefs();
+    _loadDataAndGenerateToken();
+
+    // Automatically refresh obfuscated token bytes every 15 seconds to keep timestamp valid
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
+      if (_userID.isNotEmpty && _userID != "N/A") {
+        _generateCryptoToken();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel(); // Terminate background loop safely to prevent memory leaks
+    super.dispose();
   }
 
   Future<void> _loadDataFromPrefs() async {
+    // Kept for structure, handled dynamically inside _loadDataAndGenerateToken instead
+  }
+
+  Future<void> _loadDataAndGenerateToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.reload();
 
@@ -49,8 +70,19 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
         _userName = "$f $l".trim();
         _isLoading = false;
       });
+      _generateCryptoToken();
     }
   }
+
+  /// Calculates the HMAC signature and obfuscates the token string
+  void _generateCryptoToken() {
+    if (_userID.isEmpty || _userID == "N/A") return;
+    setState(() {
+      // Direct call to the cryptographic service pipeline
+      _qrPayload = QrGeneratorService.generateQrData(_userID);
+    });
+  }
+
   Future<void> _goHome() async {
     final prefs = await SharedPreferences.getInstance();
     final String userId = prefs.getString('ID') ?? '';
@@ -73,6 +105,7 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
           (route) => false,
     );
   }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -141,13 +174,11 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
   Widget _buildMainCard(BuildContext context) {
     // Dynamic QR size based on screen width to prevent overflow
     double screenWidth = MediaQuery.of(context).size.width;
-    // Screen padding (48) + Card padding (40) = 88. Leaving breathing room.
     double qrSize = screenWidth - 100;
     if (qrSize > 240) qrSize = 240; // Cap max size
 
     return Container(
       width: double.infinity,
-      // Removed the redundant horizontal margin since the parent has Padding
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.85),
@@ -214,13 +245,13 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
               ).createShader(bounds),
               blendMode: BlendMode.srcIn,
               child: QrImageView(
-                data: _userID,
+                // Upgraded from raw plain text _userID to the dynamic encrypted payload
+                data: _qrPayload.isNotEmpty ? _qrPayload : "Loading Identity...",
                 version: QrVersions.auto,
-                size: qrSize, // Responsive Size
+                size: qrSize,
                 backgroundColor: Colors.transparent,
               ),
             ),
-
           ),
 
           const SizedBox(height: 25),

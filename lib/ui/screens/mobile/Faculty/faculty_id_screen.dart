@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -9,6 +10,7 @@ import '../profile_screen.dart';
 import '../settings_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_home.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/faculty_home_screen.dart';
+import 'package:uninexus/services/qr_generator_service.dart'; // Import your QR Obfuscation Service class
 
 class FacultyIDScreen extends StatefulWidget {
   const FacultyIDScreen({super.key});
@@ -21,9 +23,11 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
   // State Variables
   String _userID = "";
   String _userName = "";
+  String _qrPayload = ""; // Holds the HMAC signed and XOR obfuscated context string
   bool _isLoading = true;
   int _selectedIndex = -1;
   bool _isPunchedIn = false;
+  Timer? _refreshTimer; // Periodically refreshes the dynamic token timestamp
 
   // Colors preserved from your design
   final Color _mainPurple = const Color(0xFF7B61FF);
@@ -40,10 +44,27 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
   @override
   void initState() {
     super.initState();
-    _loadDataFromPrefs();
+    _loadDataAndGenerateToken();
+
+    // Automatically refresh the dynamic obfuscated token every 30 seconds
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
+      if (_userID.isNotEmpty && _userID != "N/A") {
+        _generateCryptoToken();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel(); // Terminate background loop safely to prevent memory leaks
+    super.dispose();
   }
 
   Future<void> _loadDataFromPrefs() async {
+    // Kept for structure compatibility, logical operations moved to _loadDataAndGenerateToken
+  }
+
+  Future<void> _loadDataAndGenerateToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.reload();
 
@@ -55,37 +76,51 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
         _userName = "$f $l".trim();
         _isLoading = false;
       });
+      _generateCryptoToken();
     }
   }
+
+  /// Evaluates context punch state and signs it via your encryption service pipeline
+  void _generateCryptoToken() {
+    if (_userID.isEmpty || _userID == "N/A") return;
+
+    // Creates contextual baseline payload matching your state criteria
+    final String rawContextData = _isPunchedIn ? "OUT_$_userID" : "IN_$_userID";
+
+    setState(() {
+      // Passes the conditional state string directly into the backend cryptosystem loop
+      _qrPayload = QrGeneratorService.generateQrData(rawContextData);
+    });
+  }
+
   Future<void> _goHome() async {
     final prefs = await SharedPreferences.getInstance();
     final String userId = prefs.getString('ID') ?? '';
 
     Widget targetHome;
 
-    // Check the ID prefix to determine if they are Faculty or Student
     if (userId.toUpperCase().startsWith('FA')) {
       targetHome = const FacultyHomeScreen();
     } else {
-      targetHome = const StuHomeScreen(); // Defaults to Student
+      targetHome = const StuHomeScreen();
     }
 
     if (!mounted) return;
 
-    // pushAndRemoveUntil destroys the back-stack, preventing ghost screens
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => targetHome),
           (route) => false,
     );
   }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final String qrData = _isPunchedIn ? "OUT_$_userID" : "IN_$_userID";
+    // Dynamic color gradient selection based on state
     final List<Color> qrColors = _isPunchedIn
         ? [_secondaryPurple, _primaryBlue]
         : [_primaryBlue, _secondaryPurple];
@@ -97,26 +132,20 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
       bottomNavigationBar: _buildBottomBar(),
       body: Stack(
         children: [
-          // 1. Fixed Background Image - Stays static in the back
           Positioned.fill(
             child: Image.asset(
               'assets/images/Phone_Background.png',
               fit: BoxFit.cover,
             ),
           ),
-
-          // 2. Main Content Structure
           SafeArea(
             bottom: false,
             child: Column(
               children: [
-                // --- FIXED TOP BAR (Outside ScrollView) ---
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
                   child: _buildTopHeader(),
                 ),
-
-                // --- SCROLLABLE CONTENT (Inside Expanded) ---
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
@@ -124,10 +153,9 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
                     child: Column(
                       children: [
                         const SizedBox(height: 20),
-                        _buildMainCard(qrData, qrColors),
+                        _buildMainCard(qrColors),
                         const SizedBox(height: 30),
                         _buildWidePunchButton(),
-                        // Extra padding to ensure you can scroll past the FAB/BottomBar
                         const SizedBox(height: 160),
                       ],
                     ),
@@ -169,7 +197,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
     );
   }
 
-  Widget _buildMainCard(String qrData, List<Color> qrColors) {
+  Widget _buildMainCard(List<Color> qrColors) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 30),
@@ -237,10 +265,12 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
                 ).createShader(bounds),
                 blendMode: BlendMode.srcIn,
                 child: QrImageView(
-                  data: qrData,
+                  // Passes the obfuscated crypto payload to the QR UI view layout
+                  data: _qrPayload.isNotEmpty ? _qrPayload : "Loading Identity...",
                   version: QrVersions.auto,
                   size: 240.0,
                   errorCorrectionLevel: QrErrorCorrectLevel.H,
+                  backgroundColor: Colors.transparent,
                 ),
               ),
             ],
@@ -263,7 +293,13 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
   Widget _buildWidePunchButton() {
     final Color activeColor = _isPunchedIn ? _primaryBlue : _mainPurple;
     return GestureDetector(
-      onTap: () => setState(() => _isPunchedIn = !_isPunchedIn),
+      onTap: () {
+        setState(() {
+          _isPunchedIn = !_isPunchedIn;
+        });
+        // Instantly recalculate the dynamic token payload structure upon toggling punch status
+        _generateCryptoToken();
+      },
       child: Container(
         width: 240,
         height: 60,
