@@ -220,7 +220,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
           // Center Version
           const Center(
             child: Text(
-              "App Version: UN2.0",
+              "App Version: UN2.6",
               style: TextStyle(
                 fontFamily: MobileAppFonts.heading,
                 fontSize: 18,

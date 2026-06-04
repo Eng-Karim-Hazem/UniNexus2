@@ -415,7 +415,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
         const SizedBox(height: 80),
         const Center(
           child: Text(
-            "App Version: UN2.0",
+            "App Version: UN2.6",
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.black87),
           ),
         ),
