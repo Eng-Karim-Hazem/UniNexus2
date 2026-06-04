@@ -147,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen>
             await prefs.setStringList('facultySubjects', subjectsList);
             nextScreen = const FacultyHomeScreen();
           } else {
-            throw "Staff mobile dashboard is under construction.";
+            throw "Staff Users have no Access to Mobile dashboard.";
           }
 
           if (!mounted) return;

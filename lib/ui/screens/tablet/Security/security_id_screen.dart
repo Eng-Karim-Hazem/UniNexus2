@@ -66,7 +66,7 @@ class _SecurityIdScreenState extends State<SecurityIdScreen> {
 
     setState(() {
       // Passes the conditional state string directly into the backend cryptosystem loop
-      _qrPayload = QrGeneratorService.generateQrData(rawContextData);
+      _qrPayload = QrGeneratorService.EmpgenerateQrData(rawContextData);
     });
   }
 

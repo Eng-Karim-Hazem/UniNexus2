@@ -67,7 +67,7 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
 
     setState(() {
       // Passes the conditional state string directly into the backend cryptosystem loop
-      _qrPayload = QrGeneratorService.generateQrData(rawContextData);
+      _qrPayload = QrGeneratorService.EmpgenerateQrData(rawContextData);
     });
   }
 
