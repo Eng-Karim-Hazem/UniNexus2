@@ -114,7 +114,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
 
   Future<void> _updateContactInfo() async {
     final newPhone = _phoneController.text.trim();
-    final newEmail = _emailController.text.trim();
+    final newEmail = _emailController.text.trim().toLowerCase();
 
     if (newPhone.isEmpty && newEmail.isEmpty) {
       _showError("Please enter a new phone number or email.");
@@ -142,20 +142,70 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       final prefs = await SharedPreferences.getInstance();
       final String userId = prefs.getString('ID') ?? '';
 
+      // Get currently stored contact info to check for identical data updates
+      final String currentPhone = prefs.getString('pNum') ?? '';
+      final String currentEmail = (prefs.getString('email') ?? '').toLowerCase();
+
       if (userId.isEmpty) throw Exception("User ID not found.");
 
-      String targetCollection = 'students';
-      final prefix = userId.toUpperCase();
-
-      if (prefix.startsWith('FA')) {
-        targetCollection = 'faculty';
-      } else if (prefix.startsWith('ST')) {
-        targetCollection = 'students';
+      // --- NEW: SELF-DUPLICATE VALIDATION ---
+      // Stop the update if the user enters exactly what they already have configured
+      if (newPhone == currentPhone && newEmail.isEmpty) {
+        _showError("This phone number is already set as your current number.");
+        setState(() => _isLoading = false);
+        return;
       }
 
+      if (newEmail == currentEmail && newPhone.isEmpty) {
+        _showError("This email address is already set as your current email.");
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      if (newPhone == currentPhone && newEmail == currentEmail) {
+        _showError("Both the phone number and email are identical to your current data.");
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final String currentUserIdUpper = userId.toUpperCase();
+      String targetCollection = currentUserIdUpper.startsWith('FA') ? 'faculty' : 'students';
+
+      // --- CROSS-COLLECTION OTHER-USER DUPLICATE VALIDATION ---
+      final List<String> collectionsToCheck = ['students', 'faculty'];
+
+      for (String collectionName in collectionsToCheck) {
+        if (newPhone.isNotEmpty && newPhone != currentPhone) {
+          final phoneConflictQuery = await FirebaseFirestore.instance
+              .collection(collectionName)
+              .where('pNum', isEqualTo: newPhone)
+              .get();
+
+          if (phoneConflictQuery.docs.isNotEmpty) {
+            _showError("This phone number is already registered to another account.");
+            setState(() => _isLoading = false);
+            return;
+          }
+        }
+
+        if (newEmail.isNotEmpty && newEmail != currentEmail) {
+          final emailConflictQuery = await FirebaseFirestore.instance
+              .collection(collectionName)
+              .where('email', isEqualTo: newEmail)
+              .get();
+
+          if (emailConflictQuery.docs.isNotEmpty) {
+            _showError("This email address is already registered to another account.");
+            setState(() => _isLoading = false);
+            return;
+          }
+        }
+      }
+
+      // Proceed to update since it's verified unique and modified
       final query = await FirebaseFirestore.instance
           .collection(targetCollection)
-          .where('ID', isEqualTo: prefix)
+          .where('ID', isEqualTo: currentUserIdUpper)
           .limit(1)
           .get();
 
@@ -166,13 +216,14 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       final docRef = query.docs.first.reference;
 
       Map<String, dynamic> updates = {};
-      if (newPhone.isNotEmpty) updates['pNum'] = newPhone;
-      if (newEmail.isNotEmpty) updates['email'] = newEmail;
+      // Only attach to map if the field has changed from current value
+      if (newPhone.isNotEmpty && newPhone != currentPhone) updates['pNum'] = newPhone;
+      if (newEmail.isNotEmpty && newEmail != currentEmail) updates['email'] = newEmail;
 
       await docRef.update(updates);
 
-      if (newPhone.isNotEmpty) await prefs.setString('pNum', newPhone);
-      if (newEmail.isNotEmpty) await prefs.setString('email', newEmail);
+      if (updates.containsKey('pNum')) await prefs.setString('pNum', newPhone);
+      if (updates.containsKey('email')) await prefs.setString('email', newEmail);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

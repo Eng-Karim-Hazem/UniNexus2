@@ -40,7 +40,16 @@ class SignupService {
         return 'user_not_found';
       }
 
+      // --- PHASE 1.5: THE FIX - Check for existing registration request ---
+      DocumentSnapshot preExistingRequest =
+      await _db.collection(_collection).doc(targetNationalId).get();
+
+      if (preExistingRequest.exists) {
+        return 'already_registered';
+      }
+
       final userData = foundUserDoc.data() as Map<String, dynamic>;
+      // Note: Kept your 'email' and 'nID' mappings intact from your database structure
       final storedEmail = (userData['email'] ?? '').toString().trim().toLowerCase();
       final storedNationalId = (userData['nID'] ?? '').toString().trim();
 

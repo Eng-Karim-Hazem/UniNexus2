@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/services/firebase/qna_service.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import '../settings_screen.dart';
+import 'edit_qa_request_screen.dart';
 import 'qa_request.dart';
 import '../Student/stu_schedule.dart';
 import '../profile_screen.dart';
@@ -158,7 +159,8 @@ class _StuQAScreenState extends State<StuQAScreen> {
                             itemBuilder: (context, index) => QACardItem(
                               item: qnaList[index],
                               mainPurple: _mainPurple,
-                              currentStudentId: _currentStudentId, // Pass ID to Card
+                              currentStudentId: _currentStudentId,
+                              onRefresh: _loadStudentData, // --- 4. ADD THIS LINE ---
                             ),
                           );
                         },
@@ -192,7 +194,9 @@ class _StuQAScreenState extends State<StuQAScreen> {
 
   Widget _buildAddQuestionFab(double sw, double sh) {
     return Positioned(
-      bottom: (sh * 0.12).clamp(110.0, 140.0),
+      // --- THE FIX ---
+      // 80 (Bottom Bar) + System Nav Bar Height + 20 (Margin)
+      bottom: 80.0 + MediaQuery.of(context).padding.bottom + 20.0,
       right: (sw * 0.06).clamp(20.0, 35.0),
       child: GestureDetector(
         onTap: () async {
@@ -334,19 +338,20 @@ class _StuQAScreenState extends State<StuQAScreen> {
 class QACardItem extends StatefulWidget {
   final Map<String, dynamic> item;
   final Color mainPurple;
-  final String currentStudentId; // Receives the ID from the parent
+  final String currentStudentId;
+  final VoidCallback onRefresh; // --- 1. ADD THIS LINE ---
 
   const QACardItem({
     super.key,
     required this.item,
     required this.mainPurple,
     required this.currentStudentId,
+    required this.onRefresh, // --- 2. ADD THIS LINE ---
   });
 
   @override
   State<QACardItem> createState() => _QACardItemState();
 }
-
 class _QACardItemState extends State<QACardItem> {
   bool isExpanded = false;
 
@@ -354,18 +359,19 @@ class _QACardItemState extends State<QACardItem> {
     return await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text("Delete Question", style: TextStyle(fontFamily: MobileAppFonts.heading, fontWeight: FontWeight.bold)),
         content: const Text("Are you sure you want to delete this question? This cannot be undone.", style: TextStyle(fontFamily: MobileAppFonts.body)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false), // Cancel
+            onPressed: () => Navigator.pop(context, false),
             child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context, true); // Confirm
+              Navigator.pop(context, true);
               try {
-                await QnAService().deleteQuestion(docId); // Call backend
+                await QnAService().deleteQuestion(docId);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Question deleted"), backgroundColor: Colors.green),
@@ -388,100 +394,144 @@ class _QACardItemState extends State<QACardItem> {
 
   @override
   Widget build(BuildContext context) {
-    // Check if the current user owns this question
     bool isMyQuestion = widget.currentStudentId.toUpperCase() == (widget.item['ID']?.toString().toUpperCase() ?? "");
+    const Color primaryBlue = Color(0xFF237ABA); // Added standard blue
 
-    // The main card UI
+    // --- MAIN CARD UI ---
     Widget cardUI = GestureDetector(
       onTap: () => setState(() => isExpanded = !isExpanded),
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.all(2.5),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.6),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: widget.mainPurple.withOpacity(0.3), width: 1),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 18, spreadRadius: 2, offset: const Offset(0, 6)),
+          ],
+          gradient: isMyQuestion
+              ? LinearGradient(
+            colors: [
+              primaryBlue.withValues(alpha: 0.8), // Reverted to Blue!
+              widget.mainPurple.withValues(alpha: 0.25),
+              widget.mainPurple.withValues(alpha: 0.25),
+              Colors.redAccent.withValues(alpha: 0.8),
+            ],
+            stops: const [0.0, 0.20, 0.80, 1.0],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          )
+              : null,
+          color: isMyQuestion ? null : widget.mainPurple.withValues(alpha: 0.15),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Image.asset('assets/images/help_1.png', width: 24, color: widget.mainPurple),
-                Container(
-                  height: 22,
-                  width: 1.5,
-                  margin: const EdgeInsets.symmetric(horizontal: 12),
-                  color: Colors.grey.withOpacity(0.3),
-                ),
-                Expanded(
-                  child: Text(
-                    widget.item['subject'] ?? "",
-                    style: TextStyle(
-                        color: widget.mainPurple,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: MobileAppFonts.heading,
-                        fontSize: 17),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.95), borderRadius: BorderRadius.circular(17)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Image.asset('assets/images/help_1.png', width: 24, color: widget.mainPurple),
+                  Container(height: 22, width: 1.5, margin: const EdgeInsets.symmetric(horizontal: 12), color: Colors.grey.withValues(alpha: 0.3)),
+                  Expanded(
+                    child: Text(
+                      widget.item['subject'] ?? "",
+                      style: TextStyle(color: widget.mainPurple, fontWeight: FontWeight.bold, fontFamily: MobileAppFonts.heading, fontSize: 17),
+                    ),
                   ),
-                ),
-                Icon(isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, color: widget.mainPurple, size: 26),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              widget.item['title'] ?? "",
-              style: const TextStyle(color: Colors.black87, fontSize: 14, fontFamily: MobileAppFonts.heading),
-            ),
-            if (isExpanded) ...[
-              const SizedBox(height: 18),
-              RichText(
-                text: TextSpan(
-                  style: const TextStyle(color: Colors.black, fontFamily: MobileAppFonts.heading, fontSize: 14, height: 1.5),
-                  children: [
-                    const TextSpan(text: "Q : ", style: TextStyle(fontWeight: FontWeight.bold)),
-                    TextSpan(text: widget.item['question'] ?? "", style: const TextStyle(fontWeight: FontWeight.bold)),
-                  ],
-                ),
+                  Icon(isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, color: widget.mainPurple, size: 26),
+                ],
               ),
-              if (widget.item['answer'] != null && widget.item['answer'].toString().isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(widget.item['title'] ?? "", style: const TextStyle(color: Colors.black87, fontSize: 14, fontFamily: MobileAppFonts.heading)),
+              if (isExpanded) ...[
                 const SizedBox(height: 18),
                 RichText(
                   text: TextSpan(
-                    style: const TextStyle(color: Colors.black, fontSize: 14, fontFamily: MobileAppFonts.heading, height: 1.5),
+                    style: const TextStyle(color: Colors.black, fontFamily: MobileAppFonts.heading, fontSize: 14, height: 1.5),
                     children: [
-                      const TextSpan(text: "A : ", style: TextStyle(fontWeight: FontWeight.normal)),
-                      TextSpan(text: widget.item['answer']),
+                      const TextSpan(text: "Q : ", style: TextStyle(fontWeight: FontWeight.bold)),
+                      TextSpan(text: widget.item['question'] ?? "", style: const TextStyle(fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
-              ],
-            ]
-          ],
+                if (widget.item['answer'] != null && widget.item['answer'].toString().isNotEmpty) ...[
+                  const SizedBox(height: 18),
+                  RichText(
+                    text: TextSpan(
+                      style: const TextStyle(color: Colors.black, fontSize: 14, fontFamily: MobileAppFonts.heading, height: 1.5),
+                      children: [
+                        const TextSpan(text: "A : ", style: TextStyle(fontWeight: FontWeight.normal)),
+                        TextSpan(text: widget.item['answer']),
+                      ],
+                    ),
+                  ),
+                ],
+              ]
+            ],
+          ),
         ),
       ),
     );
 
-    // If it's NOT their question, just return the card.
     if (!isMyQuestion) return cardUI;
 
-    // If IT IS their question, wrap it in a Dismissible for swipe-to-delete
+    // --- SWIPE LOGIC FOR OWNERS ---
     return Dismissible(
       key: Key(widget.item['docId'] ?? UniqueKey().toString()),
-      direction: DismissDirection.endToStart, // Only allow swipe from Right to Left
-      confirmDismiss: (direction) async {
-        // Show the dialog before actually animating the card away
-        return await _confirmDelete(context, widget.item['docId']);
-      },
+      direction: DismissDirection.horizontal,
+
       background: Container(
         margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.only(left: 25),
+        alignment: Alignment.centerLeft,
         decoration: BoxDecoration(
-          color: Colors.redAccent,
+          gradient: LinearGradient(
+            colors: [
+              primaryBlue.withValues(alpha: 0.8), // Reverted to Blue!
+              primaryBlue.withValues(alpha: 0.0),
+            ],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
           borderRadius: BorderRadius.circular(20),
         ),
-        alignment: Alignment.centerRight,
-        child: const Icon(Icons.delete_sweep, color: Colors.white, size: 30),
+        child: const Icon(Icons.edit_rounded, color: Colors.white, size: 32),
       ),
+
+      secondaryBackground: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.only(right: 25),
+        alignment: Alignment.centerRight,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.redAccent.withValues(alpha: 0.0), Colors.redAccent.withValues(alpha: 0.9)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Icon(Icons.delete_forever_rounded, color: Colors.white, size: 32),
+      ),
+
+      confirmDismiss: (direction) async {
+        // --- NEW EDIT ACTION ---
+        if (direction == DismissDirection.startToEnd) {
+          // 1. Send them to the edit screen and WAIT for them to come back
+          await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => EditQARequestScreen(item: widget.item))
+          );
+
+          // --- 3. ADD THIS LINE: Force the UI to refresh immediately ---
+          widget.onRefresh();
+
+          return false; // Snap the card back without dismissing
+        }
+
+        // --- EXISTING DELETE ACTION ---
+        return await _confirmDelete(context, widget.item['docId']);
+      },
       child: cardUI,
     );
   }

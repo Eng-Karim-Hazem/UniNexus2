@@ -70,4 +70,17 @@ class CommunityService {
       throw Exception("Failed to delete post and replies: $e");
     }
   }
+  // --- ADD THIS TO YOUR COMMUNITY SERVICE ---
+  Future<void> updatePost(String postId, String newTitle, String newContent) async {
+    try {
+      // Make sure the collection name matches your actual Firebase structure
+      await FirebaseFirestore.instance.collection('community_posts').doc(postId).update({
+        'title': newTitle,
+        'content': newContent,
+        // Optional: you can add a flag like 'isEdited': true if you want to show an "(edited)" badge later
+      });
+    } catch (e) {
+      throw Exception("Failed to update post: $e");
+    }
+  }
 }

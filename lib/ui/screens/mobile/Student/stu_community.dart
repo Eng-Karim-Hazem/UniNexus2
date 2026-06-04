@@ -5,6 +5,7 @@ import 'package:uninexus/model/community_model.dart';
 import 'package:uninexus/services/firebase/community_service.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import '../settings_screen.dart';
+import 'edit_community_post_screen.dart';
 import 'stu_schedule.dart';
 import '../profile_screen.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/qa_screen.dart';
@@ -139,7 +140,9 @@ class _StuCommunityState extends State<StuCommunity> {
               ),
 
               Positioned(
-                bottom: (sh * 0.12).clamp(110.0, 140.0),
+                // --- THE FIX ---
+                // 80 (Bottom Bar Height) + System Padding (Nav Buttons) + 20 (Margin gap)
+                bottom: 80.0 + MediaQuery.of(context).padding.bottom + 20.0,
                 right: (sw * 0.06).clamp(20.0, 35.0),
                 child: GestureDetector(
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateCommunityPostScreen())),
@@ -206,22 +209,62 @@ class _StuCommunityState extends State<StuCommunity> {
   Widget _buildPostCard(CommunityPostModel post, double sw) {
     // --- OWNERSHIP RULES ---
     // If user is Faculty, they can delete anything. If student, only their own userId works.
-    bool canDelete = !_isStudent || (_currentUserId.isNotEmpty && _currentUserId.toUpperCase() == post.userId.toUpperCase());
+    bool canModify = !_isStudent || (_currentUserId.isNotEmpty && _currentUserId.toUpperCase() == post.userId.toUpperCase());
 
     return Dismissible(
       key: Key(post.id),
-      // Set swipe direction to none if the current user doesn't own the post or isn't Faculty
-      direction: canDelete ? DismissDirection.endToStart : DismissDirection.none,
+      // Allow swiping both ways if they own the post
+      direction: canModify ? DismissDirection.horizontal : DismissDirection.none,
+
+      // --- BACKGROUND: EDIT (Swipe Left to Right) ---
       background: Container(
+        padding: const EdgeInsets.only(left: 25),
+        alignment: Alignment.centerLeft,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              _primaryBlue.withValues(alpha: 0.8), // Solid blue at the start
+              _primaryBlue.withValues(alpha: 0.0), // Fading to transparent
+            ],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Icon(Icons.edit_rounded, color: Colors.white, size: 32),
+      ),
+
+      // --- SECONDARY BACKGROUND: DELETE (Swipe Right to Left) ---
+      secondaryBackground: Container(
         padding: const EdgeInsets.only(right: 25),
         alignment: Alignment.centerRight,
         decoration: BoxDecoration(
-          color: Colors.redAccent.withValues(alpha: 0.9),
+          gradient: LinearGradient(
+            colors: [
+              Colors.redAccent.withValues(alpha: 0.0), // Transparent start
+              Colors.redAccent.withValues(alpha: 0.9), // Fading to solid red at the end
+            ],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
           borderRadius: BorderRadius.circular(20),
         ),
         child: const Icon(Icons.delete_forever_rounded, color: Colors.white, size: 32),
       ),
+
       confirmDismiss: (direction) async {
+        // --- THE NEW EDIT ACTION ---
+        if (direction == DismissDirection.startToEnd) {
+          // Launch the edit screen and pass the specific post data to it
+          Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => EditCommunityPostScreen(post: post))
+          );
+          // Return false so the card snaps back to its original position in the list
+          return false;
+        }
+
+        // --- EXISTING DELETE ACTION ---
         return await showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
@@ -239,16 +282,19 @@ class _StuCommunityState extends State<StuCommunity> {
         );
       },
       onDismissed: (direction) {
-        _communityService.deletePost(post.id);
+        if (direction == DismissDirection.endToStart) {
+          _communityService.deletePost(post.id);
+        }
       },
       child: GestureDetector(
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CommunityPostDetailScreen(post: post))),
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: sw * 0.04, vertical: 16),
+          // --- THE GRADIENT BORDER WRAPPER ---
+          // This padding dictates the border thickness (2.5 pixels)
+          padding: const EdgeInsets.all(2.5),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: _mainPurple.withValues(alpha: 0.15), width: 1.5),
+            // The shadow stays on the outer wrapper
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.12),
@@ -257,51 +303,76 @@ class _StuCommunityState extends State<StuCommunity> {
                 offset: const Offset(0, 6),
               ),
             ],
+            // Draw the dual-color affordance border if they own the post
+            gradient: canModify
+                ? LinearGradient(
+              colors: [
+                _primaryBlue.withValues(alpha: 0.8), // Blue on the left
+                _mainPurple.withValues(alpha: 0.25), // Fades to default purple
+                _mainPurple.withValues(alpha: 0.25),
+                Colors.redAccent.withValues(alpha: 0.8), // Red on the right
+              ],
+              stops: const [0.0, 0.20, 0.80, 1.0],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            )
+                : null,
+            // Fallback to solid standard border if they don't own it
+            color: canModify ? null : _mainPurple.withValues(alpha: 0.15),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.help_outline_rounded, color: _mainPurple, size: 24),
-                  const SizedBox(width: 10),
-                  Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                              post.title,
+          child: Container(
+            // --- THE INNER CARD CONTENT ---
+            padding: EdgeInsets.symmetric(horizontal: sw * 0.04, vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.95), // Solid white reading background
+              // Inner radius must be smaller to keep corners perfectly rounded inside the border
+              borderRadius: BorderRadius.circular(17),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.help_outline_rounded, color: _mainPurple, size: 24),
+                    const SizedBox(width: 10),
+                    Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                                post.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 15, fontWeight: FontWeight.bold, color: _primaryBlue)
+                            ),
+                            Text(
+                              "${post.userRole} • ${post.userName}",
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 15, fontWeight: FontWeight.bold, color: _primaryBlue)
-                          ),
-                          Text(
-                            "${post.userRole} • ${post.userName}",
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
-                          ),
-                        ],
-                      )
-                  ),
-                  if (post.replyCount > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(color: _mainPurple.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                      child: Text("${post.replyCount}", style: TextStyle(color: _mainPurple, fontSize: 12, fontWeight: FontWeight.bold)),
+                              style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        )
                     ),
-                  const SizedBox(width: 5),
-                  Icon(Icons.keyboard_arrow_right_rounded, color: _mainPurple),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                  post.content,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 13, color: _textIndigo, height: 1.4)
-              ),
-            ],
+                    if (post.replyCount > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(color: _mainPurple.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                        child: Text("${post.replyCount}", style: TextStyle(color: _mainPurple, fontSize: 12, fontWeight: FontWeight.bold)),
+                      ),
+                    const SizedBox(width: 5),
+                    Icon(Icons.keyboard_arrow_right_rounded, color: _mainPurple),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                    post.content,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontFamily: MobileAppFonts.body, fontSize: 13, color: _textIndigo, height: 1.4)
+                ),
+              ],
+            ),
           ),
         ),
       ),

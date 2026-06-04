@@ -64,7 +64,18 @@ class QnAService {
   Future<void> deleteQuestion(String docId) async {
     await _db.collection('QnA').doc(docId).delete();
   }
-
+  Future<void> updateQuestion(String docId, String newCourse, String newSubject, String newQuestion) async {
+    try {
+      // Ensure 'qa_requests' matches your actual Firestore collection name
+      await FirebaseFirestore.instance.collection('QnA').doc(docId).update({
+        'subject': newCourse, // The dropdown value
+        'title': newSubject,  // The topic text field
+        'question': newQuestion,
+      });
+    } catch (e) {
+      throw Exception("Failed to update question: $e");
+    }
+  }
   Stream<List<String>> streamSubjectsByYear(int year) {
     return _db
         .collection('subjects')

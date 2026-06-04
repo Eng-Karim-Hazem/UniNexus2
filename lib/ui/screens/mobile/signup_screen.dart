@@ -97,16 +97,19 @@ class _SignUpScreenState extends State<SignUpScreen>
 
   Future<void> _handleSignUp() async {
     final nationalIdInput = _nationalIdController.text.trim();
+    final emailInput = _emailController.text.trim();
 
-    // Front-end explicit rule validation check
     if (nationalIdInput.length != 14) {
       _showError("Make sure of your national ID (must be exactly 14 digits).");
       return;
     }
-
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(emailInput)) {
+      _showError("Please enter a valid university email format (e.g., user@uni.edu).");
+      return; // Stops execution immediately without hitting Firebase
+    }
     setState(() => _isLoading = true);
 
-    // Call service which now responds with strict state results
     String resultStatus = await SignupService().registerUser(
       nationalId: nationalIdInput,
       universityId: _studentIdController.text,
@@ -123,6 +126,10 @@ class _SignUpScreenState extends State<SignUpScreen>
           context,
           MaterialPageRoute(builder: (_) => const RequestSubmittedScreen()),
         );
+        break;
+    // --- NEW: Handle Duplicate Active Registration Account ---
+      case 'already_registered':
+        _showError("This account is already registered. Please go to the Login screen.");
         break;
       case 'user_not_found':
         _showError("University ID not found in our system.");

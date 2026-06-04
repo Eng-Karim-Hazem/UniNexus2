@@ -218,9 +218,14 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  // Padding adjusted since header is now separate
-                  padding: EdgeInsets.fromLTRB(24, 10, 24,
-                      keyboardHeight > 0 ? keyboardHeight + 20 : 150),
+                  padding: EdgeInsets.fromLTRB(
+                    24,
+                    10,
+                    24,
+                    keyboardHeight > 0
+                        ? keyboardHeight + 20
+                        : MediaQuery.of(context).padding.bottom + 140.0,
+                  ),
                   child: Column(
                     children: [
                       const SizedBox(height: 50),
