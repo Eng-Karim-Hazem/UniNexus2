@@ -131,6 +131,7 @@ class _HallsScreenState extends State<HallsScreen> {
                         final normalizedQuery = _searchQuery.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), "");
 
                         // 3. APPLY COMBINED FILTER LOGIC
+                        // 3. APPLY COMBINED FILTER LOGIC
                         final filteredHalls = snapshot.data!.where((hall) {
                           // Check Search Query
                           if (normalizedQuery.isNotEmpty) {
@@ -139,8 +140,13 @@ class _HallsScreenState extends State<HallsScreen> {
                           }
 
                           // Check Filter Chips
-                          if (_selectedFilter == 'Available') return hall.isAvailable;
-                          if (_selectedFilter == 'Occupied') return hall.isBusy;
+                          if (_selectedFilter == 'Available') {
+                            // --- THE FIX: Must be available AND not broken ---
+                            // Note: If your HallModel uses a different name like 'isBroken', change 'hasError' below!
+                            return hall.isAvailable == true && hall.hasError == false;
+                          }
+                          if (_selectedFilter == 'Occupied') return hall.isBusy == true;
+
                           return true; // 'All'
                         }).toList();
 
@@ -156,8 +162,8 @@ class _HallsScreenState extends State<HallsScreen> {
                           physics: const BouncingScrollPhysics(),
                           itemCount: filteredHalls.length,
                           itemBuilder: (context, index) {
-                            final hall = filteredHalls[index];
-                            return _buildHallCard(hall.displayName, hall.isBusy);
+                            // --- THE FIX: Pass the entire hall object ---
+                            return _buildHallCard(filteredHalls[index]);
                           },
                         );
                       },
@@ -279,8 +285,20 @@ class _HallsScreenState extends State<HallsScreen> {
     );
   }
 
-  Widget _buildHallCard(String name, bool isBusy) {
-    Color statusColor = isBusy ? Colors.red : Colors.greenAccent.shade700;
+  // --- THE FIX: Accept the full HallModel instead of just strings and bools ---
+  Widget _buildHallCard(HallModel hall) {
+    Color statusColor;
+
+    // --- THE 3-STATE LOGIC ---
+    // Note: Change 'hasError' to whatever property your HallModel uses to track reports!
+    if (hall.hasError == true) {
+      statusColor = Colors.amber; // Yellow for Maintenance/Error
+    } else if (hall.isBusy == true) {
+      statusColor = Colors.redAccent; // Red for Occupied
+    } else {
+      statusColor = Colors.greenAccent.shade700; // Green for Available
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -300,7 +318,7 @@ class _HallsScreenState extends State<HallsScreen> {
               const SizedBox(width: 15),
               Container(height: 35, width: 2.5, color: _mainPurple.withOpacity(0.3)),
               const SizedBox(width: 15),
-              Text(name,
+              Text(hall.displayName, // Read directly from the model
                   style: TextStyle(
                       fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: _accentIndigo)),
             ],

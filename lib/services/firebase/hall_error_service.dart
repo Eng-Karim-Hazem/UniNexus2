@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import '../../model/hall_error_model.dart';
 
 class HallErrorService {
@@ -50,15 +51,42 @@ class HallErrorService {
   }
 
   // --- 3. SUBMIT ERROR ---
-  Future<void> submitError(HallErrorModel report) async {
+  Future<void> submitError(HallErrorModel report, String targetBuilding, String targetCode) async {
     try {
-      // Convert to map and automatically attach a "pending" status for the duplicate checker
-      Map<String, dynamic> reportData = report.toFirestore();
-      reportData['status'] = 'pending';
+      // 1. Save the report to the HallErrors collection
+      await _db.collection('HallErrors').add({
+        'attachment': report.attachment,
+        'department': report.department,
+        'description': report.description,
+        'errorType': report.errorType,
+        'hallName': report.hallName,
+        'status': 'pending',
+        'timestamp': FieldValue.serverTimestamp(),
+      });
 
-      await _db.collection('HallErrors').add(reportData);
+      debugPrint("✅ Saved to HallErrors. Now searching halls for: Building '$targetBuilding', Code '$targetCode'");
+
+      // 2. Find the exact hall in the 'halls' database
+      QuerySnapshot hallQuery = await _db
+          .collection('halls')
+          .where('building', isEqualTo: targetBuilding)
+          .where('hallCode', isEqualTo: targetCode)
+          .limit(1)
+          .get();
+
+      if (hallQuery.docs.isNotEmpty) {
+        // 3. Flip the hasError flag to true!
+        await hallQuery.docs.first.reference.update({
+          'hasError': true,
+        });
+        debugPrint("✅ Hall found and hasError updated to true!");
+      } else {
+        // If you see this in your console, your Firestore fields don't match the query!
+        debugPrint("❌ ERROR: Could not find this hall in the 'halls' collection. The light will stay green.");
+      }
+
     } catch (e) {
-      throw Exception("Failed to submit report: $e");
+      throw Exception("Failed to submit error: $e");
     }
   }
 }

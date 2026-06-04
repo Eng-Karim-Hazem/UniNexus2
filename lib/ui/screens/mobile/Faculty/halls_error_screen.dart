@@ -145,7 +145,11 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
         timestamp: DateTime.now(),
       );
 
-      await _service.submitError(report);
+      await _service.submitError(
+          report,
+          _selectedBuilding!,
+          _hallNameController.text.trim()
+      );
 
       if (mounted) {
         _showFloatingSnackBar("Error Report Submitted!", Colors.green);
@@ -197,6 +201,8 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
   @override
   Widget build(BuildContext context) {
     final sw = MediaQuery.of(context).size.width;
+    // --- ADDED: Track keyboard height ---
+    final double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -220,7 +226,15 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
               ),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 150),
+                  // --- THE FIX: Dynamic bottom padding ---
+                  padding: EdgeInsets.fromLTRB(
+                    24,
+                    0,
+                    24,
+                    keyboardHeight > 0
+                        ? keyboardHeight + 20
+                        : MediaQuery.of(context).padding.bottom + 140.0,
+                  ),
                   physics: const BouncingScrollPhysics(),
                   child: Column(
                     children: [
