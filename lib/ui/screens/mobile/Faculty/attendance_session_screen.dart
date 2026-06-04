@@ -1,11 +1,13 @@
+import 'dart:async'; // --- ADDED FOR TIMER ---
 import 'package:flutter/material.dart';
-import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:url_launcher/url_launcher.dart'; // --- ADDED URL LAUNCHER ---
+import 'package:url_launcher/url_launcher.dart';
 
+import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/halls_screen.dart';
+import 'package:uninexus/services/AttendanceGeneratorService.dart';
 import '../Student/stu_community.dart';
 import '../settings_screen.dart';
 import '../Faculty/qa_screen.dart';
@@ -29,7 +31,9 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
   int _selectedIndex = -1;
 
   bool _isGenerating = false;
-  bool _isOpeningSheet = false; // --- NEW LOADING STATE FOR SHEET BUTTON ---
+  bool _isOpeningSheet = false;
+
+  Timer? _refreshTimer; // --- ADDED: Manages the 30-second token rotation loop ---
 
   // Constants & Styles
   final Color _mainPurple = const Color(0xFF7B61FF);
@@ -50,6 +54,12 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
   void initState() {
     super.initState();
     _loadUserSubjects();
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel(); // --- ADDED: Cancel timer to preserve memory threads ---
+    super.dispose();
   }
 
   // --- Logic Methods ---
@@ -81,7 +91,6 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
         final data = query.docs.first.data();
         if (data.containsKey('subjects')) {
           savedSubjects = List<String>.from(data['subjects']);
-
           await prefs.setStringList('subjects', savedSubjects);
 
           if (mounted) {
@@ -96,38 +105,65 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
     }
   }
 
+  /// Core calculation method extracted so the periodic loop can run it autonomously
+  Future<void> _generateAndSetQRData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String instructorId = prefs.getString('ID') ?? 'UNKNOWN_FA';
+
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('subjects')
+        .where('subName', isEqualTo: _selectedCourse)
+        .limit(1)
+        .get();
+
+    if (querySnapshot.docs.isEmpty) {
+      throw Exception("Subject not found in database.");
+    }
+
+    final subjectData = querySnapshot.docs.first.data();
+    final String subID = subjectData['subID']?.toString() ?? querySnapshot.docs.first.id;
+
+    final String typeCode = _selectedSessionType == 'Lecture' ? 'L' : 'S';
+    final String durationCode = _selectedDuration!.replaceAll(' mins', 'min');
+
+    // 1. Construct the raw plain text sequence configuration block
+    final String rawContextString = "${subID}_${typeCode}_${durationCode}_$instructorId";
+
+    if (mounted) {
+      setState(() {
+        // 2. Feed context parameters to generation engine to lock down cryptosystem updates
+        _qrData = AttendanceGeneratorService.generateAttendanceData(rawContextString);
+      });
+    }
+  }
+
+  /// Triggered manually when the user presses the 'Generate QR' UI button interface
   Future<void> _handleGenerateQR() async {
     if (_selectedCourse == null || _selectedSessionType == null || _selectedDuration == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select all fields first", style: TextStyle(fontFamily: MobileAppFonts.body))),
+        const SnackBar(
+          content: Text("Please select all fields first", style: TextStyle(fontFamily: MobileAppFonts.body)),
+        ),
       );
       return;
     }
 
+    // Clean up any pre-existing loops running before rebuilding active workflows
+    _refreshTimer?.cancel();
+
     setState(() => _isGenerating = true);
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final String instructorId = prefs.getString('ID') ?? 'UNKNOWN_FA';
+      // Perform structural setup and render the initial signed payload package
+      await _generateAndSetQRData();
 
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('subjects')
-          .where('subName', isEqualTo: _selectedCourse)
-          .limit(1)
-          .get();
-
-      if (querySnapshot.docs.isEmpty) {
-        throw Exception("Subject not found in database.");
-      }
-
-      final subjectData = querySnapshot.docs.first.data();
-      final String subID = subjectData['subID']?.toString() ?? querySnapshot.docs.first.id;
-
-      final String typeCode = _selectedSessionType == 'Lecture' ? 'L' : 'S';
-      final String durationCode = _selectedDuration!.replaceAll(' mins', 'min');
-
-      setState(() {
-        _qrData = "${subID}_${typeCode}_${durationCode}_$instructorId";
+      // --- ADDED: Start an infinite background loop rotating token vectors every 30 seconds ---
+      _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) async {
+        if (_selectedCourse != null && _selectedSessionType != null && _selectedDuration != null) {
+          await _generateAndSetQRData();
+        } else {
+          timer.cancel(); // Safety cleanup if parameters drop mid-session
+        }
       });
 
     } catch (e) {
@@ -140,34 +176,34 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
       if (mounted) setState(() => _isGenerating = false);
     }
   }
+
   Future<void> _goHome() async {
     final prefs = await SharedPreferences.getInstance();
     final String userId = prefs.getString('ID') ?? '';
 
     Widget targetHome;
 
-    // Check the ID prefix to determine if they are Faculty or Student
     if (userId.toUpperCase().startsWith('FA')) {
       targetHome = const FacultyHomeScreen();
     } else {
-      targetHome = const StuHomeScreen(); // Defaults to Student
+      targetHome = const StuHomeScreen();
     }
 
     if (!mounted) return;
 
-    // pushAndRemoveUntil destroys the back-stack, preventing ghost screens
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => targetHome),
           (route) => false,
     );
   }
-  // --- NEW: FETCH AND OPEN GOOGLE SHEET LOGIC ---
+
   Future<void> _openGoogleSheet() async {
-    // 1. Ensure they picked a course first
     if (_selectedCourse == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select a Course to view its attendance sheet.", style: TextStyle(fontFamily: MobileAppFonts.body))),
+        const SnackBar(
+          content: Text("Please select a Course to view its attendance sheet.", style: TextStyle(fontFamily: MobileAppFonts.body)),
+        ),
       );
       return;
     }
@@ -175,7 +211,6 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
     setState(() => _isOpeningSheet = true);
 
     try {
-      // 2. Query Firebase for this specific subject
       final querySnapshot = await FirebaseFirestore.instance
           .collection('subjects')
           .where('subName', isEqualTo: _selectedCourse)
@@ -184,15 +219,13 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
 
       if (querySnapshot.docs.isEmpty) throw "Subject not found in database.";
 
-      // 3. Extract the 'sheetUrl' field
       final subjectData = querySnapshot.docs.first.data();
-      final String? sheetUrl = subjectData['sheetUrl']; // Ensure this field exists in Firebase!
+      final String? sheetUrl = subjectData['sheetUrl'];
 
       if (sheetUrl == null || sheetUrl.isEmpty) {
         throw "No Google Sheet linked to this subject yet.";
       }
 
-      // 4. Launch the URL on the phone
       final Uri url = Uri.parse(sheetUrl);
       if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
         throw "Could not open the link.";
@@ -368,7 +401,12 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
             value: _selectedCourse,
             hint: _courses.isEmpty ? "No subjects found" : "Choose the Course",
             items: _courses,
-            onChanged: (val) => setState(() => _selectedCourse = val),
+            // Cancel old workflows if the target metadata properties change
+            onChanged: (val) => setState(() {
+              _selectedCourse = val;
+              _qrData = "";
+              _refreshTimer?.cancel();
+            }),
           ),
           const SizedBox(height: 16),
           Row(
@@ -384,7 +422,11 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
                       value: _selectedSessionType,
                       hint: "Type",
                       items: _sessionTypes,
-                      onChanged: (val) => setState(() => _selectedSessionType = val),
+                      onChanged: (val) => setState(() {
+                        _selectedSessionType = val;
+                        _qrData = "";
+                        _refreshTimer?.cancel();
+                      }),
                     ),
                   ],
                 ),
@@ -401,7 +443,11 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
                       value: _selectedDuration,
                       hint: "Time",
                       items: _durationOptions,
-                      onChanged: (val) => setState(() => _selectedDuration = val),
+                      onChanged: (val) => setState(() {
+                        _selectedDuration = val;
+                        _qrData = "";
+                        _refreshTimer?.cancel();
+                      }),
                     ),
                   ],
                 ),
@@ -432,14 +478,14 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
                 child: _isGenerating
                     ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: _mainPurple, strokeWidth: 2))
                     : Text("Generate QR",
-                    style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF7B61FF),)),
+                    style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF7B61FF))),
               ),
             ),
           ),
 
           const SizedBox(width: 16),
 
-          // --- UPDATED GOOGLE SHEETS BUTTON ---
+          // --- GOOGLE SHEETS BUTTON ---
           SizedBox(
             height: 55,
             width: 65,

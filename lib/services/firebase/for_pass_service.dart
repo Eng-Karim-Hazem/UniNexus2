@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 class ForpassService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final String _requestCollection = "ForgotPass_request";
-//what
+
   // The three main collections to check
   final List<String> _userCollections = ['students', 'faculty', 'staff'];
 
@@ -42,8 +42,7 @@ class ForpassService {
       final data = foundUserDoc.data() as Map<String, dynamic>;
       final storedNationalId = (data['nID'] ?? '').toString().trim();
 
-      // Assumes your database field for the password is 'password'.
-      // Update this key if it is named something else (e.g., 'pass')
+      // Assumes your database field for the password is 'pass'
       final storedPassword = (data['pass'] ?? '').toString();
 
       // Phase 2: Verify if the National ID matches
@@ -57,16 +56,11 @@ class ForpassService {
       }
 
       // Everything matches and password is new! Proceed to save the request
-      final firstName = data['fName']?.toString() ?? '';
-      final lastName = data['lName']?.toString() ?? '';
-
+      // Mapping fields directly to match the screenshot schema template values
       await _db.collection(_requestCollection).add({
-        'ID': targetId,
+        'emailOrId': targetId, // Map to emailOrId as required by the database structure
         'nationalId': targetNationalId,
         'newPassword': newPassword,
-        'fName': firstName,
-        'lName': lastName,
-        'fullName': '$firstName $lastName'.trim(),
         'requestDate': FieldValue.serverTimestamp(),
         'status': 'pending',
         'isProcessed': false,
@@ -86,7 +80,7 @@ class ForpassService {
     try {
       QuerySnapshot query = await _db
           .collection(_requestCollection)
-          .where('ID', isEqualTo: universityId.toUpperCase())
+          .where('emailOrId', isEqualTo: universityId.toUpperCase()) // Aligned query field
           .where('isProcessed', isEqualTo: false)
           .get();
 

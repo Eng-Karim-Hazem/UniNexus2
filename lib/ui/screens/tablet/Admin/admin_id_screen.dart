@@ -1,10 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:uninexus/theme/app_theme.dart';
-
 import '../../../../admin_tab.dart';
+import 'package:uninexus/services/qr_generator_service.dart'; // Import your QR Obfuscation Service class
 
 class AdminIdScreen extends StatefulWidget {
   final void Function(AdminTab) onNavigate;
@@ -17,8 +17,10 @@ class AdminIdScreen extends StatefulWidget {
 
 class _AdminIdScreenState extends State<AdminIdScreen> {
   String _userID = '';
+  String _qrPayload = ''; // Holds the HMAC signed and XOR obfuscated string
   bool _isLoading = true;
   bool _isPunchedIn = false;
+  Timer? _refreshTimer; // Periodically refreshes the dynamic token timestamp
 
   final Color _primaryBlue = const Color(0xFF237ABA);
   final Color _secondaryPurple = const Color(0xFF9C2CF3);
@@ -26,11 +28,24 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
   @override
   void initState() {
     super.initState();
-    _loadDataFromPrefs();
+    _loadDataAndGenerateToken();
+
+    // Automatically refresh the obfuscated token bytes every 15 seconds to keep timestamp valid
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
+      if (_userID.isNotEmpty && _userID != 'N/A') {
+        _generateCryptoToken();
+      }
+    });
   }
 
-  // Load user ID from shared preferences
-  Future<void> _loadDataFromPrefs() async {
+  @override
+  void dispose() {
+    _refreshTimer?.cancel(); // Terminate background loop safely to prevent memory leaks
+    super.dispose();
+  }
+
+  // Load user ID from preferences and calculate initial token
+  Future<void> _loadDataAndGenerateToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.reload();
 
@@ -40,6 +55,20 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
       _userID = prefs.getString('userCode') ?? prefs.getString('ID') ?? 'N/A';
       _isLoading = false;
     });
+    _generateCryptoToken();
+  }
+
+  /// Evaluates context punch state and signs it via your encryption service pipeline
+  void _generateCryptoToken() {
+    if (_userID.isEmpty || _userID == 'N/A') return;
+
+    // Creates contextual baseline payload matching your state criteria
+    final String rawContextData = _isPunchedIn ? "OUT_$_userID" : "IN_$_userID";
+
+    setState(() {
+      // Passes the conditional state string directly into the backend cryptosystem loop
+      _qrPayload = QrGeneratorService.generateQrData(rawContextData);
+    });
   }
 
   // Handle punch in/out
@@ -47,6 +76,10 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
     setState(() {
       _isPunchedIn = !_isPunchedIn;
     });
+
+    // Instantly recalculate the dynamic token payload structure upon toggling punch status
+    _generateCryptoToken();
+
     showInfoSnackBar(
       context,
       _isPunchedIn ? 'Punched IN successfully' : 'Punched OUT successfully',
@@ -61,7 +94,6 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
       );
     }
 
-    final String qrData = _isPunchedIn ? 'OUT_$_userID' : 'IN_$_userID';
     final List<Color> qrColors = _isPunchedIn
         ? [_secondaryPurple, _primaryBlue]
         : [_primaryBlue, _secondaryPurple];
@@ -157,10 +189,12 @@ class _AdminIdScreenState extends State<AdminIdScreen> {
                                         ).createShader(bounds),
                                         blendMode: BlendMode.srcIn,
                                         child: QrImageView(
-                                          data: qrData,
+                                          // Swapped from raw string data to secure dynamic crypto pipeline payload
+                                          data: _qrPayload.isNotEmpty ? _qrPayload : "Loading Identity...",
                                           version: QrVersions.auto,
                                           size: 240.0,
                                           errorCorrectionLevel: QrErrorCorrectLevel.H,
+                                          backgroundColor: Colors.transparent,
                                         ),
                                       ),
                                       Container(

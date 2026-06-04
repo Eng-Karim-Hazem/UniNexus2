@@ -1,0 +1,47 @@
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
+
+class QrGeneratorService {
+  // Config keys converted exactly from Python's bytes literals
+  static final List<int> _hmacSecretKey = utf8.encode("B4_02_xNexus");
+  static final List<int> _xorKey = utf8.encode("UTr0tM32Schv+KUVxtuPW18CoQenlliC");
+
+  /// Replicates Python's byte-by-byte repeating XOR function
+  static List<int> _xorData(List<int> dataBytes, List<int> key) {
+    return List<int>.generate(
+      dataBytes.length,
+          (i) => dataBytes[i] ^ key[i % key.length],
+    );
+  }
+
+  /// Generates the absolute identical QR payload data structure as the backend script
+  static String generateQrData(String userId) {
+    // 1. Dynamic unix timestamp in seconds
+    final int timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+    // 2. Format payload string: "user_id|timestamp"
+    final String payloadStr = "$userId|$timestamp";
+    final List<int> payloadBytes = utf8.encode(payloadStr);
+
+    // 3. Generate HMAC-SHA256 Signature
+    final Hmac hmacSha256 = Hmac(sha256, _hmacSecretKey);
+    final Digest signature = hmacSha256.convert(payloadBytes);
+    final List<int> signatureBytes = signature.bytes;
+
+    // 4. Combine: payloadBytes + '|' + signatureBytes
+    final List<int> pipeByte = utf8.encode("|");
+    final List<int> fullPackage = [
+      ...payloadBytes,
+      ...pipeByte,
+      ...signatureBytes,
+    ];
+
+    // 5. Apply XOR Obfuscation
+    final List<int> obfuscatedBytes = _xorData(fullPackage, _xorKey);
+
+    // 6. Encode into URL-safe Base64 String (removing trailing padding matches Python)
+    String base64Str = base64UrlEncode(obfuscatedBytes);
+
+    return base64Str;
+  }
+}
