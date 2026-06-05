@@ -267,6 +267,9 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
     final sw = MediaQuery.of(context).size.width;
     final sh = MediaQuery.of(context).size.height;
 
+    // --- ADDED: Track keyboard height ---
+    final double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+
     return Scaffold(
       extendBody: true,
       floatingActionButton: _buildHomeFab(),
@@ -292,7 +295,12 @@ class _AttendanceSessionScreenState extends State<AttendanceSessionScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.only(bottom: sh * 0.15),
+                    // --- THE FIX: Dynamic bottom padding ---
+                    padding: EdgeInsets.only(
+                      bottom: keyboardHeight > 0
+                          ? keyboardHeight + 20
+                          : MediaQuery.of(context).padding.bottom + 140.0,
+                    ),
                     child: Column(
                       children: [
                         _buildQRContainer(sw),
