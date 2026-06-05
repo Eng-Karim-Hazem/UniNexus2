@@ -93,11 +93,14 @@ class _SecurityIdLookupScreenState extends State<SecurityIdLookupScreen> {
         _isLoading = false;
       });
     } else {
+      if (!mounted) return;
       setState(() {
         _searchError = 'No user found with ID: $id';
         _selectedStudent = null;
         _isLoading = false;
       });
+      // Added error snackbar to match Admin search error notifications
+      showErrorSnackBar(context, "No user found with this ID");
     }
   }
 

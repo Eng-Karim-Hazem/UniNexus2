@@ -336,7 +336,13 @@ class _SecurityAnnouncement extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: AppDecorations.smallCard(),
       child: Row(children: [
-        const Icon(Icons.notifications, color: AppColors.primary, size: 28),
+         Image.asset(
+          'assets/icons/Alarm.png',
+          width: 22, height: 22,
+          errorBuilder: (_, __, ___) => const Icon(
+              Icons.notifications_outlined,
+              size: 22, color: AppColors.primary),
+        ),
         const SizedBox(width: 10),
         Container(width: 2, height: 34, color: AppColors.primary.withOpacity(0.35)),
         const SizedBox(width: 10),

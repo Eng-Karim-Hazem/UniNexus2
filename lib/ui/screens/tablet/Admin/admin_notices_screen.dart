@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../admin_tab.dart';
@@ -229,6 +230,27 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
     );
   }
 
+  // Looks up the input code across user groups and extracts their actual Document ID
+  Future<String?> _findDocumentIdByCustomId(String customId) async {
+    final firestore = FirebaseFirestore.instance;
+
+    final collections = ['students', 'faculty', 'staff'];
+
+    for (final col in collections) {
+      final querySnapshot = await firestore
+          .collection(col)
+          .where('ID', isEqualTo: customId)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        // This gives us the actual matching document UID token (e.g. "37SeeDzbmAqQBu5RFDea")
+        return querySnapshot.docs.first.id;
+      }
+    }
+    return null;
+  }
+
   Future<void> _sendNotice() async {
     final String message = _messageController.text.trim();
 
@@ -248,11 +270,19 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
 
       switch (_activeCategory) {
         case 'Individual':
-          final String id = _idController.text.trim();
-          if (id.isEmpty) throw Exception('Please enter a user ID.');
-          recipientIds = [id];
+          final String customId = _idController.text.trim().toUpperCase();
+          if (customId.isEmpty) throw Exception('Please enter a user ID.');
+
+          // Match custom string attribute and gather the system Auth UID
+          final String? realDocId = await _findDocumentIdByCustomId(customId);
+          if (realDocId == null) {
+            throw Exception('User ID does not exist in students, faculty, or staff.');
+          }
+
+          // Use the real document ID so notifications trigger properly for the target client
+          recipientIds = [realDocId];
           targetType = NoticeTargetType.individual;
-          targetValue = id;
+          targetValue = customId;
           title = 'Individual Notice';
           break;
         case 'Groups':
@@ -344,12 +374,9 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
                     width: 180,
                     child: LayoutBuilder(
                       builder: (context, constraints) {
-                        // Calculate available space minus the gaps (3 gaps of 16px)
                         final totalSpacing = 16.0 * 3;
                         final availableHeight = constraints.maxHeight - totalSpacing;
                         final dynamicHeight = availableHeight / 4;
-
-                        // Set a safe minimum height so it won't overflow when keyboard appears
                         final safeHeight = dynamicHeight < 110.0 ? 110.0 : dynamicHeight;
 
                         return SingleChildScrollView(
@@ -419,7 +446,6 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
                     ),
                   ),
                   const SizedBox(width: 40),
-                  // Form panel
                   Expanded(
                     child: GlassCard(
                       padding: const EdgeInsets.all(40),
@@ -458,7 +484,6 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
   }
 }
 
-// Category button widget
 class _CategoryButton extends StatelessWidget {
   final String imagePath;
   final String label;
