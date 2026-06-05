@@ -89,4 +89,19 @@ class QnAService {
   Future<void> submitQuestion(QnAModel qna) async {
     await _db.collection('QnA').add(qna.toFirestore());
   }
+  // --- ADD TO QnAService ---
+  Stream<List<Map<String, dynamic>>> streamAllQnAForSubjects(List<String> subjects) {
+    if (subjects.isEmpty) return Stream.value([]);
+
+    return FirebaseFirestore.instance
+        .collection('QnA') // Make sure this matches your actual collection name!
+        .where('subject', whereIn: subjects)
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['docId'] = doc.id; // Inject the document ID so the UI can use it
+      return data;
+    }).toList());
+  }
 }

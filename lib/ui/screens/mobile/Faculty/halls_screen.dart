@@ -339,7 +339,9 @@ class _HallsScreenState extends State<HallsScreen> {
 
   Widget _buildErrorFab(double sw, double sh) {
     return Positioned(
-      bottom: (sh * 0.12).clamp(110.0, 140.0),
+      // --- THE FIX ---
+      // 80 (Bottom Bar) + System Nav Bar Height + 20 (Margin)
+      bottom: 80.0 + MediaQuery.of(context).padding.bottom + 20.0,
       right: (sw * 0.06).clamp(20.0, 35.0),
       child: GestureDetector(
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const HallErrorScreen())),
