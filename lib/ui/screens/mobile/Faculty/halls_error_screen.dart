@@ -49,7 +49,12 @@ class _HallErrorScreenState extends State<HallErrorScreen> {
   final List<String> _errorTypes = ['Projector Issue', 'Air Conditioner', 'Lighting', 'Furniture/Desk', 'Other'];
 
   Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 50,
+      maxWidth: 800,  // <-- ADD THIS
+      maxHeight: 800, // <-- ADD THIS
+    );
     if (image != null) {
       final bytes = await File(image.path).readAsBytes();
       if (mounted) {
