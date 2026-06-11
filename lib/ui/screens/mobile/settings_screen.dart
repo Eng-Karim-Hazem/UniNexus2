@@ -72,8 +72,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } else {
       // Student Routes
       if (index == 0) await Navigator.push(context, MaterialPageRoute(builder: (_) => const StuCommunity()));
-      else if (index == 1) await Navigator.push(context, MaterialPageRoute(builder: (_) => const StuSchedule()));
-      else if (index == 2) await Navigator.push(context, MaterialPageRoute(builder: (_) => const StuQAScreen()));
+      else if (index == 1) await Navigator.push(context, MaterialPageRoute(builder: (_) => const StuQAScreen()));
+      else if (index == 2) await Navigator.push(context, MaterialPageRoute(builder: (_) => const StuSchedule()));
       else if (index == 3) await Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
     }
   }
@@ -344,7 +344,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   // --- DYNAMIC NAV BAR ITEM ---
                   _isFaculty
                       ? _navItem('assets/images/classroom_1.png', "Halls", 1)
-                      : _navItem('assets/images/calendar.png', "Schedule", 1),
+                      : _navItem('assets/images/qa.png', "Q&A", 1),
                 ],
               ),
             ),
@@ -353,7 +353,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _navItem('assets/images/qa.png', "Q&A", 2),
+                  _isFaculty
+                      ? _navItem('assets/images/qa.png', "Q&A", 2)
+                      : _navItem('assets/images/calendar.png', "Schedule", 2),
                   _navItem('assets/images/user.png', "Profile", 3),
                 ],
               ),

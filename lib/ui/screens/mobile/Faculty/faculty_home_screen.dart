@@ -124,7 +124,6 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
       canPop: false,
       child: Scaffold(
         extendBody: true,
-        floatingActionButtonAnimator: FloatingActionButtonAnimator.noAnimation,
         floatingActionButton: _buildFab(),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         bottomNavigationBar: _buildBottomBar(),

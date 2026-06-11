@@ -95,7 +95,6 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
       canPop: false,
       child: Scaffold(
         extendBody: true,
-        floatingActionButtonAnimator: FloatingActionButtonAnimator.noAnimation,
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         floatingActionButton: _buildFab(),
         bottomNavigationBar: _buildBottomBar(),
@@ -304,9 +303,9 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [_buildNavBarItem('assets/images/solidarity_1.png', "Community", 0), _buildNavBarItem('assets/images/calendar.png', "Schedule", 1)])),
+            Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [_buildNavBarItem('assets/images/solidarity_1.png', "Community", 0),_buildNavBarItem('assets/images/qa.png', "Q&A", 2)])),
             const SizedBox(width: 72),
-            Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [_buildNavBarItem('assets/images/qa.png', "Q&A", 2), _buildNavBarItem('assets/images/user.png', "Profile", 3)])),
+            Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [_buildNavBarItem('assets/images/calendar.png', "Schedule", 1), _buildNavBarItem('assets/images/user.png', "Profile", 3)])),
           ],
         ),
       ),

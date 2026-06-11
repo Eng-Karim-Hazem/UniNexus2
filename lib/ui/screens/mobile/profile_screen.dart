@@ -373,8 +373,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _navItem('assets/images/solidarity_1.png', "Community", false, onTap: () {
                   Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const StuCommunity()));
                 }),
-                _navItem('assets/images/calendar.png', "Schedule", false, onTap: () {
-                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const StuSchedule()));
+                _navItem('assets/images/qa.png', "Q&A", false, onTap: () {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const StuQAScreen()));
                 }),
               ],
             ),
@@ -384,8 +384,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _navItem('assets/images/qa.png', "Q&A", false, onTap: () {
-                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const StuQAScreen()));
+                _navItem('assets/images/calendar.png', "Schedule", false, onTap: () {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const StuSchedule()));
                 }),
                 _navItem('assets/images/user.png', "Profile", true),
               ],

@@ -376,11 +376,11 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
         children: [
           Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
             _navItem('assets/images/solidarity_1.png', 'Community', true),
-            _navItem('assets/images/calendar.png', 'Schedule', false, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuSchedule()))),
+            _navItem('assets/images/qa.png', 'Q&A', false, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuQAScreen()))),
           ])),
           const SizedBox(width: 72),
           Expanded(child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-            _navItem('assets/images/qa.png', 'Q&A', false, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuQAScreen()))),
+            _navItem('assets/images/calendar.png', 'Schedule', false, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const StuSchedule()))),
             _navItem('assets/images/user.png', 'Profile', false, onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileScreen()))),
           ])),
         ],

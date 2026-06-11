@@ -370,7 +370,7 @@ class _QARequestScreenState extends State<QARequestScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _navItem('assets/images/solidarity_1.png', "Community", 0),
-                  _navItem('assets/images/calendar.png', "Schedule", 1),
+                  _navItem('assets/images/qa.png', "Q&A", 2),
                 ],
               ),
             ),
@@ -379,7 +379,7 @@ class _QARequestScreenState extends State<QARequestScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _navItem('assets/images/qa.png', "Q&A", 2),
+                  _navItem('assets/images/calendar.png', "Schedule", 1),
                   _navItem('assets/images/user.png', "Profile", 3),
                 ],
               ),

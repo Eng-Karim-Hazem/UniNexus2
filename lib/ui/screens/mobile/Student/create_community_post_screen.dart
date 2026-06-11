@@ -147,11 +147,11 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
       Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (_) => target));
     } else if (index == 1) {
-      Widget target = _isStudent ? const StuSchedule() : const HallsScreen();
+      Widget target = _isStudent ? const StuQAScreen() : const HallsScreen();
       Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (_) => target));
     } else if (index == 2) {
-      Widget target = _isStudent ? const StuQAScreen() : const QAScreen();
+      Widget target = _isStudent ? const StuSchedule()  : const QAScreen();
       Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (_) => target));
     } else if (index == 3) {
@@ -426,9 +426,9 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
             children: [
               _navItem('assets/images/solidarity_1.png', 'Community', 0),
               _navItem(isStudent
-                  ? 'assets/images/calendar.png'
+                  ? 'assets/images/qa.png'
                   : 'assets/images/classroom_1.png',
-                  isStudent ? 'Schedule' : 'Halls', 1),
+                  isStudent ? 'Q&A' : 'Halls', 1),
             ],
           ),
         ),
@@ -437,7 +437,10 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _navItem('assets/images/qa.png', 'Q&A', 2),
+              _navItem(isStudent
+                  ? 'assets/images/calendar.png'
+                  : 'assets/images/classroom_1.png',
+                  isStudent ? 'Schedule' : 'Halls', 2),
               _navItem('assets/images/user.png', 'Profile', 3),
             ],
           ),

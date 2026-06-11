@@ -119,10 +119,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         await Navigator.push(context, MaterialPageRoute(builder: (_) => const StuCommunity()));
       } else if (index == 1) {
         await Navigator.push(
-            context, MaterialPageRoute(builder: (_) => const StuSchedule()));
+            context, MaterialPageRoute(builder: (_) => const StuQAScreen()));
       } else if (index == 2) {
         await Navigator.push(
-            context, MaterialPageRoute(builder: (_) => const StuQAScreen()));
+            context, MaterialPageRoute(builder: (_) => const StuSchedule()));
       } else if (index == 3) {
         await Navigator.push(
             context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
@@ -395,7 +395,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   // --- DYNAMIC SWITCH ---
                   _isFaculty
                       ? _navItem('assets/images/classroom_1.png', "Halls", 1)
-                      : _navItem('assets/images/calendar.png', "Schedule", 1),
+                      : _navItem('assets/images/qa.png', "Q&A", 1),
                 ],
               ),
             ),
@@ -404,7 +404,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _navItem('assets/images/qa.png', "Q&A", 2),
+                  _isFaculty
+                      ? _navItem('assets/images/qa.png', "Q&A", 2)
+                      : _navItem('assets/images/calendar.png', "Schedule", 2),
                   _navItem('assets/images/user.png', "Profile", 3),
                 ],
               ),
