@@ -508,6 +508,7 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                   label: 'Fixed',
                   onTap: () async {
                     try {
+                      // 1. Mark target issue log entries as fixed
                       if (isTamperedType) {
                         await docRef.update({'tampered': false, 'status': 'fixed'});
                         await ITLogService.logAction('Resolved hardware alignment status on Scanner "$hallName"');
@@ -516,7 +517,35 @@ class _ITHallErrorScreenState extends State<ITHallErrorScreen> {
                         final String trackingLabel = isDevice ? 'Scanner "$hallName"' : 'issue in $hallName';
                         await ITLogService.logAction('Resolved $trackingLabel');
                       }
-                      if (mounted) showSuccessSnackBar(context, 'Status updated to: Fixed');
+
+                      // Default Fallbacks
+                      String buildingLetter = "A";
+                      String cleanHallCode = hallName.trim();
+
+                      // 2. Parse out Building and Hall code components precisely (e.g. from "Building A - 202")
+                      if (hallName.contains(' - ')) {
+                        final List<String> parts = hallName.split(' - ');
+                        cleanHallCode = parts.last.trim(); // "202"
+
+                        final String firstPart = parts.first.replaceAll('Building', '').trim(); // Extracts "A"
+                        if (firstPart.isNotEmpty) {
+                          buildingLetter = firstPart;
+                        }
+                      }
+
+                      // 3. Match both 'building' and 'hallCode' fields inside the halls collection
+                      final hallQuery = await FirebaseFirestore.instance
+                          .collection('halls')
+                          .where('building', isEqualTo: buildingLetter)
+                          .where('hallCode', isEqualTo: cleanHallCode)
+                          .limit(1)
+                          .get();
+
+                      if (hallQuery.docs.isNotEmpty) {
+                        await hallQuery.docs.first.reference.update({'hasError': false});
+                      }
+
+                      if (mounted) showSuccessSnackBar(context, 'Status updated to: Fixed & Hall error cleared.');
                     } catch (e) {
                       if (mounted) showErrorSnackBar(context, 'Error updating status: $e');
                     }
