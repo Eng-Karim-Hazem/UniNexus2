@@ -11,7 +11,7 @@ class LoginService {
 
   Future<Map<String, dynamic>> login(String code, String password) async {
     try {
-      final cleanCode = code.toUpperCase().trim();
+      final cleanCode = code.trim();
       final cleanPassword = password.trim();
 
       if (cleanCode.length < 2) return {'status': LoginResult.invalidPrefix};

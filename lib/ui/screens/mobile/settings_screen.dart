@@ -145,6 +145,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       extendBody: true,
+      floatingActionButtonAnimator: FloatingActionButtonAnimator.noAnimation,
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildBottomBar(),

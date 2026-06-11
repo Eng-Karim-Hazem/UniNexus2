@@ -95,6 +95,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
       canPop: false,
       child: Scaffold(
         extendBody: true,
+        floatingActionButtonAnimator: FloatingActionButtonAnimator.noAnimation,
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         floatingActionButton: _buildFab(),
         bottomNavigationBar: _buildBottomBar(),

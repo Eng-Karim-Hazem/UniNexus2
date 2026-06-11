@@ -154,6 +154,7 @@ class _QAScreenState extends State<QAScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       extendBody: true,
+      floatingActionButtonAnimator: FloatingActionButtonAnimator.noAnimation,
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildBottomBar(),

@@ -28,6 +28,7 @@ class _StuQAScreenState extends State<StuQAScreen> {
 
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _textIndigo = const Color(0xFF5C5C80);
+  final Color _primaryBlue = const Color(0xFF237ABA);
   final Gradient _fabGradient = const LinearGradient(
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
     begin: Alignment.topLeft,
@@ -72,7 +73,7 @@ class _StuQAScreenState extends State<StuQAScreen> {
       return;
     }
 
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => next));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => next));
   }
 
   Future<void> _goHome() async {
@@ -108,6 +109,7 @@ class _StuQAScreenState extends State<StuQAScreen> {
 
     return Scaffold(
       extendBody: true,
+      floatingActionButtonAnimator: FloatingActionButtonAnimator.noAnimation,
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildBottomBar(),
@@ -253,7 +255,10 @@ class _StuQAScreenState extends State<StuQAScreen> {
         elevation: 0,
         shape: const CircleBorder(),
         child: Container(
-          decoration: BoxDecoration(shape: BoxShape.circle, gradient: _fabGradient),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(colors: [_primaryBlue, _mainPurple]),
+          ),
           child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
         ),
       ),

@@ -58,7 +58,7 @@ class _LoginPageState extends State<LoginPage>
     try {
       final bool isEmail = inputId.contains('@');
       final String queryField = isEmail ? 'email' : 'ID';
-      final String searchValue = isEmail ? inputId.toLowerCase() : inputId.toUpperCase();
+      final String searchValue = isEmail ? inputId : inputId;
 
       Map<String, dynamic>? userData;
       String userCode = "";

@@ -28,6 +28,7 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
   Timer? _refreshTimer; // Periodically refreshes the dynamic token timestamp
 
   final Color _mainPurple = const Color(0xFF7B61FF);
+  final Color _primaryBlue = const Color(0xFF237ABA);
 
   final Gradient _fabGradient = const LinearGradient(
     colors: [Color(0xFF237ABA), Color(0xFF7B61FF)],
@@ -114,6 +115,7 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
 
     return Scaffold(
         extendBody: true,
+        floatingActionButtonAnimator: FloatingActionButtonAnimator.noAnimation,
         floatingActionButton: _buildHomeFab(),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         bottomNavigationBar: _buildBottomBar(),
@@ -287,6 +289,7 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
         ],
       ),
       child: FloatingActionButton(
+        heroTag: null,
         onPressed: _goHome,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -294,7 +297,7 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
         child: Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: _fabGradient,
+            gradient: LinearGradient(colors: [_primaryBlue, _mainPurple]),
           ),
           child: const Center(child: Icon(Icons.home_rounded, color: Colors.white, size: 40)),
         ),
@@ -332,8 +335,8 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _navItem('assets/images/solidarity_1.png', 'Community', 0),
-                  _navItem('assets/images/calendar.png', 'Schedule', 1),
+                  _navItem('assets/images/solidarity_1.png', "Community", 0),
+                  _navItem('assets/images/calendar.png', "Schedule", 1),
                 ],
               ),
             ),
@@ -342,8 +345,8 @@ class _StudentIDScreenState extends State<StudentIDScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _navItem('assets/images/qa.png', 'Q&A', 2),
-                  _navItem('assets/images/user.png', 'Profile', 3),
+                  _navItem('assets/images/qa.png', "Q&A", 2),
+                  _navItem('assets/images/user.png', "Profile", 3),
                 ],
               ),
             ),

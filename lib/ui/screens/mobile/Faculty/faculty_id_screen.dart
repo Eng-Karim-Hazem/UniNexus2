@@ -127,6 +127,7 @@ class _FacultyIDScreenState extends State<FacultyIDScreen> {
 
     return Scaffold(
       extendBody: true,
+      floatingActionButtonAnimator: FloatingActionButtonAnimator.noAnimation,
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildBottomBar(),

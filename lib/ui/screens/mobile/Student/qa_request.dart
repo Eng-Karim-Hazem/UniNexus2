@@ -147,6 +147,7 @@ class _QARequestScreenState extends State<QARequestScreen> {
     return Scaffold(
       extendBody: true,
       // FIXED: Keeps FAB and BottomBar stationary
+      floatingActionButtonAnimator: FloatingActionButtonAnimator.noAnimation,
       resizeToAvoidBottomInset: false,
       floatingActionButton: _buildHomeFab(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
