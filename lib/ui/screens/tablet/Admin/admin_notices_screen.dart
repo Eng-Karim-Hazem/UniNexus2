@@ -325,6 +325,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
         recipientIds: recipientIds,
         createdAt: DateTime.now(),
         sentBy: _senderName,
+        expiryDate: DateTime.now().add(const Duration(days: 7)),
       );
 
       await _noticesService.sendNotice(notice);

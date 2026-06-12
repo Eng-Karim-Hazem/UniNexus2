@@ -9,6 +9,7 @@ import '../settings_screen.dart';
 import 'faculty_id_screen.dart';
 import '../Faculty/qa_screen.dart';
 import '../profile_screen.dart';
+import 'faculty_send_notices.dart';
 import 'halls_screen.dart';
 import 'attendance_session_screen.dart';
 
@@ -62,14 +63,11 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         _storedLastName = prefs.getString('lName') ?? "";
         _storedUserID = prefs.getString('ID') ?? "No ID";
         _facultySubjects = prefs.getStringList('facultySubjects') ?? [];
-
-        // --- ADD THIS: Load the hidden notices ---
         _hiddenNotices = prefs.getStringList('hiddenNotices') ?? [];
       });
     }
   }
 
-  // --- ADD THIS HELPER METHOD ---
   Future<void> _hideNotification(String docId) async {
     setState(() {
       _hiddenNotices.add(docId);
@@ -132,7 +130,6 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     final sw = MediaQuery.of(context).size.width;
     final sh = MediaQuery.of(context).size.height;
 
-    // WRAP THE SCAFFOLD IN POPSCOPE TO DISABLE THE BACK BUTTON
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -153,13 +150,10 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
             bottom: false,
             child: Column(
               children: [
-                // --- FIXED TOP HEADER (OUTSIDE SCROLLVIEW) ---
                 Padding(
                   padding: EdgeInsets.fromLTRB(sw * 0.06, sh * 0.02, sw * 0.06, 10),
                   child: _buildTopHeader(),
                 ),
-
-                // --- SCROLLABLE AREA ---
                 Expanded(
                   child: SingleChildScrollView(
                     padding: EdgeInsets.symmetric(horizontal: sw * 0.06),
@@ -231,7 +225,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   Widget _buildActionButtons(double sw, double sh) {
     return Row(
       children: [
-        Expanded(child: _buildActionCard("Halls", 'assets/images/classroom_1.png', () => Navigator.push(context, MaterialPageRoute(builder: (context) => const HallsScreen())), sh)),
+        Expanded(child: _buildActionCard("Send Notices", 'assets/images/classroom_1.png', () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SendNoticeScreen())), sh)),
         const SizedBox(width: 16),
         Expanded(child: _buildActionCard("Attendance", 'assets/images/user-check_1.png', () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AttendanceSessionScreen())), sh)),
       ],
@@ -283,10 +277,21 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
               return const Padding(padding: EdgeInsets.all(40), child: Center(child: Text('No announcements.', style: TextStyle(fontFamily: MobileAppFonts.body))));
             }
 
-            // --- THE FIX: Filter out the hidden notices ---
+            // --- FILTER: Handles hidden notices AND frontend expiration checking ---
             final docs = snapshot.data!.docs.where((doc) {
-              if (_hiddenNotices.contains(doc.id)) return false; // Skip if hidden!
-              return _isNoticeForFaculty(doc.data() as Map<String, dynamic>);
+              if (_hiddenNotices.contains(doc.id)) return false; // Skip if manually hidden
+
+              final data = doc.data() as Map<String, dynamic>;
+
+              // --- ADDED: Hide if frontend expiration date has passed ---
+              if (data.containsKey('expiryDate') && data['expiryDate'] != null) {
+                final DateTime expirationDate = (data['expiryDate'] as Timestamp).toDate();
+                if (DateTime.now().isAfter(expirationDate)) {
+                  return false;
+                }
+              }
+
+              return _isNoticeForFaculty(data);
             }).toList();
 
             if (docs.isEmpty) return const Padding(padding: EdgeInsets.all(40), child: Center(child: Text('No relevant notices.', style: TextStyle(fontFamily: MobileAppFonts.body))));
@@ -299,19 +304,17 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
               itemBuilder: (context, index) {
                 final doc = docs[index];
                 final data = doc.data() as Map<String, dynamic>;
-                final docId = doc.id; // Grab the unique Firebase ID
+                final docId = doc.id;
 
                 final timestamp = data['date'] as Timestamp?;
                 String timeStr = timestamp != null ? DateFormat('MMM d, h:mm a').format(timestamp.toDate()) : '';
 
-                // --- THE FIX: Wrap in a simple Dismissible ---
                 return Dismissible(
                   key: Key(docId),
-                  direction: DismissDirection.horizontal, // Swipe left OR right
+                  direction: DismissDirection.horizontal,
                   onDismissed: (direction) {
-                    _hideNotification(docId); // Save to local preferences
+                    _hideNotification(docId);
                   },
-                  // No background properties added, ensuring the edges stay clean!
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: _buildNotifyItem(data['sentBy'] ?? 'Management', data['description'] ?? '', timeStr),

@@ -211,7 +211,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: Image.asset("assets/images/uni.jpeg", width: MobileAppDimensions.heroImageWidth),
+                          child: Image.asset("assets/images/logooo.png", width: MobileAppDimensions.heroImageWidth),
                         ),
                         SizedBox(height: sh * 0.015),
                         const Text(

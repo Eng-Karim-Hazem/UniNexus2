@@ -11,6 +11,8 @@ class NoticeModel {
   final List<String> recipientIds;
   final DateTime createdAt;
   final String sentBy;
+  // --- ADDED: Expiry Date Field ---
+  final DateTime? expiryDate;
 
   const NoticeModel({
     this.docId,
@@ -21,6 +23,7 @@ class NoticeModel {
     required this.recipientIds,
     required this.createdAt,
     required this.sentBy,
+    this.expiryDate, // Optional parameter for creating new notices
   });
 
   Map<String, dynamic> toFirestore() {
@@ -32,6 +35,10 @@ class NoticeModel {
       'recipientIds': recipientIds,
       'date': Timestamp.fromDate(createdAt),
       'sentBy': sentBy,
+
+      // --- ADDED: Save future date if provided ---
+      'expiryDate': expiryDate != null ? Timestamp.fromDate(expiryDate!) : null,
+
       // Backward-compatible fields for existing schema screenshots.
       'ID': recipientIds.isNotEmpty ? recipientIds.first : '',
     };
@@ -39,6 +46,9 @@ class NoticeModel {
 
   factory NoticeModel.fromFirestore(Map<String, dynamic> data, String id) {
     final Timestamp? timestamp = data['date'] as Timestamp?;
+
+    // --- ADDED: Read future date if it exists ---
+    final Timestamp? expiryTimestamp = data['expiryDate'] as Timestamp?;
 
     return NoticeModel(
       docId: id,
@@ -52,6 +62,9 @@ class NoticeModel {
       recipientIds: List<String>.from(data['recipientIds'] ?? const []),
       createdAt: timestamp?.toDate() ?? DateTime.now(),
       sentBy: (data['sentBy'] ?? '').toString(),
+
+      // --- ADDED: Assign to model property ---
+      expiryDate: expiryTimestamp?.toDate(),
     );
   }
 }

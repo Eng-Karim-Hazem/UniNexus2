@@ -34,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen>
   // --- Live Status Tracking Variables ---
   String _requestStatus = '';
   Timer? _debounce;
-  String _lastSearchedId = ''; // <-- ADDED: The Cache to stop spamming Firebase
+  String _lastSearchedId = '';
 
   late AnimationController _contentController;
   late Animation<Offset> _contentIntro;
@@ -98,16 +98,13 @@ class _LoginScreenState extends State<LoginScreen>
     _passwordController.addListener(_validate);
   }
 
-  // --- UPDATED: Bulletproof Firebase read protection ---
   void _onIdChanged() {
     _validate();
 
     final currentText = _codeController.text.trim().toUpperCase();
 
-    // 1. Ignore cursor movements or taps if the text hasn't changed
     if (currentText == _lastSearchedId) return;
 
-    // 2. Hide the bulb and reset cache if they delete the ID completely
     if (currentText.isEmpty) {
       if (_requestStatus.isNotEmpty) setState(() => _requestStatus = '');
       _lastSearchedId = '';
@@ -116,12 +113,9 @@ class _LoginScreenState extends State<LoginScreen>
 
     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
-    // 3. Wait a full 1 second after they STOP typing before calling the database
     _debounce = Timer(const Duration(milliseconds: 1000), () {
-
-      // Double check it hasn't changed again while waiting
       if (currentText != _lastSearchedId) {
-        _lastSearchedId = currentText; // Update cache
+        _lastSearchedId = currentText;
         _fetchStatusFromDatabase(currentText);
       }
     });
@@ -288,6 +282,21 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
+  // --- Get dynamic status properties ---
+  Color? get _statusColor {
+    if (_requestStatus == 'accepted' || _requestStatus == 'processed') return Colors.green.shade700;
+    if (_requestStatus == 'rejected') return Colors.redAccent;
+    if (_requestStatus == 'pending') return const Color(0xFFFFC107);
+    return null;
+  }
+
+  String get _statusMessage {
+    if (_requestStatus == 'accepted' || _requestStatus == 'processed') return "Request Approved! You can now log in.";
+    if (_requestStatus == 'rejected') return "Request Rejected. Please contact IT.";
+    if (_requestStatus == 'pending') return "Your request is currently being processed.";
+    return "";
+  }
+
   @override
   Widget build(BuildContext context) {
     final sw = MediaQuery.of(context).size.width;
@@ -310,11 +319,7 @@ class _LoginScreenState extends State<LoginScreen>
                   child: IgnorePointer(
                     child: Opacity(
                       opacity: 0.9,
-                      child: Image.asset(
-                        "assets/images/Rectangle.png",
-                        width: 550,
-                        fit: BoxFit.contain,
-                      ),
+                      child: Image.asset("assets/images/Rectangle.png", width: 550, fit: BoxFit.contain),
                     ),
                   ),
                 ),
@@ -331,11 +336,7 @@ class _LoginScreenState extends State<LoginScreen>
                       tag: 'shared-rectangle',
                       child: Opacity(
                         opacity: 0.9,
-                        child: Image.asset(
-                          "assets/images/Rectangle.png",
-                          width: 550,
-                          fit: BoxFit.contain,
-                        ),
+                        child: Image.asset("assets/images/Rectangle.png", width: 550, fit: BoxFit.contain),
                       ),
                     ),
                   ),
@@ -343,174 +344,129 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ),
             SafeArea(
-              child: Stack(
-                children: [
-                  SlideTransition(
-                    position: _contentIntro,
-                    child: FadeTransition(
-                      opacity: _contentController,
-                      child: CustomScrollView(
-                        slivers: [
-                          SliverFillRemaining(
-                            hasScrollBody: false,
-                            child: Padding(
-                              padding: EdgeInsets.fromLTRB(sw * 0.08, 25, sw * 0.08, 20),
-                              child: Column(
+              child: SlideTransition(
+                position: _contentIntro,
+                child: FadeTransition(
+                  opacity: _contentController,
+                  child: CustomScrollView(
+                    slivers: [
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Padding(
+                          padding: EdgeInsets.fromLTRB(sw * 0.08, 25, sw * 0.08, 20),
+                          child: Column(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.asset(
+                                  "assets/images/uni.jpeg",
+                                  width: MobileAppDimensions.heroImageWidth,
+                                  height: sh * 0.15,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+
+                              const Text(
+                                "Log in to UniNexus",
+                                style: MobileAppTextStyles.screenTitle,
+                                textAlign: TextAlign.center,
+                              ),
+
+                              const Text(
+                                "Access your campus services securely",
+                                style: MobileAppTextStyles.screenSubtitle,
+                                textAlign: TextAlign.center,
+                              ),
+
+                              const Spacer(flex: 1),
+
+                              // --- THE ID FIELD WITH FADED GRADIENT ---
+                              _animatedItem(
+                                anim: _field1Anim,
+                                child: _modernField(
+                                  label: "ID",
+                                  hint: "Enter Your ID",
+                                  controller: _codeController,
+                                  statusColor: _statusColor,
+                                  statusMessage: _statusMessage,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+
+                              _animatedItem(
+                                anim: _field2Anim,
+                                child: _modernField(
+                                  label: "Password",
+                                  hint: "Enter Your Password",
+                                  controller: _passwordController,
+                                  obscure: _obscurePassword,
+                                  icon: IconButton(
+                                    icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                  ),
+                                ),
+                              ),
+
+                              _animatedItem(
+                                anim: _checkAnim,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Flexible(
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Checkbox(
+                                            value: _rememberMe,
+                                            activeColor: MobileAppColors.primary,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                                            onChanged: (val) => setState(() => _rememberMe = val ?? false),
+                                          ),
+                                          const Flexible(child: Text("Remember Me", style: MobileAppTextStyles.bodyTextMedium, overflow: TextOverflow.ellipsis)),
+                                        ],
+                                      ),
+                                    ),
+                                    Flexible(
+                                      child: TextButton(
+                                        onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
+                                        child: const Text("Forgot Password?", style: TextStyle(fontFamily: MobileAppFonts.body), overflow: TextOverflow.ellipsis),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const Spacer(flex: 2),
+
+                              _mainButton(
+                                text: "Log In",
+                                enabled: _isFormValid && !_isLoading,
+                                isLoading: _isLoading,
+                                onTap: _handleLogin,
+                              ),
+
+                              const SizedBox(height: 10),
+
+                              Wrap(
+                                alignment: WrapAlignment.center,
+                                crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Image.asset(
-                                      "assets/images/uni.jpeg",
-                                      width: MobileAppDimensions.heroImageWidth,
-                                      height: sh * 0.15,
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-
-                                  const Text(
-                                    "Log in to UniNexus",
-                                    style: MobileAppTextStyles.screenTitle,
-                                    textAlign: TextAlign.center,
-                                  ),
-
-                                  const Text(
-                                    "Access your campus services securely",
-                                    style: MobileAppTextStyles.screenSubtitle,
-                                    textAlign: TextAlign.center,
-                                  ),
-
-                                  const Spacer(flex: 1),
-
-                                  _animatedItem(
-                                    anim: _field1Anim,
-                                    child: _modernField(
-                                      label: "ID",
-                                      hint: "Enter Your ID",
-                                      controller: _codeController,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  _animatedItem(
-                                    anim: _field2Anim,
-                                    child: _modernField(
-                                      label: "Password",
-                                      hint: "Enter Your Password",
-                                      controller: _passwordController,
-                                      obscure: _obscurePassword,
-                                      icon: IconButton(
-                                        icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                                      ),
-                                    ),
-                                  ),
-
-                                  _animatedItem(
-                                    anim: _checkAnim,
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Flexible(
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Checkbox(
-                                                value: _rememberMe,
-                                                activeColor: MobileAppColors.primary,
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                                                onChanged: (val) => setState(() => _rememberMe = val ?? false),
-                                              ),
-                                              const Flexible(child: Text("Remember Me", style: MobileAppTextStyles.bodyTextMedium, overflow: TextOverflow.ellipsis)),
-                                            ],
-                                          ),
-                                        ),
-                                        Flexible(
-                                          child: TextButton(
-                                            onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
-                                            child: const Text("Forgot Password?", style: TextStyle(fontFamily: MobileAppFonts.body), overflow: TextOverflow.ellipsis),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-
-                                  const Spacer(flex: 2),
-
-                                  _mainButton(
-                                    text: "Log In",
-                                    enabled: _isFormValid && !_isLoading,
-                                    isLoading: _isLoading,
-                                    onTap: _handleLogin,
-                                  ),
-
-                                  const SizedBox(height: 10),
-
-                                  Wrap(
-                                    alignment: WrapAlignment.center,
-                                    crossAxisAlignment: WrapCrossAlignment.center,
-                                    children: [
-                                      const Text("Don't have an account?", style: MobileAppTextStyles.bodyText),
-                                      TextButton(
-                                        onPressed: () => _slideTo(const SignUpScreen(), fromRight: true),
-                                        child: const Text("Register now", style: MobileAppTextStyles.textButtonHeading),
-                                      ),
-                                    ],
+                                  const Text("Don't have an account?", style: MobileAppTextStyles.bodyText),
+                                  TextButton(
+                                    onPressed: () => _slideTo(const SignUpScreen(), fromRight: true),
+                                    child: const Text("Register now", style: MobileAppTextStyles.textButtonHeading),
                                   ),
                                 ],
                               ),
-                            ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-
-                  Positioned(
-                    top: 16,
-                    right: 24,
-                    child: _buildStatusIndicator(),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusIndicator() {
-    if (_requestStatus.isEmpty) return const SizedBox.shrink();
-
-    Color bulbColor;
-    String tooltipMsg;
-
-    if (_requestStatus == 'accepted' || _requestStatus == 'processed') {
-      bulbColor = Colors.greenAccent;
-      tooltipMsg = "Request Approved! You can now log in.";
-    } else if (_requestStatus == 'rejected') {
-      bulbColor = Colors.redAccent;
-      tooltipMsg = "Request Rejected. Please contact IT.";
-    } else {
-      bulbColor = const Color(0xFFFFC107);
-      tooltipMsg = "Your request is currently being processed.";
-    }
-
-    return Tooltip(
-      message: tooltipMsg,
-      triggerMode: TooltipTriggerMode.tap,
-      showDuration: const Duration(seconds: 3),
-      child: Container(
-        width: 14,
-        height: 14,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: bulbColor,
-          boxShadow: [
-            BoxShadow(
-              color: bulbColor.withOpacity(0.6),
-              blurRadius: 8,
-              spreadRadius: 2,
             ),
           ],
         ),
@@ -525,21 +481,76 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _modernField({required String label, required String hint, required TextEditingController controller, bool obscure = false, Widget? icon}) {
+  // --- UPDATED _modernField TO SUPPORT THE QA-STYLE FADED GRADIENT ---
+  Widget _modernField({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    bool obscure = false,
+    Widget? icon,
+    Color? statusColor,
+    String statusMessage = "",
+  }) {
+    Widget inputWidget = Container(
+      height: MobileAppDimensions.inputHeight,
+      decoration: MobileAppDecorations.inputBox,
+      // Wrap the content in a ClipRRect so the gradient doesn't bleed out of your rounded borders
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          children: [
+            // 1. The Faded Gradient Layer
+            if (statusColor != null)
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        statusColor.withOpacity(0.0),  // Transparent on the left
+                        statusColor.withOpacity(0.15), // Starts to fade in
+                        statusColor.withOpacity(0.6),  // Glows on the right edge
+                      ],
+                      stops: const [0.7, 0.85, 1.0], // Keeps the gradient pinned to the right 30% of the box
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                  ),
+                ),
+              ),
+
+            // 2. The standard TextField on top
+            TextField(
+              controller: controller,
+              obscureText: obscure,
+              style: MobileAppTextStyles.fieldText,
+              decoration: MobileAppInputStyles.fieldDecoration(
+                hint: hint,
+                suffixIcon: icon,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    // If there is a status message, wrap the entire text field so they can tap it to read the message
+    if (statusMessage.isNotEmpty) {
+      inputWidget = Tooltip(
+        message: statusMessage,
+        triggerMode: TooltipTriggerMode.tap,
+        showDuration: const Duration(seconds: 3),
+        child: inputWidget,
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(padding: const EdgeInsets.only(left: 10, bottom: 1), child: Text(label, style: MobileAppTextStyles.fieldLabel)),
-        Container(
-          height: MobileAppDimensions.inputHeight,
-          decoration: MobileAppDecorations.inputBox,
-          child: TextField(
-            controller: controller,
-            obscureText: obscure,
-            style: MobileAppTextStyles.fieldText,
-            decoration: MobileAppInputStyles.fieldDecoration(hint: hint, suffixIcon: icon),
-          ),
+        Padding(
+            padding: const EdgeInsets.only(left: 10, bottom: 1),
+            child: Text(label, style: MobileAppTextStyles.fieldLabel)
         ),
+        inputWidget,
       ],
     );
   }

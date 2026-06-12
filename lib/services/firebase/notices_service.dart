@@ -126,7 +126,23 @@ class NoticesService {
         .orderBy('date', descending: true)
         .snapshots()
         .map((snapshot) {
+
+      final DateTime now = DateTime.now();
+
       return snapshot.docs
+          .where((doc) {
+        final data = doc.data();
+
+        // --- THE FIX: Filter out expired notices at the service level ---
+        if (data.containsKey('expiryDate') && data['expiryDate'] != null) {
+          final DateTime expirationDate = (data['expiryDate'] as Timestamp).toDate();
+          if (now.isAfter(expirationDate)) {
+            return false; // Skip this document if it has expired
+          }
+        }
+
+        return true;
+      })
           .map((doc) => NoticeModel.fromFirestore(doc.data(), doc.id))
           .toList();
     });

@@ -201,7 +201,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                       padding: EdgeInsets.fromLTRB(sw * 0.08, sh * 0.04, sw * 0.08, sh * 0.05),
                       child: Column(
                         children: [
-                          ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.asset("assets/images/uni.jpeg", width: 90, fit: BoxFit.cover)),
+                          ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.asset("assets/images/logooo.png", width: 90, fit: BoxFit.cover)),
                           SizedBox(height: sh * 0.015),
 
                           const Text("Forgotten Password", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 30, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
