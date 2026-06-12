@@ -439,8 +439,8 @@ class _CreateCommunityPostScreenState extends State<CreateCommunityPostScreen> {
             children: [
               _navItem(isStudent
                   ? 'assets/images/calendar.png'
-                  : 'assets/images/classroom_1.png',
-                  isStudent ? 'Schedule' : 'Halls', 2),
+                  : 'assets/images/qa.png',
+                  isStudent ? 'Schedule' : 'Q&A', 2),
               _navItem('assets/images/user.png', 'Profile', 3),
             ],
           ),

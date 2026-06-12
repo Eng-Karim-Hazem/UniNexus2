@@ -225,7 +225,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   Widget _buildActionButtons(double sw, double sh) {
     return Row(
       children: [
-        Expanded(child: _buildActionCard("Send Notices", 'assets/images/classroom_1.png', () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SendNoticeScreen())), sh)),
+        Expanded(child: _buildActionCard("Send Notices", 'assets/icons/Notices.png', () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SendNoticeScreen())), sh)),
         const SizedBox(width: 16),
         Expanded(child: _buildActionCard("Attendance", 'assets/images/user-check_1.png', () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AttendanceSessionScreen())), sh)),
       ],

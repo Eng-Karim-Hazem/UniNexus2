@@ -23,6 +23,8 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
   String _lastName = '';
   String _studentID = '';
   String _faculty = '';
+  String _section = '';
+  List<String> _studentSubjects = [];
   bool _isLoading = true;
 
   // --- 1. TRACK DISMISSED NOTICES LOCALLY ---
@@ -52,6 +54,10 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
         _lastName = prefs.getString('lName') ?? '';
         _studentID = prefs.getString('ID') ?? '';
         _faculty = prefs.getString('faculty') ?? '';
+        _section = prefs.getString('section') ?? '';
+
+        // Load student's assigned subjects array
+        _studentSubjects = prefs.getStringList('studentSubjects') ?? [];
 
         // Load the list of notices the student has swiped away
         _hiddenNotices = prefs.getStringList('hiddenNotices_student') ?? [];
@@ -76,7 +82,9 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
   bool _isNoticeForStudent(Map<String, dynamic> data) {
     final String userId = _studentID.trim();
     final String userProgram = _faculty.trim().toLowerCase();
+    final String userSection = _section.trim();
 
+    // 1. Check explicit direct target array assignment matching standard rules
     final List<String> recipientIds = (data['recipientIds'] as List<dynamic>? ?? const [])
         .map((e) => e.toString().trim())
         .where((e) => e.isNotEmpty)
@@ -86,18 +94,40 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
     }
 
     final String targetType = (data['type'] ?? '').toString().trim().toLowerCase();
-    final String targetValue = (data['targetValue'] ?? '').toString().trim().toLowerCase();
+    final String targetValue = (data['targetValue'] ?? '').toString().trim();
+    final String targetValueLower = targetValue.toLowerCase();
 
-    if (targetType == 'individual' && userId.isNotEmpty && targetValue == userId.toLowerCase()) {
+    if (targetType == 'individual' && userId.isNotEmpty && targetValueLower == userId.toLowerCase()) {
       return true;
     }
-    if (targetType == 'group' && (targetValue == 'students' || targetValue == 'student' || targetValue == 'all')) {
+
+    // 2. Evaluate dynamic groups (Subjects, Sections, and structural matches)
+    if (targetType == 'group') {
+      if (targetValueLower == 'students' || targetValueLower == 'student' || targetValueLower == 'all') {
+        return true;
+      }
+
+      // Check dynamic matches for subjects and combined sections
+      for (String subject in _studentSubjects) {
+        String cleanSubject = subject.split(' - ').first.trim();
+
+        // Pattern A: "students_SubjectCode" (From Screenshot 2026-06-13 020713.png)
+        if (targetValue == 'students_$cleanSubject') {
+          return true;
+        }
+
+        // Pattern B: "SubjectCode_section_Number" (From Screenshot 2026-06-13 020723.png)
+        if (userSection.isNotEmpty && targetValue == '${cleanSubject}_section_$userSection') {
+          return true;
+        }
+      }
+    }
+
+    if (targetType == 'program' && userProgram.isNotEmpty && targetValueLower == userProgram) {
       return true;
     }
-    if (targetType == 'program' && userProgram.isNotEmpty && targetValue == userProgram) {
-      return true;
-    }
-    return targetType.isEmpty && (targetValue == 'all' || targetValue == 'students' || targetValue == userProgram);
+
+    return targetType.isEmpty && (targetValueLower == 'all' || targetValueLower == 'students' || targetValueLower == userProgram);
   }
 
   @override
@@ -188,12 +218,10 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return _buildEmptyNotices();
 
                               final filteredDocs = snapshot.data!.docs.where((doc) {
-                                // A. Hide if swiped away
                                 if (_hiddenNotices.contains(doc.id)) return false;
 
                                 final data = doc.data() as Map<String, dynamic>;
 
-                                // B. Hide if frontend expiration date has passed
                                 if (data.containsKey('expiryDate') && data['expiryDate'] != null) {
                                   final DateTime expirationDate = (data['expiryDate'] as Timestamp).toDate();
                                   if (DateTime.now().isAfter(expirationDate)) {
@@ -201,7 +229,6 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                                   }
                                 }
 
-                                // C. Keep if it's meant for this student
                                 return _isNoticeForStudent(data);
                               }).toList();
 
@@ -217,7 +244,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
 
                                   return Dismissible(
                                     key: Key(doc.id),
-                                    direction: DismissDirection.horizontal, // Clean left/right swipe
+                                    direction: DismissDirection.horizontal,
                                     onDismissed: (direction) {
                                       _hideNotification(doc.id);
                                     },
