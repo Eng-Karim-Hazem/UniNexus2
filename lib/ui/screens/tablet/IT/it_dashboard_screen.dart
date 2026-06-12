@@ -1,4 +1,4 @@
-import 'dart:async'; // --- ADDED FOR STREAM SUBSCRIPTIONS ---
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,20 +15,18 @@ class ITDashboardScreen extends StatefulWidget {
 }
 
 class _ITDashboardScreenState extends State<ITDashboardScreen> {
-  // STATE VARIABLES
   String _userName = 'Loading...';
-
-  // GRAPH VARIABLES
   int _activeIssuesCount = 0;
   double _resolutionRate = 0.0;
   bool _isLoadingStats = true;
 
-  // --- STREAM SUBSCRIPTIONS ---
+  // --- 1. LOCAL HIDDEN LIST ---
+  List<String> _hiddenNotices = [];
+
   StreamSubscription<QuerySnapshot>? _hallErrorsSub;
   StreamSubscription<QuerySnapshot>? _passRequestsSub;
-  StreamSubscription<QuerySnapshot>? _deviceLogSyncSub; // Background subscription to track scanner drops safely
+  StreamSubscription<QuerySnapshot>? _deviceLogSyncSub;
 
-  // Variables to hold the live counts from each stream
   int _hallTotal = 0;
   int _hallResolved = 0;
   int _hallActive = 0;
@@ -37,7 +35,6 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
   int _passResolved = 0;
   int _passActive = 0;
 
-  // Track scanner alerts with a unique ID combination to prevent continuous duplicate writes across rebuilds
   final Set<String> _loggedDowntimeScanners = {};
 
   @override
@@ -45,7 +42,7 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
     super.initState();
     _fetchUserName();
     _setupRealtimeStats();
-    _setupBackgroundDeviceLogger(); // Start background real-time logging sync
+    _setupBackgroundDeviceLogger();
   }
 
   @override
@@ -79,6 +76,10 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
   Future<void> _fetchUserName() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+
+      // Load hidden notices
+      _hiddenNotices = prefs.getStringList('hiddenNotices_it') ?? [];
+
       final String firstName = prefs.getString('fName') ?? 'Guest';
       if(mounted) {
         setState(() {
@@ -94,12 +95,20 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
     }
   }
 
+  // --- 2. HELPER TO SAVE SWIPED NOTICES ---
+  Future<void> _hideNotification(String docId) async {
+    setState(() {
+      _hiddenNotices.add(docId);
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('hiddenNotices_it', _hiddenNotices);
+  }
+
   void _setupRealtimeStats() {
     final db = FirebaseFirestore.instance;
     final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
     final timestampLimit = Timestamp.fromDate(sevenDaysAgo);
 
-    // 1. Listen to Hall Errors Live
     _hallErrorsSub = db.collection('HallErrors')
         .where('timestamp', isGreaterThanOrEqualTo: timestampLimit)
         .snapshots()
@@ -124,7 +133,6 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
       _updateCombinedStats();
     });
 
-    // 2. Listen to Password Requests Live
     _passRequestsSub = db.collection('ForgotPass_request')
         .where('requestDate', isGreaterThanOrEqualTo: timestampLimit)
         .snapshots()
@@ -150,7 +158,6 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
     });
   }
 
-  // --- SAFE IDEMPOTENT BACKGROUND LOGGER ---
   void _setupBackgroundDeviceLogger() {
     _deviceLogSyncSub = FirebaseFirestore.instance
         .collection('Devices')
@@ -167,28 +174,24 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
           final bool isOffline = (currentUnixTime - lastHeartbeat) > 60;
 
           if (isOffline) {
-            // Use a deterministic composite key matching the specific outage instance
             final String uniqueLogId = '${scannerName}_$lastHeartbeat';
 
             if (!_loggedDowntimeScanners.contains(uniqueLogId)) {
               _loggedDowntimeScanners.add(uniqueLogId);
 
-              // Converts scanner heartbeat unix timestamp directly to a standard Timestamp object
               final Timestamp lastSeenTimestamp = Timestamp.fromMillisecondsSinceEpoch(lastHeartbeat * 1000);
 
-              // Setting explicit document paths avoids random auto-generated ID replication
               FirebaseFirestore.instance
                   .collection('IT_Logs')
                   .doc(uniqueLogId)
                   .set({
                 'message': 'Scanner "$scannerName" is down',
-                'timestamp': lastSeenTimestamp, // Preserves the scanner's exact last seen timing parameters
+                'timestamp': lastSeenTimestamp,
               }).catchError((_) {
                 _loggedDowntimeScanners.remove(uniqueLogId);
               });
             }
           } else {
-            // Reset local cache references for this scanner once it registers online again
             _loggedDowntimeScanners.removeWhere((key) => key.startsWith('${scannerName}_'));
           }
         }
@@ -235,7 +238,6 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // LEFT SIDE CARD PANEL (Registration requests, password requests, and scanner down alerts)
                   Expanded(
                     flex: 5,
                     child: GlassCard(
@@ -294,7 +296,6 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
 
                   const SizedBox(width: 20),
 
-                  // RIGHT SIDE CARD PANEL (Announcements panel view context)
                   Expanded(
                     flex: 4,
                     child: Column(
@@ -324,7 +325,17 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
                                       }
 
                                       var docs = snapshot.data!.docs.where((doc) {
+                                        // A. Hide if swiped away
+                                        if (_hiddenNotices.contains(doc.id)) return false;
+
                                         final data = doc.data() as Map<String, dynamic>;
+
+                                        // B. Hide if frontend expiration date has passed
+                                        if (data.containsKey('expiryDate') && data['expiryDate'] != null) {
+                                          final DateTime expirationDate = (data['expiryDate'] as Timestamp).toDate();
+                                          if (DateTime.now().isAfter(expirationDate)) return false;
+                                        }
+
                                         return data['targetValue'] == 'IT' || data['targetValue'] == 'All';
                                       }).toList();
 
@@ -346,15 +357,23 @@ class _ITDashboardScreenState extends State<ITDashboardScreen> {
                                         physics: const NeverScrollableScrollPhysics(),
                                         itemCount: previewDocs.length,
                                         itemBuilder: (context, index) {
-                                          final data = previewDocs[index].data() as Map<String, dynamic>;
+                                          final doc = previewDocs[index];
+                                          final data = doc.data() as Map<String, dynamic>;
                                           final sender = data['sentBy'] ?? 'Management';
                                           final message = data['description'] ?? 'No details provided.';
 
-                                          return Padding(
-                                            padding: const EdgeInsets.only(bottom: 10),
-                                            child: _AnnouncementCard(
-                                              sender: sender,
-                                              message: message,
+                                          return Dismissible(
+                                            key: Key(doc.id),
+                                            direction: DismissDirection.horizontal,
+                                            onDismissed: (direction) {
+                                              _hideNotification(doc.id);
+                                            },
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(bottom: 10),
+                                              child: _AnnouncementCard(
+                                                sender: sender,
+                                                message: message,
+                                              ),
                                             ),
                                           );
                                         },

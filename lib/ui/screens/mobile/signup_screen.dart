@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // <-- ADDED FOR BREADCRUMB
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:uninexus/ui/screens/mobile/request_submitted_screen.dart';
 import '../../../services/firebase/signup_service.dart';
@@ -78,7 +79,6 @@ class _SignUpScreenState extends State<SignUpScreen>
 
   void _validate() {
     setState(() {
-      // Allows the button to be interactive as long as fields have content
       _isFormValid = _nationalIdController.text.isNotEmpty &&
           _emailController.text.isNotEmpty &&
           _studentIdController.text.isNotEmpty;
@@ -106,7 +106,7 @@ class _SignUpScreenState extends State<SignUpScreen>
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(emailInput)) {
       _showError("Please enter a valid university email format (e.g., user@uni.edu).");
-      return; // Stops execution immediately without hitting Firebase
+      return;
     }
     setState(() => _isLoading = true);
 
@@ -122,12 +122,17 @@ class _SignUpScreenState extends State<SignUpScreen>
 
     switch (resultStatus) {
       case 'success':
+      // --- DROPPING THE BREADCRUMB ---
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('pending_student_id', _studentIdController.text.trim());
+        await prefs.setString('pending_request_type', 'registration');
+
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const RequestSubmittedScreen()),
         );
         break;
-    // --- NEW: Handle Duplicate Active Registration Account ---
       case 'already_registered':
         _showError("This account is already registered. Please go to the Login screen.");
         break;

@@ -61,13 +61,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       final pass = results[1];
       final notices = results[2];
 
-      // Filter pending password reset requests
       final pendingPassDocs = pass.docs.where((doc) {
         final data = doc.data();
         final status = (data['status'] ?? '').toString().toLowerCase();
         final isProcessed = data['isProcessed'] == true;
         final isClosed = status == 'accepted' || status == 'rejected' || status == 'processed';
-        // Only keep if NOT processed and NOT closed
         return !(isProcessed || isClosed);
       }).toList();
 
@@ -79,13 +77,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         };
       }).toList();
 
-      // Filter pending registration requests
       final pendingRegDocs = reg.docs.where((doc) {
         final data = doc.data();
         final status = (data['status'] ?? '').toString().toLowerCase();
         final isProcessed = data['isProcessed'] == true;
         final isClosed = status == 'accepted' || status == 'rejected' || status == 'processed';
-        // Only keep if NOT processed and NOT closed
         return !(isProcessed || isClosed);
       }).toList();
 
@@ -98,17 +94,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         };
       }).toList();
 
-      // Combine and limit to 10 recent requests
       final List<Map<String, String>> requestItems = [
         ...registrationRequests,
         ...resetRequests,
       ].take(5).toList();
 
-      // Filter notices meant for this admin
+      // --- EXPIRATION CHECK ADDED HERE ---
       final List<Map<String, String>> noticesList = notices.docs
           .where((doc) {
         if (_readNoticeIds.contains(doc.id)) return false;
         final data = doc.data();
+
+        // Hide if frontend expiration date has passed
+        if (data.containsKey('expiryDate') && data['expiryDate'] != null) {
+          final DateTime expirationDate = (data['expiryDate'] as Timestamp).toDate();
+          if (DateTime.now().isAfter(expirationDate)) return false;
+        }
+
         final List<String> recipientIds = List<String>.from(data['recipientIds'] ?? const []);
         final String legacyRecipientId = (data['ID'] ?? '').toString().trim();
         final String type = (data['type'] ?? '').toString().toLowerCase();
@@ -134,11 +136,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       if (!mounted) return;
       setState(() {
         _adminName = fName.isNotEmpty && lName.isNotEmpty ? '$fName $lName' : fName.isNotEmpty ? fName : 'Admin';
-
-        // Use the length of the filtered pending lists instead of the total collection length
         _registrationCount = pendingRegDocs.length;
         _passwordResetCount = pendingPassDocs.length;
-
         _recentRequests = requestItems;
         _recentNotices = noticesList;
         _loading = false;
@@ -149,7 +148,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
   }
 
-  // Get current date string
   String _today() {
     final now = DateTime.now();
     const months = [
@@ -159,7 +157,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return '${months[now.month - 1]} ${now.day}, ${now.year}';
   }
 
-  // Format notice timestamp
   String _formatNoticeTime(DateTime date) {
     final hh = date.hour.toString().padLeft(2, '0');
     final mm = date.minute.toString().padLeft(2, '0');
@@ -168,7 +165,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return '$dd/$mo ${date.year} $hh:$mm';
   }
 
-  // Open request and mark as read
   Future<void> _openRecentRequest(Map<String, String> request) async {
     final id = request['id'];
     if (id == null || id.isEmpty) return;
@@ -181,7 +177,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     widget.onNavigate(AdminTab.requests);
   }
 
-  // Mark notice as read and remove from list
   Future<void> _openNotice(Map<String, String> notice) async {
     final id = notice['id'];
     if (id == null || id.isEmpty) return;
@@ -212,7 +207,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Left column - Requests summary
                   Expanded(
                     flex: 5,
                     child: GlassCard(
@@ -265,7 +259,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                   ),
                   const SizedBox(width: 20),
-                  // Right column - Quick actions and notices
                   Expanded(
                     flex: 5,
                     child: Column(
@@ -345,7 +338,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  // Quick action card widget
   Widget _buildQuickActionCard(String title, String imagePath,
       {required VoidCallback onTap}) {
     return GestureDetector(
@@ -408,7 +400,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  // Request summary row
   Widget _buildRequestSummaryRow(String iconPath, String title, IconData fallback) {
     return Row(
       children: [
@@ -428,7 +419,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  // Recent request item
   Widget _buildRecentRequestItem(
       String text,
       IconData icon, {
@@ -459,7 +449,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  // Notice item
   Widget _buildNoticeItem(
       String sender,
       String msg,

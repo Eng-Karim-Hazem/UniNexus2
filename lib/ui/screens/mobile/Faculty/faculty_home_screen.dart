@@ -32,6 +32,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   String _storedLastName = "";
   String _storedUserID = "";
   List<String> _facultySubjects = [];
+  List<String> _hiddenNotices = [];
 
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
@@ -61,8 +62,20 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         _storedLastName = prefs.getString('lName') ?? "";
         _storedUserID = prefs.getString('ID') ?? "No ID";
         _facultySubjects = prefs.getStringList('facultySubjects') ?? [];
+
+        // --- ADD THIS: Load the hidden notices ---
+        _hiddenNotices = prefs.getStringList('hiddenNotices') ?? [];
       });
     }
+  }
+
+  // --- ADD THIS HELPER METHOD ---
+  Future<void> _hideNotification(String docId) async {
+    setState(() {
+      _hiddenNotices.add(docId);
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('hiddenNotices', _hiddenNotices);
   }
 
   String _getGreeting() {
@@ -267,10 +280,16 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
               return const SizedBox(height: 150, child: Center(child: CircularProgressIndicator(color: Color(0xFF7B61FF))));
             }
             if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-              return const Padding(padding: EdgeInsets.all(40), child: Center(child: Text('No announcements.')));
+              return const Padding(padding: EdgeInsets.all(40), child: Center(child: Text('No announcements.', style: TextStyle(fontFamily: MobileAppFonts.body))));
             }
-            final docs = snapshot.data!.docs.where((doc) => _isNoticeForFaculty(doc.data() as Map<String, dynamic>)).toList();
-            if (docs.isEmpty) return const Padding(padding: EdgeInsets.all(40), child: Center(child: Text('No relevant notices.')));
+
+            // --- THE FIX: Filter out the hidden notices ---
+            final docs = snapshot.data!.docs.where((doc) {
+              if (_hiddenNotices.contains(doc.id)) return false; // Skip if hidden!
+              return _isNoticeForFaculty(doc.data() as Map<String, dynamic>);
+            }).toList();
+
+            if (docs.isEmpty) return const Padding(padding: EdgeInsets.all(40), child: Center(child: Text('No relevant notices.', style: TextStyle(fontFamily: MobileAppFonts.body))));
 
             return ListView.builder(
               padding: EdgeInsets.all(sw * 0.04),
@@ -278,12 +297,25 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: docs.length,
               itemBuilder: (context, index) {
-                final data = docs[index].data() as Map<String, dynamic>;
+                final doc = docs[index];
+                final data = doc.data() as Map<String, dynamic>;
+                final docId = doc.id; // Grab the unique Firebase ID
+
                 final timestamp = data['date'] as Timestamp?;
                 String timeStr = timestamp != null ? DateFormat('MMM d, h:mm a').format(timestamp.toDate()) : '';
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildNotifyItem(data['sentBy'] ?? 'Management', data['description'] ?? '', timeStr),
+
+                // --- THE FIX: Wrap in a simple Dismissible ---
+                return Dismissible(
+                  key: Key(docId),
+                  direction: DismissDirection.horizontal, // Swipe left OR right
+                  onDismissed: (direction) {
+                    _hideNotification(docId); // Save to local preferences
+                  },
+                  // No background properties added, ensuring the edges stay clean!
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildNotifyItem(data['sentBy'] ?? 'Management', data['description'] ?? '', timeStr),
+                  ),
                 );
               },
             );

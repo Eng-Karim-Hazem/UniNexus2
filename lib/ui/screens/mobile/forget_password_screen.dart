@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Required for input formatters
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // <-- ADDED FOR BREADCRUMB
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:uninexus/ui/screens/mobile/request_submitted_screen.dart';
 
@@ -8,7 +9,7 @@ import 'login_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
-//what
+
   @override
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
@@ -66,7 +67,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
   void _validate() {
     setState(() {
-      // Keep button clickable if fields are filled, explicit validation happens on submit
       _isFormValid = _idController.text.isNotEmpty &&
           _nationalIdController.text.isNotEmpty &&
           _newPasswordController.text.isNotEmpty &&
@@ -89,7 +89,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
     final nationalIdInput = _nationalIdController.text.trim();
 
-    // Front-end validation rules
     if (nationalIdInput.length != 14) {
       _showError("Make sure of your national ID (must be exactly 14 digits).");
       return;
@@ -114,6 +113,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
     switch (resultStatus) {
       case 'success':
+      // --- DROPPING THE BREADCRUMB ---
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('pending_student_id', _idController.text.trim());
+        await prefs.setString('pending_request_type', 'password');
+
+        if (!mounted) return;
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const RequestSubmittedScreen()),
         );
@@ -124,7 +129,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
       case 'national_id_mismatch':
         _showError("The National ID provided does not match our records for this ID.");
         break;
-      case 'same_as_old_password': // <--- ADD THIS CASE
+      case 'same_as_old_password':
         _showError("You can't enter an old password. Please choose a new one.");
         break;
       case 'error':
@@ -222,7 +227,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                                 label: "National ID",
                                 hint: "Enter Your National ID",
                                 controller: _nationalIdController,
-                                isNumeric: true, // Trigger numeric constraints
+                                isNumeric: true,
                               ),
                             ),
                           ),
@@ -301,7 +306,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     required String label,
     required String hint,
     required TextEditingController controller,
-    bool isNumeric = false, // Added numeric toggle
+    bool isNumeric = false,
   }) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Padding(padding: const EdgeInsets.only(left: 10, bottom: 1), child: Text(label, style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 16, fontWeight: FontWeight.bold))),
@@ -320,7 +325,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 hintText: hint,
                 hintStyle: const TextStyle(fontFamily: MobileAppFonts.body),
                 border: InputBorder.none,
-                counterText: "", // Hides length counter
+                counterText: "",
                 contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10)
             )
         ),

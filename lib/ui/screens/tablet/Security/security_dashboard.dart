@@ -21,7 +21,10 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
   String _currentDate = "";
   late Timer _timer;
 
-  List<Map<String, String>> _recentNotices = [];
+  // --- 1. LOCAL HIDDEN LIST ---
+  List<String> _hiddenNotices = [];
+
+  List<Map<String, dynamic>> _recentNotices = [];
   bool _loadingNotices = true;
 
   @override
@@ -39,7 +42,17 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
     super.dispose();
   }
 
-  // --- REAL-TIME NOTIFICATION STREAM ---
+  // --- 2. HELPER TO SAVE SWIPED NOTICES ---
+  Future<void> _hideNotification(String docId) async {
+    setState(() {
+      _hiddenNotices.add(docId);
+      // Remove from UI immediately
+      _recentNotices.removeWhere((notice) => notice['id'] == docId);
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('hiddenNotices_sec', _hiddenNotices);
+  }
+
   void _initNoticesStream() async {
     final prefs = await SharedPreferences.getInstance();
     final String currentUserId = prefs.getString('userId') ?? '';
@@ -50,7 +63,17 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
         .listen((snapshot) {
       if (mounted) {
         var filteredDocs = snapshot.docs.where((doc) {
+          // A. Hide if swiped away
+          if (_hiddenNotices.contains(doc.id)) return false;
+
           final data = doc.data();
+
+          // B. Hide if frontend expiration date has passed
+          if (data.containsKey('expiryDate') && data['expiryDate'] != null) {
+            final DateTime expirationDate = (data['expiryDate'] as Timestamp).toDate();
+            if (DateTime.now().isAfter(expirationDate)) return false;
+          }
+
           final target = data['targetValue']?.toString() ?? '';
           final List<dynamic> recipientIds = data['recipientIds'] ?? [];
 
@@ -74,6 +97,7 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
           _recentNotices = filteredDocs.take(3).map((doc) {
             final data = doc.data();
             return {
+              'id': doc.id, // Keep ID for dismissal
               'sender': (data['sentBy'] ?? 'Management').toString(),
               'message': (data['description'] ?? '').toString(),
             };
@@ -94,6 +118,9 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
         String f = prefs.getString('fName') ?? "Security";
         String l = prefs.getString('lName') ?? "";
         _userName = "$f $l".trim();
+
+        // Load hidden notices
+        _hiddenNotices = prefs.getStringList('hiddenNotices_sec') ?? [];
       });
     }
   }
@@ -134,7 +161,6 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
             Expanded(
               child: Row(
                 children: [
-                  // --- LEFT COLUMN: GATE ENTRIES ---
                   Expanded(
                     flex: 5,
                     child: GlassCard(
@@ -214,7 +240,6 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
                   ),
                   const SizedBox(width: 26),
 
-                  // --- RIGHT COLUMN: NOTICES (WITH NAVIGATION) ---
                   Expanded(
                     flex: 4,
                     child: Column(
@@ -241,11 +266,18 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
                                     itemCount: _recentNotices.length,
                                     itemBuilder: (context, index) {
                                       final notice = _recentNotices[index];
-                                      return Padding(
-                                        padding: const EdgeInsets.only(bottom: 12),
-                                        child: _SecurityAnnouncement(
-                                          title: notice['sender']!,
-                                          message: notice['message']!,
+                                      return Dismissible(
+                                        key: Key(notice['id']),
+                                        direction: DismissDirection.horizontal,
+                                        onDismissed: (direction) {
+                                          _hideNotification(notice['id']);
+                                        },
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(bottom: 12),
+                                          child: _SecurityAnnouncement(
+                                            title: notice['sender']!,
+                                            message: notice['message']!,
+                                          ),
                                         ),
                                       );
                                     },
@@ -253,7 +285,6 @@ class _SecurityDashboardScreenState extends State<SecurityDashboardScreen> {
                                 ),
                                 const SizedBox(height: 8),
 
-                                // --- NAVIGATION LINK ---
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: GestureDetector(
@@ -336,7 +367,7 @@ class _SecurityAnnouncement extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: AppDecorations.smallCard(),
       child: Row(children: [
-         Image.asset(
+        Image.asset(
           'assets/icons/Alarm.png',
           width: 22, height: 22,
           errorBuilder: (_, __, ___) => const Icon(

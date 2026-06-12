@@ -1,3 +1,4 @@
+import 'dart:async'; // <-- ADDED: For Timer and Debounce
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,22 +25,102 @@ class _LoginPageState extends State<LoginPage>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-
-  // CHANGED: Initialized to false so it is NOT checked at first
   bool _rememberMe = false;
+
+  // --- Live Status Tracking Variables ---
+  String _requestStatus = '';
+  Timer? _debounce;
+  String _lastSearchedId = ''; // <-- Local cache string to prevent unnecessary duplicate reads
 
   @override
   void initState() {
     super.initState();
     initPageAnimation(vsync: this);
+
+    // Attach listener for the live request tracking
+    _emailController.addListener(_onIdChanged);
   }
 
   @override
   void dispose() {
+    _debounce?.cancel(); // Cancel timer to prevent leaks
     disposePageAnimation();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  // --- Live Monitoring Logic ---
+  void _onIdChanged() {
+    final currentText = _emailController.text.trim().toUpperCase();
+
+    // 1. Prevent trigger on cursor blink or non-text modifications
+    if (currentText == _lastSearchedId) return;
+
+    // 2. Wipe state if the field is cleared out completely
+    if (currentText.isEmpty) {
+      if (_requestStatus.isNotEmpty) setState(() => _requestStatus = '');
+      _lastSearchedId = '';
+      return;
+    }
+
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+    // 3. Keep the 1000ms delay window to limit read calls during active typing
+    _debounce = Timer(const Duration(milliseconds: 1000), () {
+      if (currentText != _lastSearchedId) {
+        _lastSearchedId = currentText;
+        _fetchStatusFromDatabase(currentText);
+      }
+    });
+  }
+
+  Future<void> _fetchStatusFromDatabase(String inputId) async {
+    try {
+      // Look up cross-collection documents matching the input
+      final regSnap = await FirebaseFirestore.instance
+          .collection('registration_requests')
+          .where('ID', isEqualTo: inputId)
+          .get();
+
+      final passSnap = await FirebaseFirestore.instance
+          .collection('ForgotPass_request')
+          .where('emailOrId', isEqualTo: inputId)
+          .get();
+
+      List<Map<String, dynamic>> allRequests = [];
+
+      for (var doc in regSnap.docs) {
+        allRequests.add(doc.data());
+      }
+      for (var doc in passSnap.docs) {
+        allRequests.add(doc.data());
+      }
+
+      if (allRequests.isEmpty) {
+        if (mounted) setState(() => _requestStatus = '');
+        return;
+      }
+
+      // Sort collections locally by submission date descending
+      allRequests.sort((a, b) {
+        final timeA = a['requestDate'] as Timestamp?;
+        final timeB = b['requestDate'] as Timestamp?;
+        if (timeA != null && timeB != null) return timeB.compareTo(timeA);
+        return 0;
+      });
+
+      final latestRequest = allRequests.first;
+      final status = (latestRequest['status'] ?? 'pending').toString().toLowerCase();
+
+      if (mounted) {
+        setState(() {
+          _requestStatus = status;
+        });
+      }
+    } catch (e) {
+      // Fail silently if device goes offline
+    }
   }
 
   Future<void> _handleLogin() async {
@@ -95,10 +176,7 @@ class _LoginPageState extends State<LoginPage>
         return;
       }
 
-      // Login Successful!
       final prefs = await SharedPreferences.getInstance();
-
-      // Save the checkbox state to control auto-login in main.dart
       await prefs.setBool('rememberMe', _rememberMe);
 
       await prefs.setString('ID', userCode);
@@ -116,7 +194,6 @@ class _LoginPageState extends State<LoginPage>
 
       if (!mounted) return;
 
-      // --- ROUTING LOGIC ---
       if (userCode.startsWith('MN')) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const ITShell()),
@@ -278,7 +355,7 @@ class _LoginPageState extends State<LoginPage>
                                 anim: checkAnim,
                                 child: _isLoading
                                     ? const Center(child: CircularProgressIndicator())
-                                    : Row( // Using a Row guarantees it centers perfectly
+                                    : Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     SizedBox(
@@ -314,10 +391,57 @@ class _LoginPageState extends State<LoginPage>
                     ],
                   ),
                 ),
+
+                // --- THE FLOATING STATUS INDICATOR (Frees UI layout from calculation shifts) ---
+                Positioned(
+                  top: sh * 0.04,
+                  right: sw * 0.04,
+                  child: _buildStatusIndicator(),
+                ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // --- FLOATING INDICATOR UI WIDGET ---
+  Widget _buildStatusIndicator() {
+    if (_requestStatus.isEmpty) return const SizedBox.shrink();
+
+    Color bulbColor;
+    String tooltipMsg;
+
+    if (_requestStatus == 'accepted' || _requestStatus == 'processed') {
+      bulbColor = Colors.greenAccent;
+      tooltipMsg = "Request Approved! You can log in.";
+    } else if (_requestStatus == 'rejected') {
+      bulbColor = Colors.redAccent;
+      tooltipMsg = "Request Rejected. Please contact IT.";
+    } else {
+      bulbColor = const Color(0xFFFFC107);
+      tooltipMsg = "Your request is currently being processed.";
+    }
+
+    return Tooltip(
+      message: tooltipMsg,
+      triggerMode: TooltipTriggerMode.tap,
+      showDuration: const Duration(seconds: 3),
+      child: Container(
+        width: 16,
+        height: 16,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: bulbColor,
+          boxShadow: [
+            BoxShadow(
+              color: bulbColor.withOpacity(0.6),
+              blurRadius: 10,
+              spreadRadius: 3,
+            ),
+          ],
+        ),
       ),
     );
   }

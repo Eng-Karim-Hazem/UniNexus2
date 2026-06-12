@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uninexus/theme/mobile_app_theme.dart';
 import 'package:uninexus/ui/screens/mobile/signup_screen.dart';
 
@@ -29,6 +31,11 @@ class _LoginScreenState extends State<LoginScreen>
   bool _isLoading = false;
   bool _rememberMe = false;
 
+  // --- Live Status Tracking Variables ---
+  String _requestStatus = '';
+  Timer? _debounce;
+  String _lastSearchedId = ''; // <-- ADDED: The Cache to stop spamming Firebase
+
   late AnimationController _contentController;
   late Animation<Offset> _contentIntro;
   late Animation<double> _field1Anim;
@@ -40,6 +47,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void initState() {
     super.initState();
+
     _contentController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
@@ -86,8 +94,84 @@ class _LoginScreenState extends State<LoginScreen>
       if (mounted) _contentController.forward();
     });
 
-    _codeController.addListener(_validate);
+    _codeController.addListener(_onIdChanged);
     _passwordController.addListener(_validate);
+  }
+
+  // --- UPDATED: Bulletproof Firebase read protection ---
+  void _onIdChanged() {
+    _validate();
+
+    final currentText = _codeController.text.trim().toUpperCase();
+
+    // 1. Ignore cursor movements or taps if the text hasn't changed
+    if (currentText == _lastSearchedId) return;
+
+    // 2. Hide the bulb and reset cache if they delete the ID completely
+    if (currentText.isEmpty) {
+      if (_requestStatus.isNotEmpty) setState(() => _requestStatus = '');
+      _lastSearchedId = '';
+      return;
+    }
+
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+    // 3. Wait a full 1 second after they STOP typing before calling the database
+    _debounce = Timer(const Duration(milliseconds: 1000), () {
+
+      // Double check it hasn't changed again while waiting
+      if (currentText != _lastSearchedId) {
+        _lastSearchedId = currentText; // Update cache
+        _fetchStatusFromDatabase(currentText);
+      }
+    });
+  }
+
+  Future<void> _fetchStatusFromDatabase(String inputId) async {
+    try {
+      final regSnap = await FirebaseFirestore.instance
+          .collection('registration_requests')
+          .where('ID', isEqualTo: inputId)
+          .get();
+
+      final passSnap = await FirebaseFirestore.instance
+          .collection('ForgotPass_request')
+          .where('emailOrId', isEqualTo: inputId)
+          .get();
+
+      List<Map<String, dynamic>> allRequests = [];
+
+      for (var doc in regSnap.docs) {
+        allRequests.add(doc.data());
+      }
+      for (var doc in passSnap.docs) {
+        allRequests.add(doc.data());
+      }
+
+      if (allRequests.isEmpty) {
+        if (mounted) setState(() => _requestStatus = '');
+        return;
+      }
+
+      allRequests.sort((a, b) {
+        final timeA = a['requestDate'] as Timestamp?;
+        final timeB = b['requestDate'] as Timestamp?;
+        if (timeA != null && timeB != null) return timeB.compareTo(timeA);
+        return 0;
+      });
+
+      final latestRequest = allRequests.first;
+      final status = (latestRequest['status'] ?? 'pending').toString().toLowerCase();
+
+      if (mounted) {
+        setState(() {
+          _requestStatus = status;
+        });
+      }
+
+    } catch (e) {
+      // Fail silently if offline
+    }
   }
 
   Future<void> _handleLogin() async {
@@ -197,6 +281,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _contentController.dispose();
     _codeController.dispose();
     _passwordController.dispose();
@@ -213,7 +298,6 @@ class _LoginScreenState extends State<LoginScreen>
       child: Scaffold(
         body: Stack(
           children: [
-            // Background stays fixed
             Positioned.fill(
               child: Image.asset("assets/images/WelcomeBackground.png", fit: BoxFit.cover),
             ),
@@ -259,124 +343,134 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ),
             SafeArea(
-              child: SlideTransition(
-                position: _contentIntro,
-                child: FadeTransition(
-                  opacity: _contentController,
-                  child: CustomScrollView(
-                    slivers: [
-                      SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: Padding(
-                          padding: EdgeInsets.fromLTRB(sw * 0.08, 25, sw * 0.08, 20),
-                          child: Column(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.asset(
-                                  "assets/images/uni.jpeg",
-                                  width: MobileAppDimensions.heroImageWidth,
-                                  height: sh * 0.15,
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-
-                              // --- UPDATED BOTH TEXT WIDGETS WITH TEXTALIGN ---
-                              const Text(
-                                "Log in to UniNexus",
-                                style: MobileAppTextStyles.screenTitle,
-                                textAlign: TextAlign.center,
-                              ),
-                              const Text(
-                                "Access your campus services securely",
-                                style: MobileAppTextStyles.screenSubtitle,
-                                textAlign: TextAlign.center,
-                              ),
-
-                              const Spacer(flex: 1),
-
-                              _animatedItem(
-                                anim: _field1Anim,
-                                child: _modernField(
-                                  label: "ID",
-                                  hint: "Enter Your ID",
-                                  controller: _codeController,
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              _animatedItem(
-                                anim: _field2Anim,
-                                child: _modernField(
-                                  label: "Password",
-                                  hint: "Enter Your Password",
-                                  controller: _passwordController,
-                                  obscure: _obscurePassword,
-                                  icon: IconButton(
-                                    icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                                  ),
-                                ),
-                              ),
-
-                              _animatedItem(
-                                anim: _checkAnim,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Flexible(
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Checkbox(
-                                            value: _rememberMe,
-                                            activeColor: MobileAppColors.primary,
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                                            onChanged: (val) => setState(() => _rememberMe = val ?? false),
-                                          ),
-                                          const Flexible(child: Text("Remember Me", style: MobileAppTextStyles.bodyTextMedium, overflow: TextOverflow.ellipsis)),
-                                        ],
-                                      ),
-                                    ),
-                                    Flexible(
-                                      child: TextButton(
-                                        onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
-                                        child: const Text("Forgot Password?", style: TextStyle(fontFamily: MobileAppFonts.body), overflow: TextOverflow.ellipsis),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              const Spacer(flex: 2),
-
-                              _mainButton(
-                                text: "Log In",
-                                enabled: _isFormValid && !_isLoading,
-                                isLoading: _isLoading,
-                                onTap: _handleLogin,
-                              ),
-
-                              const SizedBox(height: 10),
-
-                              Wrap(
-                                alignment: WrapAlignment.center,
-                                crossAxisAlignment: WrapCrossAlignment.center,
+              child: Stack(
+                children: [
+                  SlideTransition(
+                    position: _contentIntro,
+                    child: FadeTransition(
+                      opacity: _contentController,
+                      child: CustomScrollView(
+                        slivers: [
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Padding(
+                              padding: EdgeInsets.fromLTRB(sw * 0.08, 25, sw * 0.08, 20),
+                              child: Column(
                                 children: [
-                                  const Text("Don't have an account?", style: MobileAppTextStyles.bodyText),
-                                  TextButton(
-                                    onPressed: () => _slideTo(const SignUpScreen(), fromRight: true),
-                                    child: const Text("Register now", style: MobileAppTextStyles.textButtonHeading),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.asset(
+                                      "assets/images/uni.jpeg",
+                                      width: MobileAppDimensions.heroImageWidth,
+                                      height: sh * 0.15,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+
+                                  const Text(
+                                    "Log in to UniNexus",
+                                    style: MobileAppTextStyles.screenTitle,
+                                    textAlign: TextAlign.center,
+                                  ),
+
+                                  const Text(
+                                    "Access your campus services securely",
+                                    style: MobileAppTextStyles.screenSubtitle,
+                                    textAlign: TextAlign.center,
+                                  ),
+
+                                  const Spacer(flex: 1),
+
+                                  _animatedItem(
+                                    anim: _field1Anim,
+                                    child: _modernField(
+                                      label: "ID",
+                                      hint: "Enter Your ID",
+                                      controller: _codeController,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  _animatedItem(
+                                    anim: _field2Anim,
+                                    child: _modernField(
+                                      label: "Password",
+                                      hint: "Enter Your Password",
+                                      controller: _passwordController,
+                                      obscure: _obscurePassword,
+                                      icon: IconButton(
+                                        icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                      ),
+                                    ),
+                                  ),
+
+                                  _animatedItem(
+                                    anim: _checkAnim,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Flexible(
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Checkbox(
+                                                value: _rememberMe,
+                                                activeColor: MobileAppColors.primary,
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                                                onChanged: (val) => setState(() => _rememberMe = val ?? false),
+                                              ),
+                                              const Flexible(child: Text("Remember Me", style: MobileAppTextStyles.bodyTextMedium, overflow: TextOverflow.ellipsis)),
+                                            ],
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: TextButton(
+                                            onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
+                                            child: const Text("Forgot Password?", style: TextStyle(fontFamily: MobileAppFonts.body), overflow: TextOverflow.ellipsis),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  const Spacer(flex: 2),
+
+                                  _mainButton(
+                                    text: "Log In",
+                                    enabled: _isFormValid && !_isLoading,
+                                    isLoading: _isLoading,
+                                    onTap: _handleLogin,
+                                  ),
+
+                                  const SizedBox(height: 10),
+
+                                  Wrap(
+                                    alignment: WrapAlignment.center,
+                                    crossAxisAlignment: WrapCrossAlignment.center,
+                                    children: [
+                                      const Text("Don't have an account?", style: MobileAppTextStyles.bodyText),
+                                      TextButton(
+                                        onPressed: () => _slideTo(const SignUpScreen(), fromRight: true),
+                                        child: const Text("Register now", style: MobileAppTextStyles.textButtonHeading),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+
+                  Positioned(
+                    top: 16,
+                    right: 24,
+                    child: _buildStatusIndicator(),
+                  ),
+                ],
               ),
             ),
           ],
@@ -384,6 +478,46 @@ class _LoginScreenState extends State<LoginScreen>
       ),
     );
   }
+
+  Widget _buildStatusIndicator() {
+    if (_requestStatus.isEmpty) return const SizedBox.shrink();
+
+    Color bulbColor;
+    String tooltipMsg;
+
+    if (_requestStatus == 'accepted' || _requestStatus == 'processed') {
+      bulbColor = Colors.greenAccent;
+      tooltipMsg = "Request Approved! You can now log in.";
+    } else if (_requestStatus == 'rejected') {
+      bulbColor = Colors.redAccent;
+      tooltipMsg = "Request Rejected. Please contact IT.";
+    } else {
+      bulbColor = const Color(0xFFFFC107);
+      tooltipMsg = "Your request is currently being processed.";
+    }
+
+    return Tooltip(
+      message: tooltipMsg,
+      triggerMode: TooltipTriggerMode.tap,
+      showDuration: const Duration(seconds: 3),
+      child: Container(
+        width: 14,
+        height: 14,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: bulbColor,
+          boxShadow: [
+            BoxShadow(
+              color: bulbColor.withOpacity(0.6),
+              blurRadius: 8,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _animatedItem({required Animation<double> anim, required Widget child}) {
     return FadeTransition(
       opacity: anim,

@@ -25,6 +25,9 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
   String _faculty = '';
   bool _isLoading = true;
 
+  // --- 1. TRACK DISMISSED NOTICES LOCALLY ---
+  List<String> _hiddenNotices = [];
+
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
 
@@ -49,9 +52,21 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
         _lastName = prefs.getString('lName') ?? '';
         _studentID = prefs.getString('ID') ?? '';
         _faculty = prefs.getString('faculty') ?? '';
+
+        // Load the list of notices the student has swiped away
+        _hiddenNotices = prefs.getStringList('hiddenNotices_student') ?? [];
         _isLoading = false;
       });
     }
+  }
+
+  // --- 2. HELPER TO SAVE SWIPED NOTICES ---
+  Future<void> _hideNotification(String docId) async {
+    setState(() {
+      _hiddenNotices.add(docId);
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('hiddenNotices_student', _hiddenNotices);
   }
 
   String _getCurrentDate() {
@@ -90,7 +105,6 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
     final sw = MediaQuery.of(context).size.width;
     final sh = MediaQuery.of(context).size.height;
 
-    // WRAP THE SCAFFOLD IN POPSCOPE TO DISABLE THE BACK BUTTON
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -113,13 +127,11 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : Column(
               children: [
-                // --- FIXED TOP HEADER (NOT SCROLLABLE) ---
                 Padding(
                   padding: EdgeInsets.fromLTRB(sw * 0.06, 20, sw * 0.06, 10),
                   child: _buildTopHeader(),
                 ),
 
-                // --- SCROLLABLE CONTENT AREA ---
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
@@ -157,7 +169,7 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                         ),
                         const SizedBox(height: 30),
 
-                        // Notifications Section
+                        // --- 3. UPDATED NOTIFICATIONS SECTION ---
                         Container(
                           width: double.infinity,
                           margin: EdgeInsets.only(bottom: sh * 0.15),
@@ -175,7 +187,24 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                               }
                               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return _buildEmptyNotices();
 
-                              final filteredDocs = snapshot.data!.docs.where((doc) => _isNoticeForStudent(doc.data() as Map<String, dynamic>)).toList();
+                              final filteredDocs = snapshot.data!.docs.where((doc) {
+                                // A. Hide if swiped away
+                                if (_hiddenNotices.contains(doc.id)) return false;
+
+                                final data = doc.data() as Map<String, dynamic>;
+
+                                // B. Hide if frontend expiration date has passed
+                                if (data.containsKey('expiryDate') && data['expiryDate'] != null) {
+                                  final DateTime expirationDate = (data['expiryDate'] as Timestamp).toDate();
+                                  if (DateTime.now().isAfter(expirationDate)) {
+                                    return false;
+                                  }
+                                }
+
+                                // C. Keep if it's meant for this student
+                                return _isNoticeForStudent(data);
+                              }).toList();
+
                               if (filteredDocs.isEmpty) return _buildEmptyNotices();
 
                               return ListView.builder(
@@ -183,13 +212,22 @@ class _StuHomeScreenState extends State<StuHomeScreen> {
                                 physics: const NeverScrollableScrollPhysics(),
                                 itemCount: filteredDocs.length,
                                 itemBuilder: (context, index) {
-                                  final data = filteredDocs[index].data() as Map<String, dynamic>;
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: 12.0),
-                                    child: _buildStudentNotification(
-                                      title: data['sentBy'] ?? "University Notice",
-                                      message: data['description'] ?? "",
-                                      icon: Icons.notifications_none_rounded,
+                                  final doc = filteredDocs[index];
+                                  final data = doc.data() as Map<String, dynamic>;
+
+                                  return Dismissible(
+                                    key: Key(doc.id),
+                                    direction: DismissDirection.horizontal, // Clean left/right swipe
+                                    onDismissed: (direction) {
+                                      _hideNotification(doc.id);
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(bottom: 12.0),
+                                      child: _buildStudentNotification(
+                                        title: data['sentBy'] ?? "University Notice",
+                                        message: data['description'] ?? "",
+                                        icon: Icons.notifications_none_rounded,
+                                      ),
                                     ),
                                   );
                                 },
