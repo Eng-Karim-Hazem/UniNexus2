@@ -8,11 +8,8 @@ import 'package:uninexus/ui/screens/mobile/Student/stu_community.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_qa_screen.dart';
 import '../profile_screen.dart';
 import '../settings_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/ui/screens/mobile/Student/stu_home.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/faculty_home_screen.dart';
-
-
 
 class StuSchedule extends StatefulWidget {
   const StuSchedule({super.key});
@@ -27,43 +24,59 @@ class _StuScheduleState extends State<StuSchedule> {
   final Color _primaryBlue = const Color(0xFF237ABA);
   final Color _textIndigo = const Color(0xFF5C5C80);
 
+  // Tracks the filtered weekday state (lowercase to match service configuration rules)
+  late String _selectedDay;
+
+  // Reordered list so that Saturday is the first element in the horizontal bar
+  final List<String> _weekdays = [
+    "saturday", "sunday", "monday", "tuesday", "wednesday", "thursday", "friday"
+  ];
+
   final List<String> startTimes = ["9:00 AM", "9:50 AM", "10:50 AM", "11:40 AM", "1:00 PM", "1:50 PM", "2:50 PM", "3:40 PM", "4:30 PM", "5:20 PM"];
   final List<String> endTimes = ["9:50 AM", "10:40 AM", "11:40 AM", "12:30 PM", "1:50 PM", "2:40 PM", "3:40 PM", "4:30 PM", "5:20 PM", "6:10 PM"];
+
+  @override
+  void initState() {
+    super.initState();
+    // Default assignment matching the execution string rules of your local device clock
+    _selectedDay = DateFormat('EEEE').format(DateTime.now()).toLowerCase();
+  }
 
   Future<ScheduleModel?> _fetchMySchedule() async {
     final prefs = await SharedPreferences.getInstance();
     String year = prefs.getString('year') ?? "4";
     String section = prefs.getString('section') ?? "2";
-    String today = DateFormat('EEEE').format(DateTime.now()).toLowerCase();
 
     final service = ScheduleService();
     List<ScheduleModel> results = await service.getStudentSchedule(
-      year: year, section: section, day: today,
+      year: year,
+      section: section,
+      day: _selectedDay,
     );
     return results.isNotEmpty ? results.first : null;
   }
+
   Future<void> _goHome() async {
     final prefs = await SharedPreferences.getInstance();
     final String userId = prefs.getString('ID') ?? '';
 
     Widget targetHome;
 
-    // Check the ID prefix to determine if they are Faculty or Student
     if (userId.toUpperCase().startsWith('FA')) {
       targetHome = const FacultyHomeScreen();
     } else {
-      targetHome = const StuHomeScreen(); // Defaults to Student
+      targetHome = const StuHomeScreen();
     }
 
     if (!mounted) return;
 
-    // pushAndRemoveUntil destroys the back-stack, preventing ghost screens
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => targetHome),
           (route) => false,
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -87,15 +100,30 @@ class _StuScheduleState extends State<StuSchedule> {
             child: Column(
               children: [
                 _buildTopHeader(),
-                const SizedBox(height: 30),
+                const SizedBox(height: 24),
                 _buildDateHeaderCard(),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
+                _buildDayFilterBar(), // Interactive Weekday Filter row starting with Saturday
+                const SizedBox(height: 16),
                 Expanded(
                   child: FutureBuilder<ScheduleModel?>(
                     future: _fetchMySchedule(),
                     builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-                      if (!snapshot.hasData) return Center(child: Text("No schedule found", style: TextStyle(fontFamily: MobileAppFonts.body, color: _textIndigo, fontWeight: FontWeight.bold)));
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (!snapshot.hasData) {
+                        return Center(
+                          child: Text(
+                            "No schedule found for ${toBeginningOfSentenceCase(_selectedDay)}",
+                            style: TextStyle(
+                              fontFamily: MobileAppFonts.body,
+                              color: _textIndigo,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      }
                       return _buildSchedulePanel(snapshot.data!);
                     },
                   ),
@@ -113,7 +141,6 @@ class _StuScheduleState extends State<StuSchedule> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // --- ADDED NAVIGATION HERE ---
         GestureDetector(
           onTap: () {
             Navigator.push(
@@ -123,7 +150,6 @@ class _StuScheduleState extends State<StuSchedule> {
           },
           child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
         ),
-
         const Text(
             "Schedule",
             style: TextStyle(
@@ -133,7 +159,6 @@ class _StuScheduleState extends State<StuSchedule> {
                 color: Color(0xFF5C5C80)
             )
         ),
-
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.asset('assets/images/LOGO.png', width: 36, height: 36),
@@ -145,22 +170,74 @@ class _StuScheduleState extends State<StuSchedule> {
   Widget _buildDateHeaderCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 25),
+      padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          // INCREASED OPACITY TO 0.1
           BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 24, offset: const Offset(0, -12)),
           BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 24, offset: const Offset(0, 7)),
         ],
       ),
       child: Column(
         children: [
-          const Text("Today's Schedule", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 24, fontWeight: FontWeight.w900)),
+          const Text("Timetable Matrix", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.w900)),
+          const SizedBox(height: 4),
           Text(DateFormat('MMMM d, yyyy').format(DateTime.now()),
               style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: Color(0xFF5BA4F5), fontWeight: FontWeight.w600)),
         ],
+      ),
+    );
+  }
+
+  // Horizontal Day Filter Row Layout Pipeline (Starting with Saturday)
+  Widget _buildDayFilterBar() {
+    return SizedBox(
+      height: 46,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: _weekdays.length,
+        itemBuilder: (context, index) {
+          final day = _weekdays[index];
+          final bool isSelected = _selectedDay == day;
+          final String shortLabel = day.substring(0, 3).toUpperCase();
+
+          return GestureDetector(
+            onTap: () {
+              if (_selectedDay != day) {
+                setState(() => _selectedDay = day);
+              }
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.only(right: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              decoration: BoxDecoration(
+                color: isSelected ? _mainPurple : Colors.white.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isSelected ? _mainPurple : _mainPurple.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+                boxShadow: isSelected
+                    ? [BoxShadow(color: _mainPurple.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))]
+                    : null,
+              ),
+              child: Center(
+                child: Text(
+                  shortLabel,
+                  style: TextStyle(
+                    fontFamily: MobileAppFonts.body,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: isSelected ? Colors.white : _textIndigo.withValues(alpha: 0.8),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -222,7 +299,6 @@ class _StuScheduleState extends State<StuSchedule> {
     );
   }
 
-  // --- UPDATED GLOWING HOME FAB ---
   Widget _buildHomeFab() {
     return Container(
       height: 72,
@@ -254,7 +330,6 @@ class _StuScheduleState extends State<StuSchedule> {
     );
   }
 
-  // --- UPDATED BOTTOM NAVIGATION BAR WITH NATIVE CUTOUT SHADOW ---
   Widget _buildBottomBar() {
     return Container(
       decoration: BoxDecoration(
@@ -289,7 +364,7 @@ class _StuScheduleState extends State<StuSchedule> {
                 ],
               ),
             ),
-            const SizedBox(width: 72), // Space for the FAB notch
+            const SizedBox(width: 72),
             Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -321,7 +396,6 @@ class _StuScheduleState extends State<StuSchedule> {
           await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
         }
 
-        // Reset to highlight Schedule when returned here
         if (mounted) setState(() => _selectedIndex = 1);
       },
       child: Column(

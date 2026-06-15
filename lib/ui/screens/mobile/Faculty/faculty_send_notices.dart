@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uninexus/theme/mobile_app_theme.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // <-- MAKE SURE THIS IS IMPORTED
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../services/firebase/notices_service.dart';
 import '../../../../model/notices_model.dart';
@@ -20,11 +20,37 @@ class _SendNoticeScreenState extends State<SendNoticeScreen> {
   bool _isLoading = false;
   String _selectedReceiverType = 'Individual';
   String _selectedSection = 'All Sections';
+  String _selectedSubject = '';
 
   final List<String> _receiverTypes = ['Individual', 'Subjects/Sections'];
   final List<String> _sections = ['All Sections', 'Section 1', 'Section 2', 'Section 3', 'Section 4'];
 
+  // Dynamic list populated from SharedPreferences memory footprint
+  List<String> _subjects = [];
+
   final Color _mainPurple = const Color(0xFF7B61FF);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFacultySubjects();
+  }
+
+  // Reads the stored subject strings directly out of SharedPreferences storage key
+  Future<void> _loadFacultySubjects() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedSubjects = prefs.getStringList('facultySubjects') ?? [];
+
+    setState(() {
+      if (storedSubjects.isNotEmpty) {
+        _subjects = storedSubjects;
+        _selectedSubject = _subjects.first;
+      } else {
+        _subjects = ['No assigned subjects found'];
+        _selectedSubject = _subjects.first;
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -44,6 +70,10 @@ class _SendNoticeScreenState extends State<SendNoticeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a User ID.')));
       return;
     }
+    if (_selectedReceiverType == 'Subjects/Sections' && _selectedSubject == 'No assigned subjects found') {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot send notice without a valid subject configuration.')));
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -55,25 +85,23 @@ class _SendNoticeScreenState extends State<SendNoticeScreen> {
       String targetVal;
       List<String> recipients = [];
 
-      // --- THE FIX: FETCH IDS FROM FIRESTORE ---
       if (_selectedReceiverType == 'Individual') {
         type = NoticeTargetType.individual;
         targetVal = _userIdController.text.trim().toLowerCase();
         recipients = [targetVal];
       } else {
         type = NoticeTargetType.group;
+        // Strip text clean or grab the code format context directly
+        String subjectCode = _selectedSubject.split(' - ').first.trim();
 
         if (_selectedSection == 'All Sections') {
-          targetVal = 'students';
-          // Get all students
+          targetVal = 'students_$subjectCode';
           final snap = await FirebaseFirestore.instance.collection('students').get();
           recipients = snap.docs.map((doc) => (doc.data()['ID'] ?? '').toString()).where((id) => id.isNotEmpty).toList();
         } else {
-          // Extract just the number (e.g., "Section 2" -> "2")
           String sectionNumber = _selectedSection.replaceAll(RegExp(r'[^0-9]'), '');
-          targetVal = 'section_$sectionNumber';
+          targetVal = '${subjectCode}_section_$sectionNumber';
 
-          // Query the students collection for this exact section
           final snap = await FirebaseFirestore.instance.collection('students')
               .where('section', isEqualTo: sectionNumber)
               .get();
@@ -82,11 +110,10 @@ class _SendNoticeScreenState extends State<SendNoticeScreen> {
         }
       }
 
-      // Safety check: Don't create the notice if no students exist in that section
       if (recipients.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No students found in this section!'), backgroundColor: Colors.orange),
+            const SnackBar(content: Text('No students found in this target group!'), backgroundColor: Colors.orange),
           );
           setState(() => _isLoading = false);
         }
@@ -219,6 +246,20 @@ class _SendNoticeScreenState extends State<SendNoticeScreen> {
                                 sh: sh,
                                 onChanged: (val) => setState(() => _selectedSection = val!),
                               ),
+                              SizedBox(height: sh * 0.025),
+
+                              // --- REACTIVE STORAGE SUBJECT DROPDOWN ---
+                              _buildLabel("Choose Subject", sw),
+                              if (_selectedSubject.isNotEmpty)
+                                _buildDropdown(
+                                  value: _selectedSubject,
+                                  items: _subjects,
+                                  sw: sw,
+                                  sh: sh,
+                                  onChanged: (val) => setState(() => _selectedSubject = val!),
+                                )
+                              else
+                                const LinearProgressIndicator(),
                             ],
 
                             SizedBox(height: sh * 0.025),
