@@ -4,15 +4,20 @@ import '../../model/qna_model.dart';
 class QnAService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // Fetches QnA posts that match the subjects of a specific year
-  Stream<List<Map<String, dynamic>>> streamQnAByYear(int year) {
+  // Fetches QnA posts that match both the year and the faculty code prefix of the subject id
+  Stream<List<Map<String, dynamic>>> streamQnAByYear(int year, String faculty) {
     return _db
         .collection('subjects')
         .where('year', isEqualTo: year)
         .snapshots()
         .asyncMap((subjectSnapshot) async {
 
+      // Filter locally to ensure the subject ID matches the student's faculty prefix
       List<String> validSubjects = subjectSnapshot.docs
+          .where((doc) {
+        String subId = doc['subID']?.toString() ?? "";
+        return subId.toUpperCase().startsWith(faculty.toUpperCase());
+      })
           .map((doc) => doc['subName'].toString())
           .toList();
 
@@ -23,7 +28,6 @@ class QnAService {
           .where('subject', whereIn: validSubjects)
           .get();
 
-      // --- UPDATED: Added docId mapping so we can target it for deletion ---
       return qnaSnapshot.docs.map((doc) => {
         ...doc.data() as Map<String, dynamic>,
         'docId': doc.id
@@ -60,28 +64,33 @@ class QnAService {
     });
   }
 
-  // --- NEW: Delete Question Method ---
   Future<void> deleteQuestion(String docId) async {
     await _db.collection('QnA').doc(docId).delete();
   }
+
   Future<void> updateQuestion(String docId, String newCourse, String newSubject, String newQuestion) async {
     try {
-      // Ensure 'qa_requests' matches your actual Firestore collection name
       await FirebaseFirestore.instance.collection('QnA').doc(docId).update({
-        'subject': newCourse, // The dropdown value
-        'title': newSubject,  // The topic text field
+        'subject': newCourse,
+        'title': newSubject,
         'question': newQuestion,
       });
     } catch (e) {
       throw Exception("Failed to update question: $e");
     }
   }
-  Stream<List<String>> streamSubjectsByYear(int year) {
+
+  // Streams available dropdown choices matching both the year and the faculty prefix code
+  Stream<List<String>> streamSubjectsByYear(int year, String faculty) {
     return _db
         .collection('subjects')
         .where('year', isEqualTo: year)
         .snapshots()
         .map((snapshot) => snapshot.docs
+        .where((doc) {
+      String subId = doc['subID']?.toString() ?? "";
+      return subId.toUpperCase().startsWith(faculty.toUpperCase());
+    })
         .map((doc) => doc['subName'].toString())
         .toList());
   }
@@ -89,18 +98,18 @@ class QnAService {
   Future<void> submitQuestion(QnAModel qna) async {
     await _db.collection('QnA').add(qna.toFirestore());
   }
-  // --- ADD TO QnAService ---
+
   Stream<List<Map<String, dynamic>>> streamAllQnAForSubjects(List<String> subjects) {
     if (subjects.isEmpty) return Stream.value([]);
 
     return FirebaseFirestore.instance
-        .collection('QnA') // Make sure this matches your actual collection name!
+        .collection('QnA')
         .where('subject', whereIn: subjects)
         .orderBy('timestamp', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) {
       final data = doc.data();
-      data['docId'] = doc.id; // Inject the document ID so the UI can use it
+      data['docId'] = doc.id;
       return data;
     }).toList());
   }

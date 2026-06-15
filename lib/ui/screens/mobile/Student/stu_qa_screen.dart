@@ -23,7 +23,8 @@ class _StuQAScreenState extends State<StuQAScreen> {
   final int _selectedIndex = 2;
 
   int _studentYear = 1;
-  String _currentStudentId = ""; // Add a variable to hold the ID
+  String _studentFaculty = "";
+  String _currentStudentId = "";
   bool _isInit = false;
 
   final Color _mainPurple = const Color(0xFF7B61FF);
@@ -41,8 +42,6 @@ class _StuQAScreenState extends State<StuQAScreen> {
     _loadStudentData();
   }
 
-  // --- Logic Methods ---
-
   Future<void> _loadStudentData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.reload();
@@ -50,7 +49,7 @@ class _StuQAScreenState extends State<StuQAScreen> {
       setState(() {
         String? storedYear = prefs.getString('year');
         _studentYear = int.tryParse(storedYear ?? '1') ?? 1;
-        // Fetch the user's ID
+        _studentFaculty = prefs.getString('faculty') ?? "";
         _currentStudentId = prefs.getString('ID') ?? "";
         _isInit = true;
       });
@@ -96,8 +95,6 @@ class _StuQAScreenState extends State<StuQAScreen> {
     );
   }
 
-  // --- UI Builders ---
-
   @override
   Widget build(BuildContext context) {
     if (!_isInit) {
@@ -124,7 +121,7 @@ class _StuQAScreenState extends State<StuQAScreen> {
           child: Stack(
             children: [
               RefreshIndicator(
-                onRefresh: _loadStudentData, // Triggers reload
+                onRefresh: _loadStudentData,
                 color: _mainPurple,
                 child: Column(
                   children: [
@@ -134,7 +131,7 @@ class _StuQAScreenState extends State<StuQAScreen> {
                     ),
                     Expanded(
                       child: StreamBuilder<List<Map<String, dynamic>>>(
-                        stream: _qnaService.streamQnAByYear(_studentYear),
+                        stream: _qnaService.streamQnAByYear(_studentYear, _studentFaculty),
                         builder: (context, snapshot) {
                           if (snapshot.connectionState == ConnectionState.waiting) {
                             return const Center(child: CircularProgressIndicator());
@@ -162,7 +159,7 @@ class _StuQAScreenState extends State<StuQAScreen> {
                               item: qnaList[index],
                               mainPurple: _mainPurple,
                               currentStudentId: _currentStudentId,
-                              onRefresh: _loadStudentData, // --- 4. ADD THIS LINE ---
+                              onRefresh: _loadStudentData,
                             ),
                           );
                         },
@@ -196,8 +193,6 @@ class _StuQAScreenState extends State<StuQAScreen> {
 
   Widget _buildAddQuestionFab(double sw, double sh) {
     return Positioned(
-      // --- THE FIX ---
-      // 80 (Bottom Bar) + System Nav Bar Height + 20 (Margin)
       bottom: 80.0 + MediaQuery.of(context).padding.bottom + 20.0,
       right: (sw * 0.06).clamp(20.0, 35.0),
       child: GestureDetector(
@@ -344,19 +339,20 @@ class QACardItem extends StatefulWidget {
   final Map<String, dynamic> item;
   final Color mainPurple;
   final String currentStudentId;
-  final VoidCallback onRefresh; // --- 1. ADD THIS LINE ---
+  final VoidCallback onRefresh;
 
   const QACardItem({
     super.key,
     required this.item,
     required this.mainPurple,
     required this.currentStudentId,
-    required this.onRefresh, // --- 2. ADD THIS LINE ---
+    required this.onRefresh,
   });
 
   @override
   State<QACardItem> createState() => _QACardItemState();
 }
+
 class _QACardItemState extends State<QACardItem> {
   bool isExpanded = false;
 
@@ -400,9 +396,8 @@ class _QACardItemState extends State<QACardItem> {
   @override
   Widget build(BuildContext context) {
     bool isMyQuestion = widget.currentStudentId.toUpperCase() == (widget.item['ID']?.toString().toUpperCase() ?? "");
-    const Color primaryBlue = Color(0xFF237ABA); // Added standard blue
+    const Color primaryBlue = Color(0xFF237ABA);
 
-    // --- MAIN CARD UI ---
     Widget cardUI = GestureDetector(
       onTap: () => setState(() => isExpanded = !isExpanded),
       child: Container(
@@ -416,7 +411,7 @@ class _QACardItemState extends State<QACardItem> {
           gradient: isMyQuestion
               ? LinearGradient(
             colors: [
-              primaryBlue.withValues(alpha: 0.8), // Reverted to Blue!
+              primaryBlue.withValues(alpha: 0.8),
               widget.mainPurple.withValues(alpha: 0.25),
               widget.mainPurple.withValues(alpha: 0.25),
               Colors.redAccent.withValues(alpha: 0.8),
@@ -481,7 +476,6 @@ class _QACardItemState extends State<QACardItem> {
 
     if (!isMyQuestion) return cardUI;
 
-    // --- SWIPE LOGIC FOR OWNERS ---
     return Dismissible(
       key: Key(widget.item['docId'] ?? UniqueKey().toString()),
       direction: DismissDirection.horizontal,
@@ -493,7 +487,7 @@ class _QACardItemState extends State<QACardItem> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              primaryBlue.withValues(alpha: 0.8), // Reverted to Blue!
+              primaryBlue.withValues(alpha: 0.8),
               primaryBlue.withValues(alpha: 0.0),
             ],
             begin: Alignment.centerLeft,
@@ -520,21 +514,17 @@ class _QACardItemState extends State<QACardItem> {
       ),
 
       confirmDismiss: (direction) async {
-        // --- NEW EDIT ACTION ---
         if (direction == DismissDirection.startToEnd) {
-          // 1. Send them to the edit screen and WAIT for them to come back
           await Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => EditQARequestScreen(item: widget.item))
           );
 
-          // --- 3. ADD THIS LINE: Force the UI to refresh immediately ---
           widget.onRefresh();
 
-          return false; // Snap the card back without dismissing
+          return false;
         }
 
-        // --- EXISTING DELETE ACTION ---
         return await _confirmDelete(context, widget.item['docId']);
       },
       child: cardUI,

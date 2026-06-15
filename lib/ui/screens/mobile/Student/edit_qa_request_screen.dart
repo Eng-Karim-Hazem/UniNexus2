@@ -10,7 +10,7 @@ import 'package:uninexus/ui/screens/mobile/Student/stu_home.dart';
 import 'package:uninexus/ui/screens/mobile/Faculty/faculty_home_screen.dart';
 
 class EditQARequestScreen extends StatefulWidget {
-  final Map<String, dynamic> item; // Receive the existing Q&A data
+  final Map<String, dynamic> item;
 
   const EditQARequestScreen({super.key, required this.item});
 
@@ -25,6 +25,7 @@ class _EditQARequestScreenState extends State<EditQARequestScreen> {
 
   String? _selectedCourse;
   int _studentYear = 1;
+  String _studentFaculty = "";
   bool _isInit = false;
   bool _isSubmitting = false;
   final int _selectedIndex = 2;
@@ -40,7 +41,6 @@ class _EditQARequestScreenState extends State<EditQARequestScreen> {
   @override
   void initState() {
     super.initState();
-    // Pre-fill fields from the database record
     _selectedCourse = widget.item['subject'];
     _subjectController = TextEditingController(text: widget.item['title'] ?? "");
     _questionController = TextEditingController(text: widget.item['question'] ?? "");
@@ -60,6 +60,7 @@ class _EditQARequestScreenState extends State<EditQARequestScreen> {
       setState(() {
         String? storedYear = prefs.getString('year');
         _studentYear = int.tryParse(storedYear ?? '1') ?? 1;
+        _studentFaculty = prefs.getString('faculty') ?? "";
         _isInit = true;
       });
     }
@@ -86,7 +87,6 @@ class _EditQARequestScreenState extends State<EditQARequestScreen> {
       return;
     }
 
-    // Stop execution if no edits were made
     if (_selectedCourse == widget.item['subject'] &&
         _subjectController.text.trim() == widget.item['title'] &&
         _questionController.text.trim() == widget.item['question']) {
@@ -179,7 +179,7 @@ class _EditQARequestScreenState extends State<EditQARequestScreen> {
             ),
           ),
           Text("Edit Q&A", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.bold, color: _textIndigo)),
-          const SizedBox(width: 40), // Spacer for centering
+          const SizedBox(width: 40),
         ],
       ),
     );
@@ -189,7 +189,7 @@ class _EditQARequestScreenState extends State<EditQARequestScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.6), // Matched community screen opacity
+        color: Colors.white.withOpacity(0.6),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: _mainPurple.withOpacity(0.5), width: 1.5),
       ),
@@ -198,10 +198,9 @@ class _EditQARequestScreenState extends State<EditQARequestScreen> {
         children: [
           _buildLabel("Course"),
           StreamBuilder<List<String>>(
-            stream: _qnaService.streamSubjectsByYear(_studentYear),
+            stream: _qnaService.streamSubjectsByYear(_studentYear, _studentFaculty),
             builder: (context, snapshot) {
               final subjects = snapshot.data ?? [];
-              // Safeguard if existing course is no longer in the list
               if (subjects.isNotEmpty && _selectedCourse != null && !subjects.contains(_selectedCourse)) {
                 subjects.add(_selectedCourse!);
               }
@@ -209,7 +208,7 @@ class _EditQARequestScreenState extends State<EditQARequestScreen> {
                 height: 55,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF2F2F2), // Matched community screen colors
+                  color: const Color(0xFFF2F2F2),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: DropdownButtonHideUnderline(
@@ -278,7 +277,6 @@ class _EditQARequestScreenState extends State<EditQARequestScreen> {
     );
   }
 
-  // --- STANDARD NAV BAR METHODS ---
   Widget _buildHomeFab() {
     return Container(
       height: 72, width: 72,
@@ -310,7 +308,6 @@ class _EditQARequestScreenState extends State<EditQARequestScreen> {
                 children: [
                   _navItem('assets/images/solidarity_1.png', "Community", 0),
                   _navItem('assets/images/qa.png', "Q&A", 2),
-
                 ],
               ),
             ),
