@@ -30,7 +30,7 @@ class _StuCommunityState extends State<StuCommunity> {
   final Color _textIndigo = const Color(0xFF5C5C80);
 
   bool _isStudent = true;
-  String _currentUserId = ""; // --- TRACK LOGGED IN USER ---
+  String _currentUserId = "";
 
   @override
   void initState() {
@@ -44,7 +44,7 @@ class _StuCommunityState extends State<StuCommunity> {
       final String id = prefs.getString('ID') ?? "";
       if (mounted) {
         setState(() {
-          _currentUserId = id; // --- STORE LOCAL ID FOR COMPARISON ---
+          _currentUserId = id;
           _isStudent = !id.toUpperCase().startsWith('FA');
         });
       }
@@ -140,8 +140,6 @@ class _StuCommunityState extends State<StuCommunity> {
               ),
 
               Positioned(
-                // --- THE FIX ---
-                // 80 (Bottom Bar Height) + System Padding (Nav Buttons) + 20 (Margin gap)
                 bottom: 80.0 + MediaQuery.of(context).padding.bottom + 20.0,
                 right: (sw * 0.06).clamp(20.0, 35.0),
                 child: GestureDetector(
@@ -207,24 +205,22 @@ class _StuCommunityState extends State<StuCommunity> {
   }
 
   Widget _buildPostCard(CommunityPostModel post, double sw) {
-    // --- OWNERSHIP RULES ---
-    // If user is Faculty, they can delete anything. If student, only their own userId works.
-    bool canModify = !_isStudent || (_currentUserId.isNotEmpty && _currentUserId.toUpperCase() == post.userId.toUpperCase());
+    // --- UPDATED OWNERSHIP RULES ---
+    // Both faculty and student users can edit or delete their own posts only.
+    bool canModify = _currentUserId.isNotEmpty && _currentUserId.toUpperCase() == post.userId.toUpperCase();
 
     return Dismissible(
       key: Key(post.id),
-      // Allow swiping both ways if they own the post
       direction: canModify ? DismissDirection.horizontal : DismissDirection.none,
 
-      // --- BACKGROUND: EDIT (Swipe Left to Right) ---
       background: Container(
         padding: const EdgeInsets.only(left: 25),
         alignment: Alignment.centerLeft,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              _primaryBlue.withValues(alpha: 0.8), // Solid blue at the start
-              _primaryBlue.withValues(alpha: 0.0), // Fading to transparent
+              _primaryBlue.withValues(alpha: 0.8),
+              _primaryBlue.withValues(alpha: 0.0),
             ],
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
@@ -234,15 +230,14 @@ class _StuCommunityState extends State<StuCommunity> {
         child: const Icon(Icons.edit_rounded, color: Colors.white, size: 32),
       ),
 
-      // --- SECONDARY BACKGROUND: DELETE (Swipe Right to Left) ---
       secondaryBackground: Container(
         padding: const EdgeInsets.only(right: 25),
         alignment: Alignment.centerRight,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Colors.redAccent.withValues(alpha: 0.0), // Transparent start
-              Colors.redAccent.withValues(alpha: 0.9), // Fading to solid red at the end
+              Colors.redAccent.withValues(alpha: 0.0),
+              Colors.redAccent.withValues(alpha: 0.9),
             ],
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
@@ -253,18 +248,14 @@ class _StuCommunityState extends State<StuCommunity> {
       ),
 
       confirmDismiss: (direction) async {
-        // --- THE NEW EDIT ACTION ---
         if (direction == DismissDirection.startToEnd) {
-          // Launch the edit screen and pass the specific post data to it
           Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => EditCommunityPostScreen(post: post))
           );
-          // Return false so the card snaps back to its original position in the list
           return false;
         }
 
-        // --- EXISTING DELETE ACTION ---
         return await showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
@@ -289,12 +280,9 @@ class _StuCommunityState extends State<StuCommunity> {
       child: GestureDetector(
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CommunityPostDetailScreen(post: post))),
         child: Container(
-          // --- THE GRADIENT BORDER WRAPPER ---
-          // This padding dictates the border thickness (2.5 pixels)
           padding: const EdgeInsets.all(2.5),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            // The shadow stays on the outer wrapper
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.12),
@@ -303,29 +291,25 @@ class _StuCommunityState extends State<StuCommunity> {
                 offset: const Offset(0, 6),
               ),
             ],
-            // Draw the dual-color affordance border if they own the post
             gradient: canModify
                 ? LinearGradient(
               colors: [
-                _primaryBlue.withValues(alpha: 0.8), // Blue on the left
-                _mainPurple.withValues(alpha: 0.25), // Fades to default purple
+                _primaryBlue.withValues(alpha: 0.8),
                 _mainPurple.withValues(alpha: 0.25),
-                Colors.redAccent.withValues(alpha: 0.8), // Red on the right
+                _mainPurple.withValues(alpha: 0.25),
+                Colors.redAccent.withValues(alpha: 0.8),
               ],
               stops: const [0.0, 0.20, 0.80, 1.0],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             )
                 : null,
-            // Fallback to solid standard border if they don't own it
             color: canModify ? null : _mainPurple.withValues(alpha: 0.15),
           ),
           child: Container(
-            // --- THE INNER CARD CONTENT ---
             padding: EdgeInsets.symmetric(horizontal: sw * 0.04, vertical: 16),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.95), // Solid white reading background
-              // Inner radius must be smaller to keep corners perfectly rounded inside the border
+              color: Colors.white.withValues(alpha: 0.95),
               borderRadius: BorderRadius.circular(17),
             ),
             child: Column(
@@ -407,7 +391,6 @@ class _StuCommunityState extends State<StuCommunity> {
     );
   }
 
-  // --- REPLACED PUSH WITH PUSHREPLACEMENT FOR PROPER NAV INHERITANCE ---
   Widget _buildStudentBottomBar() {
     return _bottomNavWrapper(
       child: Row(
