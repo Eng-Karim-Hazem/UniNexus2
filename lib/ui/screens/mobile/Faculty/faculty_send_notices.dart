@@ -59,6 +59,22 @@ class _SendNoticeScreenState extends State<SendNoticeScreen> {
     super.dispose();
   }
 
+  /// Looks up the student written input code in Firestore and returns their actual Document UID.
+  /// This prevents sending notices to faulty or non-existent student IDs.
+  Future<String?> _findStudentDocumentIdByCustomId(String customId) async {
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('students')
+        .where('ID', isEqualTo: customId)
+        .limit(1)
+        .get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      // Returns the actual authentic document ID (e.g. "37SeeDzbmAqQBu5RFDea")
+      return querySnapshot.docs.first.id;
+    }
+    return null;
+  }
+
   Future<void> _submitNotice() async {
     final message = _messageController.text.trim();
 
@@ -87,17 +103,33 @@ class _SendNoticeScreenState extends State<SendNoticeScreen> {
 
       if (_selectedReceiverType == 'Individual') {
         type = NoticeTargetType.individual;
-        targetVal = _userIdController.text.trim().toLowerCase();
-        recipients = [targetVal];
+        final String inputId = _userIdController.text.trim().toLowerCase();
+
+        // --- ADMIN EXTRACTION METHOD IMPLEMENTATION ---
+        // Verifies if the student exists across your dataset before creating documents
+        final String? accurateDocId = await _findStudentDocumentIdByCustomId(_userIdController.text.trim());
+
+        if (accurateDocId == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Error: Student ID does not exist.'), backgroundColor: Colors.redAccent),
+            );
+            setState(() => _isLoading = false);
+          }
+          return;
+        }
+
+        targetVal = inputId;
+        // Use the validated tracking key for your model arrays
+        recipients = [accurateDocId];
       } else {
         type = NoticeTargetType.group;
-        // Strip text clean or grab the code format context directly
         String subjectCode = _selectedSubject.split(' - ').first.trim();
 
         if (_selectedSection == 'All Sections') {
           targetVal = 'students_$subjectCode';
           final snap = await FirebaseFirestore.instance.collection('students').get();
-          recipients = snap.docs.map((doc) => (doc.data()['ID'] ?? '').toString()).where((id) => id.isNotEmpty).toList();
+          recipients = snap.docs.map((doc) => doc.id).toList(); // Prefer mapping actual collection document IDs
         } else {
           String sectionNumber = _selectedSection.replaceAll(RegExp(r'[^0-9]'), '');
           targetVal = '${subjectCode}_section_$sectionNumber';
@@ -106,7 +138,7 @@ class _SendNoticeScreenState extends State<SendNoticeScreen> {
               .where('section', isEqualTo: sectionNumber)
               .get();
 
-          recipients = snap.docs.map((doc) => (doc.data()['ID'] ?? '').toString()).where((id) => id.isNotEmpty).toList();
+          recipients = snap.docs.map((doc) => doc.id).toList();
         }
       }
 
@@ -121,7 +153,7 @@ class _SendNoticeScreenState extends State<SendNoticeScreen> {
       }
 
       final newNotice = NoticeModel(
-        title: "Faculty Announcement",
+        title: _selectedReceiverType == 'Individual' ? "Direct Faculty Notice" : "Faculty Announcement",
         description: message,
         targetType: type,
         targetValue: targetVal,
@@ -248,7 +280,6 @@ class _SendNoticeScreenState extends State<SendNoticeScreen> {
                               ),
                               SizedBox(height: sh * 0.025),
 
-                              // --- REACTIVE STORAGE SUBJECT DROPDOWN ---
                               _buildLabel("Choose Subject", sw),
                               if (_selectedSubject.isNotEmpty)
                                 _buildDropdown(
