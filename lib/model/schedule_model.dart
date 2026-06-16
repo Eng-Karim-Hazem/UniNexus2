@@ -1,12 +1,12 @@
 class ScheduleModel {
-  List<String> periods;
-  String day;
-  String faculty;
-  String year;
-  String section;
+  final Map<String, String> timeSlots; // Dynamic map of {"Time-Range": "Subject Name"}
+  final String day;
+  final String faculty;
+  final String year;
+  final String section;
 
   ScheduleModel({
-    required this.periods,
+    required this.timeSlots,
     required this.day,
     required this.faculty,
     required this.year,
@@ -14,19 +14,17 @@ class ScheduleModel {
   });
 
   factory ScheduleModel.fromJson(Map<String, dynamic> json) {
+    final Map<String, String> dynamicSlots = {};
+    final metadataKeys = {'day', 'faculty', 'year', 'section'};
+
+    json.forEach((key, value) {
+      if (!metadataKeys.contains(key) && value != null && value.toString().trim().isNotEmpty) {
+        dynamicSlots[key] = value.toString();
+      }
+    });
+
     return ScheduleModel(
-      periods: [
-        json['9:00-9:50'] ?? '',   // Index 0
-        json['9:50-10:40'] ?? '',  // Index 1
-        json['10:50-11:40'] ?? '', // Index 2
-        json['11:40-12:30'] ?? '', // Index 3
-        json['1:00-1:50'] ?? '',   // Index 4
-        json['1:50-2:40'] ?? '',   // Index 5
-        json['2:50-3:40'] ?? '',   // Index 6
-        json['3:40-4:30'] ?? '',   // Index 7
-        json['4:30-5:20'] ?? '',   // Index 8
-        json['5:20-6:10'] ?? '',   // Index 9
-      ],
+      timeSlots: dynamicSlots,
       day: json['day'] ?? '',
       faculty: json['faculty'] ?? '',
       year: json['year']?.toString() ?? '',

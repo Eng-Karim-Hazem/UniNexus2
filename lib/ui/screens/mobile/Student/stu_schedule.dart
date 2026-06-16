@@ -19,54 +19,52 @@ class StuSchedule extends StatefulWidget {
 }
 
 class _StuScheduleState extends State<StuSchedule> {
-  int _selectedIndex = 1; // Highlights Schedule icon
+  int _selectedIndex = 1;
   final Color _mainPurple = const Color(0xFF7B61FF);
   final Color _primaryBlue = const Color(0xFF237ABA);
   final Color _textIndigo = const Color(0xFF5C5C80);
 
-  // Tracks the filtered weekday state (lowercase to match service configuration rules)
   late String _selectedDay;
 
-  // Reordered list so that Saturday is the first element in the horizontal bar
   final List<String> _weekdays = [
     "saturday", "sunday", "monday", "tuesday", "wednesday", "thursday", "friday"
   ];
 
-  final List<String> startTimes = ["9:00 AM", "9:50 AM", "10:50 AM", "11:40 AM", "1:00 PM", "1:50 PM", "2:50 PM", "3:40 PM", "4:30 PM", "5:20 PM"];
-  final List<String> endTimes = ["9:50 AM", "10:40 AM", "11:40 AM", "12:30 PM", "1:50 PM", "2:40 PM", "3:40 PM", "4:30 PM", "5:20 PM", "6:10 PM"];
-
   @override
   void initState() {
     super.initState();
-    // Default assignment matching the execution string rules of your local device clock
     _selectedDay = DateFormat('EEEE').format(DateTime.now()).toLowerCase();
   }
 
-  Future<ScheduleModel?> _fetchMySchedule() async {
+  Future<ScheduleModel?> _fetchScheduleFromService() async {
     final prefs = await SharedPreferences.getInstance();
     String year = prefs.getString('year') ?? "4";
-    String section = prefs.getString('section') ?? "2";
+    String section = prefs.getString('section') ?? "4";
 
     final service = ScheduleService();
-    List<ScheduleModel> results = await service.getStudentSchedule(
-      year: year,
-      section: section,
-      day: _selectedDay,
-    );
-    return results.isNotEmpty ? results.first : null;
+    try {
+      final result = await service.getStudentSchedule(
+        year: year,
+        section: section,
+        day: _selectedDay,
+      );
+
+      if (result != null && result.isNotEmpty) {
+        return result.first;
+      }
+    } catch (e) {
+      debugPrint("Schedule Service Error: $e");
+    }
+    return null;
   }
 
   Future<void> _goHome() async {
     final prefs = await SharedPreferences.getInstance();
     final String userId = prefs.getString('ID') ?? '';
 
-    Widget targetHome;
-
-    if (userId.toUpperCase().startsWith('FA')) {
-      targetHome = const FacultyHomeScreen();
-    } else {
-      targetHome = const StuHomeScreen();
-    }
+    Widget targetHome = userId.toUpperCase().startsWith('FA')
+        ? const FacultyHomeScreen()
+        : const StuHomeScreen();
 
     if (!mounted) return;
 
@@ -103,16 +101,16 @@ class _StuScheduleState extends State<StuSchedule> {
                 const SizedBox(height: 24),
                 _buildDateHeaderCard(),
                 const SizedBox(height: 16),
-                _buildDayFilterBar(), // Interactive Weekday Filter row starting with Saturday
+                _buildDayFilterBar(),
                 const SizedBox(height: 16),
                 Expanded(
                   child: FutureBuilder<ScheduleModel?>(
-                    future: _fetchMySchedule(),
+                    future: _fetchScheduleFromService(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       }
-                      if (!snapshot.hasData) {
+                      if (!snapshot.hasData || snapshot.data == null) {
                         return Center(
                           child: Text(
                             "No schedule found for ${toBeginningOfSentenceCase(_selectedDay)}",
@@ -124,7 +122,7 @@ class _StuScheduleState extends State<StuSchedule> {
                           ),
                         );
                       }
-                      return _buildSchedulePanel(snapshot.data!);
+                      return _buildDynamicSchedulePanel(snapshot.data!);
                     },
                   ),
                 ),
@@ -143,10 +141,7 @@ class _StuScheduleState extends State<StuSchedule> {
       children: [
         GestureDetector(
           onTap: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen())
-            );
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen()));
           },
           child: Image.asset('assets/images/settings_1.png', width: 28, color: _mainPurple),
         ),
@@ -172,11 +167,11 @@ class _StuScheduleState extends State<StuSchedule> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.8),
+        color: Colors.white.withAlpha((0.8 * 255).toInt()),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 24, offset: const Offset(0, -12)),
-          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 24, offset: const Offset(0, 7)),
+          BoxShadow(color: Colors.black.withAlpha((0.1 * 255).toInt()), blurRadius: 24, offset: const Offset(0, -12)),
+          BoxShadow(color: Colors.black.withAlpha((0.1 * 255).toInt()), blurRadius: 24, offset: const Offset(0, 7)),
         ],
       ),
       child: Column(
@@ -190,7 +185,6 @@ class _StuScheduleState extends State<StuSchedule> {
     );
   }
 
-  // Horizontal Day Filter Row Layout Pipeline (Starting with Saturday)
   Widget _buildDayFilterBar() {
     return SizedBox(
       height: 46,
@@ -214,15 +208,13 @@ class _StuScheduleState extends State<StuSchedule> {
               margin: const EdgeInsets.only(right: 10),
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
               decoration: BoxDecoration(
-                color: isSelected ? _mainPurple : Colors.white.withValues(alpha: 0.7),
+                color: isSelected ? _mainPurple : Colors.white.withAlpha((0.7 * 255).toInt()),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isSelected ? _mainPurple : _mainPurple.withValues(alpha: 0.2),
+                  color: isSelected ? _mainPurple : _mainPurple.withAlpha((0.2 * 255).toInt()),
                   width: 1,
                 ),
-                boxShadow: isSelected
-                    ? [BoxShadow(color: _mainPurple.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))]
-                    : null,
+                boxShadow: isSelected ? [BoxShadow(color: _mainPurple.withAlpha((0.3 * 255).toInt()), blurRadius: 8, offset: const Offset(0, 4))] : null,
               ),
               child: Center(
                 child: Text(
@@ -231,7 +223,7 @@ class _StuScheduleState extends State<StuSchedule> {
                     fontFamily: MobileAppFonts.body,
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
-                    color: isSelected ? Colors.white : _textIndigo.withValues(alpha: 0.8),
+                    color: isSelected ? Colors.white : _textIndigo.withAlpha((0.8 * 255).toInt()),
                   ),
                 ),
               ),
@@ -242,60 +234,162 @@ class _StuScheduleState extends State<StuSchedule> {
     );
   }
 
-  Widget _buildSchedulePanel(ScheduleModel schedule) {
-    Set<int> handledIndices = {};
+  // Parses, orders, and merges matching continuous lecture frames seamlessly
+  Widget _buildDynamicSchedulePanel(ScheduleModel schedule) {
+    final facultyName = schedule.faculty.isNotEmpty ? schedule.faculty : 'N/A';
+    final slots = schedule.timeSlots;
+
+    if (slots.isEmpty) {
+      return Center(
+        child: Text(
+          "No classes assigned.",
+          style: TextStyle(fontFamily: MobileAppFonts.body, color: _textIndigo),
+        ),
+      );
+    }
+
+    // Master list structure reference from image_e9c927.png
+    final List<String> masterTimeline = [
+      '9:00-9:50',
+      '9:50-10:40',
+      '10:50-11:40',
+      '11:40-12:30',
+      '1:00-1:50',
+      '1:50-2:40',
+      '2:50-3:40',
+      '3:40-4:30',
+      '4:30-5:20',
+      '5:20-6:10',
+    ];
+
+    int getMinutesFromField(String timeField) {
+      try {
+        final rawStart = timeField.split('-').first.trim();
+        final timeParts = rawStart.split(':');
+        int hour = int.parse(timeParts[0]);
+        int minute = int.parse(timeParts[1]);
+
+        if (hour >= 1 && hour <= 6) {
+          hour += 12;
+        }
+        return (hour * 60) + minute;
+      } catch (_) {
+        return 9999;
+      }
+    }
+
+    // 1. Sort the dynamic fields in temporal timeline sequence
+    final sortedKeys = slots.keys.toList();
+    sortedKeys.sort((a, b) {
+      int indexA = masterTimeline.indexOf(a.trim());
+      int indexB = masterTimeline.indexOf(b.trim());
+
+      if (indexA != -1 && indexB != -1) {
+        return indexA.compareTo(indexB);
+      }
+      return getMinutesFromField(a).compareTo(getMinutesFromField(b));
+    });
+
+    // 2. Linear pass execution to compress and join identical consecutive blocks
+    final List<MapEntry<String, String>> mergedSlots = [];
+
+    for (var currentKey in sortedKeys) {
+      final currentSubject = slots[currentKey]!;
+
+      if (mergedSlots.isEmpty) {
+        mergedSlots.add(MapEntry(currentKey, currentSubject));
+      } else {
+        final lastEntry = mergedSlots.last;
+        final lastKey = lastEntry.key;
+        final lastSubject = lastEntry.value;
+
+        // If the subject matches, merge the time boundaries
+        if (lastSubject.trim().toLowerCase() == currentSubject.trim().toLowerCase()) {
+          final lastStartTime = lastKey.split('-').first.trim();
+          final currentEndTime = currentKey.split('-').last.trim();
+
+          // Replace the last item with the updated merged time entry
+          mergedSlots[mergedSlots.length - 1] = MapEntry("$lastStartTime-$currentEndTime", lastSubject);
+        } else {
+          mergedSlots.add(MapEntry(currentKey, currentSubject));
+        }
+      }
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.4),
+        color: Colors.white.withAlpha((0.4 * 255).toInt()),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _mainPurple.withValues(alpha: 0.5), width: 1.5),
+        border: Border.all(color: _mainPurple.withAlpha((0.5 * 255).toInt()), width: 1.5),
       ),
       child: ListView.builder(
         physics: const BouncingScrollPhysics(),
-        itemCount: 10,
-        itemBuilder: (context, i) {
-          if (handledIndices.contains(i) || schedule.periods[i].isEmpty) return const SizedBox.shrink();
-          String currentSubject = schedule.periods[i];
-          String startTime = startTimes[i];
-          String endTime = endTimes[i];
+        itemCount: mergedSlots.length,
+        itemBuilder: (context, index) {
+          final timeRangeKey = mergedSlots[index].key;
+          final subjectName = mergedSlots[index].value;
 
-          if (i + 1 < 10 && schedule.periods[i + 1] == currentSubject) {
-            endTime = endTimes[i + 1];
-            handledIndices.add(i + 1);
-          }
-          return _buildScheduleItem(startTime, endTime, currentSubject, schedule.faculty);
-        },
-      ),
-    );
-  }
+          final parts = timeRangeKey.split('-');
+          String startDisplay = parts[0].trim();
+          String endDisplay = parts.length > 1 ? parts[1].trim() : '';
 
-  Widget _buildScheduleItem(String start, String end, String subject, String faculty) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12.0),
-          child: Row(
+          return Column(
             children: [
-              SizedBox(width: 75, child: Text("$start\n$end", style: const TextStyle(fontFamily: MobileAppFonts.body, fontWeight: FontWeight.bold, fontSize: 13))),
-              const SizedBox(width: 10),
-              Container(width: 1.5, height: 40, color: _mainPurple.withValues(alpha: 0.3)),
-              const SizedBox(width: 15),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12.0),
+                child: Row(
                   children: [
-                    Text(subject, style: const TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 16, fontWeight: FontWeight.bold)),
-                    Text(faculty, style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 13, color: Colors.black54)),
+                    SizedBox(
+                      width: 85,
+                      child: Text(
+                        "$startDisplay\n$endDisplay",
+                        style: const TextStyle(
+                          fontFamily: MobileAppFonts.body,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      width: 1.5,
+                      height: 40,
+                      color: _mainPurple.withAlpha((0.3 * 255).toInt()),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            subjectName,
+                            style: const TextStyle(
+                              fontFamily: MobileAppFonts.heading,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            facultyName,
+                            style: const TextStyle(
+                              fontFamily: MobileAppFonts.body,
+                              fontSize: 13,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
+              Divider(color: _mainPurple.withAlpha((0.1 * 255).toInt())),
             ],
-          ),
-        ),
-        Divider(color: _mainPurple.withValues(alpha: 0.1)),
-      ],
+          );
+        },
+      ),
     );
   }
 
@@ -306,12 +400,7 @@ class _StuScheduleState extends State<StuSchedule> {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         boxShadow: [
-          BoxShadow(
-            color: _mainPurple.withValues(alpha: 0.6),
-            blurRadius: 25,
-            spreadRadius: 6,
-            offset: const Offset(0, 2),
-          )
+          BoxShadow(color: _mainPurple.withAlpha((0.6 * 255).toInt()), blurRadius: 25, spreadRadius: 6, offset: const Offset(0, 2))
         ],
       ),
       child: FloatingActionButton(
@@ -335,12 +424,7 @@ class _StuScheduleState extends State<StuSchedule> {
       decoration: BoxDecoration(
         color: Colors.transparent,
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 20,
-            spreadRadius: 4,
-            offset: const Offset(0, -6),
-          ),
+          BoxShadow(color: Colors.black.withAlpha((0.18 * 255).toInt()), blurRadius: 20, spreadRadius: 4, offset: const Offset(0, -6)),
         ],
       ),
       child: BottomAppBar(
@@ -385,7 +469,6 @@ class _StuScheduleState extends State<StuSchedule> {
     return GestureDetector(
       onTap: () async {
         if (index == _selectedIndex) return;
-
         setState(() => _selectedIndex = index);
 
         if (index == 0) {
@@ -401,12 +484,7 @@ class _StuScheduleState extends State<StuSchedule> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(
-            path,
-            width: 28,
-            height: 28,
-            color: sel ? _mainPurple : Colors.grey.shade500,
-          ),
+          Image.asset(path, width: 28, height: 28, color: sel ? _mainPurple : Colors.grey.shade500),
           const SizedBox(height: 5),
           Text(
             label,
