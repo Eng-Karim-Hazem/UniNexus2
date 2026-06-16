@@ -176,7 +176,7 @@ class _StuScheduleState extends State<StuSchedule> {
       ),
       child: Column(
         children: [
-          const Text("Timetable Matrix", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.w900)),
+          const Text("Timetable", style: TextStyle(fontFamily: MobileAppFonts.heading, fontSize: 22, fontWeight: FontWeight.w900)),
           const SizedBox(height: 4),
           Text(DateFormat('MMMM d, yyyy').format(DateTime.now()),
               style: const TextStyle(fontFamily: MobileAppFonts.body, fontSize: 14, color: Color(0xFF5BA4F5), fontWeight: FontWeight.w600)),
